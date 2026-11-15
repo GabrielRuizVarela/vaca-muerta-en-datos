@@ -34,10 +34,43 @@ html { scroll-behavior: smooth; scroll-padding-top: 12px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
-header p { color: var(--ink-2); max-width: 720px; margin: 8px 0 0; }
-h1, h2, .titulares .v { font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Charter, Georgia, serif; }
+header p { color: var(--ink-2); max-width: 880px; margin: 8px 0 0; }
+h1, h2, h3, .titulares .v, .hallazgo .frase { font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Charter, Georgia, serif; }
 h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.08; margin: 0; letter-spacing: -0.015em; font-weight: 600; }
-h2 { font-size: 21px; margin: 0 0 4px; font-weight: 600; line-height: 1.25; }
+h2, h3 { font-size: 21px; margin: 0 0 4px; font-weight: 600; line-height: 1.25; }
+section.caso { background: transparent; border: 0; border-radius: 0; padding: 0; margin: 28px 0 8px; }
+.caso > h2 { font: 600 15px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--s2); margin: 0 0 10px; letter-spacing: .01em; }
+.hallazgo .frase { font-size: clamp(25px, 3.3vw, 36px); line-height: 1.18; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 14px; max-width: 28em; }
+.hallazgo .apoyo { font-size: 16px; line-height: 1.5; color: var(--ink-2); margin: 0 0 16px; max-width: 62em; }
+.limites { border: 1px solid var(--s4); background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 10px 16px 6px; margin: 0 0 16px; }
+.limites h3 { font: 700 15px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0 0 2px; }
+.limites h3, .limites .nota-datos { display: inline; }
+.limites .nota-datos { margin: 0; font-size: 14px; }
+.limites h3 { margin-right: 8px; }
+.limites ul { margin: 8px 0 0; padding: 0; list-style: none; columns: 2; column-gap: 28px; font-size: 14px; line-height: 1.4; }
+.limites li { margin: 0 0 6px; break-inside: avoid; }
+@media (max-width: 760px) { .limites ul { columns: 1; } }
+.grid-caso { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+@media (max-width: 760px) { .grid-caso { grid-template-columns: 1fr; } }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 12px; min-width: 0; }
+.panel .cap { margin: 0; font-weight: 600; font-size: 15px; line-height: 1.3; }
+.panel .sub { font-size: 13px; margin: 2px 0 10px; color: var(--ink-3); }
+.panel .legend { margin-bottom: 6px; }
+.chart.chart-caso { height: 300px; }
+.chart.chart-previa { height: 240px; }
+.fila-previa { margin-top: 16px; align-items: start; }
+.fila-previa .resultado { margin: 0; }
+.leyenda-anual { font-size: 13px; color: var(--ink-3); margin: 8px 0 0; }
+.leyenda-anual .rayado::before { content: ""; display: inline-block; width: 12px; height: 10px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--s2); background: repeating-linear-gradient(135deg, var(--s2) 0 2px, transparent 2px 4px); }
+.caso .kpis { margin: 16px 0; }
+.glosario { margin-top: 16px; }
+.glosario summary { font-weight: 600; color: var(--ink); }
+.glosario dl { margin: 10px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; max-width: 760px; }
+.glosario dt { font-weight: 600; color: var(--ink); }
+.glosario dd { margin: 0; }
+.contexto { margin: 40px 0 0; padding-top: 18px; border-top: 2px solid var(--ink); }
+.contexto h2 { font-size: 26px; margin: 0 0 4px; }
+.contexto .sub { margin: 0; }
 nav.salto { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 14px 0 0; font-size: 14px; }
 .titulares { list-style: none; margin: 28px 0 8px; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 2px solid var(--ink); }
 .titulares li { padding: 14px 14px 12px 0; display: flex; flex-direction: column; gap: 2px; }
@@ -58,6 +91,8 @@ nav.salto { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 14px 0 0; fon
 .eje-barra .base { stroke: var(--line); stroke-width: 2; }
 .eje-barra .ic { fill: var(--s2); opacity: .55; }
 .eje-barra .pt { fill: var(--ink); stroke: var(--bg); stroke-width: 2; }
+.eje-barra .shmax { stroke: var(--s1); stroke-width: 2; stroke-dasharray: 3 2; }
+.eje-barra .shmax-t { fill: var(--s1); }
 .eje-barra .tick { stroke: var(--ink-3); stroke-width: 1; }
 .eje-barra text { fill: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
 pre.cmd { margin: 8px 0 12px; padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
@@ -114,24 +149,63 @@ a { color: var(--s1); }
   <p>Pipeline reproducible sobre los datos abiertos de la Secretaría de Energía: producción mensual por pozo y datos de fractura (Adjunto IV), modelados en DuckDB, con controles de calidad que se publican junto a los resultados.</p>
   <div class="meta" id="meta"></div>
   <nav class="salto" aria-label="Secciones">
-    <a href="#interferencia">Interferencia entre pozos</a>
+    <a href="#interferencia">El caso: interferencia</a>
+    <a href="#contexto">Contexto de la cuenca</a>
     <a href="#calidad">Calidad de datos</a>
     <a href="#reproducir">Cómo reproducir</a>
     <a href="replay.html">Repetición temporal (mapa)</a>
+    <a href="../docs/caso-interferencia.md">Caso de estudio</a>
   </nav>
 </header>
+
+<section class="caso" id="interferencia">
+  <h2>El caso: interferencia entre pozos</h2>
+  <!--__HALLAZGO__-->
+  <!--__NO_SE_MIDE__-->
+  <div class="grid-caso">
+    <div class="panel">
+      <p class="cap">Caudal del padre, mediana (100 = antes de la fractura)</p>
+      <p class="sub">Fracción de su promedio de los 3 meses previos, padre cercano contra control.</p>
+      <div class="legend" id="leg-interf"></div>
+      <div class="chart chart-caso"><canvas id="c-interf" aria-label="Caudal del pozo padre alrededor de la fractura del hijo"></canvas></div>
+    </div>
+    <div class="panel">
+      <p class="cap">Brecha al mes 1 por año de fractura (puntos)</p>
+      <p class="sub">Cercano menos control.</p>
+      <div class="chart chart-caso"><canvas id="c-interf-anual" aria-label="Brecha de interferencia por año"></canvas></div>
+      <!--__LEYENDA_ANUAL__-->
+    </div>
+  </div>
+  <div class="grid2 fila-previa">
+    <div class="panel" id="panel-previa">
+      <p class="cap">Brecha previa, con intervalo de confianza 95% por bootstrap (puntos)</p>
+      <p class="sub">Cercano menos control, meses -3 a 3 en la base limpia. La zona sombreada es la brecha previa a la fractura.</p>
+      <div class="chart chart-previa"><canvas id="c-previa" aria-label="Brecha entre padres cercanos y control con su intervalo de confianza"></canvas></div>
+    </div>
+    <div><!--__EJE__--></div>
+  </div>
+  <!--__KPIS_INTERF__-->
+  <!--__FINDING_INTERF__-->
+  <details><summary>Ver tabla</summary><div class="scroll"><table id="t-interf"></table></div></details>
+  <!--__GLOSARIO__-->
+</section>
+
+<div class="contexto" id="contexto">
+  <h2>Contexto de la cuenca</h2>
+  <p class="sub">Producción por operador, curvas tipo y diseño de terminación: el marco en el que ocurre la interferencia.</p>
+</div>
 
 <!--__TITULARES__-->
 
 <section>
-  <h2>Producción de petróleo de Vaca Muerta por operador</h2>
+  <h3>Producción de petróleo de Vaca Muerta por operador</h3>
   <p class="sub">Miles de barriles por día calendario (kbbl/d), apilado. Los cinco operadores con mayor producción en el último mes; el resto en "Otros".</p>
   <div class="legend" id="leg-mensual"></div>
   <div class="chart"><canvas id="c-mensual" aria-label="Producción mensual por operador"></canvas></div>
 </section>
 
 <section>
-  <h2>Curva tipo: pozos shale oil por cohorte</h2>
+  <h3>Curva tipo: pozos shale oil por cohorte</h3>
   <p class="sub">Caudal promedio de petróleo (bbl/d) por mes desde el primer petróleo. La cohorte es el año del primer petróleo. Se muestran solo meses con al menos 10 pozos.</p>
   <div class="filters" id="f-cohorte" role="group" aria-label="Cohorte"></div>
   <div class="legend" id="leg-curva"></div>
@@ -139,29 +213,15 @@ a { color: var(--s1); }
 </section>
 
 <section>
-  <h2>Diseño de terminación y productividad</h2>
+  <h3>Diseño de terminación y productividad</h3>
   <p class="sub">Medianas por cohorte, pozos con 12 meses de producción publicados. Rama horizontal desde Adjunto IV.</p>
   <div class="legend" id="leg-diseno"></div>
   <div class="grid2">
     <div><p class="sub"><strong>Rama horizontal (m)</strong></p><div class="chart"><canvas id="c-rama"></canvas></div></div>
     <div><p class="sub"><strong>Petróleo 12 meses por metro de rama (bbl/m)</strong></p><div class="chart"><canvas id="c-prod"></canvas></div></div>
   </div>
-  <p class="finding" id="finding"></p>
+  <!--__FINDING_DISENO__-->
   <details><summary>Ver tabla</summary><div class="scroll"><table id="t-diseno"></table></div></details>
-</section>
-
-<section id="interferencia">
-  <h2>Interferencia entre pozos</h2>
-  <p class="sub">Cuando se fractura un pozo nuevo (hijo), ¿qué le pasa a los pozos vecinos que ya producían (padres)? Caudal de petróleo del padre como fracción de su promedio de los 3 meses previos. Padres a menos de 1 km contra padres a 2-5 km del mismo evento (control).</p>
-  <div class="kpis" id="kpis-interf"></div>
-  <div class="legend" id="leg-interf"></div>
-  <div class="grid2">
-    <div><p class="sub"><strong>Caudal del padre, mediana (100 = antes de la fractura)</strong></p><div class="chart"><canvas id="c-interf" aria-label="Caudal del pozo padre alrededor de la fractura del hijo"></canvas></div></div>
-    <div><p class="sub"><strong>Brecha al mes 1 por año de fractura (puntos)</strong></p><div class="chart"><canvas id="c-interf-anual" aria-label="Brecha de interferencia por año"></canvas></div></div>
-  </div>
-  <!--__EJE__-->
-  <p class="finding" id="finding-interf"></p>
-  <details><summary>Ver tabla</summary><div class="scroll"><table id="t-interf"></table></div></details>
 </section>
 
 <section id="calidad">
@@ -205,6 +265,10 @@ uv run pytest -q</pre>
 const D = /*__DATA__*/null;
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const fmt = (n, d = 0) => n == null ? "s/d" : Number(n).toLocaleString("es-AR", { maximumFractionDigits: d, minimumFractionDigits: d });
+// Spanish (es-AR) numbers everywhere a number is shown: dot for thousands, comma for decimals.
+const nf = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2, useGrouping: "always" });
+Chart.defaults.locale = "es-AR";
+const alpha = (c, a) => c + Math.round(a * 255).toString(16).padStart(2, "0");
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const slotVars = ["--s1", "--s2", "--s3", "--s4", "--s5"];
 // Color follows the entity: YPF is always slot 1, other operators keep a fixed slot.
@@ -216,6 +280,41 @@ function legend(el, names) {
   el.innerHTML = names.map((n) => `<span style="--c: var(${colorVar[n]})">${esc(n)}</span>`).join("");
 }
 
+// Event-study marks: shaded pre-trend (months -3 to -1, "brecha previa") and a dashed line at the frac (month 0).
+const marcasEvento = {
+  id: "marcasEvento",
+  beforeDatasetsDraw(ch) {
+    const x = ch.scales.x, a = ch.chartArea, ctx = ch.ctx, L = ch.data.labels;
+    const i0 = L.indexOf(-3), i1 = L.indexOf(-1);
+    if (i0 < 0 || i1 < 0) return;
+    ctx.save();
+    ctx.globalAlpha = 0.14; ctx.fillStyle = css("--ink-3");
+    ctx.fillRect(x.getPixelForValue(i0), a.top, x.getPixelForValue(i1) - x.getPixelForValue(i0), a.bottom - a.top);
+    ctx.restore();
+  },
+  afterDatasetsDraw(ch) {
+    const x = ch.scales.x, a = ch.chartArea, ctx = ch.ctx, L = ch.data.labels;
+    const i0 = L.indexOf(-3), i1 = L.indexOf(-1), iz = L.indexOf(0);
+    ctx.save();
+    ctx.font = "600 12px system-ui, sans-serif"; ctx.fillStyle = css("--ink-2");
+    if (i0 >= 0 && i1 >= 0) { ctx.textAlign = "center"; ctx.fillText("brecha previa", (x.getPixelForValue(i0) + x.getPixelForValue(i1)) / 2, a.bottom - 8); }
+    if (iz >= 0) {
+      ctx.strokeStyle = css("--ink-3"); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(x.getPixelForValue(iz), a.top); ctx.lineTo(x.getPixelForValue(iz), a.bottom); ctx.stroke();
+      ctx.setLineDash([]); ctx.textAlign = "left"; ctx.fillText("fractura del hijo", x.getPixelForValue(iz) + 6, a.top + 14);
+    }
+    ctx.restore();
+  },
+};
+// Hatched fill for the current (incomplete) year.
+function rayado(color) {
+  const c = document.createElement("canvas"); c.width = c.height = 8;
+  const g = c.getContext("2d");
+  g.fillStyle = alpha(color, 0.18); g.fillRect(0, 0, 8, 8);
+  g.strokeStyle = color; g.lineWidth = 2; g.beginPath(); g.moveTo(-2, 10); g.lineTo(10, -2); g.moveTo(-2, 2); g.lineTo(2, -2); g.moveTo(6, 10); g.lineTo(10, 6); g.stroke();
+  return g.createPattern(c, "repeat");
+}
+
 const charts = [];
 function baseOptions(yTitle) {
   return {
@@ -224,7 +323,7 @@ function baseOptions(yTitle) {
     plugins: { legend: { display: false }, tooltip: { backgroundColor: css("--card"), titleColor: css("--ink"), bodyColor: css("--ink-2"), borderColor: css("--line"), borderWidth: 1, padding: 10, boxPadding: 4 } },
     scales: {
       x: { grid: { display: false }, ticks: { color: css("--ink-3"), maxRotation: 0, autoSkipPadding: 16 }, border: { color: css("--line") } },
-      y: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { color: css("--ink-3") }, border: { display: false }, title: { display: !!yTitle, text: yTitle, color: css("--ink-3") } },
+      y: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { color: css("--ink-3"), callback: (v) => nf.format(v) }, border: { display: false }, title: { display: !!yTitle, text: yTitle, color: css("--ink-3") } },
     },
   };
 }
@@ -270,37 +369,48 @@ function render() {
       label: g, data: pick(g, field), borderColor: css(colorVar[g]), backgroundColor: css(colorVar[g]), borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, tension: 0.2,
     })) } }));
   }
-  const ypf = D.diseno.filter((r) => r.grupo === "YPF");
-  const peak = ypf.reduce((a, r) => (r.bbl_12m_por_m_mediana > a.bbl_12m_por_m_mediana ? r : a));
-  const last = ypf[ypf.length - 1];
-  document.getElementById("finding").innerHTML = `<strong>Lectura:</strong> la rama horizontal mediana de YPF pasó de ${fmt(ypf[0].rama_m_mediana)} m (cohorte ${ypf[0].cohorte}) a ${fmt(last.rama_m_mediana)} m (cohorte ${last.cohorte}), mientras el petróleo de 12 meses por metro bajó de ${fmt(peak.bbl_12m_por_m_mediana)} bbl/m (cohorte ${peak.cohorte}) a ${fmt(last.bbl_12m_por_m_mediana)} bbl/m. Los pozos producen más petróleo en total que en ${ypf[0].cohorte}, pero cada metro de rama rinde menos. Es una correlación en datos públicos, no una causa: calidad de zona, espaciamiento y diseño de fractura son hipótesis a validar con datos internos. La sección siguiente mide una de ellas: la interferencia entre pozos.`;
   document.getElementById("t-diseno").innerHTML = `<tr><th>Cohorte</th><th>Grupo</th><th class="n">Pozos</th><th class="n">Rama (m)</th><th class="n">Etapas</th><th class="n">Arena (t/m)</th><th class="n">Petróleo 12m (bbl)</th><th class="n">bbl/m</th></tr>` +
     D.diseno.map((r) => `<tr><td>${r.cohorte}</td><td>${esc(r.grupo)}</td><td class="n">${r.pozos}</td><td class="n">${fmt(r.rama_m_mediana)}</td><td class="n">${fmt(r.etapas_mediana)}</td><td class="n">${fmt(r.arena_tn_por_m_mediana, 2)}</td><td class="n">${fmt(r.petroleo_12m_bbl_mediana)}</td><td class="n">${fmt(r.bbl_12m_por_m_mediana)}</td></tr>`).join("");
 
   // Interference event study.
-  const I = D.interferencia, R = I.resumen;
-  document.getElementById("kpis-interf").innerHTML = [
-    [fmt(R.brecha_mes_1 * 100), "puntos al mes 1", "padre cercano contra control"],
-    [fmt(R.brecha_mes_6 * 100), "puntos al mes 6", "la brecha casi se cierra"],
-    [fmt(R.diferido_ypf_bbl / 1e6, 1), "millones de bbl diferidos en YPF", `de ${fmt(R.diferido_bbl / 1e6, 1)} millones en total, meses 0 a 6`],
-  ].map(([v, l, d]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div><div class="d">${d}</div></div>`).join("");
+  const I = D.interferencia;
   const series = { cercano: ["Padre a menos de 1 km", "--s2"], control: ["Control a 2-5 km", "--other"] };
   document.getElementById("leg-interf").innerHTML = Object.values(series).map(([n, c]) => `<span style="--c: var(${c})">${esc(n)}</span>`).join("");
   const ks = [...new Set(I.curva.map((r) => r.k))].sort((a, b) => a - b);
   const oi = baseOptions("% del caudal previo"); oi.scales.y.beginAtZero = false;
   oi.scales.x.title = { display: true, text: "Meses desde la fractura del hijo", color: css("--ink-3") };
   oi.plugins.tooltip.callbacks = { title: (i) => `Mes ${i[0].label}`, label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)}%` };
-  charts.push(new Chart(document.getElementById("c-interf"), { type: "line", options: oi, data: { labels: ks, datasets: Object.entries(series).map(([b, [n, c]]) => ({
+  oi.scales.y.ticks.callback = (v) => nf.format(v) + "%";
+  charts.push(new Chart(document.getElementById("c-interf"), { type: "line", options: oi, plugins: [marcasEvento], data: { labels: ks, datasets: Object.entries(series).map(([b, [n, c]]) => ({
     label: n, data: ks.map((k) => (I.curva.find((r) => r.banda === b && r.k === k)?.indice ?? null) * 100),
     borderColor: css(c), backgroundColor: css(c), borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0.2,
   })) } }));
   const oa = baseOptions("puntos"); oa.scales.y.beginAtZero = true;
-  oa.plugins.tooltip.callbacks = { label: (c) => ` ${fmt(c.parsed.y)} puntos (${I.anual[c.dataIndex].eventos_cercanos} eventos)` };
-  charts.push(new Chart(document.getElementById("c-interf-anual"), { type: "bar", options: oa, data: { labels: I.anual.map((r) => r.anio), datasets: [{
-    label: "Brecha", data: I.anual.map((r) => r.brecha * 100), backgroundColor: css("--s2"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 28,
+  const enCurso = (r) => String(r.anio) === D.ultimo_mes.slice(0, 4);
+  oa.plugins.tooltip.callbacks = { title: (i) => { const r = I.anual[i[0].dataIndex]; return enCurso(r) ? `${r.anio} (año en curso)` : String(r.anio); }, label: (c) => ` ${fmt(c.parsed.y)} puntos (${fmt(I.anual[c.dataIndex].eventos_cercanos)} eventos)` };
+  oa.scales.x.ticks.autoSkip = false; oa.scales.x.ticks.font = { size: 11 };
+  charts.push(new Chart(document.getElementById("c-interf-anual"), { type: "bar", options: oa, data: { labels: I.anual.map((r) => [String(r.anio), fmt(r.eventos_cercanos)]), datasets: [{
+    label: "Brecha", data: I.anual.map((r) => r.brecha * 100),
+    backgroundColor: I.anual.map((r) => enCurso(r) ? rayado(css("--s2")) : css("--s2")),
+    borderColor: css("--s2"), borderWidth: I.anual.map((r) => enCurso(r) ? 1.5 : 0),
+    borderRadius: 4, borderSkipped: "start", maxBarThickness: 28,
   }] } }));
-  const ultimos = I.anual.slice(-2);
-  document.getElementById("finding-interf").innerHTML = `<strong>Lectura:</strong> un mes después de fracturar un pozo nuevo, los padres a menos de 1 km rinden ${fmt(-R.brecha_mes_1 * 100)} puntos menos que los padres de control a 2-5 km; a los 6 meses la brecha casi se cierra (${fmt(-R.brecha_mes_6 * 100)} puntos). La brecha creció en los últimos años: ${ultimos.map((r) => `${fmt(-r.brecha * 100)} puntos en ${r.anio}`).join(" y ")}${ultimos.at(-1).anio == D.ultimo_mes.slice(0, 4) ? " (año en curso)" : ""}. Contra un control de la misma edad, suma ${fmt(R.diferido_bbl / 1e6, 1)} millones de barriles diferidos en los meses 0 a 6. Límites: son coordenadas de superficie, no la trayectoria de la rama, y un cierre preventivo del operador se ve igual que un daño en datos mensuales. Es una huella medida, no una causa.`;
+
+  // Pre-trend with its bootstrap interval (mart_placebo_pretrend); hidden if the mart is missing.
+  const P = I.pretrend || [];
+  const panelPrevia = document.getElementById("panel-previa");
+  if (P.length) {
+    const op = baseOptions("puntos"); op.scales.y.beginAtZero = false;
+    op.scales.x.title = { display: true, text: "Meses desde la fractura del hijo", color: css("--ink-3") };
+    op.plugins.tooltip.filter = (c) => c.datasetIndex === 2;
+    op.plugins.tooltip.callbacks = { title: (i) => `Mes ${i[0].label}`, label: (c) => { const r = P[c.dataIndex]; return ` ${fmt(r.brecha * 100)} puntos (IC 95%: ${fmt(r.ic_bajo * 100)} a ${fmt(r.ic_alto * 100)})`; } };
+    const banda = alpha(css("--s2"), 0.22);
+    charts.push(new Chart(document.getElementById("c-previa"), { type: "line", options: op, plugins: [marcasEvento], data: { labels: P.map((r) => r.k), datasets: [
+      { label: "IC bajo", data: P.map((r) => r.ic_bajo * 100), borderWidth: 0, pointRadius: 0, fill: false },
+      { label: "IC 95%", data: P.map((r) => r.ic_alto * 100), borderWidth: 0, pointRadius: 0, backgroundColor: banda, fill: "-1" },
+      { label: "Brecha", data: P.map((r) => r.brecha * 100), borderColor: css("--s2"), backgroundColor: css("--s2"), borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0 },
+    ] } }));
+  } else if (panelPrevia) { panelPrevia.hidden = true; }
   document.getElementById("t-interf").innerHTML = `<tr><th>Año</th><th class="n">Eventos cercanos</th><th class="n">Brecha mes 1 (puntos)</th></tr>` +
     I.anual.map((r) => `<tr><td>${r.anio}</td><td class="n">${fmt(r.eventos_cercanos)}</td><td class="n">${fmt(r.brecha * 100)}</td></tr>`).join("");
   const ev = D.evals;

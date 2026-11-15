@@ -1,0 +1,217 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 660" width="700" height="660" role="img" aria-labelledby="t d">
+<title id="t">Brecha de petróleo por mes desde la fractura del hijo</title>
+<desc id="d">Brecha del petróleo entre los padres a menos de 1 km y los controles de la misma edad, por mes desde la fractura del pozo hijo, en puntos del índice. La brecha cae en el mes 1 a -22,9 puntos, ya era negativa antes de la fractura y casi se cierra a los 6 meses. Medida, no causa.</desc>
+<style>text { fill: #222222; font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 11px; }
+.titulo { font-size: 15px; font-weight: bold; }
+.sub { fill: #6b6b6b; }
+.eje { stroke: #222222; stroke-width: 1; fill: none; }
+.rejilla { stroke: #e4e4e4; stroke-width: 1; }
+.cero { stroke: #222222; stroke-width: 1.2; }
+.marca { stroke: #6b6b6b; stroke-width: 1; stroke-dasharray: 4 3; }
+.banda { fill: #f0e442; fill-opacity: 0.25; }
+.pie { fill: #6b6b6b; font-size: 10px; }</style>
+<rect x="0" y="0" width="700" height="660" fill="#ffffff"/>
+<text class="titulo" x="20" y="26">Brecha de petróleo por mes desde la fractura del hijo</text>
+<text class="sub" x="20" y="43">Padres a menos de 1 km menos controles de la misma edad a 2 a 5 km, en puntos del índice de caudal</text>
+<rect class="banda" x="153.3" y="70.0" width="100.0" height="200.0"/>
+<text class="pie" x="203.3" y="81.0" text-anchor="middle">pretendencia</text>
+<line class="rejilla" x1="70.0" y1="270.0" x2="670.0" y2="270.0"/>
+<text x="64.0" y="274.0" text-anchor="end">-30</text>
+<line class="rejilla" x1="70.0" y1="245.0" x2="670.0" y2="245.0"/>
+<text x="64.0" y="249.0" text-anchor="end">-25</text>
+<line class="rejilla" x1="70.0" y1="220.0" x2="670.0" y2="220.0"/>
+<text x="64.0" y="224.0" text-anchor="end">-20</text>
+<line class="rejilla" x1="70.0" y1="195.0" x2="670.0" y2="195.0"/>
+<text x="64.0" y="199.0" text-anchor="end">-15</text>
+<line class="rejilla" x1="70.0" y1="170.0" x2="670.0" y2="170.0"/>
+<text x="64.0" y="174.0" text-anchor="end">-10</text>
+<line class="rejilla" x1="70.0" y1="145.0" x2="670.0" y2="145.0"/>
+<text x="64.0" y="149.0" text-anchor="end">-5</text>
+<line class="rejilla" x1="70.0" y1="120.0" x2="670.0" y2="120.0"/>
+<text x="64.0" y="124.0" text-anchor="end">0</text>
+<line class="rejilla" x1="70.0" y1="95.0" x2="670.0" y2="95.0"/>
+<text x="64.0" y="99.0" text-anchor="end">5</text>
+<line class="rejilla" x1="70.0" y1="70.0" x2="670.0" y2="70.0"/>
+<text x="64.0" y="74.0" text-anchor="end">10</text>
+<line class="cero" x1="70.0" y1="120.0" x2="670.0" y2="120.0"/>
+<path class="eje" d="M70.0,70.0 L70.0,270.0 L670.0,270.0"/>
+<text x="70.0" y="284.0" text-anchor="middle">-6</text>
+<text x="103.3" y="284.0" text-anchor="middle">-5</text>
+<text x="136.7" y="284.0" text-anchor="middle">-4</text>
+<text x="170.0" y="284.0" text-anchor="middle">-3</text>
+<text x="203.3" y="284.0" text-anchor="middle">-2</text>
+<text x="236.7" y="284.0" text-anchor="middle">-1</text>
+<text x="270.0" y="284.0" text-anchor="middle">0</text>
+<text x="303.3" y="284.0" text-anchor="middle">1</text>
+<text x="336.7" y="284.0" text-anchor="middle">2</text>
+<text x="370.0" y="284.0" text-anchor="middle">3</text>
+<text x="403.3" y="284.0" text-anchor="middle">4</text>
+<text x="436.7" y="284.0" text-anchor="middle">5</text>
+<text x="470.0" y="284.0" text-anchor="middle">6</text>
+<text x="503.3" y="284.0" text-anchor="middle">7</text>
+<text x="536.7" y="284.0" text-anchor="middle">8</text>
+<text x="570.0" y="284.0" text-anchor="middle">9</text>
+<text x="603.3" y="284.0" text-anchor="middle">10</text>
+<text x="636.7" y="284.0" text-anchor="middle">11</text>
+<text x="670.0" y="284.0" text-anchor="middle">12</text>
+<line class="marca" x1="303.3" y1="70.0" x2="303.3" y2="270.0"/>
+<path d="M70.0,92.0 L103.3,97.1 L136.7,101.2 L170.0,111.4 L203.3,120.0 L236.7,135.4 L270.0,205.1 L303.3,234.6 L336.7,188.3 L370.0,163.8 L403.3,158.2 L436.7,148.9 L470.0,130.5 L503.3,130.7 L536.7,125.9 L570.0,122.0 L603.3,130.5 L636.7,135.7 L670.0,129.5" fill="none" stroke="#0072B2" stroke-width="2"/>
+<circle cx="70.0" cy="92.0" r="2.5" fill="#0072B2"/>
+<circle cx="103.3" cy="97.1" r="2.5" fill="#0072B2"/>
+<circle cx="136.7" cy="101.2" r="2.5" fill="#0072B2"/>
+<circle cx="170.0" cy="111.4" r="2.5" fill="#0072B2"/>
+<circle cx="203.3" cy="120.0" r="2.5" fill="#0072B2"/>
+<circle cx="236.7" cy="135.4" r="2.5" fill="#0072B2"/>
+<circle cx="270.0" cy="205.1" r="2.5" fill="#0072B2"/>
+<circle cx="303.3" cy="234.6" r="2.5" fill="#0072B2"/>
+<circle cx="336.7" cy="188.3" r="2.5" fill="#0072B2"/>
+<circle cx="370.0" cy="163.8" r="2.5" fill="#0072B2"/>
+<circle cx="403.3" cy="158.2" r="2.5" fill="#0072B2"/>
+<circle cx="436.7" cy="148.9" r="2.5" fill="#0072B2"/>
+<circle cx="470.0" cy="130.5" r="2.5" fill="#0072B2"/>
+<circle cx="503.3" cy="130.7" r="2.5" fill="#0072B2"/>
+<circle cx="536.7" cy="125.9" r="2.5" fill="#0072B2"/>
+<circle cx="570.0" cy="122.0" r="2.5" fill="#0072B2"/>
+<circle cx="603.3" cy="130.5" r="2.5" fill="#0072B2"/>
+<circle cx="636.7" cy="135.7" r="2.5" fill="#0072B2"/>
+<circle cx="670.0" cy="129.5" r="2.5" fill="#0072B2"/>
+<circle cx="303.3" cy="234.6" r="6" fill="none" stroke="#0072B2" stroke-width="1.5"/>
+<text x="313.3" y="238.6" text-anchor="start" style="fill:#0072B2;font-weight:bold">-22,9</text>
+<path d="M70.0,115.3 L103.3,120.7 L136.7,128.4 L170.0,132.7 L203.3,137.3 L236.7,151.4 L270.0,224.4 L303.3,247.4 L336.7,203.4 L370.0,175.4 L403.3,162.3 L436.7,147.1 L470.0,141.6 L503.3,140.3 L536.7,137.5 L570.0,136.0 L603.3,141.0 L636.7,148.3 L670.0,144.4" fill="none" stroke="#D55E00" stroke-width="2" stroke-dasharray="6 4"/>
+<circle cx="70.0" cy="115.3" r="2.5" fill="#D55E00"/>
+<circle cx="103.3" cy="120.7" r="2.5" fill="#D55E00"/>
+<circle cx="136.7" cy="128.4" r="2.5" fill="#D55E00"/>
+<circle cx="170.0" cy="132.7" r="2.5" fill="#D55E00"/>
+<circle cx="203.3" cy="137.3" r="2.5" fill="#D55E00"/>
+<circle cx="236.7" cy="151.4" r="2.5" fill="#D55E00"/>
+<circle cx="270.0" cy="224.4" r="2.5" fill="#D55E00"/>
+<circle cx="303.3" cy="247.4" r="2.5" fill="#D55E00"/>
+<circle cx="336.7" cy="203.4" r="2.5" fill="#D55E00"/>
+<circle cx="370.0" cy="175.4" r="2.5" fill="#D55E00"/>
+<circle cx="403.3" cy="162.3" r="2.5" fill="#D55E00"/>
+<circle cx="436.7" cy="147.1" r="2.5" fill="#D55E00"/>
+<circle cx="470.0" cy="141.6" r="2.5" fill="#D55E00"/>
+<circle cx="503.3" cy="140.3" r="2.5" fill="#D55E00"/>
+<circle cx="536.7" cy="137.5" r="2.5" fill="#D55E00"/>
+<circle cx="570.0" cy="136.0" r="2.5" fill="#D55E00"/>
+<circle cx="603.3" cy="141.0" r="2.5" fill="#D55E00"/>
+<circle cx="636.7" cy="148.3" r="2.5" fill="#D55E00"/>
+<circle cx="670.0" cy="144.4" r="2.5" fill="#D55E00"/>
+<circle cx="303.3" cy="247.4" r="6" fill="none" stroke="#D55E00" stroke-width="1.5"/>
+<text x="313.3" y="251.4" text-anchor="start" style="fill:#D55E00;font-weight:bold">-25,5</text>
+<text x="32.0" y="170.0" text-anchor="middle" transform="rotate(-90 32.0 170.0)">Brecha (puntos)</text>
+<line x1="70.0" y1="306.0" x2="98.0" y2="306.0" stroke="#0072B2" stroke-width="2"/>
+<text x="104.0" y="310.0">Base de los meses -3 a -1 (resultado principal)</text>
+<line x1="70.0" y1="322.0" x2="98.0" y2="322.0" stroke="#D55E00" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="104.0" y="326.0">Base de los meses -6 a -4 (muestra la pretendencia)</text>
+<text class="titulo" x="20" y="366" style="font-size:13px">Cómo se reparte la brecha del volumen (puntos logarítmicos)</text>
+<line class="rejilla" x1="70.0" y1="520.0" x2="670.0" y2="520.0"/>
+<text x="64.0" y="524.0" text-anchor="end">-80</text>
+<line class="rejilla" x1="70.0" y1="492.0" x2="670.0" y2="492.0"/>
+<text x="64.0" y="496.0" text-anchor="end">-60</text>
+<line class="rejilla" x1="70.0" y1="464.0" x2="670.0" y2="464.0"/>
+<text x="64.0" y="468.0" text-anchor="end">-40</text>
+<line class="rejilla" x1="70.0" y1="436.0" x2="670.0" y2="436.0"/>
+<text x="64.0" y="440.0" text-anchor="end">-20</text>
+<line class="rejilla" x1="70.0" y1="408.0" x2="670.0" y2="408.0"/>
+<text x="64.0" y="412.0" text-anchor="end">0</text>
+<line class="rejilla" x1="70.0" y1="380.0" x2="670.0" y2="380.0"/>
+<text x="64.0" y="384.0" text-anchor="end">20</text>
+<line class="cero" x1="70.0" y1="408.0" x2="670.0" y2="408.0"/>
+<path class="eje" d="M70.0,380.0 L70.0,520.0 L670.0,520.0"/>
+<text x="70.0" y="534.0" text-anchor="middle">-6</text>
+<text x="103.3" y="534.0" text-anchor="middle">-5</text>
+<text x="136.7" y="534.0" text-anchor="middle">-4</text>
+<text x="170.0" y="534.0" text-anchor="middle">-3</text>
+<text x="203.3" y="534.0" text-anchor="middle">-2</text>
+<text x="236.7" y="534.0" text-anchor="middle">-1</text>
+<text x="270.0" y="534.0" text-anchor="middle">0</text>
+<text x="303.3" y="534.0" text-anchor="middle">1</text>
+<text x="336.7" y="534.0" text-anchor="middle">2</text>
+<text x="370.0" y="534.0" text-anchor="middle">3</text>
+<text x="403.3" y="534.0" text-anchor="middle">4</text>
+<text x="436.7" y="534.0" text-anchor="middle">5</text>
+<text x="470.0" y="534.0" text-anchor="middle">6</text>
+<text x="503.3" y="534.0" text-anchor="middle">7</text>
+<text x="536.7" y="534.0" text-anchor="middle">8</text>
+<text x="570.0" y="534.0" text-anchor="middle">9</text>
+<text x="603.3" y="534.0" text-anchor="middle">10</text>
+<text x="636.7" y="534.0" text-anchor="middle">11</text>
+<text x="670.0" y="534.0" text-anchor="middle">12</text>
+<line class="marca" x1="303.3" y1="380.0" x2="303.3" y2="520.0"/>
+<path d="M70.0,406.4 L103.3,407.5 L136.7,404.4 L170.0,408.9 L203.3,414.9 L236.7,423.5 L270.0,479.5 L303.3,509.6 L336.7,471.2 L370.0,441.2 L403.3,427.1 L436.7,423.7 L470.0,421.9 L503.3,416.8 L536.7,412.4 L570.0,407.0 L603.3,413.1 L636.7,413.3 L670.0,413.6" fill="none" stroke="#222222" stroke-width="2" stroke-dasharray="2 3"/>
+<circle cx="70.0" cy="406.4" r="2.5" fill="#222222"/>
+<circle cx="103.3" cy="407.5" r="2.5" fill="#222222"/>
+<circle cx="136.7" cy="404.4" r="2.5" fill="#222222"/>
+<circle cx="170.0" cy="408.9" r="2.5" fill="#222222"/>
+<circle cx="203.3" cy="414.9" r="2.5" fill="#222222"/>
+<circle cx="236.7" cy="423.5" r="2.5" fill="#222222"/>
+<circle cx="270.0" cy="479.5" r="2.5" fill="#222222"/>
+<circle cx="303.3" cy="509.6" r="2.5" fill="#222222"/>
+<circle cx="336.7" cy="471.2" r="2.5" fill="#222222"/>
+<circle cx="370.0" cy="441.2" r="2.5" fill="#222222"/>
+<circle cx="403.3" cy="427.1" r="2.5" fill="#222222"/>
+<circle cx="436.7" cy="423.7" r="2.5" fill="#222222"/>
+<circle cx="470.0" cy="421.9" r="2.5" fill="#222222"/>
+<circle cx="503.3" cy="416.8" r="2.5" fill="#222222"/>
+<circle cx="536.7" cy="412.4" r="2.5" fill="#222222"/>
+<circle cx="570.0" cy="407.0" r="2.5" fill="#222222"/>
+<circle cx="603.3" cy="413.1" r="2.5" fill="#222222"/>
+<circle cx="636.7" cy="413.3" r="2.5" fill="#222222"/>
+<circle cx="670.0" cy="413.6" r="2.5" fill="#222222"/>
+<circle cx="303.3" cy="509.6" r="6" fill="none" stroke="#222222" stroke-width="1.5"/>
+<text x="313.3" y="513.6" text-anchor="start" style="fill:#222222;font-weight:bold">-72,5</text>
+<path d="M70.0,407.0 L103.3,405.9 L136.7,405.6 L170.0,408.7 L203.3,413.4 L236.7,421.2 L270.0,471.6 L303.3,461.6 L336.7,428.9 L370.0,417.3 L403.3,411.7 L436.7,409.7 L470.0,408.6 L503.3,404.9 L536.7,402.3 L570.0,400.9 L603.3,407.3 L636.7,405.3 L670.0,406.2" fill="none" stroke="#0072B2" stroke-width="2"/>
+<circle cx="70.0" cy="407.0" r="2.5" fill="#0072B2"/>
+<circle cx="103.3" cy="405.9" r="2.5" fill="#0072B2"/>
+<circle cx="136.7" cy="405.6" r="2.5" fill="#0072B2"/>
+<circle cx="170.0" cy="408.7" r="2.5" fill="#0072B2"/>
+<circle cx="203.3" cy="413.4" r="2.5" fill="#0072B2"/>
+<circle cx="236.7" cy="421.2" r="2.5" fill="#0072B2"/>
+<circle cx="270.0" cy="471.6" r="2.5" fill="#0072B2"/>
+<circle cx="303.3" cy="461.6" r="2.5" fill="#0072B2"/>
+<circle cx="336.7" cy="428.9" r="2.5" fill="#0072B2"/>
+<circle cx="370.0" cy="417.3" r="2.5" fill="#0072B2"/>
+<circle cx="403.3" cy="411.7" r="2.5" fill="#0072B2"/>
+<circle cx="436.7" cy="409.7" r="2.5" fill="#0072B2"/>
+<circle cx="470.0" cy="408.6" r="2.5" fill="#0072B2"/>
+<circle cx="503.3" cy="404.9" r="2.5" fill="#0072B2"/>
+<circle cx="536.7" cy="402.3" r="2.5" fill="#0072B2"/>
+<circle cx="570.0" cy="400.9" r="2.5" fill="#0072B2"/>
+<circle cx="603.3" cy="407.3" r="2.5" fill="#0072B2"/>
+<circle cx="636.7" cy="405.3" r="2.5" fill="#0072B2"/>
+<circle cx="670.0" cy="406.2" r="2.5" fill="#0072B2"/>
+<circle cx="303.3" cy="461.6" r="6" fill="none" stroke="#0072B2" stroke-width="1.5"/>
+<text x="313.3" y="474.6" text-anchor="start" style="fill:#0072B2;font-weight:bold">-38,3</text>
+<path d="M70.0,407.4 L103.3,409.6 L136.7,406.8 L170.0,408.2 L203.3,409.5 L236.7,410.4 L270.0,415.9 L303.3,455.9 L336.7,450.3 L370.0,431.9 L403.3,423.5 L436.7,422.0 L470.0,421.4 L503.3,419.9 L536.7,418.1 L570.0,414.1 L603.3,413.8 L636.7,416.0 L670.0,415.4" fill="none" stroke="#D55E00" stroke-width="2" stroke-dasharray="6 4"/>
+<circle cx="70.0" cy="407.4" r="2.5" fill="#D55E00"/>
+<circle cx="103.3" cy="409.6" r="2.5" fill="#D55E00"/>
+<circle cx="136.7" cy="406.8" r="2.5" fill="#D55E00"/>
+<circle cx="170.0" cy="408.2" r="2.5" fill="#D55E00"/>
+<circle cx="203.3" cy="409.5" r="2.5" fill="#D55E00"/>
+<circle cx="236.7" cy="410.4" r="2.5" fill="#D55E00"/>
+<circle cx="270.0" cy="415.9" r="2.5" fill="#D55E00"/>
+<circle cx="303.3" cy="455.9" r="2.5" fill="#D55E00"/>
+<circle cx="336.7" cy="450.3" r="2.5" fill="#D55E00"/>
+<circle cx="370.0" cy="431.9" r="2.5" fill="#D55E00"/>
+<circle cx="403.3" cy="423.5" r="2.5" fill="#D55E00"/>
+<circle cx="436.7" cy="422.0" r="2.5" fill="#D55E00"/>
+<circle cx="470.0" cy="421.4" r="2.5" fill="#D55E00"/>
+<circle cx="503.3" cy="419.9" r="2.5" fill="#D55E00"/>
+<circle cx="536.7" cy="418.1" r="2.5" fill="#D55E00"/>
+<circle cx="570.0" cy="414.1" r="2.5" fill="#D55E00"/>
+<circle cx="603.3" cy="413.8" r="2.5" fill="#D55E00"/>
+<circle cx="636.7" cy="416.0" r="2.5" fill="#D55E00"/>
+<circle cx="670.0" cy="415.4" r="2.5" fill="#D55E00"/>
+<circle cx="303.3" cy="455.9" r="6" fill="none" stroke="#D55E00" stroke-width="1.5"/>
+<text x="313.3" y="450.9" text-anchor="start" style="fill:#D55E00;font-weight:bold">-34,2</text>
+<text x="32.0" y="450.0" text-anchor="middle" transform="rotate(-90 32.0 450.0)">Brecha (puntos)</text>
+<text x="370.0" y="552.0" text-anchor="middle">Meses desde la fractura del hijo (k = 0 es el mes de la fractura)</text>
+<line x1="70.0" y1="570.0" x2="98.0" y2="570.0" stroke="#222222" stroke-width="2" stroke-dasharray="2 3"/>
+<text x="104.0" y="574.0">Volumen</text>
+<line x1="70.0" y1="586.0" x2="98.0" y2="586.0" stroke="#0072B2" stroke-width="2"/>
+<text x="104.0" y="590.0">Días producidos</text>
+<line x1="70.0" y1="602.0" x2="98.0" y2="602.0" stroke="#D55E00" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="104.0" y="606.0">Caudal por día producido</text>
+<text class="pie" x="20" y="652">Mediana de los eventos en el panel superior; media de logaritmos en el inferior. Huella medida, no causa.</text>
+</svg>

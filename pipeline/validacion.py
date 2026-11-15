@@ -435,6 +435,20 @@ def veredicto_holdout(res: list[dict], hold: list[dict]) -> str:
     return t
 
 
+def holdout_razones(hold: list[dict]) -> list[str]:
+    """Por qué el eje de entrenamiento no pasa la prueba fuera de tiempo (lista vacía si la pasa): su mejora no se separa
+    del SHmax publicado, no se separa de los ejes al azar, o una parte de los ejes al azar la iguala."""
+    d_sh = next(r for r in hold if r["modelo"] == "Entrenamiento menos SHmax")
+    d_al = next(r for r in hold if r["modelo"].startswith("Entrenamiento menos la mediana"))
+    prop = next(r for r in hold if r["modelo"].startswith("Proporción"))
+    razones = []
+    if not (d_sh["ic_bajo"] is not None and d_sh["ic_bajo"] > 0):
+        razones.append("fuera de tiempo el eje no se separa del SHmax publicado")
+    if not (d_al["ic_bajo"] is not None and d_al["ic_bajo"] > 0) or prop["mejora_rss"] >= 0.05:
+        razones.append("fuera de tiempo el eje no se separa de los ejes al azar")
+    return razones
+
+
 def pagina_validacion(con) -> str:
     """Pagina de wiki a partir de las tablas de validacion. Texto en espanol, sin rayas largas."""
     res = _filas(con, "select * from mart_validacion_resultados")

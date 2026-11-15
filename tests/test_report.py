@@ -112,3 +112,19 @@ def test_pagina_con_marts_a_mano_sobre_warehouse_chico(warehouse, tmp_path):  # 
     assert "Eje de mayor merma en la cuenca" in visible and "93 grados" in visible
     assert "El modelo de costo no supera a la media fuera de muestra (R² -0,15 contra 0,00)" in visible
     assert 'id="reproducir"' in html and not re.search("[–—]", visible)
+
+
+def test_barra_eje_marca_el_shmax_publicado():
+    eje = {"eje_grados": 93.0, "ic_bajo": 70.0, "ic_alto": 122.0, "shmax": 67.5}
+    svg = report.barra_eje(eje)
+    assert 'class="shmax"' in svg and "SHmax 67,5" in svg
+    assert 'class="shmax"' not in report.barra_eje(dict(eje, shmax=None))
+
+
+def test_kpis_interferencia_diferido_por_evento_y_rango_del_mes_1():
+    datos = {"interferencia": {"resumen": {
+        "eventos": 10, "diferido_bbl": 1000.0, "diferido_ypf_bbl": 800.0, "eventos_ypf": 6,
+        "brecha_mes_1": -0.229, "brecha_mes_1_neta": -0.192, "brecha_mes_6": -0.02}}}
+    html = report.kpis_interferencia(datos)
+    assert "-19 a -23" in html
+    assert "133" in html and "50 por evento (4 eventos)" in html   # 800/6 y 200/4, no la parte del total

@@ -1,0 +1,18 @@
+{
+  "produccion_no_convencional": {
+    "url": "http://datos.energia.gob.ar/dataset/c846e79c-026c-4040-897f-1ad3543b407c/resource/b5b58cdc-9e07-41f9-b392-fb9ec68b0725/download/produccin-de-pozos-de-gas-y-petrleo-no-convencional.csv",
+    "bytes": 3289730,
+    "sha256": "1126c8ec6dc4a6c4b2e81c2636e7faf107cec96eff25c5a01f7e127feccfc1ee",
+    "path": "produccion_no_convencional.csv.gz",
+    "sha256_fuente": "61cecc31c8dd81fd474c4094f2605b2b01b5a5d157e2089db7f3c548c410deae",
+    "bytes_fuente": 148923474
+  },
+  "fractura_adjunto_iv": {
+    "url": "http://datos.energia.gob.ar/dataset/71fa2e84-0316-4a1b-af68-7f35e41f58d7/resource/2280ad92-6ed3-403e-a095-50139863ab0d/download/datos-de-fractura-de-pozos-de-hidrocarburos-adjunto-iv-actualizacin-diaria.csv",
+    "bytes": 44112,
+    "sha256": "71309a9751b10fdc2e0ddf6eb7cae1d85a0e44732942e516cc3dc938183db452",
+    "path": "fractura_adjunto_iv.csv.gz",
+    "sha256_fuente": "ff95734bf485b1a27ecb75e3a44dda3035e5496805cf3970a28d19802bf03026",
+    "bytes_fuente": 1271920
+  }
+}

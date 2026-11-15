@@ -7,7 +7,7 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from pipeline import costo, placebo, replay, report, robustez
+from pipeline import costo, descomposicion, diferido, placebo, replay, report, robustez
 from pipeline.build import build
 from pipeline.ingest import DATA, ROOT, load_manifest
 from pipeline.wiki import build_wiki
@@ -18,6 +18,9 @@ needs_wh = pytest.mark.skipif(not WAREHOUSE.exists(), reason="warehouse not buil
 MARTS_ROBUSTEZ = ["mart_robustez_eje", "mart_robustez_costo"]
 MARTS_PLACEBO = ["mart_placebo_pretrend", "mart_placebo_pretrend_base_original", "mart_placebo_pretrend_sin_previos",
                  "mart_placebo_fechas", "mart_placebo_permutacion", "mart_placebo_eje"]
+MARTS_DESCOMPOSICION = ["mart_descomposicion_k", "mart_descomposicion_aditiva", "mart_descomposicion_cierres",
+                        "mart_descomposicion_distancia"]
+MARTS_DIFERIDO = ["mart_diferido_rango", "mart_diferido_operador"]
 MARTS_COSTO = ["mart_anisotropia_area", "mart_costo_coef", "mart_perdida_permanente", "mart_costo_cv",
                "mart_costo_calibracion", "mart_costo_residuales"]
 
@@ -168,5 +171,41 @@ def test_placebo_dos_veces_da_marts_identicos(tmp_path):
         finally:
             con.close()
     for t in MARTS_PLACEBO:
+        assert resultados[0][t], f"{t} vacia"
+        assert resultados[0][t] == resultados[1][t], f"mart no determinista: {t}"
+
+
+@pytest.mark.slow
+@needs_wh
+def test_descomposicion_dos_veces_da_marts_identicos(tmp_path):
+    resultados = []
+    for nombre in ("a", "b"):
+        copia = tmp_path / f"{nombre}.duckdb"
+        shutil.copyfile(WAREHOUSE, copia)
+        descomposicion.main(copia)
+        con = duckdb.connect(str(copia), read_only=True)
+        try:
+            resultados.append({t: con.execute(f"select * from {t}").fetchall() for t in MARTS_DESCOMPOSICION})
+        finally:
+            con.close()
+    for t in MARTS_DESCOMPOSICION:
+        assert resultados[0][t], f"{t} vacia"
+        assert resultados[0][t] == resultados[1][t], f"mart no determinista: {t}"
+
+
+@pytest.mark.slow
+@needs_wh
+def test_diferido_dos_veces_da_marts_identicos(tmp_path):
+    resultados = []
+    for nombre in ("a", "b"):
+        copia = tmp_path / f"{nombre}.duckdb"
+        shutil.copyfile(WAREHOUSE, copia)
+        diferido.main(copia)
+        con = duckdb.connect(str(copia), read_only=True)
+        try:
+            resultados.append({t: con.execute(f"select * from {t}").fetchall() for t in MARTS_DIFERIDO})
+        finally:
+            con.close()
+    for t in MARTS_DIFERIDO:
         assert resultados[0][t], f"{t} vacia"
         assert resultados[0][t] == resultados[1][t], f"mart no determinista: {t}"

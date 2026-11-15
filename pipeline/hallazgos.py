@@ -1,7 +1,7 @@
 """Libro de hallazgos: hipotesis en codigo, re-evaluadas en cada build.
 
 Cada hipotesis tiene una consulta SQL que devuelve un numero, una expectativa
-con umbral y un estado (confirmado / debilitado / refutado). Las evaluaciones
+con umbral y un estado (confirmado / debilitado / refutado / no firme). Las evaluaciones
 se acumulan en ``wiki/hallazgos/ledger.csv`` (idempotente por id, hash de datos
 de produccion y fractura, y firma de la hipotesis: consulta, operador y umbral).
 """
@@ -27,6 +27,7 @@ class Hipotesis:
     op: str  # '<', '>' o 'abs<'
     umbral: float
     unidad: str
+    firmeza: bool = False  # si cumple el umbral pero el eje no es firme (ver razones_eje_no_firme), el estado es "no firme"
 
 
 _BRECHA_K = """
@@ -121,7 +122,12 @@ HIPOTESIS = [
     Hipotesis("anisotropia",
               "Entre eventos cercanos a 0,3 a 1 km, el eje de 56,25 a 101,25 grados pierde más "
               "producción al mes 1 que el eje de 0 +/- 22,5 grados (diferencia de medianas del índice).",
-              _SQL_ANISOTROPIA, "<", -0.10, "índice"),
+              _SQL_ANISOTROPIA, "<", -0.10, "índice", firmeza=True),
+    Hipotesis("sincronia_mes0",
+              "La brecha del mes de la fractura crece con la fracción del mes posterior al inicio de la fractura del hijo: "
+              "el límite superior del IC de la pendiente (índice por unidad de fracción) queda por debajo de -0,02 "
+              "(regla fijada antes de correr, pipeline/sincronia.py).",
+              "select ic_alto from mart_sincronia_pendiente where k = 0", "<", -0.02, "índice por unidad de fracción"),
 ]
 
 
@@ -145,6 +151,39 @@ def clasificar(op: str, valor, umbral: float) -> str:
     return "debilitado" if falta < DEBIL_FRAC * abs(umbral) else "refutado"
 
 
+def _existe(con, tabla: str) -> bool:
+    return bool(con.execute("select count(*) from information_schema.tables where table_schema = 'main' "
+                            "and table_name = ?", [tabla]).fetchone()[0])
+
+
+def razones_eje_no_firme(con) -> list[str] | None:
+    """Razones por las que el eje de mayor merma no es firme, leídas de los marts que ya publican la robustez y la
+    validación fuera de tiempo (sin análisis nuevo). Lista vacía: el eje es firme. None: faltan los marts y no se puede juzgar.
+
+    No es firme si ocurre cualquiera de:
+      * el eje no está definido en algún subconjunto de mart_robustez_eje (IC de ANCHO_MAX grados o más, o p de permutación
+        de P_EJE_COSTO o más), o el IC de la muestra completa mide ANCHO_MAX grados o más;
+      * falla la prueba fuera de tiempo de mart_validacion_holdout: el eje de entrenamiento no se separa del SHmax publicado
+        ni de los ejes al azar (IC de la diferencia que incluye cero, o 5% o más de los ejes al azar lo iguala).
+    """
+    from pipeline.costo import ANCHO_MAX, P_EJE_COSTO
+    if not (_existe(con, "mart_robustez_eje") and _existe(con, "mart_validacion_holdout")):
+        return None
+    razones = []
+    completa = con.execute("select ancho_ic from mart_robustez_eje where grupo = 'completa'").fetchall()
+    if not completa or completa[0][0] is None or completa[0][0] >= ANCHO_MAX:
+        razones.append(f"el IC de la muestra completa mide {ANCHO_MAX:.0f} grados o más")
+    sub = con.execute("select count(*), count(*) filter (where ancho_ic >= ? or p_perm >= ?) "
+                      "from mart_robustez_eje where grupo <> 'completa'", [ANCHO_MAX, P_EJE_COSTO]).fetchone()
+    if sub[1]:
+        razones.append(f"el eje no está definido en {sub[1]} de {sub[0]} subconjuntos")
+    from pipeline.validacion import holdout_razones
+    cur = con.execute("select * from mart_validacion_holdout")
+    cols = [d[0] for d in cur.description]
+    razones += holdout_razones([dict(zip(cols, r)) for r in cur.fetchall()])
+    return razones
+
+
 def _mes_datos(con) -> str:
     row = con.execute("select mes from ultimo_mes").fetchall()
     v = row[0][0] if row else None
@@ -165,7 +204,8 @@ def sha_produccion(manifest) -> str:
 
 def firma(h) -> str:
     """Hash corto de la definicion de una hipotesis; cambia si cambia su consulta o su umbral."""
-    return hashlib.sha256(f"{h.sql}|{h.op}|{h.umbral}".encode()).hexdigest()[:8]
+    base = f"{h.sql}|{h.op}|{h.umbral}" + ("|firmeza" if h.firmeza else "")
+    return hashlib.sha256(base.encode()).hexdigest()[:8]
 
 
 def evaluar(con, manifest, hoy: str | None = None) -> list[dict]:
@@ -177,8 +217,11 @@ def evaluar(con, manifest, hoy: str | None = None) -> list[dict]:
         r = con.execute(h.sql).fetchall()
         valor = r[0][0] if r else None
         valor = None if valor is None else float(valor)
+        estado = clasificar(h.op, valor, h.umbral)
+        if h.firmeza and estado == "confirmado" and razones_eje_no_firme(con):
+            estado = "no firme"
         filas.append({"id": h.id, "enunciado": h.enunciado, "valor": valor, "op": h.op,
-                      "umbral": h.umbral, "estado": clasificar(h.op, valor, h.umbral),
+                      "umbral": h.umbral, "estado": estado,
                       "sha_datos": sha, "firma": firma(h), "mes_datos": mes, "evaluado_en": hoy})
     return filas
 
@@ -233,6 +276,16 @@ def pagina_libro(ledger_rows) -> str:
     L.append("")
     L.append("Estado: confirmado si cumple el umbral; debilitado si falla por menos del 25% del umbral; "
              "refutado si falla por más.")
+    L.append("")
+    L.append("Estado no firme: la hipótesis del eje (`anisotropia`) cumple el umbral, pero se marca no firme si el eje no es "
+             "firme según la robustez y la validación fuera de tiempo. Eso pasa si el eje no está definido en algún "
+             "subconjunto de `mart_robustez_eje` (IC de 90 grados o más, o p de permutación de 0,10 o más), si el IC de la "
+             "muestra completa mide 90 grados o más, o si el eje estimado con datos viejos no se separa del SHmax publicado "
+             "ni de ejes al azar en `mart_validacion_holdout`. Se lee de esos marts; no es un análisis nuevo. "
+             "Los umbrales de las demás hipótesis no cambian.")
+    L.append("")
+    L.append("El ledger solo agrega filas: cuando cambia la regla de una hipótesis se registra una fila nueva con la misma "
+             "versión de datos y la fila anterior queda en el historial. La última fila de cada hipótesis es la vigente.")
     L.append("")
     L.append("## Estado actual")
     L.append("")

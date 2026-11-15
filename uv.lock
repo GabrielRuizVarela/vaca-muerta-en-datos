@@ -802,11 +802,11 @@ dependencies = [
     { name = "mcp" },
     { name = "numpy" },
     { name = "pydantic" },
-    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "pytest" },
     { name = "ruff" },
 ]
 
@@ -816,8 +816,10 @@ requires-dist = [
     { name = "mcp", specifier = ">=1.2" },
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "pydantic", specifier = ">=2.14.3" },
-    { name = "pytest", specifier = ">=9.2.0" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.17.5" }]
+dev = [
+    { name = "pytest", specifier = ">=9.2.0" },
+    { name = "ruff", specifier = ">=0.17.5" },
+]

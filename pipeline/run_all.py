@@ -1,10 +1,11 @@
 """One command for the whole chain, with timings.
 
-  uv run python -m pipeline.run_all                  # build, costo, robustez, [validacion], placebo, wiki, report, replay, claims
+  uv run python -m pipeline.run_all                  # build, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, figuras, wiki, report, replay, claims
   uv run python -m pipeline.run_all --with-ingest    # also download first (needs the Secretaria server)
   uv run python -m pipeline.run_all --only build,wiki
   uv run python -m pipeline.run_all --skip report,replay
   uv run python -m pipeline.run_all --list
+  uv run python -m pipeline.run_all --muestra        # demo: build + report sobre data/muestra (sin descargas)
 
 Each step runs as `python -m pipeline.<modulo>` in its own process. The chain stops at the first failure,
 prints a table of step, seconds and status, and exits 1. A step whose module cannot be imported (for
@@ -17,7 +18,7 @@ import importlib.util
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -29,6 +30,7 @@ class Paso:
     modulo: str
     opcional: bool = False      # left out when the module is not importable
     solo_con_flag: bool = False  # only with --with-ingest
+    args: tuple[str, ...] = ()   # extra command-line arguments for the module
 
 
 PASOS: list[Paso] = [
@@ -38,11 +40,33 @@ PASOS: list[Paso] = [
     Paso("robustez", "pipeline.robustez"),
     Paso("validacion", "pipeline.validacion", opcional=True),
     Paso("placebo", "pipeline.placebo"),
+    Paso("descomposicion", "pipeline.descomposicion"),
+    Paso("diferido", "pipeline.diferido"),
+    Paso("sincronia", "pipeline.sincronia"),
+    Paso("figuras", "pipeline.figuras"),
     Paso("wiki", "pipeline.wiki"),
     Paso("report", "pipeline.report"),
     Paso("replay", "pipeline.replay"),
     Paso("claims", "pipeline.claims"),
 ]
+
+
+MUESTRA_DIR = ROOT / "data" / "muestra"
+MUESTRA_DB = ROOT / "data" / "muestra.duckdb"
+MUESTRA_SITE = ROOT / "site" / "muestra"
+# Pasos que corren sobre la muestra (con sus argumentos) y los que no, con el motivo.
+MUESTRA_ARGS = {
+    "build": ("--raw-dir", str(MUESTRA_DIR), "--db", str(MUESTRA_DB)),
+    "report": ("--db", str(MUESTRA_DB), "--out", str(MUESTRA_SITE), "--banner"),
+}
+MUESTRA_MOTIVO = "necesita la cuenca completa (modelos y mapas sobre miles de pozos); la muestra no los reproduce"
+
+
+def pasos_muestra(pasos: list[Paso] = PASOS) -> tuple[list[Paso], dict[str, str]]:
+    """(steps of the demo chain with sample arguments, {skipped step: reason})."""
+    corren = [replace(p, args=MUESTRA_ARGS[p.nombre]) for p in pasos if p.nombre in MUESTRA_ARGS]
+    omitidos = {p.nombre: MUESTRA_MOTIVO for p in pasos if p.nombre not in MUESTRA_ARGS and not p.solo_con_flag}
+    return corren, omitidos
 
 
 def disponible(p: Paso) -> bool:
@@ -75,7 +99,7 @@ def seleccionar(pasos: list[Paso], con_ingest: bool = False, solo: list[str] | N
 
 
 def ejecutar(p: Paso) -> int:
-    return subprocess.run([sys.executable, "-m", p.modulo], cwd=ROOT).returncode
+    return subprocess.run([sys.executable, "-m", p.modulo, *p.args], cwd=ROOT).returncode
 
 
 def correr(pasos: list[Paso], ejecutor=None) -> list[tuple[str, float, str]]:
@@ -107,6 +131,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--with-ingest", action="store_true", help="also run pipeline.ingest first")
     ap.add_argument("--only", help="comma-separated steps to run (chain order is kept)")
     ap.add_argument("--skip", help="comma-separated steps to leave out")
+    ap.add_argument("--muestra", action="store_true",
+                    help="demo: build y report sobre data/muestra (base data/muestra.duckdb, pagina site/muestra/index.html)")
     ap.add_argument("--list", action="store_true", help="print the steps and exit")
     a = ap.parse_args(argv)
     solo = [s for s in a.only.split(",") if s] if a.only else None
@@ -115,9 +141,18 @@ def main(argv: list[str] | None = None) -> int:
         for p in PASOS:
             nota = "con --with-ingest" if p.solo_con_flag else ("si el modulo existe" if p.opcional else "")
             estado = "disponible" if disponible(p) else "no disponible"
-            print(f"{p.nombre:<12} {p.modulo:<22} {estado:<14} {nota}")
+            print(f"{p.nombre:<15} {p.modulo:<26} {estado:<14} {nota}")
         return 0
-    pasos = seleccionar(PASOS, a.with_ingest, solo, omitir)
+    if a.muestra:
+        if a.with_ingest or solo or omitir:
+            ap.error("--muestra no se combina con --with-ingest, --only ni --skip")
+        if not (MUESTRA_DIR / "manifest.json").exists():
+            ap.error(f"falta {MUESTRA_DIR}: generala con `uv run python -m pipeline.muestra` (necesita data/raw)")
+        pasos, omitidos = pasos_muestra()
+        for n, motivo in omitidos.items():
+            print(f"[muestra] se omite {n}: {motivo}")
+    else:
+        pasos = seleccionar(PASOS, a.with_ingest, solo, omitir)
     if not pasos:
         print("nada que correr")
         return 0
@@ -128,6 +163,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nCadena detenida en el paso '{filas[-1][0]}'. Corregir y reanudar con --only {','.join([filas[-1][0]] + pendientes)}",
               file=sys.stderr)
         return 1
+    if a.muestra:
+        print(f"\nDemo lista: {MUESTRA_SITE / 'index.html'} (MUESTRA: no son las cifras de la cuenca)")
     return 0
 
 

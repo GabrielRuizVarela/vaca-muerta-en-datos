@@ -14,6 +14,9 @@ Salidas dentro de ``out_dir``:
     hallazgos/robustez.md      estabilidad del eje y del costo en subconjuntos (si corrio pipeline.robustez)
     hallazgos/linaje.md        de que dataset crudo sale cada tabla (se arma leyendo pipeline/sql)
     hallazgos/validacion.md    otros resultados, eje por ano y prueba fuera de tiempo (si corrio pipeline.validacion)
+    hallazgos/descomposicion.md  dias producidos contra caudal por dia y gradiente por distancia (si corrio pipeline.descomposicion)
+    hallazgos/diferido.md      rango de barriles diferidos y cifra por evento (si corrio pipeline.diferido)
+    hallazgos/sincronia.md     la brecha del mes 0 segun la fraccion del mes posterior al inicio de la fractura (si corrio pipeline.sincronia)
     hallazgos/placebo.md       pretendencia, fechas falsas y permutacion del estudio de eventos (si corrio pipeline.placebo)
     grafo.json                grafo de operadores, areas, pads y pozos
 """
@@ -27,7 +30,7 @@ from pathlib import Path
 
 import duckdb
 
-from pipeline import costo, linaje, mapa, placebo, robustez, validacion
+from pipeline import costo, descomposicion, diferido, linaje, mapa, placebo, robustez, sincronia, validacion
 from pipeline import hallazgos as hz
 from pipeline.ingest import DATA, ROOT, load_manifest
 
@@ -575,6 +578,36 @@ def build_wiki(con, manifest, out_dir) -> dict:
     elif pla_path.exists():
         pla_path.unlink()
 
+    # descomposicion de la brecha (necesita pipeline.descomposicion corrido despues de pipeline.placebo)
+    hay_desc = con.execute("select count(*) from information_schema.tables "
+                           "where table_name = 'mart_descomposicion_k'").fetchall()[0][0] > 0
+    desc_path = out_dir / "hallazgos" / "descomposicion.md"
+    if hay_desc:
+        desc_path.write_text(_clean(descomposicion.pagina_descomposicion(con)), encoding="utf-8")
+        paginas += 1
+    elif desc_path.exists():
+        desc_path.unlink()
+
+    # barriles diferidos: rango y cifra por evento (necesita pipeline.diferido corrido despues de pipeline.descomposicion)
+    hay_dif = con.execute("select count(*) from information_schema.tables "
+                          "where table_name = 'mart_diferido_rango'").fetchall()[0][0] > 0
+    dif_path = out_dir / "hallazgos" / "diferido.md"
+    if hay_dif:
+        dif_path.write_text(_clean(diferido.pagina_diferido(con)), encoding="utf-8")
+        paginas += 1
+    elif dif_path.exists():
+        dif_path.unlink()
+
+    # sincronia dentro del mes (necesita pipeline.sincronia corrido despues de pipeline.diferido)
+    hay_sinc = con.execute("select count(*) from information_schema.tables "
+                           "where table_name = 'mart_sincronia_pendiente'").fetchall()[0][0] > 0
+    sinc_path = out_dir / "hallazgos" / "sincronia.md"
+    if hay_sinc:
+        sinc_path.write_text(_clean(sincronia.pagina_sincronia(con)), encoding="utf-8")
+        paginas += 1
+    elif sinc_path.exists():
+        sinc_path.unlink()
+
     # indice
     grafo = _grafo(con, data)
     grafo_path = out_dir / "grafo.json"
@@ -605,6 +638,12 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Validación del eje con otros resultados, por año y fuera de tiempo: [validacion.md](hallazgos/validacion.md).")
     if hay_placebo:
         L.append("- Pruebas de falsación del estudio de eventos (pretendencia, fechas falsas, permutación): [placebo.md](hallazgos/placebo.md).")
+    if hay_desc:
+        L.append("- Descomposición de la brecha (días producidos contra caudal por día) y gradiente por distancia: [descomposicion.md](hallazgos/descomposicion.md).")
+    if hay_dif:
+        L.append("- Barriles diferidos como rango (sin duplicar y descontando la brecha previa) y cifra por evento: [diferido.md](hallazgos/diferido.md).")
+    if hay_sinc:
+        L.append("- Sincronía dentro del mes (la brecha del mes 0 según la fracción posterior al inicio de la fractura): [sincronia.md](hallazgos/sincronia.md).")
     L.append(f"- Grafo: [grafo.json](grafo.json) con {len(grafo['nodos'])} nodos y "
              f"{_vigentes(grafo['aristas'])} aristas vigentes.")
     L.append("")

@@ -5,3 +5,11 @@ data/*.duckdb*
 data/*.tmp
 data/tmp*
 data/refresh.log
+# La muestra (data/muestra/) se versiona; lo que genera la demo no
+!data/muestra/
+!data/muestra/**
+data/muestra_*.json
+site/muestra/
+data/raw
+.claude/
+.pytest_cache/

@@ -80,3 +80,43 @@ def test_sha_datos_incluye_fractura():
     m = {"produccion_no_convencional": {"sha256": "a" * 64}, "fractura_adjunto_iv": {"sha256": "b" * 64}}
     m2 = {"produccion_no_convencional": {"sha256": "a" * 64}, "fractura_adjunto_iv": {"sha256": "c" * 64}}
     assert hz.sha_produccion(m) != hz.sha_produccion(m2)
+
+
+def _holdout(ic_sh, ic_al, prop):
+    return [{"modelo": "Entrenamiento menos SHmax", "ic_bajo": ic_sh, "mejora_rss": 0.0},
+            {"modelo": "Entrenamiento menos la mediana de los ejes aleatorios", "ic_bajo": ic_al, "mejora_rss": 0.0},
+            {"modelo": "Proporción de ejes aleatorios con mejora igual o mayor", "ic_bajo": None, "mejora_rss": prop}]
+
+
+def test_holdout_razones_firme_y_no_firme():
+    from pipeline.validacion import holdout_razones
+    assert holdout_razones(_holdout(0.01, 0.01, 0.02)) == []
+    assert len(holdout_razones(_holdout(-0.01, 0.01, 0.02))) == 1   # no se separa del SHmax
+    assert len(holdout_razones(_holdout(0.01, 0.01, 0.07))) == 1    # una parte de los ejes al azar lo iguala
+    assert len(holdout_razones(_holdout(-0.01, -0.01, 0.07))) == 2
+
+
+def _con_robustez(ancho_sub, p_sub, holdout):
+    con = duckdb.connect()
+    con.execute("create table mart_robustez_eje as select * from (values "
+                f"('completa', 50.0, 0.01), ('periodo', {ancho_sub}, {p_sub})) t(grupo, ancho_ic, p_perm)")
+    con.execute("create table mart_validacion_holdout (modelo varchar, ic_bajo double, mejora_rss double)")
+    for r in holdout:
+        con.execute("insert into mart_validacion_holdout values (?, ?, ?)", [r["modelo"], r["ic_bajo"], r["mejora_rss"]])
+    return con
+
+
+def test_razones_eje_no_firme_lee_los_marts():
+    firme = _con_robustez(60.0, 0.02, _holdout(0.01, 0.01, 0.02))
+    assert hz.razones_eje_no_firme(firme) == []
+    ancho = _con_robustez(120.0, 0.02, _holdout(0.01, 0.01, 0.02))
+    assert any("subconjuntos" in r for r in hz.razones_eje_no_firme(ancho))
+    fuera_de_tiempo = _con_robustez(60.0, 0.02, _holdout(-0.01, 0.01, 0.02))
+    assert any("SHmax" in r for r in hz.razones_eje_no_firme(fuera_de_tiempo))
+    assert hz.razones_eje_no_firme(duckdb.connect()) is None
+
+
+def test_solo_la_hipotesis_del_eje_exige_firmeza():
+    assert [h.id for h in hz.HIPOTESIS if h.firmeza] == ["anisotropia"]
+    sin = hz.Hipotesis("x", "e", "select 1", "<", 0.0, "u")
+    assert hz.firma(sin) != hz.firma(hz.Hipotesis("x", "e", "select 1", "<", 0.0, "u", firmeza=True))

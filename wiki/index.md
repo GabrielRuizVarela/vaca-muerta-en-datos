@@ -10,6 +10,9 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Linaje de datos, del CSV crudo a los marts: [linaje.md](hallazgos/linaje.md).
 - Validación del eje con otros resultados, por año y fuera de tiempo: [validacion.md](hallazgos/validacion.md).
 - Pruebas de falsación del estudio de eventos (pretendencia, fechas falsas, permutación): [placebo.md](hallazgos/placebo.md).
+- Descomposición de la brecha (días producidos contra caudal por día) y gradiente por distancia: [descomposicion.md](hallazgos/descomposicion.md).
+- Barriles diferidos como rango (sin duplicar y descontando la brecha previa) y cifra por evento: [diferido.md](hallazgos/diferido.md).
+- Sincronía dentro del mes (la brecha del mes 0 según la fracción posterior al inicio de la fractura): [sincronia.md](hallazgos/sincronia.md).
 - Grafo: [grafo.json](grafo.json) con 2014 nodos y 4069 aristas vigentes.
 
 ## Operadores
