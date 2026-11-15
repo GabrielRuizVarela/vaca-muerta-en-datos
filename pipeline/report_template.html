@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vaca Muerta en datos</title>
+<meta name="description" content="Pipeline de datos abiertos de la Secretaría de Energía: producción, curvas tipo y diseño de fractura en Vaca Muerta, con controles de calidad publicados.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fcfcfb; --card: #ffffff; --line: #e4e3df; --grid: #eeede9;
+  --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #7a7974;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --other: #a3a29c;
+  --warn-bg: #fff4dc; --warn-ink: #7a4d00; --ok-bg: #e3f4ea; --ok-ink: #145c33;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg: #141413; --card: #1a1a19; --line: #2e2e2c; --grid: #262624;
+    --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #94938b;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --other: #6b6a65;
+    --warn-bg: #3a2c0c; --warn-ink: #f3c56b; --ok-bg: #12301f; --ok-ink: #8fd6aa;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141413; --card: #1a1a19; --line: #2e2e2c; --grid: #262624;
+  --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #94938b;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --other: #6b6a65;
+  --warn-bg: #3a2c0c; --warn-ink: #f3c56b; --ok-bg: #12301f; --ok-ink: #8fd6aa;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+header p { color: var(--ink-2); max-width: 720px; margin: 8px 0 0; }
+h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; letter-spacing: -0.02em; }
+h2 { font-size: 20px; margin: 0 0 4px; }
+.sub { color: var(--ink-2); margin: 0 0 16px; font-size: 15px; }
+.meta { color: var(--ink-3); font-size: 13px; margin-top: 12px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 28px 0; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.kpi .v { font-size: 30px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.kpi .l { color: var(--ink-2); font-size: 14px; }
+.kpi .d { color: var(--ink-3); font-size: 13px; margin-top: 2px; }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin: 16px 0; }
+.chart { position: relative; height: 340px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } .chart { height: 280px; } }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; background: var(--c); vertical-align: -1px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.filters button { font: inherit; font-size: 14px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.finding { border-left: 3px solid var(--s1); padding: 4px 0 4px 14px; margin: 16px 0 0; color: var(--ink-2); }
+.finding strong { color: var(--ink); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink-3); font-weight: 600; font-size: 13px; }
+td.n { text-align: right; white-space: nowrap; }
+.tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.tag.aviso { background: var(--warn-bg); color: var(--warn-ink); }
+.tag.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.scroll { overflow-x: auto; }
+details { margin-top: 12px; color: var(--ink-2); font-size: 14px; }
+summary { cursor: pointer; }
+code { font-size: 13px; background: var(--grid); padding: 1px 5px; border-radius: 4px; }
+ol.flow { padding-left: 20px; color: var(--ink-2); }
+ol.flow li { margin: 6px 0; }
+footer { color: var(--ink-3); font-size: 13px; margin-top: 32px; }
+a { color: var(--s1); }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Vaca Muerta en datos</h1>
+  <p>Pipeline reproducible sobre los datos abiertos de la Secretaría de Energía: producción mensual por pozo y datos de fractura (Adjunto IV), modelados en DuckDB, con controles de calidad que se publican junto a los resultados.</p>
+  <div class="meta" id="meta"></div>
+</header>
+
+<div class="kpis" id="kpis"></div>
+
+<section>
+  <h2>Producción de petróleo de Vaca Muerta por operador</h2>
+  <p class="sub">Miles de barriles por día calendario (kbbl/d), apilado. Los cinco operadores con mayor producción en el último mes; el resto en "Otros".</p>
+  <div class="legend" id="leg-mensual"></div>
+  <div class="chart"><canvas id="c-mensual" aria-label="Producción mensual por operador"></canvas></div>
+</section>
+
+<section>
+  <h2>Curva tipo: pozos shale oil por cohorte</h2>
+  <p class="sub">Caudal promedio de petróleo (bbl/d) por mes desde el primer petróleo. La cohorte es el año del primer petróleo. Se muestran solo meses con al menos 10 pozos.</p>
+  <div class="filters" id="f-cohorte" role="group" aria-label="Cohorte"></div>
+  <div class="legend" id="leg-curva"></div>
+  <div class="chart"><canvas id="c-curva" aria-label="Curva tipo"></canvas></div>
+</section>
+
+<section>
+  <h2>Diseño de terminación y productividad</h2>
+  <p class="sub">Medianas por cohorte, pozos con 12 meses de producción publicados. Rama horizontal desde Adjunto IV.</p>
+  <div class="legend" id="leg-diseno"></div>
+  <div class="grid2">
+    <div><p class="sub"><strong>Rama horizontal (m)</strong></p><div class="chart"><canvas id="c-rama"></canvas></div></div>
+    <div><p class="sub"><strong>Petróleo 12 meses por metro de rama (bbl/m)</strong></p><div class="chart"><canvas id="c-prod"></canvas></div></div>
+  </div>
+  <p class="finding" id="finding"></p>
+  <details><summary>Ver tabla</summary><div class="scroll"><table id="t-diseno"></table></div></details>
+</section>
+
+<section>
+  <h2>Calidad de datos</h2>
+  <p class="sub">Los controles <em>bloqueantes</em> protegen el modelo (grano, nulos, valores imposibles): si uno falla, no se publica. Los <em>avisos</em> miden anomalías del dato público; se cuentan y se publican.</p>
+  <div class="scroll"><table id="t-dq"></table></div>
+</section>
+
+<section>
+  <h2>Cómo está hecho</h2>
+  <ol class="flow">
+    <li><strong>Ingesta</strong> (<code>pipeline/ingest.py</code>): GET condicional (ETag / Last-Modified), hash SHA-256 y capa raw inmutable con un archivo por versión. Una corrida sin cambios no escribe nada.</li>
+    <li><strong>Modelo</strong> (<code>pipeline/sql/</code>, DuckDB): staging tipado, normalización de razones sociales (<code>seeds/operadores.csv</code>), hechos con grano (pozo, mes), dimensiones de pozo y fractura, marts para el reporte. Todo se reconstruye desde raw: idempotente.</li>
+    <li><strong>Calidad</strong> (<code>pipeline/checks.py</code>): controles bloqueantes y avisos con conteo y muestra; el reporte JSON queda versionado.</li>
+    <li><strong>Publicación</strong>: este sitio estático se genera desde los marts. GitHub Actions corre ingesta, build, tests y publicación cada semana.</li>
+  </ol>
+  <div class="scroll"><table id="t-fuentes"></table></div>
+</section>
+
+<footer>Proyecto personal de Gabriel Ruiz Varela con datos públicos (<a href="http://datos.energia.gob.ar/">datos.energia.gob.ar</a>). No está afiliado ni avalado por ninguna empresa. Conversiones: 1 m³ = 6,2898 bbl; caudales por día calendario.</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D = /*__DATA__*/null;
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = (n, d = 0) => n == null ? "s/d" : Number(n).toLocaleString("es-AR", { maximumFractionDigits: d, minimumFractionDigits: d });
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const slotVars = ["--s1", "--s2", "--s3", "--s4", "--s5"];
+// Color follows the entity: YPF is always slot 1, other operators keep a fixed slot.
+const colorVar = {};
+D.operadores.filter((o) => o !== "Otros").forEach((o, i) => { colorVar[o] = slotVars[i]; });
+colorVar["Otros"] = "--other"; colorVar["Resto"] = "--other"; colorVar["YPF"] = colorVar["YPF"] || "--s1";
+
+function legend(el, names) {
+  el.innerHTML = names.map((n) => `<span style="--c: var(${colorVar[n]})">${esc(n)}</span>`).join("");
+}
+
+const charts = [];
+function baseOptions(yTitle) {
+  return {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: css("--card"), titleColor: css("--ink"), bodyColor: css("--ink-2"), borderColor: css("--line"), borderWidth: 1, padding: 10, boxPadding: 4 } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: css("--ink-3"), maxRotation: 0, autoSkipPadding: 16 }, border: { color: css("--line") } },
+      y: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { color: css("--ink-3") }, border: { display: false }, title: { display: !!yTitle, text: yTitle, color: css("--ink-3") } },
+    },
+  };
+}
+
+function render() {
+  charts.splice(0).forEach((c) => c.destroy());
+  const k = D.kpi;
+  const share = k.ypf / k.pet * 100;
+  const yoy = (k.pet / k.pet_anio_previo - 1) * 100;
+  document.getElementById("meta").textContent = `Último mes publicado: ${D.ultimo_mes} · Generado ${D.generado}`;
+  document.getElementById("kpis").innerHTML = [
+    [fmt(k.pet), "kbbl/d de petróleo", `${yoy >= 0 ? "+" : ""}${fmt(yoy, 1)}% interanual`],
+    [`${fmt(share, 1)}%`, "participación de YPF", `${fmt(k.ypf)} kbbl/d`],
+    [fmt(k.gas, 1), "MMm³/d de gas", "millones de m³ por día"],
+    [fmt(k.pozos), "pozos activos", `en ${D.ultimo_mes}`],
+  ].map(([v, l, d]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div><div class="d">${d}</div></div>`).join("");
+
+  // Monthly stacked area.
+  const meses = [...new Set(D.mensual.map((r) => r.mes))];
+  const by = {}; D.mensual.forEach((r) => { (by[r.grupo] ||= {})[r.mes] = r.kbbl_d; });
+  legend(document.getElementById("leg-mensual"), D.operadores);
+  const opt = baseOptions("kbbl/d"); opt.scales.y.stacked = true;
+  opt.plugins.tooltip.callbacks = { label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)} kbbl/d`, footer: (items) => `Total: ${fmt(items.reduce((a, i) => a + i.parsed.y, 0))} kbbl/d` };
+  charts.push(new Chart(document.getElementById("c-mensual"), {
+    type: "line", options: opt,
+    data: { labels: meses, datasets: D.operadores.map((o) => ({
+      label: o, data: meses.map((m) => by[o]?.[m] ?? 0), fill: true, stack: "s",
+      backgroundColor: css(colorVar[o]), borderColor: css("--card"), borderWidth: 1, pointRadius: 0, pointHoverRadius: 4, tension: 0.2,
+    })) },
+  }));
+
+  // Type curve with cohort filter.
+  const cohortes = [...new Set(D.curvas.map((r) => r.cohorte))];
+  const fc = document.getElementById("f-cohorte");
+  if (!fc.dataset.ready) {
+    fc.innerHTML = cohortes.map((c) => `<button type="button" data-c="${c}" aria-pressed="false">${c}</button>`).join("");
+    fc.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { state.cohorte = +b.dataset.c; drawCurve(); } });
+    fc.dataset.ready = "1";
+  }
+  legend(document.getElementById("leg-curva"), ["YPF", "Resto"]);
+  drawCurve();
+
+  // Design vs productivity.
+  legend(document.getElementById("leg-diseno"), ["YPF", "Resto"]);
+  const cs = [...new Set(D.diseno.map((r) => r.cohorte))];
+  const pick = (g, f) => cs.map((c) => D.diseno.find((r) => r.cohorte === c && r.grupo === g)?.[f] ?? null);
+  for (const [id, field, unit] of [["c-rama", "rama_m_mediana", "m"], ["c-prod", "bbl_12m_por_m_mediana", "bbl/m"]]) {
+    const o = baseOptions(unit);
+    o.plugins.tooltip.callbacks = { label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)} ${unit}` };
+    charts.push(new Chart(document.getElementById(id), { type: "line", options: o, data: { labels: cs, datasets: ["YPF", "Resto"].map((g) => ({
+      label: g, data: pick(g, field), borderColor: css(colorVar[g]), backgroundColor: css(colorVar[g]), borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, tension: 0.2,
+    })) } }));
+  }
+  const ypf = D.diseno.filter((r) => r.grupo === "YPF");
+  const peak = ypf.reduce((a, r) => (r.bbl_12m_por_m_mediana > a.bbl_12m_por_m_mediana ? r : a));
+  const last = ypf[ypf.length - 1];
+  document.getElementById("finding").innerHTML = `<strong>Lectura:</strong> la rama horizontal mediana de YPF pasó de ${fmt(ypf[0].rama_m_mediana)} m (cohorte ${ypf[0].cohorte}) a ${fmt(last.rama_m_mediana)} m (cohorte ${last.cohorte}), mientras el petróleo de 12 meses por metro bajó de ${fmt(peak.bbl_12m_por_m_mediana)} bbl/m (cohorte ${peak.cohorte}) a ${fmt(last.bbl_12m_por_m_mediana)} bbl/m. Los pozos producen más petróleo en total que en ${ypf[0].cohorte}, pero cada metro de rama rinde menos. Es una correlación en datos públicos, no una causa: interferencia entre pozos, calidad de zona y diseño de fractura son hipótesis a validar con datos internos.`;
+  document.getElementById("t-diseno").innerHTML = `<tr><th>Cohorte</th><th>Grupo</th><th class="n">Pozos</th><th class="n">Rama (m)</th><th class="n">Etapas</th><th class="n">Arena (t/m)</th><th class="n">Petróleo 12m (bbl)</th><th class="n">bbl/m</th></tr>` +
+    D.diseno.map((r) => `<tr><td>${r.cohorte}</td><td>${esc(r.grupo)}</td><td class="n">${r.pozos}</td><td class="n">${fmt(r.rama_m_mediana)}</td><td class="n">${fmt(r.etapas_mediana)}</td><td class="n">${fmt(r.arena_tn_por_m_mediana, 2)}</td><td class="n">${fmt(r.petroleo_12m_bbl_mediana)}</td><td class="n">${fmt(r.bbl_12m_por_m_mediana)}</td></tr>`).join("");
+
+  // Data quality and sources.
+  document.getElementById("t-dq").innerHTML = `<tr><th>Control</th><th>Tipo</th><th class="n">Filas</th><th>Qué significa</th></tr>` +
+    D.dq.checks.map((c) => `<tr><td>${esc(c.nombre)}</td><td><span class="tag ${c.ok ? "ok" : "aviso"}">${c.ok ? "✓ OK" : "⚠ " + c.severidad}</span>${c.ok ? ` <span class="tag" style="color:var(--ink-3)">${c.severidad}</span>` : ""}</td><td class="n">${fmt(c.filas)}</td><td>${esc(c.detalle)}</td></tr>`).join("");
+  document.getElementById("t-fuentes").innerHTML = `<tr><th>Fuente</th><th>Publicado</th><th class="n">Tamaño</th><th>SHA-256</th></tr>` +
+    Object.entries(D.dq.fuentes).map(([n, f]) => `<tr><td><a href="${esc(f.url)}">${esc(n)}</a></td><td>${esc(f.last_modified || "s/d")}</td><td class="n">${fmt(f.bytes / 1e6, 1)} MB</td><td><code>${esc(f.sha256.slice(0, 16))}…</code></td></tr>`).join("");
+}
+
+const state = { cohorte: null };
+function drawCurve() {
+  const cohortes = [...new Set(D.curvas.map((r) => r.cohorte))];
+  if (state.cohorte == null) state.cohorte = cohortes[cohortes.length - 2] ?? cohortes[0];
+  document.querySelectorAll("#f-cohorte button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.c === state.cohorte)));
+  const rowsC = D.curvas.filter((r) => r.cohorte === state.cohorte);
+  const mops = [...new Set(rowsC.map((r) => r.mop))].sort((a, b) => a - b);
+  const old = charts.findIndex((c) => c.canvas.id === "c-curva"); if (old >= 0) charts.splice(old, 1)[0].destroy();
+  const o = baseOptions("bbl/d");
+  o.scales.x.title = { display: true, text: "Meses desde el primer petróleo", color: css("--ink-3") };
+  o.plugins.tooltip.callbacks = { title: (i) => `Mes ${i[0].label}`, label: (c) => { const r = rowsC.find((x) => x.grupo === c.dataset.label && x.mop === +c.label); return ` ${c.dataset.label}: ${fmt(c.parsed.y)} bbl/d (${r?.pozos ?? 0} pozos)`; } };
+  charts.push(new Chart(document.getElementById("c-curva"), { type: "line", options: o, data: { labels: mops, datasets: ["YPF", "Resto"].map((g) => ({
+    label: g, data: mops.map((m) => rowsC.find((r) => r.grupo === g && r.mop === m)?.bbl_d ?? null),
+    borderColor: css(colorVar[g]), backgroundColor: css(colorVar[g]), borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, spanGaps: false,
+  })) } }));
+}
+
+render();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+</script>
+</body>
+</html>

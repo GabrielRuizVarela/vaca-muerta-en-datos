@@ -1,0 +1,12 @@
+[project]
+name = "vaca-muerta-data"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "duckdb>=2.0.0",
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

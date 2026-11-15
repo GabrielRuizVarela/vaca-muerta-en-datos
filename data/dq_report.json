@@ -1,0 +1,303 @@
+{
+  "filas_origen_produccion": 431322,
+  "bloqueantes_fallidos": 0,
+  "checks": [
+    {
+      "nombre": "Grano único (pozo, mes) en fct_produccion",
+      "severidad": "bloqueante",
+      "detalle": "Un pozo no puede tener dos filas para el mismo mes.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Volúmenes negativos en fct_produccion",
+      "severidad": "bloqueante",
+      "detalle": "Después de limpiar no debe quedar ningún volumen negativo.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Pozos de producción sin dim_pozo",
+      "severidad": "bloqueante",
+      "detalle": "Toda fila de hechos debe tener su pozo en la dimensión.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Filas de origen descartadas por pozo o fecha inválidos",
+      "severidad": "aviso",
+      "detalle": "Filas sin id de pozo o con año/mes no interpretables.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Producción con cero días efectivos",
+      "severidad": "aviso",
+      "detalle": "El pozo informa volumen pero ningún día en producción (TEF = 0).",
+      "filas": 384,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 156485,
+          "mes": "2017-02-01",
+          "petroleo_m3": 0.0,
+          "gas_miles_m3": 2108.7,
+          "dias_efectivos": 0.0
+        },
+        {
+          "pozo_id": 153918,
+          "mes": "2015-03-01",
+          "petroleo_m3": 34.94,
+          "gas_miles_m3": 0.0,
+          "dias_efectivos": 0.0
+        },
+        {
+          "pozo_id": 156504,
+          "mes": "2016-03-01",
+          "petroleo_m3": 664.89,
+          "gas_miles_m3": 950.24,
+          "dias_efectivos": 0.0
+        }
+      ]
+    },
+    {
+      "nombre": "Días efectivos mayores que los días del mes",
+      "severidad": "aviso",
+      "detalle": "TEF mayor que la cantidad de días calendario del mes.",
+      "filas": 71,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 126809,
+          "mes": "2007-09-01",
+          "dias_efectivos": 31.0
+        },
+        {
+          "pozo_id": 126809,
+          "mes": "2007-10-01",
+          "dias_efectivos": 32.0
+        },
+        {
+          "pozo_id": 126809,
+          "mes": "2007-11-01",
+          "dias_efectivos": 31.0
+        }
+      ]
+    },
+    {
+      "nombre": "Volúmenes negativos en el origen",
+      "severidad": "aviso",
+      "detalle": "Se llevan a cero en fct_produccion.",
+      "filas": 3,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 153228,
+          "mes": "2020-05-01",
+          "petroleo_m3": 1.67,
+          "gas_miles_m3": -12.267,
+          "agua_m3": 0.0
+        },
+        {
+          "pozo_id": 153227,
+          "mes": "2020-05-01",
+          "petroleo_m3": 1.02,
+          "gas_miles_m3": -7.519,
+          "agua_m3": 0.0
+        },
+        {
+          "pozo_id": 73804,
+          "mes": "2008-12-01",
+          "petroleo_m3": -0.001,
+          "gas_miles_m3": 0.0,
+          "agua_m3": 0.0
+        }
+      ]
+    },
+    {
+      "nombre": "Filas rectificadas",
+      "severidad": "aviso",
+      "detalle": "La empresa corrigió el dato después de la primera carga.",
+      "filas": 694,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 155043,
+          "mes": "2015-10-01",
+          "empresa_raw": "YPF S.A."
+        },
+        {
+          "pozo_id": 153336,
+          "mes": "2015-10-01",
+          "empresa_raw": "YPF S.A."
+        },
+        {
+          "pozo_id": 153161,
+          "mes": "2015-10-01",
+          "empresa_raw": "YPF S.A."
+        }
+      ]
+    },
+    {
+      "nombre": "Nombres de empresa sin normalizar",
+      "severidad": "aviso",
+      "detalle": "Razones sociales con producción en Vaca Muerta que no están en seeds/operadores.csv.",
+      "filas": 21,
+      "ok": false,
+      "muestra": [
+        {
+          "empresa_raw": "TANGO ENERGY ARGENTINA S.A."
+        },
+        {
+          "empresa_raw": "ROCH S.A."
+        },
+        {
+          "empresa_raw": "PETROLERA EL TREBOL S.A."
+        }
+      ]
+    },
+    {
+      "nombre": "Fracturas con fecha futura",
+      "severidad": "aviso",
+      "detalle": "Fecha de inicio posterior a la fecha de extracción. Excluidas del modelo.",
+      "filas": 1,
+      "ok": false,
+      "muestra": [
+        {
+          "fractura_id": 5490,
+          "pozo_id": 167249,
+          "fecha_inicio": "2026-12-05",
+          "fecha_fin": "2026-05-28"
+        }
+      ]
+    },
+    {
+      "nombre": "Fracturas que terminan antes de empezar",
+      "severidad": "aviso",
+      "detalle": "Fecha de fin anterior a la de inicio.",
+      "filas": 41,
+      "ok": false,
+      "muestra": [
+        {
+          "fractura_id": 899,
+          "pozo_id": 159764,
+          "fecha_inicio": "2019-09-07",
+          "fecha_fin": "2018-09-10"
+        },
+        {
+          "fractura_id": 1214,
+          "pozo_id": 135307,
+          "fecha_inicio": "2011-07-09",
+          "fecha_fin": "2010-10-22"
+        },
+        {
+          "fractura_id": 1240,
+          "pozo_id": 143810,
+          "fecha_inicio": "2012-08-11",
+          "fecha_fin": "2012-08-01"
+        }
+      ]
+    },
+    {
+      "nombre": "Fracturas sin longitud de rama horizontal",
+      "severidad": "aviso",
+      "detalle": "Rama horizontal informada como 0 o vacía (pozos verticales o dato faltante).",
+      "filas": 2054,
+      "ok": false,
+      "muestra": [
+        {
+          "fractura_id": 30,
+          "pozo_id": 159910,
+          "formacion": "los molles"
+        },
+        {
+          "fractura_id": 31,
+          "pozo_id": 159910,
+          "formacion": "los molles"
+        },
+        {
+          "fractura_id": 52,
+          "pozo_id": 154185,
+          "formacion": "vaca muerta"
+        }
+      ]
+    },
+    {
+      "nombre": "Pozos fracturados ausentes en producción no convencional",
+      "severidad": "aviso",
+      "detalle": "El pozo figura en Adjunto IV pero no en el dataset de producción no convencional.",
+      "filas": 803,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 136299
+        },
+        {
+          "pozo_id": 144693
+        },
+        {
+          "pozo_id": 135284
+        }
+      ]
+    },
+    {
+      "nombre": "Pozos con más de un trabajo de fractura",
+      "severidad": "aviso",
+      "detalle": "Se suman en dim_fractura_pozo (refracturas o cargas repetidas).",
+      "filas": 183,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 136699,
+          "n": 2
+        },
+        {
+          "pozo_id": 160465,
+          "n": 2
+        },
+        {
+          "pozo_id": 155092,
+          "n": 3
+        }
+      ]
+    },
+    {
+      "nombre": "Pozos de Vaca Muerta shale oil sin datos de fractura",
+      "severidad": "aviso",
+      "detalle": "Pozos con 12 meses de producción que no tienen fractura con rama horizontal en Adjunto IV.",
+      "filas": 447,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 156476
+        },
+        {
+          "pozo_id": 156479
+        },
+        {
+          "pozo_id": 155222
+        }
+      ]
+    }
+  ],
+  "fuentes": {
+    "produccion_no_convencional": {
+      "url": "http://datos.energia.gob.ar/dataset/c846e79c-026c-4040-897f-1ad3543b407c/resource/b5b58cdc-9e07-41f9-b392-fb9ec68b0725/download/produccin-de-pozos-de-gas-y-petrleo-no-convencional.csv",
+      "sha256": "61cecc31c8dd81fd474c4094f2605b2b01b5a5d157e2089db7f3c548c410deae",
+      "bytes": 148923474,
+      "last_modified": "Thu, 22 Oct 2026 21:00:56 GMT",
+      "loaded_at": "2026-11-15T03:50:45+00:00"
+    },
+    "fractura_adjunto_iv": {
+      "url": "http://datos.energia.gob.ar/dataset/71fa2e84-0316-4a1b-af68-7f35e41f58d7/resource/2280ad92-6ed3-403e-a095-50139863ab0d/download/datos-de-fractura-de-pozos-de-hidrocarburos-adjunto-iv-actualizacin-diaria.csv",
+      "sha256": "ff95734bf485b1a27ecb75e3a44dda3035e5496805cf3970a28d19802bf03026",
+      "bytes": 1271920,
+      "last_modified": "Sat, 14 Nov 2026 04:00:06 GMT",
+      "loaded_at": "2026-11-15T03:51:02+00:00"
+    }
+  }
+}
