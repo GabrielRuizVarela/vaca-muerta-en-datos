@@ -4,3 +4,4 @@ data/raw/
 data/*.duckdb*
 data/*.tmp
 data/tmp*
+data/refresh.log

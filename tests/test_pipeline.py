@@ -17,12 +17,12 @@ FRAC_COLS = ["id_base_fractura_adjiv", "idpozo", "formacion_productiva", "subtip
              "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante"]
 
 
-def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0):
+def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69", lat="-38"):
     return {"idempresa": "X", "anio": anio, "mes": mes, "idpozo": pozo, "prod_pet": pet, "prod_gas": gas,
             "prod_agua": 0, "tef": tef, "tipopozo": "Petrolífero", "tipoestado": "Extracción Efectiva",
             "rectificado": "f", "empresa": empresa, "sigla": f"P-{pozo}", "formacion": "vaca muerta",
             "areapermisoconcesion": "A", "areayacimiento": "Y", "provincia": "Neuquén",
-            "coordenadax": "-69", "coordenaday": "-38", "sub_tipo_recurso": "SHALE"}
+            "coordenadax": lon, "coordenaday": lat, "sub_tipo_recurso": "SHALE"}
 
 
 def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A."):
@@ -145,3 +145,24 @@ def test_fetch_skips_conditional_get_without_local_copy(tmp_path, monkeypatch):
     assert ingest.fetch("ds", "http://example.invalid", manifest, tmp_path / "raw") == "stored"
     assert "If-none-match" not in sent
     assert (tmp_path / "raw" / manifest["ds"]["path"]).read_text() == "a,b\n1,2\n"
+
+
+def test_interference_nets_out_control_decline(warehouse):
+    # Parent A sits 90 m from child C; parent B is 3 km away (control). C is fracked in March 2024.
+    # A loses half its rate for two months; B does not. Both started in January 2023 (same age bucket).
+    months = [(y, m) for y in (2023, 2024) for m in range(1, 13)]
+    rows = []
+    for y, m in months:
+        dip = (y, m) in ((2024, 3), (2024, 4))
+        rows.append(prod_row(1, y, m, 150 if dip else 300, lon="-69.000", lat="-38.000"))
+        rows.append(prod_row(2, y, m, 300, lon="-69.000", lat="-38.027"))
+        if (y, m) >= (2024, 4):
+            rows.append(prod_row(3, y, m, 500, lon="-69.001", lat="-38.000"))
+    con = warehouse(rows, [frac_row(1, 3, "2024-03-10")])
+    bands = dict(con.execute("select padre, banda from int_interferencia_evento").fetchall())
+    assert bands == {1: "cercano", 2: "control"}
+    base = (300 / 31 + 300 / 31 + 300 / 29) / 3  # Dec 2023, Jan and Feb 2024 (leap year)
+    assert one(con, "select brecha from mart_interferencia_brecha where k = 0") == pytest.approx(-150 / 31 / base)
+    assert one(con, "select brecha from mart_interferencia_brecha where k = 3") == pytest.approx(0)
+    # Two months at 150 m3 below the control-implied volume.
+    assert one(con, "select petroleo_diferido_bbl from mart_interferencia_diferida") == pytest.approx(300 * 6.2898)

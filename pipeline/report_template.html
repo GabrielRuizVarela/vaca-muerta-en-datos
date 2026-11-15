@@ -108,6 +108,19 @@ a { color: var(--s1); }
 </section>
 
 <section>
+  <h2>Interferencia entre pozos</h2>
+  <p class="sub">Cuando se fractura un pozo nuevo (hijo), ¿qué le pasa a los pozos vecinos que ya producían (padres)? Caudal de petróleo del padre como fracción de su promedio de los 3 meses previos. Padres a menos de 1 km contra padres a 2-5 km del mismo evento (control).</p>
+  <div class="kpis" id="kpis-interf"></div>
+  <div class="legend" id="leg-interf"></div>
+  <div class="grid2">
+    <div><p class="sub"><strong>Caudal del padre, mediana (100 = antes de la fractura)</strong></p><div class="chart"><canvas id="c-interf" aria-label="Caudal del pozo padre alrededor de la fractura del hijo"></canvas></div></div>
+    <div><p class="sub"><strong>Brecha al mes 1 por año de fractura (puntos)</strong></p><div class="chart"><canvas id="c-interf-anual" aria-label="Brecha de interferencia por año"></canvas></div></div>
+  </div>
+  <p class="finding" id="finding-interf"></p>
+  <details><summary>Ver tabla</summary><div class="scroll"><table id="t-interf"></table></div></details>
+</section>
+
+<section>
   <h2>Calidad de datos</h2>
   <p class="sub">Los controles <em>bloqueantes</em> protegen el modelo (grano, nulos, valores imposibles): si uno falla, no se publica. Los <em>avisos</em> miden anomalías del dato público; se cuentan y se publican.</p>
   <div class="scroll"><table id="t-dq"></table></div>
@@ -119,7 +132,9 @@ a { color: var(--s1); }
     <li><strong>Ingesta</strong> (<code>pipeline/ingest.py</code>): GET condicional (ETag / Last-Modified), hash SHA-256 y capa raw inmutable con un archivo por versión. Una corrida sin cambios no escribe nada.</li>
     <li><strong>Modelo</strong> (<code>pipeline/sql/</code>, DuckDB): staging tipado, normalización de razones sociales (<code>seeds/operadores.csv</code>), hechos con grano (pozo, mes), dimensiones de pozo y fractura, marts para el reporte. Todo se reconstruye desde raw: idempotente.</li>
     <li><strong>Calidad</strong> (<code>pipeline/checks.py</code>): controles bloqueantes y avisos con conteo y muestra; el reporte JSON queda versionado.</li>
-    <li><strong>Publicación</strong>: este sitio estático se genera desde los marts. GitHub Actions corre ingesta, build, tests y publicación cada semana.</li>
+    <li><strong>Interferencia</strong> (<code>pipeline/sql/04_interferencia.sql</code>): pads por coordenadas de superficie, pares padre/hijo a menos de 5 km, estudio de eventos con control de igual edad.</li>
+    <li><strong>Preguntas en lenguaje natural</strong> (<code>agente/</code>): un modelo local elige una de 11 operaciones tipadas y completa sus argumentos; nunca escribe SQL ni números. Las mismas operaciones se exponen como servidor MCP de solo lectura. <span id="eval-txt"></span></li>
+    <li><strong>Publicación</strong>: <code>./refresh.sh</code> (semanal, desde una máquina en Argentina) corre tests, ingesta, build y este sitio. GitHub Actions corre los tests en cada push.</li>
   </ol>
   <div class="scroll"><table id="t-fuentes"></table></div>
 </section>
@@ -208,9 +223,39 @@ function render() {
   const ypf = D.diseno.filter((r) => r.grupo === "YPF");
   const peak = ypf.reduce((a, r) => (r.bbl_12m_por_m_mediana > a.bbl_12m_por_m_mediana ? r : a));
   const last = ypf[ypf.length - 1];
-  document.getElementById("finding").innerHTML = `<strong>Lectura:</strong> la rama horizontal mediana de YPF pasó de ${fmt(ypf[0].rama_m_mediana)} m (cohorte ${ypf[0].cohorte}) a ${fmt(last.rama_m_mediana)} m (cohorte ${last.cohorte}), mientras el petróleo de 12 meses por metro bajó de ${fmt(peak.bbl_12m_por_m_mediana)} bbl/m (cohorte ${peak.cohorte}) a ${fmt(last.bbl_12m_por_m_mediana)} bbl/m. Los pozos producen más petróleo en total que en ${ypf[0].cohorte}, pero cada metro de rama rinde menos. Es una correlación en datos públicos, no una causa: interferencia entre pozos, calidad de zona y diseño de fractura son hipótesis a validar con datos internos.`;
+  document.getElementById("finding").innerHTML = `<strong>Lectura:</strong> la rama horizontal mediana de YPF pasó de ${fmt(ypf[0].rama_m_mediana)} m (cohorte ${ypf[0].cohorte}) a ${fmt(last.rama_m_mediana)} m (cohorte ${last.cohorte}), mientras el petróleo de 12 meses por metro bajó de ${fmt(peak.bbl_12m_por_m_mediana)} bbl/m (cohorte ${peak.cohorte}) a ${fmt(last.bbl_12m_por_m_mediana)} bbl/m. Los pozos producen más petróleo en total que en ${ypf[0].cohorte}, pero cada metro de rama rinde menos. Es una correlación en datos públicos, no una causa: calidad de zona, espaciamiento y diseño de fractura son hipótesis a validar con datos internos. La sección siguiente mide una de ellas: la interferencia entre pozos.`;
   document.getElementById("t-diseno").innerHTML = `<tr><th>Cohorte</th><th>Grupo</th><th class="n">Pozos</th><th class="n">Rama (m)</th><th class="n">Etapas</th><th class="n">Arena (t/m)</th><th class="n">Petróleo 12m (bbl)</th><th class="n">bbl/m</th></tr>` +
     D.diseno.map((r) => `<tr><td>${r.cohorte}</td><td>${esc(r.grupo)}</td><td class="n">${r.pozos}</td><td class="n">${fmt(r.rama_m_mediana)}</td><td class="n">${fmt(r.etapas_mediana)}</td><td class="n">${fmt(r.arena_tn_por_m_mediana, 2)}</td><td class="n">${fmt(r.petroleo_12m_bbl_mediana)}</td><td class="n">${fmt(r.bbl_12m_por_m_mediana)}</td></tr>`).join("");
+
+  // Interference event study.
+  const I = D.interferencia, R = I.resumen;
+  document.getElementById("kpis-interf").innerHTML = [
+    [fmt(R.brecha_mes_1 * 100), "puntos al mes 1", "padre cercano contra control"],
+    [fmt(R.brecha_mes_6 * 100), "puntos al mes 6", "la brecha casi se cierra"],
+    [fmt(R.diferido_bbl / 1e6, 1), "millones de bbl diferidos", `${fmt(R.eventos)} eventos, meses 0 a 6`],
+    [fmt(R.diferido_ypf_bbl / 1e6, 1), "millones de bbl en YPF", `${fmt(R.diferido_ypf_bbl / R.diferido_bbl * 100)}% del total`],
+  ].map(([v, l, d]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div><div class="d">${d}</div></div>`).join("");
+  const series = { cercano: ["Padre a menos de 1 km", "--s2"], control: ["Control a 2-5 km", "--other"] };
+  document.getElementById("leg-interf").innerHTML = Object.values(series).map(([n, c]) => `<span style="--c: var(${c})">${esc(n)}</span>`).join("");
+  const ks = [...new Set(I.curva.map((r) => r.k))].sort((a, b) => a - b);
+  const oi = baseOptions("% del caudal previo"); oi.scales.y.beginAtZero = false;
+  oi.scales.x.title = { display: true, text: "Meses desde la fractura del hijo", color: css("--ink-3") };
+  oi.plugins.tooltip.callbacks = { title: (i) => `Mes ${i[0].label}`, label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)}%` };
+  charts.push(new Chart(document.getElementById("c-interf"), { type: "line", options: oi, data: { labels: ks, datasets: Object.entries(series).map(([b, [n, c]]) => ({
+    label: n, data: ks.map((k) => (I.curva.find((r) => r.banda === b && r.k === k)?.indice ?? null) * 100),
+    borderColor: css(c), backgroundColor: css(c), borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0.2,
+  })) } }));
+  const oa = baseOptions("puntos"); oa.scales.y.beginAtZero = true;
+  oa.plugins.tooltip.callbacks = { label: (c) => ` ${fmt(c.parsed.y)} puntos (${I.anual[c.dataIndex].eventos_cercanos} eventos)` };
+  charts.push(new Chart(document.getElementById("c-interf-anual"), { type: "bar", options: oa, data: { labels: I.anual.map((r) => r.anio), datasets: [{
+    label: "Brecha", data: I.anual.map((r) => r.brecha * 100), backgroundColor: css("--s2"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 28,
+  }] } }));
+  const ultimos = I.anual.slice(-2);
+  document.getElementById("finding-interf").innerHTML = `<strong>Lectura:</strong> un mes después de fracturar un pozo nuevo, los padres a menos de 1 km rinden ${fmt(-R.brecha_mes_1 * 100)} puntos menos que los padres de control a 2-5 km; a los 6 meses la brecha casi se cierra (${fmt(-R.brecha_mes_6 * 100)} puntos). La brecha creció en los últimos años: ${ultimos.map((r) => `${fmt(-r.brecha * 100)} puntos en ${r.anio}`).join(" y ")}${ultimos.at(-1).anio == D.ultimo_mes.slice(0, 4) ? " (año en curso)" : ""}. Contra un control de la misma edad, suma ${fmt(R.diferido_bbl / 1e6, 1)} millones de barriles diferidos en los meses 0 a 6. Límites: son coordenadas de superficie, no la trayectoria de la rama, y un cierre preventivo del operador se ve igual que un daño en datos mensuales. Es una huella medida, no una causa.`;
+  document.getElementById("t-interf").innerHTML = `<tr><th>Año</th><th class="n">Eventos cercanos</th><th class="n">Brecha mes 1 (puntos)</th></tr>` +
+    I.anual.map((r) => `<tr><td>${r.anio}</td><td class="n">${fmt(r.eventos_cercanos)}</td><td class="n">${fmt(r.brecha * 100)}</td></tr>`).join("");
+  const ev = D.evals;
+  document.getElementById("eval-txt").textContent = ev.holdout ? `Exactitud en preguntas reservadas: ${fmt(ev.holdout.exactitud * 100)}% (${ev.holdout.n} preguntas, modelo ${ev.holdout.modelo} local, datos a ${ev.holdout.datos_a}).` : "";
 
   // Data quality and sources.
   document.getElementById("t-dq").innerHTML = `<tr><th>Control</th><th>Tipo</th><th class="n">Filas</th><th>Qué significa</th></tr>` +

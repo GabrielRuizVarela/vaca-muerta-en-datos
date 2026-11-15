@@ -1,0 +1,211 @@
+{
+ "split": "holdout",
+ "modelo": "qwen3.5-35b-a3b-uncensored",
+ "datos_a": "2026-09",
+ "n": 16,
+ "exactitud": 0.9375,
+ "exactitud_respuestas": 0.9230769230769231,
+ "abstencion_correcta": 1.0,
+ "abstenciones_indebidas": 1,
+ "corregidas_en_reintento": 1,
+ "filas": [
+  {
+   "id": "holdout-01",
+   "pregunta": "Dame el caudal de petróleo de la formación en marzo de 2026",
+   "op": "produccion_vm",
+   "args": {
+    "mes": "2026-03",
+    "operador": null
+   },
+   "intentos": 1,
+   "segundos": 2.1,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-02",
+   "pregunta": "¿Cuántos kbbl/d hace Vista Energy Argentina actualmente?",
+   "op": "produccion_vm",
+   "args": {
+    "mes": null,
+    "operador": "Vista"
+   },
+   "intentos": 1,
+   "segundos": 2.1,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-03",
+   "pregunta": "¿Qué porcentaje del crudo de Vaca Muerta aporta Tecpetrol?",
+   "op": "produccion_vm",
+   "args": {
+    "mes": null,
+    "operador": "Tecpetrol"
+   },
+   "intentos": 1,
+   "segundos": 2.0,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-04",
+   "pregunta": "Ranking de las 10 mayores operadoras de petróleo",
+   "op": "ranking_operadores",
+   "args": {
+    "mes": null,
+    "n": 10
+   },
+   "intentos": 1,
+   "segundos": 2.0,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-05",
+   "pregunta": "¿YPF produce más o menos que hace un año?",
+   "op": "variacion_interanual",
+   "args": {
+    "mes": null,
+    "operador": "YPF"
+   },
+   "intentos": 1,
+   "segundos": 2.0,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-06",
+   "pregunta": "Producción promedio en el mes 12 de los pozos YPF de la cohorte 2019",
+   "op": "curva_tipo",
+   "args": {
+    "cohorte": 2019,
+    "grupo": "YPF",
+    "mes_produccion": 12
+   },
+   "intentos": 1,
+   "segundos": 2.5,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-07",
+   "pregunta": "Etapas de fractura y arena por metro de la cohorte 2025 de YPF",
+   "op": "diseno_cohorte",
+   "args": {
+    "cohorte": 2025,
+    "grupo": "YPF"
+   },
+   "intentos": 1,
+   "segundos": 2.3,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-08",
+   "pregunta": "Un mes después de fracturar un pozo hijo, ¿cuánto pierden los padres de más de 4 años?",
+   "op": "interferencia_brecha",
+   "args": {
+    "k": 1,
+    "grupo_edad": "48+"
+   },
+   "intentos": 2,
+   "segundos": 4.2,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-09",
+   "pregunta": "Efecto de interferencia en los pozos fracturados durante 2025",
+   "op": "interferencia_anual",
+   "args": {
+    "anio": 2025
+   },
+   "intentos": 1,
+   "segundos": 2.1,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-10",
+   "pregunta": "¿Cuánto petróleo difirió YPF por frac hits en Loma Campana?",
+   "op": "petroleo_diferido",
+   "args": {
+    "operador": "YPF",
+    "area": "Loma Campana",
+    "anio": null
+   },
+   "intentos": 1,
+   "segundos": 2.3,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-11",
+   "pregunta": "Barriles diferidos por interferencia en fracturas de 2024",
+   "op": "petroleo_diferido",
+   "args": {
+    "operador": null,
+    "area": null,
+    "anio": 2024
+   },
+   "intentos": 1,
+   "segundos": 2.1,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-12",
+   "pregunta": "Info del pozo XOM.Nq.BdC-45(h)",
+   "op": "pozo",
+   "args": {
+    "sigla": "XOM.Nq.BdC-45(h)"
+   },
+   "intentos": 1,
+   "segundos": 2.2,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-13",
+   "pregunta": "¿Hay controles bloqueantes que fallen en el último build?",
+   "op": "abstener",
+   "args": {},
+   "intentos": 1,
+   "segundos": 2.9,
+   "correcto": false,
+   "tipo": "respuesta",
+   "fallo": "no respondió (abstener)"
+  },
+  {
+   "id": "holdout-14",
+   "pregunta": "¿Cuál es la tarifa de transporte por oleoducto de Oldelval?",
+   "op": "abstener",
+   "args": {},
+   "intentos": 1,
+   "segundos": 2.8,
+   "correcto": true,
+   "tipo": "abstencion"
+  },
+  {
+   "id": "holdout-15",
+   "pregunta": "¿Qué operadora tiene mejor clima laboral?",
+   "op": "abstener",
+   "args": {},
+   "intentos": 1,
+   "segundos": 2.3,
+   "correcto": true,
+   "tipo": "abstencion"
+  },
+  {
+   "id": "holdout-16",
+   "pregunta": "Pronóstico de producción de gas para el invierno de 2027",
+   "op": "abstener",
+   "args": {},
+   "intentos": 1,
+   "segundos": 3.0,
+   "correcto": true,
+   "tipo": "abstencion"
+  }
+ ]
+}

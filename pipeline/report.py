@@ -43,6 +43,26 @@ def collect(con) -> dict:
     curvas = rows(con, "select cohorte, grupo, mop, pozos, round(petroleo_bbl_d, 1) as bbl_d "
                        "from mart_curva_tipo order by cohorte, grupo, mop")
     diseno = rows(con, "select * from mart_diseno_productividad order by cohorte, grupo")
+    interf = {
+        "curva": rows(con, "select banda, k, eventos, round(indice_mediana, 3) as indice from mart_interferencia_curva "
+                           "where banda in ('cercano', 'control') order by banda, k"),
+        "anual": rows(con, "select anio, eventos_cercanos, round(brecha_mes_1, 3) as brecha from mart_interferencia_anual "
+                           "where anio >= 2016 and eventos_cercanos >= 30 order by anio"),
+        "resumen": rows(con, """
+            select (select count(*) from mart_interferencia_diferida) as eventos,
+                   (select sum(petroleo_diferido_bbl) from mart_interferencia_diferida) as diferido_bbl,
+                   (select sum(petroleo_diferido_bbl) from mart_interferencia_diferida where operador = 'YPF') as diferido_ypf_bbl,
+                   (select median(indice) filter (where banda = 'cercano') - median(indice) filter (where banda = 'control')
+                      from int_interferencia_mes where k = 1) as brecha_mes_1,
+                   (select median(indice) filter (where banda = 'cercano') - median(indice) filter (where banda = 'control')
+                      from int_interferencia_mes where k = 6) as brecha_mes_6""")[0],
+    }
+    evals = {}
+    for split in ("dev", "holdout"):
+        f = ROOT / "agente" / "eval" / "resultados" / f"{split}.json"
+        if f.exists():
+            r = json.loads(f.read_text())
+            evals[split] = {k: r[k] for k in ("n", "exactitud", "modelo", "datos_a")}
     dq = json.loads((DATA / "dq_report.json").read_text())
     return {
         "ultimo_mes": ultimo.strftime("%Y-%m"),
@@ -52,6 +72,8 @@ def collect(con) -> dict:
         "mensual": mensual,
         "curvas": curvas,
         "diseno": diseno,
+        "interferencia": interf,
+        "evals": evals,
         "dq": {k: dq[k] for k in ("filas_origen_produccion", "bloqueantes_fallidos", "checks", "fuentes")},
     }
 

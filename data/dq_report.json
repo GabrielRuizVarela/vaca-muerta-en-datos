@@ -42,13 +42,6 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 156485,
-          "mes": "2017-02-01",
-          "petroleo_m3": 0.0,
-          "gas_miles_m3": 2108.7,
-          "dias_efectivos": 0.0
-        },
-        {
           "pozo_id": 153918,
           "mes": "2015-03-01",
           "petroleo_m3": 34.94,
@@ -60,6 +53,13 @@
           "mes": "2016-03-01",
           "petroleo_m3": 664.89,
           "gas_miles_m3": 950.24,
+          "dias_efectivos": 0.0
+        },
+        {
+          "pozo_id": 156389,
+          "mes": "2016-03-01",
+          "petroleo_m3": 153.27,
+          "gas_miles_m3": 32.45,
           "dias_efectivos": 0.0
         }
       ]
@@ -96,6 +96,13 @@
       "ok": false,
       "muestra": [
         {
+          "pozo_id": 73804,
+          "mes": "2008-12-01",
+          "petroleo_m3": -0.001,
+          "gas_miles_m3": 0.0,
+          "agua_m3": 0.0
+        },
+        {
           "pozo_id": 153228,
           "mes": "2020-05-01",
           "petroleo_m3": 1.67,
@@ -107,13 +114,6 @@
           "mes": "2020-05-01",
           "petroleo_m3": 1.02,
           "gas_miles_m3": -7.519,
-          "agua_m3": 0.0
-        },
-        {
-          "pozo_id": 73804,
-          "mes": "2008-12-01",
-          "petroleo_m3": -0.001,
-          "gas_miles_m3": 0.0,
           "agua_m3": 0.0
         }
       ]
@@ -150,13 +150,13 @@
       "ok": false,
       "muestra": [
         {
-          "empresa_raw": "TANGO ENERGY ARGENTINA S.A."
+          "empresa_raw": "OILSTONE ENERGIA S.A."
         },
         {
-          "empresa_raw": "ROCH S.A."
+          "empresa_raw": "O&G DEVELOPMENTS LTD S.A."
         },
         {
-          "empresa_raw": "PETROLERA EL TREBOL S.A."
+          "empresa_raw": "MEDANITO S.A."
         }
       ]
     },
@@ -252,16 +252,16 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 136699,
+          "pozo_id": 137065,
           "n": 2
         },
         {
-          "pozo_id": 160465,
+          "pozo_id": 155091,
           "n": 2
         },
         {
-          "pozo_id": 155092,
-          "n": 3
+          "pozo_id": 153361,
+          "n": 2
         }
       ]
     },
@@ -273,13 +273,13 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 156476
+          "pozo_id": 155417
         },
         {
-          "pozo_id": 156479
+          "pozo_id": 154909
         },
         {
-          "pozo_id": 155222
+          "pozo_id": 155031
         }
       ]
     }

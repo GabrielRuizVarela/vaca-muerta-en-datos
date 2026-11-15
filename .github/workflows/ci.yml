@@ -1,0 +1,19 @@
+name: ci
+
+# The Secretaría de Energía server (datos.energia.gob.ar) times out from GitHub-hosted
+# runners, so CI runs the tests only. The data refresh runs from a machine in Argentina:
+# ./refresh.sh (manual or cron).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - run: uv run pytest -q
