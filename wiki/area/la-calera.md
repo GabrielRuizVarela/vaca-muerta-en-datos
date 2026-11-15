@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 124 |
-| Pads | 49 |
+| Pads | 37 |
 | Eventos cercanos de interferencia | 68 |
 | Petróleo diferido (bbl) | 1.399.716 |
 
@@ -20,11 +20,11 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.353_-68.979](../pad/pad-38-353-68-979.md) | Pluspetrol | 6 | 693.504 |
-| [-38.324_-68.971](../pad/pad-38-324-68-971.md) | Pluspetrol | 4 | 173.302 |
-| [-38.350_-68.954](../pad/pad-38-350-68-954.md) | Pluspetrol | 6 | 164.280 |
-| [-38.348_-69.028](../pad/pad-38-348-69-028.md) | Pluspetrol | 6 | 120.708 |
-| [-38.350_-68.935](../pad/pad-38-350-68-935.md) | Pluspetrol | 1 | 89.313 |
+| [p164455](../pad/pad-p164455.md) | Pluspetrol | 6 | 693.504 |
+| [p165373](../pad/pad-p165373.md) | Pluspetrol | 4 | 173.302 |
+| [p165106](../pad/pad-p165106.md) | Pluspetrol | 6 | 164.280 |
+| [p164858](../pad/pad-p164858.md) | Pluspetrol | 3 | 142.499 |
+| [p164353](../pad/pad-p164353.md) | Pluspetrol | 6 | 120.708 |
 
 ## Fuentes
 

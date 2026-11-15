@@ -10,6 +10,11 @@ Salidas dentro de ``out_dir``:
     area/<slug>.md            una pagina por area
     pad/<slug>.md             una pagina por pad con eventos cercanos
     hallazgos/interferencia.md pagina de hallazgos con historial acumulado
+    hallazgos/anisotropia.md   eje de maxima merma por area y costo (si corrio pipeline.costo)
+    hallazgos/robustez.md      estabilidad del eje y del costo en subconjuntos (si corrio pipeline.robustez)
+    hallazgos/linaje.md        de que dataset crudo sale cada tabla (se arma leyendo pipeline/sql)
+    hallazgos/validacion.md    otros resultados, eje por ano y prueba fuera de tiempo (si corrio pipeline.validacion)
+    hallazgos/placebo.md       pretendencia, fechas falsas y permutacion del estudio de eventos (si corrio pipeline.placebo)
     grafo.json                grafo de operadores, areas, pads y pozos
 """
 from __future__ import annotations
@@ -22,6 +27,8 @@ from pathlib import Path
 
 import duckdb
 
+from pipeline import costo, linaje, mapa, placebo, robustez, validacion
+from pipeline import hallazgos as hz
 from pipeline.ingest import DATA, ROOT, load_manifest
 
 TOP_N = 5
@@ -42,7 +49,7 @@ def slug(text) -> str:
 
 
 def pad_slug(pad_id) -> str:
-    """'-38.123_-68.456' -> 'pad-38-123-68-456'."""
+    """'p1234' -> 'pad-p1234'."""
     return "pad-" + slug(pad_id)
 
 
@@ -461,7 +468,6 @@ def build_wiki(con, manifest, out_dir) -> dict:
         for k in d:
             d[k].sort(key=lambda r: (-(r["diferido"] or 0), r["pad_id"]))
 
-    wells_por_op = {r["operador"]: r for r in data["operadores"]}
     areas_por_op = {}
     for r in data["areas_operadores"]:
         areas_por_op.setdefault(r["operador"], []).append(r["area"])
@@ -519,8 +525,67 @@ def build_wiki(con, manifest, out_dir) -> dict:
     hist_path.write_text(texto_h, encoding="utf-8")
     paginas += 1
 
+    # libro de hallazgos (lee el ledger ya registrado)
+    libro = hz.pagina_libro(hz.leer_ledger(out_dir / "hallazgos" / "ledger.csv"))
+    (out_dir / "hallazgos" / "libro.md").write_text(_clean(libro), encoding="utf-8")
+    paginas += 1
+
+    # anisotropia y costo (necesita pipeline.costo corrido despues del build)
+    hay_costo = con.execute("select count(*) from information_schema.tables where table_name = 'mart_anisotropia_area'"
+                            ).fetchall()[0][0] > 0
+    anis_path = out_dir / "hallazgos" / "anisotropia.md"
+    if hay_costo:
+        anis_path.write_text(_clean(costo.pagina_anisotropia(con)), encoding="utf-8")
+        paginas += 1
+        (out_dir / "hallazgos" / "anisotropia_mapa.svg").write_text(_clean(mapa.mapa_areas_svg(con)), encoding="utf-8")
+    elif anis_path.exists():
+        anis_path.unlink()
+        (out_dir / "hallazgos" / "anisotropia_mapa.svg").unlink(missing_ok=True)
+
+    # robustez del eje y del costo (necesita pipeline.robustez corrido despues de pipeline.costo)
+    hay_robustez = con.execute("select count(*) from information_schema.tables where table_name = 'mart_robustez_eje'"
+                               ).fetchall()[0][0] > 0
+    rob_path = out_dir / "hallazgos" / "robustez.md"
+    if hay_robustez:
+        rob_path.write_text(_clean(robustez.pagina_robustez(con)), encoding="utf-8")
+        paginas += 1
+    elif rob_path.exists():
+        rob_path.unlink()
+
+    # linaje de datos (se arma del SQL y del codigo de los modulos, no del warehouse)
+    (out_dir / "hallazgos" / "linaje.md").write_text(_clean(linaje.pagina_linaje()), encoding="utf-8")
+    paginas += 1
+    # validacion del eje (necesita pipeline.validacion corrido despues de pipeline.costo)
+    hay_validacion = con.execute("select count(*) from information_schema.tables "
+                                 "where table_name = 'mart_validacion_resultados'").fetchall()[0][0] > 0
+    val_path = out_dir / "hallazgos" / "validacion.md"
+    if hay_validacion:
+        val_path.write_text(_clean(validacion.pagina_validacion(con)), encoding="utf-8")
+        paginas += 1
+    elif val_path.exists():
+        val_path.unlink()
+
+    # falsacion del estudio de eventos (necesita pipeline.placebo corrido despues de pipeline.costo)
+    hay_placebo = con.execute("select count(*) from information_schema.tables "
+                              "where table_name = 'mart_placebo_fechas'").fetchall()[0][0] > 0
+    pla_path = out_dir / "hallazgos" / "placebo.md"
+    if hay_placebo:
+        pla_path.write_text(_clean(placebo.pagina_placebo(con)), encoding="utf-8")
+        paginas += 1
+    elif pla_path.exists():
+        pla_path.unlink()
+
     # indice
     grafo = _grafo(con, data)
+    grafo_path = out_dir / "grafo.json"
+    previo = None
+    if grafo_path.exists():
+        try:
+            previo = json.loads(grafo_path.read_text(encoding="utf-8"))
+        except ValueError:
+            previo = None
+    grafo["aristas"] = _bitemporal((previo or {}).get("aristas", []), grafo["aristas"],
+                                   version, hz.sha_produccion(manifest))
     (out_dir / "grafo.json").write_text(
         json.dumps(grafo, ensure_ascii=False, indent=2, sort_keys=False) + "\n", encoding="utf-8")
 
@@ -529,9 +594,19 @@ def build_wiki(con, manifest, out_dir) -> dict:
              "(Secretaría de Energía). Páginas deterministas, sin marcas de tiempo.")
     L.append("")
     L.append(f"- Datos a {version}.")
-    L.append(f"- Hallazgos: [Interferencia entre fracturas](hallazgos/interferencia.md).")
+    L.append("- Hallazgos: [Interferencia entre fracturas](hallazgos/interferencia.md).")
+    L.append("- Libro de hallazgos: [libro.md](hallazgos/libro.md).")
+    if hay_costo:
+        L.append("- Anisotropía de la interferencia y su costo: [anisotropia.md](hallazgos/anisotropia.md).")
+    if hay_robustez:
+        L.append("- Robustez del eje y del costo: [robustez.md](hallazgos/robustez.md).")
+    L.append("- Linaje de datos, del CSV crudo a los marts: [linaje.md](hallazgos/linaje.md).")
+    if hay_validacion:
+        L.append("- Validación del eje con otros resultados, por año y fuera de tiempo: [validacion.md](hallazgos/validacion.md).")
+    if hay_placebo:
+        L.append("- Pruebas de falsación del estudio de eventos (pretendencia, fechas falsas, permutación): [placebo.md](hallazgos/placebo.md).")
     L.append(f"- Grafo: [grafo.json](grafo.json) con {len(grafo['nodos'])} nodos y "
-             f"{len(grafo['aristas'])} aristas.")
+             f"{_vigentes(grafo['aristas'])} aristas vigentes.")
     L.append("")
     L.append("## Operadores")
     L.append("")
@@ -554,7 +629,61 @@ def build_wiki(con, manifest, out_dir) -> dict:
     (out_dir / "index.md").write_text(_clean("\n".join(L)), encoding="utf-8")
     paginas += 1
 
-    return {"paginas": paginas, "nodos": len(grafo["nodos"]), "aristas": len(grafo["aristas"])}
+    return {"paginas": paginas, "nodos": len(grafo["nodos"]), "aristas": _vigentes(grafo["aristas"])}
+
+
+def _clave_arista(a) -> tuple:
+    """Identidad de la relacion; los valores medidos (km, barriles) no forman parte."""
+    return (a.get("origen"), a.get("destino"), a.get("tipo"), a.get("mes"))
+
+
+BITEMPORAL = ("valido_desde", "valido_hasta", "registrado_en", "hash_datos", "actualizado_en")
+
+
+def _vigentes(aristas) -> int:
+    return sum(1 for a in aristas if not a.get("valido_hasta"))
+
+
+def _bitemporal(previas, nuevas, version, sha) -> list[dict]:
+    """Aristas estilo Graphiti: lo que deja de aparecer se invalida, no se borra.
+
+    Una arista que sigue vigente conserva su registro original; si cambia un valor
+    medido (km, barriles diferidos) se actualiza y queda ``actualizado_en``. Una que
+    desaparece queda con ``valido_hasta`` = version actual. Las ya invalidadas se conservan.
+    """
+    vigentes = {}
+    cerradas = []
+    for a in previas:
+        if a.get("valido_hasta"):
+            cerradas.append(a)
+        else:
+            vigentes[_clave_arista(a)] = a
+    out = []
+    vistas = set()
+    for a in nuevas:
+        clave = _clave_arista(a)
+        if clave in vistas:  # one edge per relation; the mart has one row per (padre, mes)
+            continue
+        vistas.add(clave)
+        antes = vigentes.get(clave)
+        if antes is not None:
+            medidos = {k: v for k, v in a.items() if k not in BITEMPORAL}
+            if any(antes.get(k) != v for k, v in medidos.items()):
+                antes = dict(antes, **medidos, actualizado_en=version, hash_datos=sha)
+            out.append(antes)
+            continue
+        a = dict(a)
+        a["valido_desde"] = a.get("mes") if a["tipo"] == "interfiere" else None
+        a["valido_hasta"] = None
+        a["registrado_en"] = version
+        a["hash_datos"] = sha
+        out.append(a)
+    for clave, a in vigentes.items():
+        if clave not in vistas:
+            a = dict(a)
+            a["valido_hasta"] = version
+            cerradas.append(a)
+    return out + cerradas
 
 
 def _grafo(con, data) -> dict:
@@ -647,10 +776,14 @@ def main() -> None:
     db = DATA / "warehouse.duckdb"
     con = duckdb.connect(str(db), read_only=True)
     try:
+        filas = hz.evaluar(con, manifest)
+        hz.registrar(filas, ROOT / "wiki" / "hallazgos" / "ledger.csv")
         stats = build_wiki(con, manifest, ROOT / "wiki")
     finally:
         con.close()
     print(json.dumps(stats, ensure_ascii=False))
+    for aviso in hz.lint_wiki(ROOT / "wiki"):
+        print(f"[aviso] {aviso}")
 
 
 if __name__ == "__main__":

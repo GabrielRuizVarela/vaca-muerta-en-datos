@@ -23,11 +23,11 @@ Operador shale con ubicación en Vaca Muerta. Página `shell`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.482_-68.453](../pad/pad-38-482-68-453.md) | SIERRAS BLANCAS | 4 | 149.617 |
-| [-38.472_-68.437](../pad/pad-38-472-68-437.md) | SIERRAS BLANCAS | 2 | 92.019 |
-| [-38.387_-68.495](../pad/pad-38-387-68-495.md) | COIRON AMARGO SUR OESTE | 6 | 85.143 |
-| [-38.416_-68.455](../pad/pad-38-416-68-455.md) | COIRON AMARGO SUR OESTE | 4 | 65.930 |
-| [-38.495_-68.472](../pad/pad-38-495-68-472.md) | SIERRAS BLANCAS | 6 | 65.396 |
+| [p163298](../pad/pad-p163298.md) | SIERRAS BLANCAS | 4 | 151.213 |
+| [p163969](../pad/pad-p163969.md) | SIERRAS BLANCAS | 4 | 149.617 |
+| [p162843](../pad/pad-p162843.md) | COIRON AMARGO SUR OESTE | 8 | 138.088 |
+| [p164926](../pad/pad-p164926.md) | COIRON AMARGO SUR OESTE | 8 | 91.165 |
+| [p158469](../pad/pad-p158469.md) | SIERRAS BLANCAS | 6 | 65.396 |
 
 ## Fuentes
 

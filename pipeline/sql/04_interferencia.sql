@@ -10,14 +10,33 @@
 -- protective shut-in or choke-back by the operator looks the same as damage in monthly
 -- data. The result is a measured footprint, not a cause.
 
--- Shale wells with a location. Pad: same coordinates rounded to 3 decimals (about 100 m).
-create or replace table int_pozo_ubicacion as
-select
-    pozo_id, operador, area, tipo_pozo, lon, lat, primer_mes_petroleo,
-    printf('%.3f_%.3f', round(lat, 3), round(lon, 3)) as pad_id
+-- Shale wells with a location. Pad: single-linkage clusters of surface locations within 50 m
+-- (connected components); pad_id = 'p' || smallest pozo_id of the component, stable across builds.
+create or replace table int_pozo_base as
+select pozo_id, operador, area, tipo_pozo, lon, lat, primer_mes_petroleo
 from dim_pozo
 where formacion = 'vaca muerta' and subtipo_recurso = 'SHALE'
   and lon is not null and lat is not null;
+
+create or replace table int_pozo_arista as
+select a.pozo_id as a, b.pozo_id as b
+from int_pozo_base a
+join int_pozo_base b
+  on b.pozo_id <> a.pozo_id
+ and abs(a.lat - b.lat) < 0.001 and abs(a.lon - b.lon) < 0.001
+where 111.32 * sqrt(power((a.lon - b.lon) * cos(radians(a.lat)), 2) + power(a.lat - b.lat, 2)) < 0.05;
+
+create or replace table int_pozo_pad as
+with recursive lab(pozo_id, etiqueta) as (
+    select pozo_id, pozo_id from int_pozo_base
+    union
+    select e.b, l.etiqueta from lab l join int_pozo_arista e on e.a = l.pozo_id
+)
+select pozo_id, 'p' || min(etiqueta) as pad_id from lab group by pozo_id;
+
+create or replace table int_pozo_ubicacion as
+select b.pozo_id, b.operador, b.area, b.tipo_pozo, b.lon, b.lat, b.primer_mes_petroleo, p.pad_id
+from int_pozo_base b join int_pozo_pad p using (pozo_id);
 
 -- First frac month of each child well (refracs are not new children).
 create or replace table int_frac_hijo as
@@ -46,7 +65,7 @@ join int_pozo_ubicacion p
 create or replace table int_interferencia_evento as
 with ev as (
     select padre, mes_frac, min(km) as km_min, count(*) filter (where km < 1) as hijos_1km,
-           arg_min(hijo, km) as hijo_cercano
+           arg_min(hijo, (km, hijo)) as hijo_cercano  -- ties (same pad) break on the lowest id
     from int_par_padre_hijo group by padre, mes_frac
 ), base as (
     select ev.padre, ev.mes_frac, avg(x.petroleo_m3 / x.dias_mes) as base_m3_d

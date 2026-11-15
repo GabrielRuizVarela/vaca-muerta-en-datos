@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 40 |
-| Pads | 21 |
+| Pads | 15 |
 | Eventos cercanos de interferencia | 4 |
 | Petróleo diferido (bbl) | -36.439 |
 
@@ -20,9 +20,8 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.158_-68.444](../pad/pad-38-158-68-444.md) | Vista | 2 | 9.899 |
-| [-38.158_-68.443](../pad/pad-38-158-68-443.md) | Vista | 1 | -5.051 |
-| [-38.189_-68.399](../pad/pad-38-189-68-399.md) | Vista | 1 | -41.288 |
+| [p165549](../pad/pad-p165549.md) | Vista | 3 | 4.849 |
+| [p164127](../pad/pad-p164127.md) | Vista | 1 | -41.288 |
 
 ## Fuentes
 

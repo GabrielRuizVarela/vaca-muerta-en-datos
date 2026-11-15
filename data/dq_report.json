@@ -42,24 +42,24 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 153918,
-          "mes": "2015-03-01",
-          "petroleo_m3": 34.94,
+          "pozo_id": 42900,
+          "mes": "2006-01-01",
+          "petroleo_m3": 42.3,
           "gas_miles_m3": 0.0,
           "dias_efectivos": 0.0
         },
         {
-          "pozo_id": 156504,
-          "mes": "2016-03-01",
-          "petroleo_m3": 664.89,
-          "gas_miles_m3": 950.24,
+          "pozo_id": 42900,
+          "mes": "2006-02-01",
+          "petroleo_m3": 32.104,
+          "gas_miles_m3": 0.0,
           "dias_efectivos": 0.0
         },
         {
-          "pozo_id": 156389,
-          "mes": "2016-03-01",
-          "petroleo_m3": 153.27,
-          "gas_miles_m3": 32.45,
+          "pozo_id": 42900,
+          "mes": "2006-03-01",
+          "petroleo_m3": 33.5,
+          "gas_miles_m3": 0.0,
           "dias_efectivos": 0.0
         }
       ]
@@ -72,18 +72,18 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 126809,
-          "mes": "2007-09-01",
-          "dias_efectivos": 31.0
+          "pozo_id": 10073,
+          "mes": "2006-12-01",
+          "dias_efectivos": 58.77
         },
         {
-          "pozo_id": 126809,
-          "mes": "2007-10-01",
-          "dias_efectivos": 32.0
+          "pozo_id": 42961,
+          "mes": "2006-02-01",
+          "dias_efectivos": 29.29166667
         },
         {
-          "pozo_id": 126809,
-          "mes": "2007-11-01",
+          "pozo_id": 72206,
+          "mes": "2006-02-01",
           "dias_efectivos": 31.0
         }
       ]
@@ -103,17 +103,17 @@
           "agua_m3": 0.0
         },
         {
-          "pozo_id": 153228,
-          "mes": "2020-05-01",
-          "petroleo_m3": 1.67,
-          "gas_miles_m3": -12.267,
-          "agua_m3": 0.0
-        },
-        {
           "pozo_id": 153227,
           "mes": "2020-05-01",
           "petroleo_m3": 1.02,
           "gas_miles_m3": -7.519,
+          "agua_m3": 0.0
+        },
+        {
+          "pozo_id": 153228,
+          "mes": "2020-05-01",
+          "petroleo_m3": 1.67,
+          "gas_miles_m3": -12.267,
           "agua_m3": 0.0
         }
       ]
@@ -126,17 +126,17 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 155043,
+          "pozo_id": 114867,
           "mes": "2015-10-01",
           "empresa_raw": "YPF S.A."
         },
         {
-          "pozo_id": 153336,
+          "pozo_id": 114880,
           "mes": "2015-10-01",
           "empresa_raw": "YPF S.A."
         },
         {
-          "pozo_id": 153161,
+          "pozo_id": 114888,
           "mes": "2015-10-01",
           "empresa_raw": "YPF S.A."
         }
@@ -150,13 +150,13 @@
       "ok": false,
       "muestra": [
         {
-          "empresa_raw": "OILSTONE ENERGIA S.A."
+          "empresa_raw": "AMERICAS PETROGAS ARGENTINA S.A."
         },
         {
-          "empresa_raw": "O&G DEVELOPMENTS LTD S.A."
+          "empresa_raw": "ARGENTA ENERGIA S.A."
         },
         {
-          "empresa_raw": "MEDANITO S.A."
+          "empresa_raw": "BENTIA ENERGY S.A."
         }
       ]
     },
@@ -234,13 +234,13 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 136299
+          "pozo_id": 458
         },
         {
-          "pozo_id": 144693
+          "pozo_id": 460
         },
         {
-          "pozo_id": 135284
+          "pozo_id": 5984
         }
       ]
     },
@@ -252,16 +252,56 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 137065,
+          "pozo_id": 6051,
           "n": 2
         },
         {
-          "pozo_id": 155091,
+          "pozo_id": 6187,
           "n": 2
         },
         {
-          "pozo_id": 153361,
+          "pozo_id": 6316,
           "n": 2
+        }
+      ]
+    },
+    {
+      "nombre": "Eventos de pozos ausentes en dim_pozo",
+      "severidad": "aviso",
+      "detalle": "Eventos cuyo pozo_id no figura en dim_pozo.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Quiebres de caudal sin fractura vecina o con caída fuera de rango",
+      "severidad": "aviso",
+      "detalle": "Un quiebre de caudal debe coincidir con la fractura de un pozo vecino a menos de 1 km y una caída de entre 25% y 100% del caudal base.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Eventos fuera del rango de datos",
+      "severidad": "aviso",
+      "detalle": "Eventos posteriores al último mes publicado (incluye fracturas cargadas antes que su producción) o anteriores a 2006.",
+      "filas": 3,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 167248,
+          "tipo": "fractura",
+          "fecha": "2026-11-05"
+        },
+        {
+          "pozo_id": 167249,
+          "tipo": "fractura",
+          "fecha": "2026-12-05"
+        },
+        {
+          "pozo_id": 167250,
+          "tipo": "fractura",
+          "fecha": "2026-10-05"
         }
       ]
     },
@@ -273,15 +313,111 @@
       "ok": false,
       "muestra": [
         {
-          "pozo_id": 155417
+          "pozo_id": 3640
         },
         {
-          "pozo_id": 154909
+          "pozo_id": 42900
         },
         {
-          "pozo_id": 155031
+          "pozo_id": 42905
         }
       ]
+    },
+    {
+      "nombre": "Pozos que cambian de pad al agrupar por cercanía en vez de redondear coordenadas",
+      "severidad": "aviso",
+      "detalle": "Pads por agrupación de ubicaciones a 50 m (enlace simple) frente al redondeo de coordenadas a 3 decimales (el criterio anterior), sobre 3448 pozos shale con ubicación: 1479 pads antes y 1223 ahora; 46 pads viejos se dividen en varios y 295 pads nuevos reúnen varios viejos; 1210 pozos cambian de pad. Pozos en pads de 3 o más pozos: 63.4% antes y 73.7% ahora. Dato informativo, no un error.",
+      "filas": 1210,
+      "ok": false,
+      "muestra": [
+        {
+          "pozo_id": 135480,
+          "pad_viejo": "-38.299_-68.869",
+          "pad_nuevo": "p135480"
+        },
+        {
+          "pozo_id": 137610,
+          "pad_viejo": "-38.331_-68.906",
+          "pad_nuevo": "p137610"
+        },
+        {
+          "pozo_id": 143869,
+          "pad_viejo": "-38.329_-68.808",
+          "pad_nuevo": "p143869"
+        }
+      ]
+    },
+    {
+      "nombre": "Conciliación: filas del CSV de producción contra stg_produccion",
+      "severidad": "bloqueante",
+      "detalle": "El CSV de produccion_no_convencional tiene 431.322 filas y stg_produccion 431.322. El staging conserva una fila por fila de origen: la diferencia explicada es cero.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Conciliación: filas del CSV de fracturas contra stg_fractura",
+      "severidad": "bloqueante",
+      "detalle": "El CSV de fractura_adjunto_iv tiene 5.064 filas y stg_fractura 5.064. El staging conserva una fila por fila de origen: la diferencia explicada es cero.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Conciliación: filas de stg_produccion contra fct_produccion",
+      "severidad": "bloqueante",
+      "detalle": "stg_produccion tiene 431.322 filas; 0 se descartan por pozo o mes inválido y fct_produccion debe tener 431.322 (tiene 431.322).",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Conciliación: volúmenes de stg_produccion contra fct_produccion por año",
+      "severidad": "bloqueante",
+      "detalle": "Petróleo: stg_produccion suma 147.188.386 m3; las filas sin pozo o mes válido aportan 0 m3 y los negativos llevados a cero 0 m3; fct_produccion suma 147.188.386 m3. Se concilia por año el petróleo, el gas y el agua, con tolerancia de 0,001 por el orden de la suma.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Conciliación: pozos de dim_pozo contra fct_produccion",
+      "severidad": "bloqueante",
+      "detalle": "dim_pozo tiene 5.164 pozos y fct_produccion 5.164 pozos distintos (stg_produccion: 5.164 con id); deben coincidir.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Conciliación: pozos fracturados de dim_fractura_pozo contra stg_fractura",
+      "severidad": "bloqueante",
+      "detalle": "stg_fractura tiene 4.820 pozos distintos; los que tienen todos sus trabajos con fecha futura (1) quedan fuera, así que dim_fractura_pozo debe tener 4.819 (tiene 4.819), con 5.063 trabajos (tiene 5.063).",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Deriva de esquema: columnas esperadas ausentes en el raw",
+      "severidad": "bloqueante",
+      "detalle": "Una columna que el staging lee no está en el último archivo del dataset.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Deriva de esquema: columnas nuevas en el raw",
+      "severidad": "aviso",
+      "detalle": "Columnas que el último archivo trae y que el staging no lee ni figuran como conocidas.",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
+    },
+    {
+      "nombre": "Frescura: meses de atraso del último mes publicado",
+      "severidad": "aviso",
+      "detalle": "Último mes con datos: 2026-09; al 2026-11-15 van 2 meses de atraso. Se avisa si pasan de 3 (la Secretaría publica con rezago).",
+      "filas": 0,
+      "ok": true,
+      "muestra": []
     }
   ],
   "fuentes": {

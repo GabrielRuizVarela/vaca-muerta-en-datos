@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 196 |
-| Pads | 63 |
+| Pads | 45 |
 | Eventos cercanos de interferencia | 166 |
 | Petróleo diferido (bbl) | -210.161 |
 
@@ -20,11 +20,11 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.216_-68.632](../pad/pad-38-216-68-632.md) | Vista | 12 | 190.868 |
-| [-38.221_-68.647](../pad/pad-38-221-68-647.md) | Vista | 11 | 111.706 |
-| [-38.221_-68.653](../pad/pad-38-221-68-653.md) | Vista | 24 | 105.373 |
-| [-38.225_-68.665](../pad/pad-38-225-68-665.md) | Vista | 19 | 94.513 |
-| [-38.218_-68.621](../pad/pad-38-218-68-621.md) | Vista | 7 | 70.716 |
+| [p165559](../pad/pad-p165559.md) | Vista | 12 | 190.868 |
+| [p162352](../pad/pad-p162352.md) | Vista | 15 | 112.399 |
+| [p164827](../pad/pad-p164827.md) | Vista | 8 | 108.571 |
+| [p161582](../pad/pad-p161582.md) | Vista | 24 | 105.373 |
+| [p160571](../pad/pad-p160571.md) | Vista | 19 | 94.513 |
 
 ## Fuentes
 

@@ -10,7 +10,9 @@ select
     greatest(coalesce(gas_miles_m3, 0), 0) as gas_miles_m3,
     greatest(coalesce(agua_m3, 0), 0)      as agua_m3,
     dias_efectivos,
-    day(last_day(mes))                     as dias_mes
+    day(last_day(mes))                     as dias_mes,
+    estado,
+    extraccion
 from stg_produccion
 where pozo_id is not null and mes is not null;
 

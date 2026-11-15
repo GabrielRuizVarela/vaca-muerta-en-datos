@@ -25,11 +25,11 @@ Operador shale con ubicación en Vaca Muerta. Página `pan-american-energy`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.596_-68.466](../pad/pad-38-596-68-466.md) | LINDERO ATRAVESADO | 10 | 177.026 |
-| [-38.590_-68.466](../pad/pad-38-590-68-466.md) | LINDERO ATRAVESADO | 8 | 155.435 |
-| [-38.595_-68.466](../pad/pad-38-595-68-466.md) | LINDERO ATRAVESADO | 10 | 74.404 |
-| [-38.044_-68.527](../pad/pad-38-044-68-527.md) | AGUADA CÁNEPA | 1 | 72.036 |
-| [-38.306_-68.378](../pad/pad-38-306-68-378.md) | COIRON AMARGO SUR ESTE | 2 | 56.874 |
+| [p163778](../pad/pad-p163778.md) | LINDERO ATRAVESADO | 10 | 177.026 |
+| [p165635](../pad/pad-p165635.md) | LINDERO ATRAVESADO | 8 | 155.435 |
+| [p165305](../pad/pad-p165305.md) | COIRON AMARGO SUR ESTE | 3 | 76.668 |
+| [p163705](../pad/pad-p163705.md) | LINDERO ATRAVESADO | 10 | 74.404 |
+| [p161223](../pad/pad-p161223.md) | AGUADA CÁNEPA | 1 | 72.036 |
 
 ## Fuentes
 

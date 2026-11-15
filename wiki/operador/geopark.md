@@ -21,7 +21,7 @@ Operador shale con ubicación en Vaca Muerta. Página `geopark`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.244_-68.426](../pad/pad-38-244-68-426.md) | LOMA JARILLOSA ESTE | 3 | 205.356 |
+| [p163811](../pad/pad-p163811.md) | LOMA JARILLOSA ESTE | 3 | 205.356 |
 
 ## Fuentes
 

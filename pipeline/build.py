@@ -36,7 +36,7 @@ def main() -> int:
     db = DATA / "warehouse.duckdb"
     con = duckdb.connect(str(db))
     build(con, inputs)
-    report = checks.run(con)
+    report = checks.run(con, inputs=inputs)
     report["fuentes"] = {k: {f: v.get(f) for f in ("url", "sha256", "bytes", "last_modified", "loaded_at")}
                          for k, v in manifest.items()}
     (DATA / "dq_report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False, default=str) + "\n")

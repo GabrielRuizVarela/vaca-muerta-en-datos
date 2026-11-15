@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 30 |
-| Pads | 14 |
+| Pads | 13 |
 | Eventos cercanos de interferencia | 0 |
 | Petróleo diferido (bbl) | s/d |
 

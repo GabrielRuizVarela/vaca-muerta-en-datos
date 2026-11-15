@@ -25,11 +25,11 @@ Operador shale con ubicación en Vaca Muerta. Página `vista`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.216_-68.632](../pad/pad-38-216-68-632.md) | BAJADA DEL PALO OESTE | 12 | 190.868 |
-| [-38.221_-68.647](../pad/pad-38-221-68-647.md) | BAJADA DEL PALO OESTE | 11 | 111.706 |
-| [-38.221_-68.653](../pad/pad-38-221-68-653.md) | BAJADA DEL PALO OESTE | 24 | 105.373 |
-| [-38.225_-68.665](../pad/pad-38-225-68-665.md) | BAJADA DEL PALO OESTE | 19 | 94.513 |
-| [-38.218_-68.621](../pad/pad-38-218-68-621.md) | BAJADA DEL PALO OESTE | 7 | 70.716 |
+| [p165559](../pad/pad-p165559.md) | BAJADA DEL PALO OESTE | 12 | 190.868 |
+| [p162352](../pad/pad-p162352.md) | BAJADA DEL PALO OESTE | 15 | 112.399 |
+| [p164827](../pad/pad-p164827.md) | BAJADA DEL PALO OESTE | 8 | 108.571 |
+| [p161582](../pad/pad-p161582.md) | BAJADA DEL PALO OESTE | 24 | 105.373 |
+| [p160571](../pad/pad-p160571.md) | BAJADA DEL PALO OESTE | 19 | 94.513 |
 
 ## Fuentes
 

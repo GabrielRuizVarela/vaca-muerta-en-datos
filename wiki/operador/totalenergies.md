@@ -22,11 +22,11 @@ Operador shale con ubicación en Vaca Muerta. Página `totalenergies`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.374_-69.108](../pad/pad-38-374-69-108.md) | AGUADA PICHANA ESTE | 3 | 1.168 |
-| [-38.390_-69.140](../pad/pad-38-390-69-140.md) | AGUADA PICHANA ESTE | 2 | 764 |
-| [-38.309_-69.112](../pad/pad-38-309-69-112.md) | AGUADA PICHANA ESTE | 1 | 589 |
-| [-38.390_-69.141](../pad/pad-38-390-69-141.md) | AGUADA PICHANA ESTE | 2 | 401 |
-| [-38.380_-69.173](../pad/pad-38-380-69-173.md) | AGUADA PICHANA ESTE | 1 | 234 |
+| [p166381](../pad/pad-p166381.md) | AGUADA PICHANA ESTE | 3 | 1.168 |
+| [p164705](../pad/pad-p164705.md) | AGUADA PICHANA ESTE | 4 | 1.165 |
+| [p145984](../pad/pad-p145984.md) | AGUADA PICHANA ESTE | 1 | 589 |
+| [p160461](../pad/pad-p160461.md) | AGUADA PICHANA ESTE | 2 | 439 |
+| [p166272](../pad/pad-p166272.md) | AGUADA PICHANA ESTE | 1 | -5.198 |
 
 ## Fuentes
 

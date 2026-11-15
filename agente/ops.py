@@ -14,13 +14,18 @@ from pathlib import Path
 from typing import Callable, Literal
 
 import duckdb
+import numpy as np
 from pydantic import BaseModel, Field
 
+from pipeline.hallazgos import HIPOTESIS, leer_ledger
 from pipeline.ingest import DATA, ROOT, load_manifest
 
 BBL = 6.2898
 Mes = Field(default=None, pattern=r"^\d{4}-\d{2}$", description="Mes 'AAAA-MM'. Vacío: último mes publicado.")
 GrupoEdad = Literal["06-11", "12-23", "24-47", "48+"]
+TipoEvento = Literal["fractura", "primera_produccion", "cambio_estado", "cambio_extraccion", "cierre", "salto_agua",
+                    "quiebre_caudal"]
+Banda = Literal["cercano", "intermedio", "control"]
 
 
 class ErrorOperacion(ValueError):
@@ -119,8 +124,39 @@ class ArgsDiferido(BaseModel):
     anio: int | None = Field(default=None, ge=2012, le=2030, description="Año de la fractura del pozo hijo.")
 
 
+class ArgsCosto(BaseModel):
+    pad: str | None = Field(default=None, pattern=r"^p\d+$",
+                            description="Pad de pozos nuevos, por ejemplo 'p1234' (el que figura en el wiki). Alternativa a lat y lon.")
+    lat: float | None = Field(default=None, ge=-60, le=-30, description="Latitud en grados decimales del punto del pozo nuevo (negativa).")
+    lon: float | None = Field(default=None, ge=-80, le=-55, description="Longitud en grados decimales del punto del pozo nuevo (negativa).")
+    fecha: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}$",
+                              description="Mes 'AAAA-MM' de la fractura del pozo nuevo. Vacío: último mes publicado.")
+
+
+class ArgsRobustez(BaseModel):
+    subconjunto: str | None = Field(default=None, max_length=60,
+                                    description="Nombre o parte del nombre de un subconjunto de robustez (por ejemplo 'sin Loma Campana', 'Padre YPF', "
+                                                "'2024 a 2026'). Vacío: todos.")
+
+
 class ArgsPozo(BaseModel):
     sigla: str = Field(min_length=2, max_length=60, description="Sigla del pozo, como figura en el dato público.")
+
+
+class ArgsEventos(BaseModel):
+    sigla: str = Field(min_length=2, max_length=60, description="Sigla del pozo, como figura en el dato público.")
+    tipo: TipoEvento | None = Field(default=None, description="Tipo de evento. Vacío: todos.")
+
+
+class ArgsClases(BaseModel):
+    operador: str | None = Field(default=None, description="Operadora del pozo padre. Vacío: todas.")
+    area: str | None = Field(default=None, description="Área o concesión del pozo padre.")
+    anio: int | None = Field(default=None, ge=2011, le=2030, description="Año de la fractura del pozo hijo.")
+    banda: Banda = Field(default="cercano", description="Distancia del hijo: cercano (menos de 1 km), intermedio o control (2 a 5 km).")
+
+
+class ArgsLibro(BaseModel):
+    id: str | None = Field(default=None, max_length=60, description="Id de la hipótesis (por ejemplo 'brecha_mes1'). Vacío: todas.")
 
 
 class ArgsCalidad(BaseModel):
@@ -250,6 +286,69 @@ def pozo(con, a: ArgsPozo) -> dict:
                      f"primer petróleo {r['primer_mes_petroleo'] or 's/d'}{rama}; acumulado {num(r['petroleo_acum_bbl'])} bbl."}
 
 
+def eventos_pozo(con, a: ArgsEventos) -> dict:
+    p = filas(con, "select pozo_id, sigla from dim_pozo where lower(sigla) = lower(?)", [a.sigla.strip()])
+    if not p:
+        raise ErrorOperacion(f"No hay un pozo con sigla '{a.sigla}'.")
+    pid, sigla = p[0]["pozo_id"], p[0]["sigla"]
+    cuenta = filas(con, """select tipo, count(*) as eventos from fct_evento
+                           where pozo_id = ? and (? is null or tipo = ?) group by tipo order by tipo""", [pid, a.tipo, a.tipo])
+    total = sum(r["eventos"] for r in cuenta)
+    ultimos = filas(con, """select strftime(fecha, '%Y-%m-%d') as fecha, tipo, detalle, valor from fct_evento
+                            where pozo_id = ? and (? is null or tipo = ?) order by fecha desc, tipo limit 20""", [pid, a.tipo, a.tipo])
+    por_tipo = "; ".join(f"{r['tipo']} {num(r['eventos'])}" for r in cuenta) or "sin eventos"
+    de_que = f" de tipo {a.tipo}" if a.tipo else ""
+    return {"valor": total, "filas": ultimos,
+            "texto": f"{sigla}: {num(total)} {'evento' if total == 1 else 'eventos'}{de_que} en el dato público ({por_tipo}). Se listan los últimos {num(len(ultimos))}."}
+
+
+def clases_interferencia(con, a: ArgsClases) -> dict:
+    op = _resolver(con, a.operador, "int_interferencia_clase", "operador", "Operadora") if a.operador else None
+    area = _resolver(con, a.area, "int_interferencia_clase", "area", "Área") if a.area else None
+    rs = filas(con, """select clase, count(*) as padres from int_interferencia_clase
+                       where banda = ? and (? is null or operador = ?) and (? is null or area = ?)
+                         and (? is null or year(mes_frac) = ?)
+                       group by clase order by clase""", [a.banda, op, op, area, area, a.anio, a.anio])
+    total = sum(r["padres"] for r in rs)
+    if not total:
+        raise ErrorOperacion("Sin pozos padre para ese filtro.")
+    con_efecto = sum(r["padres"] for r in rs if r["clase"] != "sin_efecto")
+    for r in rs:
+        r["participacion"] = r["padres"] / total
+    share = con_efecto / total
+    filtro = ", ".join(x for x in (op, area and f"área {area}", a.anio and f"fracturas de {a.anio}") if x) or "todo el período"
+    detalle = "; ".join(f"{r['clase']} {num(r['padres'])}" for r in rs)
+    return {"valor": share, "filas": rs,
+            "texto": f"Pozos padre en banda {a.banda} ({filtro}): {num(total)} casos, {num(100 * share, 1)}% con algún efecto "
+                     f"({detalle}). Es una huella en datos mensuales, no una causa: un cierre preventivo y un golpe de "
+                     f"interferencia pueden verse iguales."}
+
+
+def libro_hallazgos(con, a: ArgsLibro) -> dict:
+    ids = [h.id for h in HIPOTESIS]
+    if a.id is not None and a.id not in ids:
+        raise ErrorOperacion(f"No existe la hipótesis '{a.id}'. Ids válidos: {', '.join(ids)}.")
+    ultimas: dict[str, dict] = {}
+    for r in leer_ledger(ROOT / "wiki" / "hallazgos" / "ledger.csv"):
+        ultimas[r["id"]] = r  # the ledger is append-only: the last row of an id is the latest
+    enunciados = {h.id: h.enunciado for h in HIPOTESIS}
+    rs = []
+    for i in ids:
+        if i in ultimas and (a.id is None or a.id == i):
+            r = ultimas[i]
+            rs.append({"id": i, "enunciado": enunciados[i], "estado": r["estado"], "valor": float(r["valor"]),
+                       "umbral": float(r["umbral"]), "mes_datos": r["mes_datos"]})
+    if a.id is not None:
+        if not rs:
+            raise ErrorOperacion(f"La hipótesis '{a.id}' todavía no tiene evaluación en el libro.")
+        r = rs[0]
+        return {"valor": r["valor"], "filas": rs,
+                "texto": f"{r['id']}: {r['estado']} con datos a {r['mes_datos']} (valor {num(r['valor'], 3)}, umbral {num(r['umbral'], 3)}). {r['enunciado']}"}
+    conf = sum(r["estado"] == "confirmado" for r in rs)
+    lista = "; ".join(f"{r['id']} {r['estado']} ({num(r['valor'], 3)})" for r in rs)
+    return {"valor": conf, "filas": rs, "texto": f"Libro de hallazgos: {num(conf)} de {num(len(rs))} hipótesis confirmadas. {lista}."}
+
+
 def calidad(con, a: ArgsCalidad) -> dict:
     rep = json.loads((DATA / "dq_report.json").read_text())
     rs = [{"nombre": c["nombre"], "severidad": c["severidad"], "filas": c["filas"], "ok": c["ok"]} for c in rep["checks"]]
@@ -265,6 +364,192 @@ def pagina_wiki(con, a: ArgsWiki) -> dict:
         raise ErrorOperacion(f"No existe la página '{a.ruta}'. Empezá por 'index.md'.")
     texto = p.read_text()
     return {"valor": a.ruta, "filas": [], "texto": texto}
+
+
+_FACTORES = {"km": "distancia al pozo nuevo", "desvio_eje_10": "rumbo respecto del eje de máxima merma",
+             "edad_anios": "edad del padre", "base_10m3d": "caudal base del padre",
+             "hijos_1km": "cantidad de hijos a menos de 1 km", "arena_1000tn": "arena del hijo",
+             "etapas_10": "etapas del hijo", "parado": "cierre declarado del padre", "area": "área"}
+
+_SQL_PADRES = """
+with c as (select ?::double as lat, ?::double as lon),
+base as (
+  select pozo_id, avg(petroleo_m3 / dias_mes) as base_m3_d
+  from fct_produccion
+  where mes between cast(? as date) - interval 3 month and cast(? as date) - interval 1 month
+  group by pozo_id
+)
+select u.pozo_id as padre, trim(u.area) as area, b.base_m3_d,
+       date_diff('month', u.primer_mes_petroleo, cast(? as date)) as edad_meses,
+       111.32 * sqrt(power((u.lon - c.lon) * cos(radians(c.lat)), 2) + power(u.lat - c.lat, 2)) as km,
+       (degrees(atan2((u.lon - c.lon) * cos(radians(c.lat)), u.lat - c.lat)) + 360) % 180 as rumbo
+from int_pozo_ubicacion u, c
+join base b on b.pozo_id = u.pozo_id
+where abs(u.lat - c.lat) < 0.012 and abs(u.lon - c.lon) < 0.016
+  and u.primer_mes_petroleo <= cast(? as date) - interval 6 month
+  and b.base_m3_d > 1
+  and 111.32 * sqrt(power((u.lon - c.lon) * cos(radians(c.lat)), 2) + power(u.lat - c.lat, 2)) < 1
+order by km, u.pozo_id
+"""
+
+
+def _residuales_cv(con) -> dict | None:
+    """Residuales fuera de muestra del modelo de costo por tercil de predicción, o None si los marts no están."""
+    try:
+        res = filas(con, "select tercil, residual, pred from mart_costo_residuales order by tercil, residual, pred")
+        r2 = con.execute("select r2 from mart_costo_cv where modelo = 'modelo'").fetchall()
+    except duckdb.Error:
+        return None
+    if not res or not r2:
+        return None
+    pools = {t: [x["residual"] for x in res if x["tercil"] == t] for t in (1, 2, 3)}
+    if not all(pools.values()):
+        return None
+    cortes = tuple(max(x["pred"] for x in res if x["tercil"] == t) for t in (1, 2))
+    return {"pools": {t: np.array(v) for t, v in pools.items()}, "cortes": cortes, "r2": r2[0][0]}
+
+
+def costo_interferencia(con, a: ArgsCosto) -> dict:
+    """Barriles diferidos esperados (meses 0 a 6) en los padres a menos de 1 km de un pad o punto, con el modelo de
+    pipeline/costo.py: lineal, por padre acotado en cero, sin pérdida del hijo ni espaciamiento lateral."""
+    from pipeline import costo as modelo
+    if (a.lat is None) != (a.lon is None):
+        raise ErrorOperacion("Pasá lat y lon juntas.")
+    if a.pad and a.lat is not None:
+        raise ErrorOperacion("Pasá el pad o las coordenadas, no ambos.")
+    if not a.pad and a.lat is None:
+        raise ErrorOperacion("Falta el pad (por ejemplo 'p1234') o las coordenadas lat y lon.")
+    try:
+        coef = {r["termino"]: r for r in filas(con, "select * from mart_costo_coef")}
+        ejes = {r["area"]: r["eje_grados"] for r in filas(con, "select * from mart_anisotropia_area where usa_en_costo")}
+    except duckdb.CatalogException as e:
+        raise ErrorOperacion("El modelo de costo no está calculado: falta correr pipeline.costo.") from e
+    mes = _mes(con, a.fecha)
+    primero = f"{mes}-01"
+    hijos, arena, etapas = 1, None, None
+    if a.pad:
+        pozos = filas(con, "select pozo_id, lat, lon from int_pozo_ubicacion where pad_id = ?", [a.pad])
+        if not pozos:
+            raise ErrorOperacion(f"No existe el pad '{a.pad}'. Se ve en el wiki, por ejemplo en pad/p1234.md.")
+        lat = sum(p["lat"] for p in pozos) / len(pozos)
+        lon = sum(p["lon"] for p in pozos) / len(pozos)
+        ids = [p["pozo_id"] for p in pozos]
+        marca = ",".join("?" * len(ids))
+        hijos = max(1, con.execute(f"select count(*) from int_frac_hijo where hijo in ({marca}) and strftime(mes_frac, '%Y-%m') = ?",
+                                   ids + [mes]).fetchall()[0][0])
+        fr = con.execute(f"select avg(arena_tn), avg(etapas) from dim_fractura_pozo where pozo_id in ({marca})", ids).fetchall()[0]
+        arena = fr[0] / 1000 if fr[0] is not None else None
+        etapas = fr[1] / 10 if fr[1] is not None else None
+        etiqueta = f"el pad {a.pad}"
+    else:
+        lat, lon = a.lat, a.lon
+        etiqueta = f"el punto ({num(lat, 4)}, {num(lon, 4)})"
+    arena = coef["arena_1000tn"]["media_x"] if arena is None else arena
+    etapas = coef["etapas_10"]["media_x"] if etapas is None else etapas
+    padres = filas(con, _SQL_PADRES, [lat, lon, primero, primero, primero, primero])
+    fe = [t for t in coef if t.startswith("area:")]
+    esperado, contrib, detalle, preds = 0.0, {k: 0.0 for k in _FACTORES}, [], []
+    cv = _residuales_cv(con)
+    for r in padres:
+        x = {"km": r["km"], "desvio_eje_10": float(modelo.desvio_eje(r["rumbo"], modelo.eje_de_area(r["area"], ejes))) / 10,
+             "edad_anios": r["edad_meses"] / 12, "base_10m3d": r["base_m3_d"] / 10, "hijos_1km": hijos,
+             "arena_1000tn": arena, "etapas_10": etapas, "parado": 0.0}
+        pred = coef["intercepto"]["coef"]
+        for t, v in x.items():
+            pred += coef[t]["coef"] * v
+            contrib[t] += coef[t]["coef"] * (v - coef[t]["media_x"])
+        for t in fe:
+            d = 1.0 if t == f"area:{r['area']}" else 0.0
+            pred += coef[t]["coef"] * d
+            contrib["area"] += coef[t]["coef"] * (d - coef[t]["media_x"])
+        esperado += max(pred, 0.0)
+        preds.append(pred)
+        fila = {"padre": r["padre"], "area": r["area"], "km": round(r["km"], 3), "rumbo": round(r["rumbo"], 1),
+                "base_m3_d": round(r["base_m3_d"], 1), "esperado_bbl": round(max(pred, 0.0))}
+        if cv:
+            lo, hi = modelo.intervalo_padre(pred, cv["pools"], cv["cortes"])
+            fila.update({"p10_bbl": round(lo), "p90_bbl": round(hi)})
+        detalle.append(fila)
+    factores = [{"factor": _FACTORES[k], "bbl_vs_evento_tipico": round(v)}
+                for k, v in sorted(contrib.items(), key=lambda kv: -abs(kv[1]))[:3]] if padres else []
+    if not padres:
+        texto = (f"No hay padres en producción a menos de 1 km de {etiqueta} en {mes} (con al menos 6 meses de vida y más de "
+                 f"1 m3/d de caudal base); el diferido esperado es 0 bbl.")
+        intervalo = {"p10": 0.0, "p90": 0.0}
+    else:
+        fs = "; ".join(f"{f['factor']} ({'suma' if f['bbl_vs_evento_tipico'] >= 0 else 'resta'} "
+                       f"{num(abs(f['bbl_vs_evento_tipico']))} bbl contra un evento típico)" for f in factores)
+        texto = (f"Fractura en {etiqueta}, {mes}: {num(len(padres))} padres en producción a menos de 1 km; diferido esperado "
+                 f"{num(esperado)} bbl en los meses 0 a 6 contra control de igual edad. Factores que más pesan: {fs}. "
+                 f"Modelo lineal de asociación, sin la pérdida del pozo hijo ni el espaciamiento lateral.")
+        intervalo = None
+    if cv is None:
+        calibracion = "No disponible: falta correr pipeline.costo para calcular los errores fuera de muestra."
+        texto += " El intervalo de incertidumbre no está disponible: falta correr pipeline.costo."
+        intervalo = None
+    else:
+        calibracion = (f"R2 fuera de muestra del modelo: {num(cv['r2'], 2)} (validación cruzada por pad hijo); el intervalo "
+                       f"supone errores independientes entre padres.")
+        if padres:
+            lo, hi = modelo.intervalo_suma(preds, cv["pools"], cv["cortes"])
+            intervalo = {"p10": lo, "p90": hi}
+            texto += (f" Intervalo de 80%: de {num(lo)} a {num(hi)} bbl (según los errores fuera de muestra del modelo, "
+                      f"que es de asociación; supone errores independientes entre padres).")
+    return {"valor": esperado, "filas": detalle[:20], "factores": factores, "texto": texto,
+            "intervalo_bbl": intervalo, "calibracion": calibracion}
+
+
+def robustez_eje(con, a: ArgsRobustez) -> dict:
+    """Qué tan robusto es el eje de interferencia este-oeste: el eje de la muestra completa y el de cada subconjunto
+    de pipeline/robustez.py. Un eje está definido si su IC mide menos de ANCHO_MAX grados."""
+    from pipeline.costo import ANCHO_MAX, P_EJE_COSTO
+    from pipeline.robustez import ic_contiene
+    try:
+        rs = filas(con, "select * from mart_robustez_eje order by (grupo <> 'completa'), grupo, subconjunto")
+    except duckdb.CatalogException as e:
+        raise ErrorOperacion("El análisis de robustez no está calculado: falta correr pipeline.robustez.") from e
+    if not rs:
+        raise ErrorOperacion("El análisis de robustez está vacío: falta correr pipeline.robustez.")
+    for r in rs:
+        r["definido"] = bool(r["ancho_ic"] < ANCHO_MAX)
+        r["p_menor_umbral"] = bool(r["p_perm"] < P_EJE_COSTO)
+    base = next(r for r in rs if r["grupo"] == "completa")
+    sub = [r for r in rs if r["grupo"] != "completa"]
+    cont90 = ic_contiene(base["eje"], base["ic_bajo"], base["ic_alto"], base["ancho_ic"], 90.0)
+    if a.subconjunto is not None and a.subconjunto.strip():
+        buscado = _plano(a.subconjunto)
+        exactos = [r for r in rs if _plano(r["subconjunto"]) == buscado]
+        elegidos = exactos or [r for r in rs if buscado and buscado in _plano(r["subconjunto"])]
+        if len(elegidos) != 1:
+            validos = "; ".join(r["subconjunto"] for r in rs)
+            motivo = "no existe" if not elegidos else "es ambiguo"
+            raise ErrorOperacion(f"El subconjunto '{a.subconjunto}' {motivo}. Subconjuntos válidos: {validos}.")
+        r = elegidos[0]
+        estado = (f"definido (IC de {num(r['ancho_ic'])} grados, menos de {num(ANCHO_MAX)})" if r["definido"]
+                  else f"no definido (IC de {num(r['ancho_ic'])} grados, {num(ANCHO_MAX)} o más)")
+        c90 = ic_contiene(r["eje"], r["ic_bajo"], r["ic_alto"], r["ancho_ic"], 90.0)
+        firme = r["definido"] and r["p_menor_umbral"]
+        texto = (f"{r['subconjunto']} ({num(r['n'])} eventos): eje de {num(r['eje'], 1)} grados, IC 95% de {num(r['ic_bajo'], 1)} "
+                 f"a {num(r['ic_alto'], 1)}, p de permutación {num(r['p_perm'], 3)}. Eje {estado}. "
+                 f"El IC {'incluye' if c90 else 'no incluye'} el este-oeste (90 grados): "
+                 f"{'consistente' if c90 else 'no consistente'} con el este-oeste; {'firme' if firme else 'no firme'} "
+                 f"(firme exige un IC de menos de {num(ANCHO_MAX)} grados y p menor que {num(P_EJE_COSTO, 2)}). "
+                 f"Muestra completa: {num(base['eje'], 1)} grados.")
+        return {"valor": r["eje"], "filas": [r], "texto": texto}
+    defin = [r for r in sub if r["definido"]]
+    firmes = [r for r in defin if r["p_menor_umbral"]]
+    indef = [r["subconjunto"] for r in sub if not r["definido"]]
+    firme = bool(sub) and len(firmes) == len(sub)
+    texto = (f"El eje de la muestra completa es {num(base['eje'], 1)} grados (IC 95% de {num(base['ic_bajo'], 1)} a "
+             f"{num(base['ic_alto'], 1)}, p de permutación {num(base['p_perm'], 3)}) y su IC {'incluye' if cont90 else 'no incluye'} "
+             f"el este-oeste (90 grados). En {num(len(defin))} de {num(len(sub))} subconjuntos el eje está definido "
+             f"(IC de menos de {num(ANCHO_MAX)} grados); en {num(len(firmes))} de ellos además el p de permutación es menor que "
+             f"{num(P_EJE_COSTO, 2)}.")
+    if indef:
+        texto += f" No está definido en: {'; '.join(indef)}."
+    texto += (f" Es {'consistente con el este-oeste' if cont90 else 'no consistente con el este-oeste'}"
+              + (" y está firme en todos los cortes." if firme else " pero no es firme: depende del corte de datos."))
+    return {"valor": len(defin), "filas": rs, "texto": texto}
 
 
 # ---------------------------------------------------------------- registry
@@ -295,8 +580,24 @@ REGISTRO: dict[str, Operacion] = {o.nombre: o for o in [
               ArgsAnual, interferencia_anual, ("mart_interferencia_anual",)),
     Operacion("petroleo_diferido", "Barriles de petróleo diferidos en pozos padre por fracturas cercanas, por operadora, área o año.",
               ArgsDiferido, petroleo_diferido, ("mart_interferencia_diferida",)),
+    Operacion("costo_interferencia", "Barriles de petróleo que se esperaría diferir en los padres a menos de 1 km de un pad o "
+              "punto cuando se fractura un pozo nuevo (meses 0 a 6), con los factores que más pesan.",
+              ArgsCosto, costo_interferencia, ("int_pozo_ubicacion", "fct_produccion", "mart_costo_coef", "mart_anisotropia_area",
+                                             "mart_costo_cv", "mart_costo_residuales")),
+    Operacion("robustez_eje", "Qué tan robusto es el eje de interferencia este-oeste: eje, intervalo, p de permutación y si está "
+              "definido, en la muestra completa y en 13 subconjuntos (períodos, operador, sin un área, distancia); "
+              "opcionalmente uno solo por nombre.", ArgsRobustez, robustez_eje, ("mart_robustez_eje",)),
     Operacion("pozo", "Ficha de un pozo por sigla: operadora, área, primer petróleo, diseño de fractura, acumulado.",
               ArgsPozo, pozo, ("dim_pozo", "dim_fractura_pozo", "fct_produccion")),
+    Operacion("eventos_pozo", "Cantidad y lista (últimos 20) de eventos de un pozo por sigla: fracturas, primera producción, "
+              "cambios de estado o de extracción, cierres, saltos de corte de agua y quiebres de caudal "
+              "(caída del caudal del pozo al fracturarse un vecino a menos de 1 km).",
+              ArgsEventos, eventos_pozo, ("fct_evento", "dim_pozo")),
+    Operacion("clases_interferencia", "Cuántos pozos padre muestran golpe, cierre preventivo, ambos o ningún efecto cuando se fractura "
+              "un pozo cercano, y qué parte tiene algún efecto; por operadora, área, año y banda de distancia.",
+              ArgsClases, clases_interferencia, ("int_interferencia_clase",)),
+    Operacion("libro_hallazgos", "Estado actual de las hipótesis del libro de hallazgos (confirmada o no, valor, umbral, mes de datos).",
+              ArgsLibro, libro_hallazgos, ("wiki/hallazgos/ledger.csv",)),
     Operacion("calidad", "Controles de calidad del dato público y cuántas filas afecta cada anomalía.",
               ArgsCalidad, calidad, ("dq_report.json",)),
     Operacion("pagina_wiki", "Lee una página de la wiki generada (operadoras, áreas, pads, hallazgos).",

@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 24 |
-| Pads | 16 |
+| Pads | 14 |
 | Eventos cercanos de interferencia | 7 |
 | Petróleo diferido (bbl) | 13.937 |
 
@@ -20,10 +20,9 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.191_-68.872](../pad/pad-38-191-68-872.md) | Pan American Energy | 2 | 10.585 |
-| [-38.217_-68.741](../pad/pad-38-217-68-741.md) | Pan American Energy | 1 | 4.139 |
-| [-38.190_-68.872](../pad/pad-38-190-68-872.md) | Pan American Energy | 2 | 282 |
-| [-38.182_-68.867](../pad/pad-38-182-68-867.md) | Pan American Energy | 2 | -1.069 |
+| [p157516](../pad/pad-p157516.md) | Pan American Energy | 4 | 10.867 |
+| [p159075](../pad/pad-p159075.md) | Pan American Energy | 1 | 4.139 |
+| [p154190](../pad/pad-p154190.md) | Pan American Energy | 2 | -1.069 |
 
 ## Fuentes
 

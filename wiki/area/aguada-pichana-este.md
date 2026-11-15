@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 100 |
-| Pads | 54 |
+| Pads | 48 |
 | Eventos cercanos de interferencia | 19 |
 | Petróleo diferido (bbl) | -60.933 |
 
@@ -20,11 +20,11 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.374_-69.108](../pad/pad-38-374-69-108.md) | TotalEnergies | 3 | 1.168 |
-| [-38.390_-69.140](../pad/pad-38-390-69-140.md) | TotalEnergies | 2 | 764 |
-| [-38.309_-69.112](../pad/pad-38-309-69-112.md) | TotalEnergies | 1 | 589 |
-| [-38.390_-69.141](../pad/pad-38-390-69-141.md) | TotalEnergies | 2 | 401 |
-| [-38.380_-69.173](../pad/pad-38-380-69-173.md) | TotalEnergies | 1 | 234 |
+| [p166381](../pad/pad-p166381.md) | TotalEnergies | 3 | 1.168 |
+| [p164705](../pad/pad-p164705.md) | TotalEnergies | 4 | 1.165 |
+| [p145984](../pad/pad-p145984.md) | TotalEnergies | 1 | 589 |
+| [p160461](../pad/pad-p160461.md) | TotalEnergies | 2 | 439 |
+| [p166272](../pad/pad-p166272.md) | TotalEnergies | 1 | -5.198 |
 
 ## Fuentes
 

@@ -20,7 +20,7 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.044_-68.527](../pad/pad-38-044-68-527.md) | Pan American Energy | 1 | 72.036 |
+| [p161223](../pad/pad-p161223.md) | Pan American Energy | 1 | 72.036 |
 
 ## Fuentes
 

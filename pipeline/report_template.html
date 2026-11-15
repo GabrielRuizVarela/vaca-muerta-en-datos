@@ -30,15 +30,52 @@
   --warn-bg: #3a2c0c; --warn-ink: #f3c56b; --ok-bg: #12301f; --ok-ink: #8fd6aa;
 }
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 12px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
 header p { color: var(--ink-2); max-width: 720px; margin: 8px 0 0; }
-h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; letter-spacing: -0.02em; }
-h2 { font-size: 20px; margin: 0 0 4px; }
+h1, h2, .titulares .v { font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Charter, Georgia, serif; }
+h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.08; margin: 0; letter-spacing: -0.015em; font-weight: 600; }
+h2 { font-size: 21px; margin: 0 0 4px; font-weight: 600; line-height: 1.25; }
+nav.salto { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 14px 0 0; font-size: 14px; }
+.titulares { list-style: none; margin: 28px 0 8px; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 2px solid var(--ink); }
+.titulares li { padding: 14px 14px 12px 0; display: flex; flex-direction: column; gap: 2px; }
+.titulares li + li { padding-left: 14px; border-left: 1px solid var(--line); }
+.titulares .v { font-size: clamp(30px, 3.6vw, 40px); line-height: 1.1; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.titulares .l { font-size: 14px; color: var(--ink); line-height: 1.3; }
+.titulares .d { font-size: 13px; color: var(--ink-3); line-height: 1.35; }
+@media (max-width: 900px) {
+  .titulares { grid-template-columns: repeat(2, 1fr); }
+  .titulares li, .titulares li + li { padding: 12px 12px 10px 0; border-left: 0; border-bottom: 1px solid var(--line); }
+  .titulares li:nth-child(even) { padding-left: 14px; border-left: 1px solid var(--line); }
+  .titulares li:last-child { grid-column: 1 / -1; border-left: 0; padding-left: 0; }
+}
+.resultado { margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-left: 3px solid var(--s2); border-radius: 8px; background: var(--bg); }
+.resultado p { margin: 0 0 6px; }
+.resultado .nota { color: var(--ink-3); font-size: 13px; margin: 2px 0 8px; }
+.eje-barra { display: block; width: 100%; max-width: 420px; height: auto; }
+.eje-barra .base { stroke: var(--line); stroke-width: 2; }
+.eje-barra .ic { fill: var(--s2); opacity: .55; }
+.eje-barra .pt { fill: var(--ink); stroke: var(--bg); stroke-width: 2; }
+.eje-barra .tick { stroke: var(--ink-3); stroke-width: 1; }
+.eje-barra text { fill: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+pre.cmd { margin: 8px 0 12px; padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+pre.cmd .c { color: var(--ink-3); }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; border-radius: 3px; }
+@media (max-width: 600px) {
+  #t-dq, #t-dq tbody { display: block; }
+  #t-dq tr { display: grid; grid-template-columns: 1fr auto auto; gap: 2px 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  #t-dq tr:first-child { display: none; }
+  #t-dq td { border: 0; padding: 0; }
+  #t-dq td:nth-child(1) { font-weight: 600; }
+  #t-dq td:nth-child(4) { grid-column: 1 / -1; color: var(--ink-2); font-size: 13px; }
+}
+@media (max-width: 520px) { main { padding: 20px 16px 48px; } section { padding: 16px 14px; } .legend { font-size: 13px; } th, td { padding: 6px 6px; } }
 .sub { color: var(--ink-2); margin: 0 0 16px; font-size: 15px; }
 .meta { color: var(--ink-3); font-size: 13px; margin-top: 12px; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 28px 0; }
-.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
 .kpi .v { font-size: 30px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .kpi .l { color: var(--ink-2); font-size: 14px; }
 .kpi .d { color: var(--ink-3); font-size: 13px; margin-top: 2px; }
@@ -76,9 +113,15 @@ a { color: var(--s1); }
   <h1>Vaca Muerta en datos</h1>
   <p>Pipeline reproducible sobre los datos abiertos de la Secretaría de Energía: producción mensual por pozo y datos de fractura (Adjunto IV), modelados en DuckDB, con controles de calidad que se publican junto a los resultados.</p>
   <div class="meta" id="meta"></div>
+  <nav class="salto" aria-label="Secciones">
+    <a href="#interferencia">Interferencia entre pozos</a>
+    <a href="#calidad">Calidad de datos</a>
+    <a href="#reproducir">Cómo reproducir</a>
+    <a href="replay.html">Repetición temporal (mapa)</a>
+  </nav>
 </header>
 
-<div class="kpis" id="kpis"></div>
+<!--__TITULARES__-->
 
 <section>
   <h2>Producción de petróleo de Vaca Muerta por operador</h2>
@@ -107,7 +150,7 @@ a { color: var(--s1); }
   <details><summary>Ver tabla</summary><div class="scroll"><table id="t-diseno"></table></div></details>
 </section>
 
-<section>
+<section id="interferencia">
   <h2>Interferencia entre pozos</h2>
   <p class="sub">Cuando se fractura un pozo nuevo (hijo), ¿qué le pasa a los pozos vecinos que ya producían (padres)? Caudal de petróleo del padre como fracción de su promedio de los 3 meses previos. Padres a menos de 1 km contra padres a 2-5 km del mismo evento (control).</p>
   <div class="kpis" id="kpis-interf"></div>
@@ -116,14 +159,29 @@ a { color: var(--s1); }
     <div><p class="sub"><strong>Caudal del padre, mediana (100 = antes de la fractura)</strong></p><div class="chart"><canvas id="c-interf" aria-label="Caudal del pozo padre alrededor de la fractura del hijo"></canvas></div></div>
     <div><p class="sub"><strong>Brecha al mes 1 por año de fractura (puntos)</strong></p><div class="chart"><canvas id="c-interf-anual" aria-label="Brecha de interferencia por año"></canvas></div></div>
   </div>
+  <!--__EJE__-->
   <p class="finding" id="finding-interf"></p>
   <details><summary>Ver tabla</summary><div class="scroll"><table id="t-interf"></table></div></details>
 </section>
 
-<section>
+<section id="calidad">
   <h2>Calidad de datos</h2>
   <p class="sub">Los controles <em>bloqueantes</em> protegen el modelo (grano, nulos, valores imposibles): si uno falla, no se publica. Los <em>avisos</em> miden anomalías del dato público; se cuentan y se publican.</p>
   <div class="scroll"><table id="t-dq"></table></div>
+</section>
+
+<section id="reproducir">
+  <h2>Cómo reproducir</h2>
+  <p class="sub">Con <a href="https://docs.astral.sh/uv/">uv</a> instalado, desde la raíz del repositorio. Cada paso es idempotente: una corrida sin cambios en el origen no modifica nada.</p>
+<pre class="cmd"><span class="c"># dependencias</span>
+uv sync
+<span class="c"># toda la cadena con tiempos: build, costo, robustez, wiki, este tablero, repetición y verificación de cifras</span>
+uv run python -m pipeline.run_all
+<span class="c"># agrega la descarga desde la Secretaría (hace falta salida a su servidor)</span>
+uv run python -m pipeline.run_all --with-ingest
+<span class="c"># tests, incluida la reproducibilidad de este archivo</span>
+uv run pytest -q</pre>
+  <p class="sub">Para recorrer los resultados sin correr nada: <a href="replay.html">repetición temporal</a> (mapa de pozos mes a mes) y <a href="../wiki/index.md">wiki de hallazgos</a> (<code>wiki/index.md</code>, con el libro de hallazgos, la robustez del eje y la interferencia).</p>
 </section>
 
 <section>
@@ -133,7 +191,7 @@ a { color: var(--s1); }
     <li><strong>Modelo</strong> (<code>pipeline/sql/</code>, DuckDB): staging tipado, normalización de razones sociales (<code>seeds/operadores.csv</code>), hechos con grano (pozo, mes), dimensiones de pozo y fractura, marts para el reporte. Todo se reconstruye desde raw: idempotente.</li>
     <li><strong>Calidad</strong> (<code>pipeline/checks.py</code>): controles bloqueantes y avisos con conteo y muestra; el reporte JSON queda versionado.</li>
     <li><strong>Interferencia</strong> (<code>pipeline/sql/04_interferencia.sql</code>): pads por coordenadas de superficie, pares padre/hijo a menos de 5 km, estudio de eventos con control de igual edad.</li>
-    <li><strong>Preguntas en lenguaje natural</strong> (<code>agente/</code>): un modelo local elige una de 11 operaciones tipadas y completa sus argumentos; nunca escribe SQL ni números. Las mismas operaciones se exponen como servidor MCP de solo lectura. <span id="eval-txt"></span></li>
+    <li><strong>Preguntas en lenguaje natural</strong> (<code>agente/</code>): un modelo de lenguaje (local por defecto) elige una de 16 operaciones tipadas y completa sus argumentos; nunca escribe SQL ni números. Las mismas operaciones se exponen como servidor MCP de solo lectura. <span id="eval-txt"></span></li>
     <li><strong>Publicación</strong>: <code>./refresh.sh</code> (semanal, desde una máquina en Argentina) corre tests, ingesta, build y este sitio. GitHub Actions corre los tests en cada push.</li>
   </ol>
   <div class="scroll"><table id="t-fuentes"></table></div>
@@ -142,7 +200,7 @@ a { color: var(--s1); }
 <footer>Proyecto personal de Gabriel Ruiz Varela con datos públicos (<a href="http://datos.energia.gob.ar/">datos.energia.gob.ar</a>). No está afiliado ni avalado por ninguna empresa. Conversiones: 1 m³ = 6,2898 bbl; caudales por día calendario.</footer>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>/*__CHARTJS__*/</script>
 <script>
 const D = /*__DATA__*/null;
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -174,15 +232,7 @@ function baseOptions(yTitle) {
 function render() {
   charts.splice(0).forEach((c) => c.destroy());
   const k = D.kpi;
-  const share = k.ypf / k.pet * 100;
-  const yoy = (k.pet / k.pet_anio_previo - 1) * 100;
-  document.getElementById("meta").textContent = `Último mes publicado: ${D.ultimo_mes} · Generado ${D.generado}`;
-  document.getElementById("kpis").innerHTML = [
-    [fmt(k.pet), "kbbl/d de petróleo", `${yoy >= 0 ? "+" : ""}${fmt(yoy, 1)}% interanual`],
-    [`${fmt(share, 1)}%`, "participación de YPF", `${fmt(k.ypf)} kbbl/d`],
-    [fmt(k.gas, 1), "MMm³/d de gas", "millones de m³ por día"],
-    [fmt(k.pozos), "pozos activos", `en ${D.ultimo_mes}`],
-  ].map(([v, l, d]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div><div class="d">${d}</div></div>`).join("");
+  document.getElementById("meta").textContent = `Último mes publicado: ${D.ultimo_mes}. Generado ${D.generado}. Además: ${fmt(k.gas, 1)} MMm³/d de gas y ${fmt(k.pozos)} pozos activos.`;
 
   // Monthly stacked area.
   const meses = [...new Set(D.mensual.map((r) => r.mes))];
@@ -232,8 +282,7 @@ function render() {
   document.getElementById("kpis-interf").innerHTML = [
     [fmt(R.brecha_mes_1 * 100), "puntos al mes 1", "padre cercano contra control"],
     [fmt(R.brecha_mes_6 * 100), "puntos al mes 6", "la brecha casi se cierra"],
-    [fmt(R.diferido_bbl / 1e6, 1), "millones de bbl diferidos", `${fmt(R.eventos)} eventos, meses 0 a 6`],
-    [fmt(R.diferido_ypf_bbl / 1e6, 1), "millones de bbl en YPF", `${fmt(R.diferido_ypf_bbl / R.diferido_bbl * 100)}% del total`],
+    [fmt(R.diferido_ypf_bbl / 1e6, 1), "millones de bbl diferidos en YPF", `de ${fmt(R.diferido_bbl / 1e6, 1)} millones en total, meses 0 a 6`],
   ].map(([v, l, d]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div><div class="d">${d}</div></div>`).join("");
   const series = { cercano: ["Padre a menos de 1 km", "--s2"], control: ["Control a 2-5 km", "--other"] };
   document.getElementById("leg-interf").innerHTML = Object.values(series).map(([n, c]) => `<span style="--c: var(${c})">${esc(n)}</span>`).join("");
@@ -255,7 +304,7 @@ function render() {
   document.getElementById("t-interf").innerHTML = `<tr><th>Año</th><th class="n">Eventos cercanos</th><th class="n">Brecha mes 1 (puntos)</th></tr>` +
     I.anual.map((r) => `<tr><td>${r.anio}</td><td class="n">${fmt(r.eventos_cercanos)}</td><td class="n">${fmt(r.brecha * 100)}</td></tr>`).join("");
   const ev = D.evals;
-  document.getElementById("eval-txt").textContent = ev.holdout ? `Exactitud en preguntas reservadas: ${fmt(ev.holdout.exactitud * 100)}% (${ev.holdout.n} preguntas, modelo ${ev.holdout.modelo} local, datos a ${ev.holdout.datos_a}).` : "";
+  document.getElementById("eval-txt").textContent = ev.holdout ? `Exactitud en preguntas reservadas: ${fmt(ev.holdout.exactitud * 100)}% (${ev.holdout.n} preguntas, modelo ${ev.holdout.modelo}, datos a ${ev.holdout.datos_a}).` : "";
 
   // Data quality and sources.
   document.getElementById("t-dq").innerHTML = `<tr><th>Control</th><th>Tipo</th><th class="n">Filas</th><th>Qué significa</th></tr>` +

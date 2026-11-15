@@ -20,7 +20,7 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-37.711_-69.167](../pad/pad-37-711-69-167.md) | VACA MUERTA INVERSIONES SAU | 1 | 1.666 |
+| [p162242](../pad/pad-p162242.md) | VACA MUERTA INVERSIONES SAU | 1 | 1.666 |
 
 ## Fuentes
 

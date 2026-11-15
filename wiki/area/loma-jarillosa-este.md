@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 14 |
-| Pads | 11 |
+| Pads | 9 |
 | Eventos cercanos de interferencia | 3 |
 | Petróleo diferido (bbl) | 205.356 |
 
@@ -20,7 +20,7 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.244_-68.426](../pad/pad-38-244-68-426.md) | GeoPark | 3 | 205.356 |
+| [p163811](../pad/pad-p163811.md) | GeoPark | 3 | 205.356 |
 
 ## Fuentes
 

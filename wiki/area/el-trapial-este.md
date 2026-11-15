@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 52 |
-| Pads | 18 |
+| Pads | 15 |
 | Eventos cercanos de interferencia | 59 |
 | Petróleo diferido (bbl) | 533.763 |
 
@@ -20,11 +20,11 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-37.482_-69.393](../pad/pad-37-482-69-393.md) | Chevron | 12 | 374.902 |
-| [-37.479_-69.404](../pad/pad-37-479-69-404.md) | Chevron | 22 | 149.691 |
-| [-37.484_-69.349](../pad/pad-37-484-69-349.md) | Chevron | 4 | 93.442 |
-| [-37.484_-69.400](../pad/pad-37-484-69-400.md) | Chevron | 8 | 83.328 |
-| [-37.474_-69.398](../pad/pad-37-474-69-398.md) | Chevron | 1 | -17.937 |
+| [p165243](../pad/pad-p165243.md) | Chevron | 12 | 374.902 |
+| [p161871](../pad/pad-p161871.md) | Chevron | 22 | 149.691 |
+| [p164859](../pad/pad-p164859.md) | Chevron | 4 | 93.442 |
+| [p164529](../pad/pad-p164529.md) | Chevron | 8 | 83.328 |
+| [p162313](../pad/pad-p162313.md) | Chevron | 9 | -25.316 |
 
 ## Fuentes
 

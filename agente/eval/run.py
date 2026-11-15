@@ -35,13 +35,32 @@ def iguales(a, b) -> bool:
     return a == b
 
 
+def _puntuar_varias(con, esperadas: list[dict], elegido: dict) -> dict:
+    """Correct only with the same number of calls, each op equal and each result value equal."""
+    ops = elegido["op"] if isinstance(elegido["op"], list) else [elegido["op"]]
+    args = elegido["args"] if isinstance(elegido["op"], list) else [elegido["args"]]
+    resultados = elegido["resultados"]
+    pedido = [f"{e['op']} {e['args']}" for e in esperadas]
+    ok = len(ops) == len(esperadas)
+    if ok:
+        for e, op, r in zip(esperadas, ops, resultados):
+            ok = ok and op == e["op"] and iguales(r["valor"], ejecutar(con, e["op"], e["args"])["valor"])
+    return {"correcto": ok, "tipo": "respuesta",
+            **({} if ok else {"fallo": f"esperado {pedido}, eligió {[f'{o} {a}' for o, a in zip(ops, args)]}"})}
+
+
 def puntuar(con, item: dict, elegido: dict) -> dict:
     esperado = item["esperado"]
     abstuvo = elegido["op"] in ("abstener", "error")
-    if esperado["op"] == "abstener":
+    if esperado.get("op") == "abstener":
         return {"correcto": elegido["op"] == "abstener", "tipo": "abstencion"}
     if abstuvo:
         return {"correcto": False, "tipo": "respuesta", "fallo": f"no respondió ({elegido['op']})"}
+    if "calls" in esperado:
+        return _puntuar_varias(con, esperado["calls"], elegido)
+    if isinstance(elegido["op"], list):
+        return {"correcto": False, "tipo": "respuesta",
+                "fallo": f"esperado una llamada {esperado['op']} {esperado['args']}, hizo {len(elegido['op'])}"}
     verdad = ejecutar(con, esperado["op"], esperado["args"])["valor"]
     ok = iguales(elegido["resultado"]["valor"], verdad)
     return {"correcto": ok, "tipo": "respuesta",

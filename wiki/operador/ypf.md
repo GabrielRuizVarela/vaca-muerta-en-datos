@@ -52,11 +52,11 @@ Operador shale con ubicación en Vaca Muerta. Página `ypf`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.138_-68.693](../pad/pad-38-138-68-693.md) | LA AMARGA CHICA | 12 | 637.182 |
-| [-38.137_-68.688](../pad/pad-38-137-68-688.md) | LA AMARGA CHICA | 12 | 520.288 |
-| [-38.371_-68.677](../pad/pad-38-371-68-677.md) | LOMA CAMPANA | 15 | 412.931 |
-| [-38.248_-68.716](../pad/pad-38-248-68-716.md) | BANDURRIA SUR | 6 | 360.165 |
-| [-38.126_-68.607](../pad/pad-38-126-68-607.md) | LA AMARGA CHICA | 5 | 256.052 |
+| [p164465](../pad/pad-p164465.md) | LA AMARGA CHICA | 12 | 637.182 |
+| [p163068](../pad/pad-p163068.md) | LA AMARGA CHICA | 16 | 623.392 |
+| [p165347](../pad/pad-p165347.md) | BANDURRIA SUR | 12 | 578.367 |
+| [p159580](../pad/pad-p159580.md) | LOMA CAMPANA | 15 | 412.931 |
+| [p165418](../pad/pad-p165418.md) | LA AMARGA CHICA | 6 | 340.868 |
 
 ## Fuentes
 

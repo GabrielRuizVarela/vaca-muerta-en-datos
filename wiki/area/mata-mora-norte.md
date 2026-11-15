@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 58 |
-| Pads | 26 |
+| Pads | 17 |
 | Eventos cercanos de interferencia | 2 |
 | Petróleo diferido (bbl) | 6.373 |
 
@@ -20,8 +20,7 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.493_-68.382](../pad/pad-38-493-68-382.md) | Phoenix Global Resources | 1 | 5.472 |
-| [-38.492_-68.382](../pad/pad-38-492-68-382.md) | Phoenix Global Resources | 1 | 901 |
+| [p159884](../pad/pad-p159884.md) | Phoenix Global Resources | 2 | 6.373 |
 
 ## Fuentes
 

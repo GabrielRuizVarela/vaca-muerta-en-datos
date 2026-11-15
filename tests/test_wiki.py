@@ -11,19 +11,20 @@ from pipeline.wiki import build_wiki, pad_slug
 
 PROD_COLS = ["idempresa", "anio", "mes", "idpozo", "prod_pet", "prod_gas", "prod_agua", "tef", "tipopozo",
              "tipoestado", "rectificado", "empresa", "sigla", "formacion", "areapermisoconcesion",
-             "areayacimiento", "provincia", "coordenadax", "coordenaday", "sub_tipo_recurso"]
+             "areayacimiento", "provincia", "coordenadax", "coordenaday", "sub_tipo_recurso", "tipoextraccion"]
 FRAC_COLS = ["id_base_fractura_adjiv", "idpozo", "formacion_productiva", "subtipo_reservorio",
              "longitud_rama_horizontal_m", "cantidad_fracturas", "tipo_terminacion",
              "arena_bombeada_nacional_tn", "arena_bombeada_importada_tn", "agua_inyectada_m3",
-             "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante"]
+             "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante", "presion_maxima_psi"]
 
 
-def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69", lat="-38"):
+def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69", lat="-38", agua=0,
+             estado="Extracción Efectiva", extraccion="Surgencia Natural"):
     return {"idempresa": "X", "anio": anio, "mes": mes, "idpozo": pozo, "prod_pet": pet, "prod_gas": gas,
-            "prod_agua": 0, "tef": tef, "tipopozo": "Petrolífero", "tipoestado": "Extracción Efectiva",
+            "prod_agua": agua, "tef": tef, "tipopozo": "Petrolífero", "tipoestado": estado,
             "rectificado": "f", "empresa": empresa, "sigla": f"P-{pozo}", "formacion": "vaca muerta",
             "areapermisoconcesion": "A", "areayacimiento": "Y", "provincia": "Neuquén",
-            "coordenadax": lon, "coordenaday": lat, "sub_tipo_recurso": "SHALE"}
+            "coordenadax": lon, "coordenaday": lat, "sub_tipo_recurso": "SHALE", "tipoextraccion": extraccion}
 
 
 def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A."):
@@ -31,7 +32,8 @@ def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A."):
             "subtipo_reservorio": "SHALE", "longitud_rama_horizontal_m": rama, "cantidad_fracturas": 40,
             "tipo_terminacion": "Plug & Perf", "arena_bombeada_nacional_tn": 8000,
             "arena_bombeada_importada_tn": 0, "agua_inyectada_m3": 50000,
-            "fecha_inicio_fractura": inicio, "fecha_fin_fractura": inicio, "empresa_informante": empresa}
+            "fecha_inicio_fractura": inicio, "fecha_fin_fractura": inicio, "empresa_informante": empresa,
+            "presion_maxima_psi": 9000}
 
 
 def write_csv(path: Path, cols, rows):
@@ -142,3 +144,21 @@ def test_generated_pages_have_no_unicode_dashes(escenario, tmp_path):
             texto = path.read_text(encoding="utf-8")
             assert "\u2014" not in texto, path
             assert "\u2013" not in texto, path
+
+
+def test_grafo_invalida_aristas_sin_borrarlas():
+    from pipeline.wiki import _bitemporal
+    a1 = {"origen": "pozo:1", "destino": "pozo:2", "tipo": "interfiere", "mes": "2024-01"}
+    a2 = {"origen": "area:x", "destino": "pad:pad-p1", "tipo": "contiene"}
+    v1 = _bitemporal([], [a1, a2], "2026-08", "s1")
+    assert all(a["registrado_en"] == "2026-08" and a["valido_hasta"] is None for a in v1)
+    v2 = _bitemporal(v1, [a2], "2026-09", "s2")
+    vig = [a for a in v2 if a["valido_hasta"] is None]
+    cer = [a for a in v2 if a["valido_hasta"]]
+    assert [a["tipo"] for a in vig] == ["contiene"] and vig[0]["registrado_en"] == "2026-08"
+    assert len(cer) == 1 and cer[0]["tipo"] == "interfiere" and cer[0]["valido_hasta"] == "2026-09"
+    assert _bitemporal(v2, [a2], "2026-09", "s2") == v2
+    a1b = dict(a1, petroleo_diferido_bbl=10)
+    v3 = _bitemporal(_bitemporal([], [dict(a1, petroleo_diferido_bbl=5)], "2026-08", "s1"), [a1b], "2026-09", "s2")
+    assert len(v3) == 1 and v3[0]["petroleo_diferido_bbl"] == 10
+    assert v3[0]["registrado_en"] == "2026-08" and v3[0]["actualizado_en"] == "2026-09"

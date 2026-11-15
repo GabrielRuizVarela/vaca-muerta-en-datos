@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 54 |
-| Pads | 17 |
+| Pads | 16 |
 | Eventos cercanos de interferencia | 14 |
 | Petróleo diferido (bbl) | 260.561 |
 
@@ -20,9 +20,9 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.011_-68.567](../pad/pad-38-011-68-567.md) | Pampa Energía | 8 | 139.993 |
-| [-38.015_-68.563](../pad/pad-38-015-68-563.md) | Pampa Energía | 3 | 65.905 |
-| [-38.014_-68.562](../pad/pad-38-014-68-562.md) | Pampa Energía | 3 | 54.663 |
+| [p166501](../pad/pad-p166501.md) | Pampa Energía | 8 | 139.993 |
+| [p165089](../pad/pad-p165089.md) | Pampa Energía | 3 | 65.905 |
+| [p161522](../pad/pad-p161522.md) | Pampa Energía | 3 | 54.663 |
 
 ## Fuentes
 

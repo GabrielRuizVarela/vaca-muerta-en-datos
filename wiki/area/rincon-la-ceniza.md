@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 18 |
-| Pads | 11 |
+| Pads | 9 |
 | Eventos cercanos de interferencia | 2 |
 | Petróleo diferido (bbl) | -1.029 |
 
@@ -20,7 +20,7 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-37.865_-69.222](../pad/pad-37-865-69-222.md) | VACA MUERTA INVERSIONES SAU | 2 | -1.029 |
+| [p156715](../pad/pad-p156715.md) | VACA MUERTA INVERSIONES SAU | 2 | -1.029 |
 
 ## Fuentes
 

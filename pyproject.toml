@@ -5,6 +5,7 @@ requires-python = ">=3.13"
 dependencies = [
     "duckdb>=2.0.0",
     "mcp>=1.2",
+    "numpy>=2.5.4",
     "pydantic>=2.14.3",
     "pytest>=9.2.0",
 ]
@@ -12,3 +13,19 @@ dependencies = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+markers = ["slow: usa el warehouse real (omitido si falta)"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.5",
+]
+
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# pytest fixtures imported from another test module and requested by name in the test arguments.
+"tests/test_quiebre.py" = ["F811"]

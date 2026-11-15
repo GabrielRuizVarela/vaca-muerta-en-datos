@@ -20,7 +20,7 @@ Operador shale con ubicación en Vaca Muerta. Página `patagonia-energy-s-a`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-37.474_-69.010](../pad/pad-37-474-69-010.md) | AGUADA DEL CHIVATO - AGUADA BOCAREY | 1 | 107 |
+| [p137680](../pad/pad-p137680.md) | AGUADA DEL CHIVATO - AGUADA BOCAREY | 1 | 107 |
 
 ## Fuentes
 

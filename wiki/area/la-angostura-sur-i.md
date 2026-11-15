@@ -8,7 +8,7 @@
 |---|---|
 | Operadores | 1 |
 | Pozos shale con ubicación | 84 |
-| Pads | 29 |
+| Pads | 22 |
 | Eventos cercanos de interferencia | 7 |
 | Petróleo diferido (bbl) | 176.705 |
 
@@ -20,10 +20,10 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.708_-68.707](../pad/pad-38-708-68-707.md) | YPF | 4 | 136.803 |
-| [-38.733_-68.605](../pad/pad-38-733-68-605.md) | YPF | 1 | 15.739 |
-| [-38.705_-68.690](../pad/pad-38-705-68-690.md) | YPF | 1 | 15.024 |
-| [-38.713_-68.727](../pad/pad-38-713-68-727.md) | YPF | 1 | 9.139 |
+| [p166892](../pad/pad-p166892.md) | YPF | 4 | 136.803 |
+| [p163593](../pad/pad-p163593.md) | YPF | 1 | 15.739 |
+| [p160930](../pad/pad-p160930.md) | YPF | 1 | 15.024 |
+| [p163695](../pad/pad-p163695.md) | YPF | 1 | 9.139 |
 
 ## Fuentes
 

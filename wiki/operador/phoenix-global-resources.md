@@ -24,8 +24,7 @@ Operador shale con ubicación en Vaca Muerta. Página `phoenix-global-resources`
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-38.493_-68.382](../pad/pad-38-493-68-382.md) | MATA MORA NORTE | 1 | 5.472 |
-| [-38.492_-68.382](../pad/pad-38-492-68-382.md) | MATA MORA NORTE | 1 | 901 |
+| [p159884](../pad/pad-p159884.md) | MATA MORA NORTE | 2 | 6.373 |
 
 ## Fuentes
 

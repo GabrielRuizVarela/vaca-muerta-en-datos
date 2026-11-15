@@ -1,0 +1,6 @@
+id,sha_datos,firma,mes_datos,valor,op,umbral,estado,evaluado_en
+brecha_mes1,1f07aee9b988,6316b55e,2026-09,-0.22926389258798785,<,-0.1,confirmado,2026-11-15
+recuperacion_mes6,1f07aee9b988,efc758c1,2026-09,-0.020974526169147634,abs<,0.05,confirmado,2026-11-15
+salto_agua,1f07aee9b988,31a9661e,2026-09,0.1877018132141083,>,0.1,confirmado,2026-11-15
+parado_declarado,1f07aee9b988,58bc955b,2026-09,0.07032803609279945,>,0.03,confirmado,2026-11-15
+anisotropia,1f07aee9b988,2d9ee0f3,2026-09,-0.25965438307270894,<,-0.1,confirmado,2026-11-15

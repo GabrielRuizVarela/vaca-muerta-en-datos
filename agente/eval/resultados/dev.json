@@ -1,13 +1,13 @@
 {
  "split": "dev",
- "modelo": "qwen3.5-35b-a3b-uncensored",
+ "modelo": "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b",
  "datos_a": "2026-09",
- "n": 27,
- "exactitud": 1.0,
- "exactitud_respuestas": 1.0,
+ "n": 41,
+ "exactitud": 0.975609756097561,
+ "exactitud_respuestas": 0.972972972972973,
  "abstencion_correcta": 1.0,
  "abstenciones_indebidas": 0,
- "corregidas_en_reintento": 0,
+ "corregidas_en_reintento": 2,
  "filas": [
   {
    "id": "dev-01",
@@ -18,7 +18,7 @@
     "operador": null
    },
    "intentos": 1,
-   "segundos": 2.0,
+   "segundos": 5.1,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -31,7 +31,7 @@
     "operador": "YPF"
    },
    "intentos": 1,
-   "segundos": 2.4,
+   "segundos": 3.3,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -44,7 +44,7 @@
     "operador": "Vista"
    },
    "intentos": 1,
-   "segundos": 2.3,
+   "segundos": 4.8,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -57,7 +57,7 @@
     "operador": "Pluspetrol"
    },
    "intentos": 1,
-   "segundos": 2.0,
+   "segundos": 52.2,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -70,7 +70,7 @@
     "operador": null
    },
    "intentos": 1,
-   "segundos": 2.2,
+   "segundos": 6.1,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -83,7 +83,7 @@
     "n": 5
    },
    "intentos": 1,
-   "segundos": 2.0,
+   "segundos": 1.5,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -96,7 +96,7 @@
     "n": 3
    },
    "intentos": 1,
-   "segundos": 2.2,
+   "segundos": 8.0,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -109,7 +109,7 @@
     "operador": null
    },
    "intentos": 1,
-   "segundos": 2.0,
+   "segundos": 5.4,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -122,7 +122,7 @@
     "operador": "Chevron"
    },
    "intentos": 1,
-   "segundos": 2.0,
+   "segundos": 3.4,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -136,7 +136,7 @@
     "mes_produccion": 6
    },
    "intentos": 1,
-   "segundos": 2.5,
+   "segundos": 3.6,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -150,7 +150,7 @@
     "mes_produccion": 1
    },
    "intentos": 1,
-   "segundos": 2.5,
+   "segundos": 2.4,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -163,7 +163,7 @@
     "grupo": "YPF"
    },
    "intentos": 1,
-   "segundos": 2.3,
+   "segundos": 3.1,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -176,7 +176,7 @@
     "grupo": "Resto"
    },
    "intentos": 1,
-   "segundos": 2.4,
+   "segundos": 2.6,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -189,7 +189,7 @@
     "grupo_edad": null
    },
    "intentos": 1,
-   "segundos": 2.1,
+   "segundos": 2.5,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -201,8 +201,8 @@
     "k": 0,
     "grupo_edad": "12-23"
    },
-   "intentos": 1,
-   "segundos": 2.4,
+   "intentos": 2,
+   "segundos": 3.6,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -215,7 +215,7 @@
     "grupo_edad": null
    },
    "intentos": 1,
-   "segundos": 2.1,
+   "segundos": 9.7,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -227,7 +227,7 @@
     "anio": 2022
    },
    "intentos": 1,
-   "segundos": 2.1,
+   "segundos": 3.6,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -241,7 +241,7 @@
     "anio": null
    },
    "intentos": 1,
-   "segundos": 1.9,
+   "segundos": 3.5,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -255,7 +255,7 @@
     "anio": null
    },
    "intentos": 1,
-   "segundos": 2.1,
+   "segundos": 3.3,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -269,7 +269,7 @@
     "anio": null
    },
    "intentos": 1,
-   "segundos": 2.0,
+   "segundos": 1.7,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -281,7 +281,7 @@
     "sigla": "YPF.Nq.LLL-1610(h)"
    },
    "intentos": 1,
-   "segundos": 2.3,
+   "segundos": 1.3,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -291,7 +291,7 @@
    "op": "calidad",
    "args": {},
    "intentos": 1,
-   "segundos": 1.8,
+   "segundos": 2.2,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -303,7 +303,7 @@
     "ruta": "hallazgos/interferencia.md"
    },
    "intentos": 1,
-   "segundos": 2.1,
+   "segundos": 1.8,
    "correcto": true,
    "tipo": "respuesta"
   },
@@ -313,7 +313,7 @@
    "op": "abstener",
    "args": {},
    "intentos": 1,
-   "segundos": 2.2,
+   "segundos": 3.0,
    "correcto": true,
    "tipo": "abstencion"
   },
@@ -323,7 +323,7 @@
    "op": "abstener",
    "args": {},
    "intentos": 1,
-   "segundos": 2.6,
+   "segundos": 1.8,
    "correcto": true,
    "tipo": "abstencion"
   },
@@ -333,7 +333,7 @@
    "op": "abstener",
    "args": {},
    "intentos": 1,
-   "segundos": 2.6,
+   "segundos": 1.9,
    "correcto": true,
    "tipo": "abstencion"
   },
@@ -343,9 +343,241 @@
    "op": "abstener",
    "args": {},
    "intentos": 1,
-   "segundos": 2.4,
+   "segundos": 3.4,
    "correcto": true,
    "tipo": "abstencion"
+  },
+  {
+   "id": "dev-28",
+   "pregunta": "¿Cuántos eventos registra el pozo TAU.Nq.AP-1090(h)?",
+   "op": "eventos_pozo",
+   "args": {
+    "sigla": "TAU.Nq.AP-1090(h)",
+    "tipo": null
+   },
+   "intentos": 1,
+   "segundos": 3.9,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-29",
+   "pregunta": "¿Cuántos saltos de corte de agua tuvo el pozo TAU.Nq.AP-1052(h)?",
+   "op": "eventos_pozo",
+   "args": {
+    "sigla": "TAU.Nq.AP-1052(h)",
+    "tipo": null
+   },
+   "intentos": 1,
+   "segundos": 5.4,
+   "correcto": false,
+   "tipo": "respuesta",
+   "fallo": "esperado eventos_pozo {'sigla': 'TAU.Nq.AP-1052(h)', 'tipo': 'salto_agua'}, eligió eventos_pozo {'sigla': 'TAU.Nq.AP-1052(h)', 'tipo': None}"
+  },
+  {
+   "id": "dev-30",
+   "pregunta": "¿Qué parte de los pozos padre cercanos mostró algún efecto cuando fracturaron un vecino?",
+   "op": "clases_interferencia",
+   "args": {
+    "operador": null,
+    "area": null,
+    "anio": null,
+    "banda": "cercano"
+   },
+   "intentos": 1,
+   "segundos": 2.5,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-31",
+   "pregunta": "¿Qué porcentaje de los padres de YPF a menos de 1 km tuvo algún efecto en las fracturas de 2022?",
+   "op": "clases_interferencia",
+   "args": {
+    "operador": "YPF",
+    "area": null,
+    "anio": 2022,
+    "banda": "cercano"
+   },
+   "intentos": 1,
+   "segundos": 4.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-32",
+   "pregunta": "¿Cuántas hipótesis del libro de hallazgos están confirmadas?",
+   "op": "libro_hallazgos",
+   "args": {
+    "id": null
+   },
+   "intentos": 1,
+   "segundos": 6.3,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-33",
+   "pregunta": "¿En qué estado está la hipótesis de recuperación al mes 6 del libro?",
+   "op": "libro_hallazgos",
+   "args": {
+    "id": "recuperacion_mes6"
+   },
+   "intentos": 1,
+   "segundos": 20.0,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-34",
+   "pregunta": "¿Cuántos eventos registra el pozo TPT.Nq.FP.x-1003 y qué estado tiene en el libro la hipótesis brecha_mes1?",
+   "op": [
+    "eventos_pozo",
+    "libro_hallazgos"
+   ],
+   "args": [
+    {
+     "sigla": "TPT.Nq.FP.x-1003",
+     "tipo": null
+    },
+    {
+     "id": "brecha_mes1"
+    }
+   ],
+   "intentos": 1,
+   "segundos": 2.7,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-35",
+   "pregunta": "¿Qué parte de los padres de YPF muestra algún efecto por una fractura vecina, y cuántos barriles diferidos suma YPF?",
+   "op": [
+    "clases_interferencia",
+    "petroleo_diferido"
+   ],
+   "args": [
+    {
+     "operador": "YPF",
+     "area": null,
+     "anio": null,
+     "banda": "cercano"
+    },
+    {
+     "operador": "YPF",
+     "area": null,
+     "anio": null
+    }
+   ],
+   "intentos": 1,
+   "segundos": 14.2,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-36",
+   "pregunta": "Si se fractura en el pad p165347, ¿cuánto petróleo se esperaría diferir? Y comparalo con el diferido total de Loma Campana.",
+   "op": [
+    "costo_interferencia",
+    "petroleo_diferido"
+   ],
+   "args": [
+    {
+     "pad": "p165347",
+     "lat": null,
+     "lon": null,
+     "fecha": null
+    },
+    {
+     "operador": null,
+     "area": "Loma Campana",
+     "anio": null
+    }
+   ],
+   "intentos": 1,
+   "segundos": 3.2,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-37",
+   "pregunta": "¿Cuántos barriles se esperaría diferir si se fractura en el pad p163810?",
+   "op": "costo_interferencia",
+   "args": {
+    "pad": "p163810",
+    "lat": null,
+    "lon": null,
+    "fecha": null
+   },
+   "intentos": 1,
+   "segundos": 2.7,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-38",
+   "pregunta": "Costo de interferencia en barriles para un pozo nuevo en latitud -38,22 y longitud -68,642",
+   "op": "costo_interferencia",
+   "args": {
+    "pad": null,
+    "lat": -38.22,
+    "lon": -68.642,
+    "fecha": null
+   },
+   "intentos": 1,
+   "segundos": 2.3,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-39",
+   "pregunta": "Barriles diferidos esperados por una fractura en el pad p165559 en junio de 2025",
+   "op": "costo_interferencia",
+   "args": {
+    "pad": "p165559",
+    "lat": null,
+    "lon": null,
+    "fecha": "2025-06"
+   },
+   "intentos": 1,
+   "segundos": 2.3,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-40",
+   "pregunta": "¿En cuántos subconjuntos de robustez el eje de interferencia está definido?",
+   "op": "robustez_eje",
+   "args": {
+    "subconjunto": null
+   },
+   "intentos": 1,
+   "segundos": 3.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "dev-41",
+   "pregunta": "¿Cuál es el eje de la cuenca sin Loma Campana y qué costo diferido esperado tiene el pad p165347?",
+   "op": [
+    "robustez_eje",
+    "costo_interferencia"
+   ],
+   "args": [
+    {
+     "subconjunto": "sin Loma Campana"
+    },
+    {
+     "pad": "p165347",
+     "lat": null,
+     "lon": null,
+     "fecha": null
+    }
+   ],
+   "intentos": 2,
+   "segundos": 9.8,
+   "correcto": true,
+   "tipo": "respuesta"
   }
  ]
 }

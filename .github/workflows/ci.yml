@@ -1,8 +1,9 @@
 name: ci
 
 # The Secretaría de Energía server (datos.energia.gob.ar) times out from GitHub-hosted
-# runners, so CI runs the tests only. The data refresh runs from a machine in Argentina:
-# ./refresh.sh (manual or cron).
+# runners, so CI runs lint and the tests only. The data refresh runs from a machine in Argentina:
+# ./refresh.sh (manual or cron). The claims test (README numbers against the warehouse) checks
+# the numbers that come from committed files and skips the rest: there is no warehouse here.
 on:
   push:
     branches: [main]
@@ -10,10 +11,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: uv run ruff check pipeline agente tests
+
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
       - run: uv sync
       - run: uv run pytest -q

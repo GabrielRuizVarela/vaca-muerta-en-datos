@@ -20,7 +20,7 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [-37.474_-69.010](../pad/pad-37-474-69-010.md) | PATAGONIA ENERGY S.A. | 1 | 107 |
+| [p137680](../pad/pad-p137680.md) | PATAGONIA ENERGY S.A. | 1 | 107 |
 
 ## Fuentes
 

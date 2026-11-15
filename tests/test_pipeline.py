@@ -10,19 +10,20 @@ from pipeline.ingest import ROOT, store
 
 PROD_COLS = ["idempresa", "anio", "mes", "idpozo", "prod_pet", "prod_gas", "prod_agua", "tef", "tipopozo",
              "tipoestado", "rectificado", "empresa", "sigla", "formacion", "areapermisoconcesion",
-             "areayacimiento", "provincia", "coordenadax", "coordenaday", "sub_tipo_recurso"]
+             "areayacimiento", "provincia", "coordenadax", "coordenaday", "sub_tipo_recurso", "tipoextraccion"]
 FRAC_COLS = ["id_base_fractura_adjiv", "idpozo", "formacion_productiva", "subtipo_reservorio",
              "longitud_rama_horizontal_m", "cantidad_fracturas", "tipo_terminacion",
              "arena_bombeada_nacional_tn", "arena_bombeada_importada_tn", "agua_inyectada_m3",
-             "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante"]
+             "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante", "presion_maxima_psi"]
 
 
-def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69", lat="-38"):
+def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69", lat="-38", agua=0,
+             estado="Extracción Efectiva", extraccion="Surgencia Natural"):
     return {"idempresa": "X", "anio": anio, "mes": mes, "idpozo": pozo, "prod_pet": pet, "prod_gas": gas,
-            "prod_agua": 0, "tef": tef, "tipopozo": "Petrolífero", "tipoestado": "Extracción Efectiva",
+            "prod_agua": agua, "tef": tef, "tipopozo": "Petrolífero", "tipoestado": estado,
             "rectificado": "f", "empresa": empresa, "sigla": f"P-{pozo}", "formacion": "vaca muerta",
             "areapermisoconcesion": "A", "areayacimiento": "Y", "provincia": "Neuquén",
-            "coordenadax": lon, "coordenaday": lat, "sub_tipo_recurso": "SHALE"}
+            "coordenadax": lon, "coordenaday": lat, "sub_tipo_recurso": "SHALE", "tipoextraccion": extraccion}
 
 
 def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A."):
@@ -30,7 +31,8 @@ def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A."):
             "subtipo_reservorio": "SHALE", "longitud_rama_horizontal_m": rama, "cantidad_fracturas": 40,
             "tipo_terminacion": "Plug & Perf", "arena_bombeada_nacional_tn": 8000,
             "arena_bombeada_importada_tn": 0, "agua_inyectada_m3": 50000,
-            "fecha_inicio_fractura": inicio, "fecha_fin_fractura": inicio, "empresa_informante": empresa}
+            "fecha_inicio_fractura": inicio, "fecha_fin_fractura": inicio, "empresa_informante": empresa,
+            "presion_maxima_psi": 9000}
 
 
 def write_csv(path: Path, cols, rows):
@@ -166,3 +168,69 @@ def test_interference_nets_out_control_decline(warehouse):
     assert one(con, "select brecha from mart_interferencia_brecha where k = 3") == pytest.approx(0)
     # Two months at 150 m3 below the control-implied volume.
     assert one(con, "select petroleo_diferido_bbl from mart_interferencia_diferida") == pytest.approx(300 * 6.2898)
+
+
+def test_parent_water_jump_after_child_frac_is_golpe(warehouse):
+    rows = []
+    for y, m in [(2023, mm) for mm in range(1, 13)] + [(2024, mm) for mm in range(1, 7)]:
+        jump = (y, m) >= (2024, 3)
+        rows.append(prod_row(1, y, m, 300 if not jump else 200, agua=30 if not jump else 200,
+                             lon="-69.000", lat="-38.000"))
+        if (y, m) >= (2024, 3):
+            rows.append(prod_row(2, y, m, 500, lon="-69.003", lat="-38.000"))
+    con = warehouse(rows, [frac_row(1, 2, "2024-03-10")])
+    assert one(con, "select clase from int_interferencia_clase where padre = 1") in ("golpe", "ambos")
+    assert one(con, "select count(*) from fct_evento where pozo_id = 1 and tipo = 'salto_agua'") >= 1
+    assert one(con, "select count(*) from fct_evento where tipo = 'fractura'") == 1
+
+
+def test_pads_cluster_within_50_m(warehouse):
+    rows = [prod_row(1, 2024, 1, 100, lon="-69.0000", lat="-38.0000"),
+            prod_row(2, 2024, 1, 100, lon="-69.0002", lat="-38.0000"),   # about 17 m away
+            prod_row(3, 2024, 1, 100, lon="-69.0057", lat="-38.0000")]   # about 500 m away
+    con = warehouse(rows, [])
+    pad = dict(con.execute("select pozo_id, pad_id from int_pozo_ubicacion").fetchall())
+    assert pad[1] == pad[2] == "p1"
+    assert pad[3] == "p3"
+
+
+def test_lift_change_yields_one_event(warehouse):
+    rows = [prod_row(1, 2024, m, 100, extraccion="Surgencia Natural" if m < 3 else "Bombeo Mecánico")
+            for m in range(1, 6)]
+    con = warehouse(rows, [])
+    assert one(con, "select count(*) from fct_evento where tipo = 'cambio_extraccion'") == 1
+    assert one(con, "select detalle from fct_evento where tipo = 'cambio_extraccion'") == \
+        "Surgencia Natural -> Bombeo Mecánico"
+
+
+def test_replay_builds_arrays_pozos_by_meses(warehouse, tmp_path):
+    import base64
+    import json
+    import re
+    from array import array
+
+    from pipeline import replay
+
+    prod = []
+    for pozo in (1, 2, 3):
+        for mes in range(1, 13):
+            prod.append(prod_row(pozo, 2024, mes, 100 + pozo, lon=f"-69.{pozo}"))
+    prod += [prod_row(p, 2024, m, 50) for p in range(4, 14) for m in range(1, 13)]
+    con = warehouse(prod, [frac_row("f1", 1, "2024-03-10")])
+    data = replay.collect(con)
+
+    n, m = data["meta"]["n_pozos"], len(data["meta"]["meses"])
+    assert n == len(data["pozos"]) and n >= 3 and m >= 12
+    caudal = array("H"); caudal.frombytes(base64.b64decode(data["caudal"]))
+    agua = base64.b64decode(data["agua"]); estado = base64.b64decode(data["estado"])
+    assert len(caudal) == n * m and len(agua) == n * m and len(estado) == n * m
+    row = next(i for i, p in enumerate(data["pozos"]) if p["id"] == 1)
+    assert caudal[row * m + data["meta"]["meses"].index("2024-03")] == round(101 / 31 * 6.2898)
+    assert any(e["t"] == "frac" and e["f"] == "2024-03-10" and e["p"] == row for e in data["eventos"])
+    assert [len(k) for k in data["cuenca"]["kbbl"]] == [m] * len(data["cuenca"]["ops"])
+
+    out = tmp_path / "replay.html"
+    assert replay.render(data, out) < replay.MAX_BYTES
+    html = out.read_text()
+    assert "/*__DATA__*/" not in html
+    assert json.loads(re.search(r"const DATA = (\{.*?\});\n\(\(\) =>", html, re.S).group(1))["meta"]["n_pozos"] == n

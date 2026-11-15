@@ -16,6 +16,7 @@ select
     p.sub_tipo_recurso                                         as subtipo_recurso,
     p.tipopozo                                                 as tipo_pozo,
     p.tipoestado                                               as estado,
+    p.tipoextraccion                                           as extraccion,
     p.areayacimiento                                           as yacimiento,
     p.areapermisoconcesion                                     as area,
     p.provincia,
@@ -43,6 +44,7 @@ select
     coalesce(try_cast(f.arena_bombeada_nacional_tn as double), 0)
       + coalesce(try_cast(f.arena_bombeada_importada_tn as double), 0) as arena_tn,
     try_cast(f.agua_inyectada_m3 as double)                    as agua_m3,
-    f.tipo_terminacion                                         as terminacion
+    f.tipo_terminacion                                         as terminacion,
+    try_cast(f.presion_maxima_psi as double)                   as presion_maxima_psi
 from read_csv('{fractura_adjunto_iv}', header = true, all_varchar = true) f
 left join operadores o on o.empresa_raw = trim(f.empresa_informante);
