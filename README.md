@@ -9,6 +9,7 @@ Caso de estudio, con figuras y cada cifra verificada: [`docs/caso-interferencia.
 Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control de la misma edad a 2 a 5 km (2.077 eventos).
 A los 6 meses la brecha casi se cierra: es producción diferida, no perdida.
 Contra un control de la misma edad el diferido de los meses 0 a 6 va de 5,8 a 10,7 millones de barriles (sin duplicar y descontando la brecha previa hasta el total original), y la brecha del mes 1 llega a 44 puntos en 2026.
+En la cuenca DJ de Colorado, con los mismos estimadores y una regla fijada de antemano, la brecha del mes 1 se replica (tabla de abajo).
 Es una huella medida y sometida a pruebas de placebo y permutación, no una causa demostrada: hay una brecha previa a la fractura
 (por eso 23 es una cota superior y 19 a 20 el valor descontado).
 
@@ -17,6 +18,7 @@ Es una huella medida y sometida a pruebas de placebo y permutación, no una caus
 One month after a new well is fracked, neighbouring wells within 1 km produce 19 to 23 percentage points less than same-age control wells 2 to 5 km away (2,077 events).
 By month 6 the gap has almost closed: the oil is deferred, not lost.
 Against a same-age control the deferral over months 0 to 6 ranges from 5.8 to 10.7 million barrels (de-duplicated and net of the pre-frac gap, up to the original total), and the month-1 gap reaches 44 points in 2026.
+In Colorado's DJ basin, the same estimators and a pre-registered rule replicate the month-1 gap (table below).
 This is a measured footprint that passes placebo and permutation tests, not a demonstrated cause: there is a gap before the frac
 (so 23 is an upper bound and 19 to 20 is the discounted value).
 
@@ -32,12 +34,14 @@ This is a measured footprint that passes placebo and permutation tests, not a de
 
 | Resultado | Cifra | Intervalo | Veredicto |
 | --- | --- | --- | --- |
-| Interferencia al mes 1 (padres a menos de 1 km contra controles) | 19 a 23 puntos menos | IC 95% de la brecha de 23: 18 a 27 | sostiene, con pretendencia |
+| Interferencia al mes 1 (padres a menos de 1 km contra controles) | 19 a 23 puntos menos | IC 95% por bloques de 5 km de la brecha de 23: 17 a 29 | sostiene, con pretendencia |
 | Eje de mayor merma (cuenca) | 93 grados (E-O) | 70 a 122 grados | no firme: no se separa del SHmax publicado (67,5) |
 | Validación del eje fuera de tiempo | 92 grados con datos viejos, 88 en los nuevos | no se separa del SHmax ni de ejes al azar | no firme |
 | Modelo de costo de la interferencia | R2 fuera de muestra -0,15 (la media del área da 0,01) | ningún coeficiente excluye cero | no predice |
 | Placebo y permutación | fechas falsas de -2,4 a 0,6 puntos; permutadas de -8,4 a -4,8; real -22,9 | los intervalos de las fechas falsas incluyen cero | sostiene, con pretendencia |
 | Sincronía dentro del mes | la brecha del mes 0 cambia -2,1 puntos por cada 0,1 de fracción del mes posterior al inicio de la fractura | IC 95%: -3,1 a -1,0; el mes previo: -0,7 (IC -1,8 a 0,5) | sostiene |
+| Lado del hijo (rendimiento de 12 meses cerca de pozos depletados) | muy depletado contra virgen: -0,2 bbl por metro de rama (-0,3% del rendimiento virgen) | IC 95%: -12,8 a 12,4; el control negativo da 8,9 (IC 2,1 a 15,7) y no es nulo | no firme |
+| Replicación en Colorado (cuenca DJ) | -19,9 puntos al mes 1; previa de -6,9 en el mes -1 | IC 95% por bloques de 5 km: -27,5 a -14,8 | se replica, con la regla fijada antes de correr; por día producido la brecha es -8,1, cerca de 60% menor |
 | Diferimiento | a los 6 meses la brecha casi se cierra | al mes 12 no hay más padres cercanos bajo el 90% de su trayectoria que controles | sostiene: diferido, no perdido |
 
 ## Cómo correrlo
@@ -58,17 +62,20 @@ Preguntas con un modelo propio (cualquier endpoint compatible con OpenAI, con `V
 ## Límites
 
 - Coordenadas de superficie (pads), no la trayectoria de la rama.
+- Los intervalos de las demás pruebas remuestrean pads hijo; con bloques espaciales de 5 km (144 bloques) el IC de la brecha del mes 1 es 1,29 veces más ancho y ningún veredicto cambia (`wiki/hallazgos/bloques.md`).
 - Datos mensuales: un cierre preventivo del operador se ve igual que un daño por interferencia.
 - No se afirma causalidad: es una huella medida contra un control, con una brecha previa a la fractura.
 - El eje de mayor merma no es una medición de esfuerzos; los ejes de las áreas chicas dependen de pocos pads.
 - El modelo de costo no predice un evento puntual: sus coeficientes describen asociaciones en la muestra.
+- Lado del hijo: el grupo muy depletado se ubica en zonas de desarrollo más denso y el control negativo da efecto, así que su nulo no se lee como ausencia de degradación.
 - Datos públicos declarados por las operadoras; pueden rectificarse después.
+- Replicación en otra cuenca: se corrió en la cuenca DJ de Colorado con una regla fijada de antemano (`wiki/hallazgos/replicacion.md`); es validez externa de la huella y no una estimación conjunta. Colorado no tiene etapas ni arena, la rama es un proxy y los cierres aparecen como cero días producidos. `--with-colorado` es opcional.
 - Proyecto personal, no afiliado ni avalado por ninguna empresa.
 
 ## Cómo se hizo
 
 Ingesta con hash (raw inmutable por versión), modelo en DuckDB, 28 controles de calidad (los bloqueantes frenan la publicación) y linaje de cada tabla en `wiki/hallazgos/linaje.md`.
-Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 246 tests.
+Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 343 tests.
 Preguntas en lenguaje natural sobre 16 operaciones tipadas de solo lectura (`agente/`, también como servidor MCP): exactitud 40/41 en desarrollo y 23/27 en reservadas, con la respuesta correcta calculada sobre el warehouse vigente.
 
 ## Decisiones de diseño
@@ -77,4 +84,4 @@ Preguntas en lenguaje natural sobre 16 operaciones tipadas de solo lectura (`age
 - Reconstrucción completa en vez de incremental: son 430.000 filas y DuckDB las reconstruye en segundos, sin estado que se desincronice.
 - Controles en dos niveles: lo que rompe el modelo frena la publicación; lo propio del dato público se mide y se muestra.
 
-Más: `wiki/` (hallazgos, operadoras, áreas, pads y grafo, con el libro de seis hipótesis con umbral fijo), `docs/proceso/` (arquitectura, decisiones y planes) y `agente/` (operaciones, evaluación y servidor MCP).
+Más: `wiki/` (hallazgos, operadoras, áreas, pads y grafo, con el libro de quince hipótesis con umbral fijo), `docs/proceso/` (arquitectura, decisiones y planes) y `agente/` (operaciones, evaluación y servidor MCP).

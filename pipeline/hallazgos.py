@@ -14,8 +14,12 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+import duckdb
+
 LEDGER_COLS = ["id", "sha_datos", "firma", "mes_datos", "valor", "op", "umbral", "estado", "evaluado_en"]
 DEBIL_FRAC = 0.25
+# veredicto de una regla propia -> estado del libro. Solo "sostiene" confirma y solo "no se sostiene" refuta; el resto es no firme.
+ESTADO_DE_VEREDICTO = {"sostiene": "confirmado", "no se sostiene": "refutado"}
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
 
@@ -28,6 +32,8 @@ class Hipotesis:
     umbral: float
     unidad: str
     firmeza: bool = False  # si cumple el umbral pero el eje no es firme (ver razones_eje_no_firme), el estado es "no firme"
+    sql_estado: str = ""  # si esta, el estado sale del veredicto de la regla propia de la hipotesis (ver ESTADO_DE_VEREDICTO)
+    almacen: str = "vm"  # "colorado": se evalua sobre data/colorado/warehouse.duckdb; sin la tabla de su consulta queda "preregistrada"
 
 
 _BRECHA_K = """
@@ -128,6 +134,62 @@ HIPOTESIS = [
               "el límite superior del IC de la pendiente (índice por unidad de fracción) queda por debajo de -0,02 "
               "(regla fijada antes de correr, pipeline/sincronia.py).",
               "select ic_alto from mart_sincronia_pendiente where k = 0", "<", -0.02, "índice por unidad de fracción"),
+    Hipotesis("brecha_mes1_bloques",
+              "El IC 95% por bloques espaciales de 5 km de la brecha del mes 1 (base de los meses -3 a -1) tiene el límite superior "
+              "por debajo de -0,10: no cruza -10 puntos (regla fijada antes de correr, pipeline/bloques.py).",
+              "select ic_alto_5km from mart_bloques where metrica = 'brecha_mes1_base_original' and k = 1 limit 1", "<", -0.10, "índice"),
+    Hipotesis("sincronia_mes0_bloques",
+              "La pendiente de la brecha del mes 0 por fracción del mes tiene, con el IC por bloques espaciales de 5 km, el límite "
+              "superior por debajo de -0,02 (regla fijada antes de correr, pipeline/bloques.py).",
+              "select ic_alto_5km from mart_bloques where metrica = 'sincronia_pendiente' and k = 0 limit 1", "<", -0.02,
+              "índice por unidad de fracción"),
+    Hipotesis("hijo_depletado",
+              "Un hijo cerca de pozos depletados rinde menos petróleo por metro de rama a 12 meses que un hijo en zona virgen y el "
+              "control negativo, con pozos posteriores, es nulo: el valor es el límite superior del IC del grupo muy depletado, si el "
+              "control negativo es nulo (sin valor si no lo es), y queda por debajo de cero, en bbl por metro (regla fijada antes de "
+              "correr, pipeline/hijo.py). El estado sale del veredicto de esa regla: confirmado si sostiene, refutado si no se "
+              "sostiene, y no firme en cualquier otro caso (ubicación, no firme o sin muestra).",
+              "select case when c.ic_bajo <= 0 and 0 <= c.ic_alto then p.ic_alto end "
+              "from mart_hijo_coef p, mart_hijo_coef c where p.modelo = 'principal' and p.termino = 'muy_depletado' "
+              "and c.modelo = 'control_negativo' and c.termino = 'muy_depletado'", "<", 0.0, "bbl por metro",
+              sql_estado="select veredicto from mart_hijo_coef where modelo = 'principal' and termino = 'muy_depletado'"),
+    Hipotesis("inyeccion_r1",
+              "Un efecto plantado de 20% de caída de caudal en el mes 1 se recupera con la brecha del mes 1 a menos de 5 puntos de "
+              "-20 (media entre mundos simulados, índice con base de los meses -3 a -1; regla fijada antes de correr, "
+              "pipeline/inyeccion.py).",
+              "select recuperado_media - plantado from mart_inyeccion where escenario = 'S2' and tamano = 20 and medida = 'brecha_mes1'",
+              "abs<", 5.0, "puntos"),
+    Hipotesis("inyeccion_r2",
+              "El reparto entre días y caudal por día se identifica: con un cierre plantado la parte de los días es de al menos 80% "
+              "y con una caída de caudal plantada la parte del caudal por día es de al menos 80% (el menor de los dos valores; "
+              "regla fijada antes de correr, pipeline/inyeccion.py).",
+              "select least((select parte_dias from mart_inyeccion where escenario = 'S1' and medida = 'brecha_mes1'), "
+              "(select parte_tasa from mart_inyeccion where escenario = 'S2' and tamano = 20 and medida = 'brecha_mes1'))",
+              ">", 0.80, "proporción"),
+    Hipotesis("inyeccion_r3",
+              "Una caída plantada de 40% desde el día de inicio de la fractura se recupera con pendiente negativa y IC que excluye "
+              "cero en al menos 80% de los mundos simulados (regla fijada antes de correr, pipeline/inyeccion.py).",
+              "select ic_excluye_cero_frac from mart_inyeccion where escenario = 'S3' and tamano = 40 and medida = 'pendiente_mes0'",
+              ">", 0.80, "proporción de mundos"),
+    Hipotesis("inyeccion_r4a",
+              "Sin efecto plantado, el IC de la brecha del mes 1 excluye cero en como máximo 10% de los mundos simulados "
+              "(regla fijada antes de correr, pipeline/inyeccion.py).",
+              "select ic_excluye_cero_frac from mart_inyeccion where escenario = 'S5' and medida = 'brecha_mes1'",
+              "<", 0.10, "proporción de mundos"),
+    Hipotesis("inyeccion_r4b",
+              "Una brecha previa de nivel de 5% se lee como previa a la fractura: la pretendencia y la brecha neta del mes 1 quedan a "
+              "menos de 2 puntos de lo plantado (-5 y 0), restando el mundo nulo de los mismos sorteos (regla fijada antes de "
+              "correr, pipeline/inyeccion.py).",
+              "select max(abs(recuperado_media - plantado)) from mart_inyeccion where escenario = 'S4' and tamano = 5 "
+              "and medida in ('preten', 'brecha_mes1_neta')",
+              "<", 2.0, "puntos"),
+    Hipotesis("replicacion_colorado",
+              "Réplica en la cuenca DJ de Colorado: se sostiene si el IC 95% por bloques espaciales de 5 km de la brecha del mes 1 queda "
+              "por debajo de cero y la brecha previa a la fractura con base limpia es menor, en valor absoluto, que la del mes 1; si no, "
+              "no se replica. El valor es el mayor entre el límite superior de ese IC y la diferencia de valores absolutos (previa menos "
+              "mes 1), y se sostiene si es menor que cero (regla fijada antes de correr, pipeline/replicacion.py).",
+              "select greatest(ic_alto_bloque, abs(brecha_previa_limpia) - abs(brecha)) from mart_replicacion_colorado where k = 1 limit 1",
+              "<", 0.0, "índice", almacen="colorado"),
 ]
 
 
@@ -204,22 +266,43 @@ def sha_produccion(manifest) -> str:
 
 def firma(h) -> str:
     """Hash corto de la definicion de una hipotesis; cambia si cambia su consulta o su umbral."""
-    base = f"{h.sql}|{h.op}|{h.umbral}" + ("|firmeza" if h.firmeza else "")
+    base = f"{h.sql}|{h.op}|{h.umbral}" + ("|firmeza" if h.firmeza else "") + (f"|{h.sql_estado}" if h.sql_estado else "")
     return hashlib.sha256(base.encode()).hexdigest()[:8]
 
 
-def evaluar(con, manifest, hoy: str | None = None) -> list[dict]:
+def _valor_colorado(con_colorado, h: Hipotesis):
+    """Valor de una hipotesis del Colorado, o None si todavia no hay warehouse o tabla (queda preregistrada)."""
+    if con_colorado is None:
+        return None
+    try:
+        r = con_colorado.execute(h.sql).fetchall()
+    except duckdb.CatalogException:
+        return None
+    return None if not r or r[0][0] is None else float(r[0][0])
+
+
+def evaluar(con, manifest, hoy: str | None = None, con_colorado=None) -> list[dict]:
     sha = sha_produccion(manifest)
     mes = _mes_datos(con)
     hoy = hoy or date.today().isoformat()
     filas = []
     for h in HIPOTESIS:
+        if h.almacen == "colorado":
+            valor = _valor_colorado(con_colorado, h)
+            estado = "preregistrada" if valor is None else clasificar(h.op, valor, h.umbral)
+            filas.append({"id": h.id, "enunciado": h.enunciado, "valor": valor, "op": h.op,
+                          "umbral": h.umbral, "estado": estado,
+                          "sha_datos": sha, "firma": firma(h), "mes_datos": mes, "evaluado_en": hoy})
+            continue
         r = con.execute(h.sql).fetchall()
         valor = r[0][0] if r else None
         valor = None if valor is None else float(valor)
         estado = clasificar(h.op, valor, h.umbral)
         if h.firmeza and estado == "confirmado" and razones_eje_no_firme(con):
             estado = "no firme"
+        if h.sql_estado:
+            ver = con.execute(h.sql_estado).fetchall()
+            estado = ESTADO_DE_VEREDICTO.get(ver[0][0] if ver else None, "no firme")
         filas.append({"id": h.id, "enunciado": h.enunciado, "valor": valor, "op": h.op,
                       "umbral": h.umbral, "estado": estado,
                       "sha_datos": sha, "firma": firma(h), "mes_datos": mes, "evaluado_en": hoy})
@@ -283,6 +366,11 @@ def pagina_libro(ledger_rows) -> str:
              "muestra completa mide 90 grados o más, o si el eje estimado con datos viejos no se separa del SHmax publicado "
              "ni de ejes al azar en `mart_validacion_holdout`. Se lee de esos marts; no es un análisis nuevo. "
              "Los umbrales de las demás hipótesis no cambian.")
+    L.append("")
+    L.append("Estado de `hijo_depletado`: sale del veredicto de su propia regla (`pipeline/hijo.py`), no del umbral del valor. "
+             "Confirmado si el veredicto es sostiene, refutado si es no se sostiene, y no firme en cualquier otro caso "
+             "(ubicación, no firme o sin muestra). Su valor es el límite superior del IC del grupo muy depletado y no existe "
+             "(s/d) cuando el control negativo no es nulo.")
     L.append("")
     L.append("El ledger solo agrega filas: cuando cambia la regla de una hipótesis se registra una fila nueva con la misma "
              "versión de datos y la fila anterior queda en el historial. La última fila de cada hipótesis es la vigente.")

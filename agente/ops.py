@@ -336,7 +336,8 @@ def libro_hallazgos(con, a: ArgsLibro) -> dict:
     for i in ids:
         if i in ultimas and (a.id is None or a.id == i):
             r = ultimas[i]
-            rs.append({"id": i, "enunciado": enunciados[i], "estado": r["estado"], "valor": float(r["valor"]),
+            # una hipotesis preregistrada y todavia sin correr tiene el valor vacio en el libro
+            rs.append({"id": i, "enunciado": enunciados[i], "estado": r["estado"], "valor": float(r["valor"]) if r["valor"] != "" else None,
                        "umbral": float(r["umbral"]), "mes_datos": r["mes_datos"]})
     if a.id is not None:
         if not rs:

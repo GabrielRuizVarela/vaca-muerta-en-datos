@@ -17,6 +17,10 @@ Salidas dentro de ``out_dir``:
     hallazgos/descomposicion.md  dias producidos contra caudal por dia y gradiente por distancia (si corrio pipeline.descomposicion)
     hallazgos/diferido.md      rango de barriles diferidos y cifra por evento (si corrio pipeline.diferido)
     hallazgos/sincronia.md     la brecha del mes 0 segun la fraccion del mes posterior al inicio de la fractura (si corrio pipeline.sincronia)
+    hallazgos/bloques.md       los intervalos principales con bootstrap por bloques espaciales de 2 y 5 km (si corrio pipeline.bloques)
+    hallazgos/hijo.md          el rendimiento de 12 meses del hijo segun el petroleo ya producido a menos de 1 km (si corrio pipeline.hijo)
+    hallazgos/inyeccion.md     efectos plantados contra efectos recuperados por los estimadores (si corrio pipeline.inyeccion)
+    hallazgos/replicacion.md   el estudio de eventos sobre Colorado (lo escribe pipeline.replicacion, solo con --with-colorado)
     hallazgos/placebo.md       pretendencia, fechas falsas y permutacion del estudio de eventos (si corrio pipeline.placebo)
     grafo.json                grafo de operadores, areas, pads y pozos
 """
@@ -30,7 +34,7 @@ from pathlib import Path
 
 import duckdb
 
-from pipeline import costo, descomposicion, diferido, linaje, mapa, placebo, robustez, sincronia, validacion
+from pipeline import bloques, costo, descomposicion, diferido, hijo, inyeccion, linaje, mapa, placebo, robustez, sincronia, validacion
 from pipeline import hallazgos as hz
 from pipeline.ingest import DATA, ROOT, load_manifest
 
@@ -608,6 +612,34 @@ def build_wiki(con, manifest, out_dir) -> dict:
     elif sinc_path.exists():
         sinc_path.unlink()
 
+    # bloques espaciales (necesita pipeline.bloques corrido despues de pipeline.sincronia)
+    hay_bloq = con.execute("select count(*) from information_schema.tables where table_name = 'mart_bloques'").fetchall()[0][0] > 0
+    bloq_path = out_dir / "hallazgos" / "bloques.md"
+    if hay_bloq:
+        bloq_path.write_text(_clean(bloques.pagina_bloques(con)), encoding="utf-8")
+        paginas += 1
+    elif bloq_path.exists():
+        bloq_path.unlink()
+
+    # lado del hijo (necesita pipeline.hijo corrido despues de pipeline.sincronia)
+    hay_hijo = con.execute("select count(*) from information_schema.tables "
+                           "where table_name = 'mart_hijo_coef'").fetchall()[0][0] > 0
+    hijo_path = out_dir / "hallazgos" / "hijo.md"
+    if hay_hijo:
+        hijo_path.write_text(_clean(hijo.pagina_hijo(con)), encoding="utf-8")
+        paginas += 1
+    elif hijo_path.exists():
+        hijo_path.unlink()
+
+    # validacion por inyeccion (necesita pipeline.inyeccion corrido despues de pipeline.sincronia)
+    hay_iny = con.execute("select count(*) from information_schema.tables where table_name = 'mart_inyeccion'").fetchall()[0][0] > 0
+    iny_path = out_dir / "hallazgos" / "inyeccion.md"
+    if hay_iny:
+        iny_path.write_text(_clean(inyeccion.pagina_inyeccion(con)), encoding="utf-8")
+        paginas += 1
+    elif iny_path.exists():
+        iny_path.unlink()
+
     # indice
     grafo = _grafo(con, data)
     grafo_path = out_dir / "grafo.json"
@@ -644,6 +676,16 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Barriles diferidos como rango (sin duplicar y descontando la brecha previa) y cifra por evento: [diferido.md](hallazgos/diferido.md).")
     if hay_sinc:
         L.append("- Sincronía dentro del mes (la brecha del mes 0 según la fracción posterior al inicio de la fractura): [sincronia.md](hallazgos/sincronia.md).")
+    if hay_bloq:
+        L.append("- Bloques espaciales (los intervalos principales remuestreando bloques de 2 y 5 km en vez de pads): [bloques.md](hallazgos/bloques.md).")
+    if hay_hijo:
+        L.append("- Lado del hijo (rendimiento de 12 meses según el petróleo ya producido a menos de 1 km): [hijo.md](hallazgos/hijo.md).")
+    if hay_iny:
+        L.append("- Validación por inyección (efectos plantados contra efectos recuperados por los estimadores): [inyeccion.md](hallazgos/inyeccion.md).")
+    if (out_dir / "hallazgos" / "colorado_datos.md").exists():
+        L.append("- Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).")
+    if (out_dir / "hallazgos" / "replicacion.md").exists():
+        L.append("- Replicación en Colorado (el estudio de eventos sobre la cuenca DJ, con la regla fijada de antemano): [replicacion.md](hallazgos/replicacion.md).")
     L.append(f"- Grafo: [grafo.json](grafo.json) con {len(grafo['nodos'])} nodos y "
              f"{_vigentes(grafo['aristas'])} aristas vigentes.")
     L.append("")
@@ -813,13 +855,17 @@ def _grafo(con, data) -> dict:
 def main() -> None:
     manifest = load_manifest()
     db = DATA / "warehouse.duckdb"
+    db_co = DATA / "colorado" / "warehouse.duckdb"
     con = duckdb.connect(str(db), read_only=True)
+    con_co = duckdb.connect(str(db_co), read_only=True) if db_co.exists() else None
     try:
-        filas = hz.evaluar(con, manifest)
+        filas = hz.evaluar(con, manifest, con_colorado=con_co)
         hz.registrar(filas, ROOT / "wiki" / "hallazgos" / "ledger.csv")
         stats = build_wiki(con, manifest, ROOT / "wiki")
     finally:
         con.close()
+        if con_co is not None:
+            con_co.close()
     print(json.dumps(stats, ensure_ascii=False))
     for aviso in hz.lint_wiki(ROOT / "wiki"):
         print(f"[aviso] {aviso}")

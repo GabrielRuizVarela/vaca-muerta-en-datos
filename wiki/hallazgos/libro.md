@@ -6,6 +6,8 @@ Estado: confirmado si cumple el umbral; debilitado si falla por menos del 25% de
 
 Estado no firme: la hipótesis del eje (`anisotropia`) cumple el umbral, pero se marca no firme si el eje no es firme según la robustez y la validación fuera de tiempo. Eso pasa si el eje no está definido en algún subconjunto de `mart_robustez_eje` (IC de 90 grados o más, o p de permutación de 0,10 o más), si el IC de la muestra completa mide 90 grados o más, o si el eje estimado con datos viejos no se separa del SHmax publicado ni de ejes al azar en `mart_validacion_holdout`. Se lee de esos marts; no es un análisis nuevo. Los umbrales de las demás hipótesis no cambian.
 
+Estado de `hijo_depletado`: sale del veredicto de su propia regla (`pipeline/hijo.py`), no del umbral del valor. Confirmado si el veredicto es sostiene, refutado si es no se sostiene, y no firme en cualquier otro caso (ubicación, no firme o sin muestra). Su valor es el límite superior del IC del grupo muy depletado y no existe (s/d) cuando el control negativo no es nulo.
+
 El ledger solo agrega filas: cuando cambia la regla de una hipótesis se registra una fila nueva con la misma versión de datos y la fila anterior queda en el historial. La última fila de cada hipótesis es la vigente.
 
 ## Estado actual
@@ -18,6 +20,15 @@ El ledger solo agrega filas: cuando cambia la regla de una hipótesis se registr
 | `parado_declarado` | confirmado | 0,070 | > 0,030 | 2026-09 (1f07aee9b988) |
 | `anisotropia` | no firme | -0,260 | < -0,100 | 2026-09 (1f07aee9b988) |
 | `sincronia_mes0` | confirmado | -0,097 | < -0,020 | 2026-09 (1f07aee9b988) |
+| `brecha_mes1_bloques` | confirmado | -0,168 | < -0,100 | 2026-09 (1f07aee9b988) |
+| `sincronia_mes0_bloques` | confirmado | -0,080 | < -0,020 | 2026-09 (1f07aee9b988) |
+| `hijo_depletado` | no firme | s/d | < 0,000 | 2026-09 (1f07aee9b988) |
+| `inyeccion_r1` | confirmado | 0,367 | abs< 5,000 | 2026-09 (1f07aee9b988) |
+| `inyeccion_r2` | confirmado | 1,035 | > 0,800 | 2026-09 (1f07aee9b988) |
+| `inyeccion_r3` | confirmado | 0,933 | > 0,800 | 2026-09 (1f07aee9b988) |
+| `inyeccion_r4a` | debilitado | 0,100 | < 0,100 | 2026-09 (1f07aee9b988) |
+| `inyeccion_r4b` | confirmado | 0,504 | < 2,000 | 2026-09 (1f07aee9b988) |
+| `replicacion_colorado` | confirmado | -0,130 | < 0,000 | 2026-09 (1f07aee9b988) |
 
 ## brecha_mes1
 
@@ -80,5 +91,106 @@ Expectativa: valor < -0,020 (índice por unidad de fracción).
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | -0,097 | confirmado |
+
+## brecha_mes1_bloques
+
+El IC 95% por bloques espaciales de 5 km de la brecha del mes 1 (base de los meses -3 a -1) tiene el límite superior por debajo de -0,10: no cruza -10 puntos (regla fijada antes de correr, pipeline/bloques.py).
+
+Expectativa: valor < -0,100 (índice).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | -0,168 | confirmado |
+
+## sincronia_mes0_bloques
+
+La pendiente de la brecha del mes 0 por fracción del mes tiene, con el IC por bloques espaciales de 5 km, el límite superior por debajo de -0,02 (regla fijada antes de correr, pipeline/bloques.py).
+
+Expectativa: valor < -0,020 (índice por unidad de fracción).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | -0,080 | confirmado |
+
+## hijo_depletado
+
+Un hijo cerca de pozos depletados rinde menos petróleo por metro de rama a 12 meses que un hijo en zona virgen y el control negativo, con pozos posteriores, es nulo: el valor es el límite superior del IC del grupo muy depletado, si el control negativo es nulo (sin valor si no lo es), y queda por debajo de cero, en bbl por metro (regla fijada antes de correr, pipeline/hijo.py). El estado sale del veredicto de esa regla: confirmado si sostiene, refutado si no se sostiene, y no firme en cualquier otro caso (ubicación, no firme o sin muestra).
+
+Expectativa: valor < 0,000 (bbl por metro).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | 12,388 | refutado |
+| 2026-09 | 1f07aee9b988 | s/d | no firme |
+
+## inyeccion_r1
+
+Un efecto plantado de 20% de caída de caudal en el mes 1 se recupera con la brecha del mes 1 a menos de 5 puntos de -20 (media entre mundos simulados, índice con base de los meses -3 a -1; regla fijada antes de correr, pipeline/inyeccion.py).
+
+Expectativa: valor abs< 5,000 (puntos).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | 0,367 | confirmado |
+
+## inyeccion_r2
+
+El reparto entre días y caudal por día se identifica: con un cierre plantado la parte de los días es de al menos 80% y con una caída de caudal plantada la parte del caudal por día es de al menos 80% (el menor de los dos valores; regla fijada antes de correr, pipeline/inyeccion.py).
+
+Expectativa: valor > 0,800 (proporción).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | 1,035 | confirmado |
+
+## inyeccion_r3
+
+Una caída plantada de 40% desde el día de inicio de la fractura se recupera con pendiente negativa y IC que excluye cero en al menos 80% de los mundos simulados (regla fijada antes de correr, pipeline/inyeccion.py).
+
+Expectativa: valor > 0,800 (proporción de mundos).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | 0,933 | confirmado |
+
+## inyeccion_r4a
+
+Sin efecto plantado, el IC de la brecha del mes 1 excluye cero en como máximo 10% de los mundos simulados (regla fijada antes de correr, pipeline/inyeccion.py).
+
+Expectativa: valor < 0,100 (proporción de mundos).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | 0,100 | debilitado |
+
+## inyeccion_r4b
+
+Una brecha previa de nivel de 5% se lee como previa a la fractura: la pretendencia y la brecha neta del mes 1 quedan a menos de 2 puntos de lo plantado (-5 y 0), restando el mundo nulo de los mismos sorteos (regla fijada antes de correr, pipeline/inyeccion.py).
+
+Expectativa: valor < 2,000 (puntos).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | 0,504 | confirmado |
+
+## replicacion_colorado
+
+Réplica en la cuenca DJ de Colorado: se sostiene si el IC 95% por bloques espaciales de 5 km de la brecha del mes 1 queda por debajo de cero y la brecha previa a la fractura con base limpia es menor, en valor absoluto, que la del mes 1; si no, no se replica. El valor es el mayor entre el límite superior de ese IC y la diferencia de valores absolutos (previa menos mes 1), y se sostiene si es menor que cero (regla fijada antes de correr, pipeline/replicacion.py).
+
+Expectativa: valor < 0,000 (índice).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | s/d | preregistrada |
+| 2026-09 | 1f07aee9b988 | -0,130 | confirmado |
 
 Ver también [Interferencia entre fracturas](interferencia.md).

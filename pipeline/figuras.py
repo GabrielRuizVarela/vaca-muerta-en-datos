@@ -1,10 +1,11 @@
-"""Tres figuras SVG del caso de estudio (docs/caso-interferencia.md), generadas desde el warehouse.
+"""Cuatro figuras SVG del caso de estudio (docs/caso-interferencia.md), generadas desde el warehouse.
 
   uv run python -m pipeline.figuras [--db data/warehouse.duckdb] [--out docs/img]
 
 Cada escritor es una funcion pura de datos simples (listas de tuplas o diccionarios) que devuelve el texto del SVG:
 determinista (formato numerico fijo, orden fijo, sin fechas ni identificadores al azar), sin fuentes externas y con
 `<title>` y `<desc>`. Los datos salen de los marts ya construidos; esta pagina no calcula nada nuevo.
+La cuarta (`inyeccion_svg`) pone lo recuperado contra lo plantado en la validacion por inyeccion.
 Texto en espanol, sin rayas largas. Paleta de Okabe e Ito (segura para daltonismo) y trazos distintos por serie.
 """
 from __future__ import annotations
@@ -19,7 +20,7 @@ import duckdb
 ROOT = Path(__file__).resolve().parent.parent
 WAREHOUSE = ROOT / "data" / "warehouse.duckdb"
 SALIDA = ROOT / "docs" / "img"
-ARCHIVOS = ("caso_event_study.svg", "caso_distancia.svg", "caso_anio.svg")
+ARCHIVOS = ("caso_event_study.svg", "caso_distancia.svg", "caso_anio.svg", "caso_inyeccion.svg")
 
 ANCHO = 700
 AZUL, NARANJA, NEGRO, GRIS, CLARO = "#0072B2", "#D55E00", "#222222", "#6b6b6b", "#e4e4e4"
@@ -262,6 +263,62 @@ def anio_svg(anios: list[tuple[int, int, float]]) -> str:
     return _cerrar(out)
 
 
+def _panel_recuperado(out: list[str], x0: float, y0: float, lado: float, puntos: list[dict], titulo: str, unidad: str) -> None:
+    """Un panel cuadrado de recuperado (eje y: media y p05 a p95) contra plantado (eje x), con la recta de 1 a 1."""
+    vals = [v for p in puntos for v in (p["plantado"], p["media"], p["p05"], p["p95"])]
+    lo, hi, paso = _escala(min(vals), max(vals))
+
+    def pos(v: float, y: bool = False) -> float:
+        f = (v - lo) / (hi - lo)
+        return y0 + lado - f * lado if y else x0 + f * lado
+
+    out.append(f'<text style="font-weight:bold" x="{_n(x0)}" y="{_n(y0 - 10)}">{escape(titulo)}</text>')
+    for t in _ticks(lo, hi, paso):
+        out.append(f'<line class="rejilla" x1="{_n(x0)}" y1="{_n(pos(t, True))}" x2="{_n(x0 + lado)}" y2="{_n(pos(t, True))}"/>')
+        out.append(f'<line class="rejilla" x1="{_n(pos(t))}" y1="{_n(y0)}" x2="{_n(pos(t))}" y2="{_n(y0 + lado)}"/>')
+        out.append(f'<text x="{_n(x0 - 6)}" y="{_n(pos(t, True) + 4)}" text-anchor="end">{_c(t, 0)}</text>')
+        out.append(f'<text x="{_n(pos(t))}" y="{_n(y0 + lado + 14)}" text-anchor="middle">{_c(t, 0)}</text>')
+    out.append(f'<path class="eje" d="M{_n(x0)},{_n(y0)} L{_n(x0)},{_n(y0 + lado)} L{_n(x0 + lado)},{_n(y0 + lado)}"/>')
+    out.append(f'<line class="marca" x1="{_n(pos(lo))}" y1="{_n(pos(lo, True))}" x2="{_n(pos(hi))}" y2="{_n(pos(hi, True))}"/>')
+    for p in puntos:
+        x = pos(p["plantado"])
+        out.append(f'<line x1="{_n(x)}" y1="{_n(pos(p["p05"], True))}" x2="{_n(x)}" y2="{_n(pos(p["p95"], True))}" '
+                   f'stroke="{p["color"]}" stroke-width="2"/>')
+        out.append(f'<circle cx="{_n(x)}" cy="{_n(pos(p["media"], True))}" r="4" fill="{p["color"]}"/>')
+    out.append(f'<text x="{_n(x0 + lado / 2)}" y="{_n(y0 + lado + 32)}" text-anchor="middle">Plantado ({escape(unidad)})</text>')
+    out.append(f'<text x="{_n(x0 - 40)}" y="{_n(y0 + lado / 2)}" text-anchor="middle" '
+               f'transform="rotate(-90 {_n(x0 - 40)} {_n(y0 + lado / 2)})">Recuperado ({escape(unidad)})</text>')
+
+
+COLOR_ESCENARIO = {"S1": AZUL, "S2": NARANJA, "S3": AZUL, "S4": "#009E73", "S5": NEGRO}
+ETIQUETA_ESCENARIO = {"S1": "S1 cierre", "S2": "S2 caída de caudal", "S3": "S3 caída dentro del mes", "S4": "S4 brecha previa",
+                      "S5": "S5 nulo"}
+
+
+def inyeccion_svg(celdas: list[dict], mundos: int) -> str:
+    """Recuperado contra plantado. Cada celda: {"escenario", "plantado", "media", "p05", "p95", "panel"}, panel "brecha" o "pendiente"."""
+    desc = ("Dos paneles con la recta de uno a uno. A la izquierda, la brecha del mes 1 recuperada contra la plantada, en puntos del "
+            f"índice, con la media de {mundos} mundos simulados y el rango del 5% al 95%. A la derecha, la pendiente del mes 0 sobre la "
+            "fracción del mes. Lo recuperado es la diferencia con el mundo nulo de los mismos sorteos y lo plantado está en puntos del "
+            "índice. Los puntos cerca de la recta dicen que el estimador sin cambios recupera lo plantado. Recuperar un "
+            "efecto plantado dice algo del método, no de los pozos.")
+    out = _abrir(470, "Efectos plantados contra efectos recuperados", desc,
+                 "Estimadores sin cambios sobre datos reales con la fecha de fractura corrida un año")
+    pa = [dict(c, color=COLOR_ESCENARIO[c["escenario"]]) for c in celdas if c["panel"] == "brecha"]
+    pb = [dict(c, color=COLOR_ESCENARIO[c["escenario"]]) for c in celdas if c["panel"] == "pendiente"]
+    _panel_recuperado(out, 70, 90, 250, pa, "Brecha del mes 1", "puntos")
+    _panel_recuperado(out, 410, 90, 250, pb, "Pendiente del mes 0", "puntos por 0,1 de f0")
+    x = 30.0
+    for e in [e for e in ("S1", "S2", "S3", "S4", "S5") if any(c["escenario"] == e for c in celdas)]:
+        out.append(f'<circle cx="{_n(x)}" cy="414" r="4" fill="{COLOR_ESCENARIO[e]}"/>')
+        out.append(f'<text x="{_n(x + 10)}" y="418">{escape(ETIQUETA_ESCENARIO[e])}</text>')
+        x += 32 + 6.4 * len(ETIQUETA_ESCENARIO[e])
+    out.append('<text class="pie" x="20" y="446">Punto: media de los mundos; barra: del 5% al 95%; recta punteada: recuperado igual a plantado.</text>')
+    out.append('<text class="pie" x="20" y="432">Plantado en puntos del índice; recuperado menos el mundo nulo de los mismos sorteos (el nulo mismo no se dibuja).</text>')
+    out.append(f'<text class="pie" x="20" y="460">{mundos} mundos por celda. Prueba del método sobre efectos plantados simples, no de los pozos.</text>')
+    return _cerrar(out)
+
+
 # ---- lectura del warehouse y escritura -------------------------------------------------------------------------------
 
 def _etiqueta_banda(banda: str, ref: bool) -> str:
@@ -287,17 +344,33 @@ def datos(con) -> dict:
                        "ic_alto": float(hi), "n": int(n), "ref": ref})
     anios = [(int(a), int(n), 100 * float(b)) for a, n, b in con.execute(
         "select anio, eventos_cercanos, brecha_mes_1 from mart_interferencia_anual where brecha_mes_1 is not null order by anio").fetchall()]
-    return {"original": original, "limpia": limpia, "descomp": descomp, "bandas": bandas, "anios": anios}
+    return {"original": original, "limpia": limpia, "descomp": descomp, "bandas": bandas, "anios": anios,
+            "inyeccion": datos_inyeccion(con)}
+
+
+def datos_inyeccion(con) -> dict:
+    """Celdas de la validacion por inyeccion: lo recuperado menos el mundo nulo contra lo plantado en puntos del indice, de la brecha
+    del mes 1 (S1, S2 y S4 con base limpia) y de la pendiente del mes 0 (S3). El nulo (S5) no se dibuja: restado da cero por construccion."""
+    q = ("select escenario, tamano, medida, plantado_puntos, recuperado_neto, neto_p05, neto_p95, mundos from mart_inyeccion "
+         "where (medida = 'brecha_mes1' and escenario in ('S1', 'S2')) or (medida = 'brecha_mes1_base_limpia' and escenario = 'S4') "
+         "or (medida = 'pendiente_mes0' and escenario = 'S3') order by escenario, tamano")
+    celdas, mundos = [], 0
+    for esc, tam, med, plant, media, p05, p95, n in con.execute(q).fetchall():
+        celdas.append({"escenario": esc, "tamano": int(tam), "plantado": float(plant), "media": float(media), "p05": float(p05),
+                       "p95": float(p95), "panel": "pendiente" if med == "pendiente_mes0" else "brecha"})
+        mundos = int(n)
+    return {"celdas": celdas, "mundos": mundos}
 
 
 def svgs(d: dict) -> dict[str, str]:
     return {ARCHIVOS[0]: evento_svg(d["original"], d["limpia"], d["descomp"]),
             ARCHIVOS[1]: distancia_svg(d["bandas"]),
-            ARCHIVOS[2]: anio_svg(d["anios"])}
+            ARCHIVOS[2]: anio_svg(d["anios"]),
+            ARCHIVOS[3]: inyeccion_svg(d["inyeccion"]["celdas"], d["inyeccion"]["mundos"])}
 
 
 def escribir(d: dict, carpeta: Path) -> list[Path]:
-    """Escribe las tres figuras en `carpeta` (UTF-8, saltos de linea \\n) y devuelve las rutas."""
+    """Escribe las cuatro figuras en `carpeta` (UTF-8, saltos de linea \\n) y devuelve las rutas."""
     carpeta.mkdir(parents=True, exist_ok=True)
     rutas = []
     for nombre, texto in svgs(d).items():

@@ -13,6 +13,11 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Descomposición de la brecha (días producidos contra caudal por día) y gradiente por distancia: [descomposicion.md](hallazgos/descomposicion.md).
 - Barriles diferidos como rango (sin duplicar y descontando la brecha previa) y cifra por evento: [diferido.md](hallazgos/diferido.md).
 - Sincronía dentro del mes (la brecha del mes 0 según la fracción posterior al inicio de la fractura): [sincronia.md](hallazgos/sincronia.md).
+- Bloques espaciales (los intervalos principales remuestreando bloques de 2 y 5 km en vez de pads): [bloques.md](hallazgos/bloques.md).
+- Lado del hijo (rendimiento de 12 meses según el petróleo ya producido a menos de 1 km): [hijo.md](hallazgos/hijo.md).
+- Validación por inyección (efectos plantados contra efectos recuperados por los estimadores): [inyeccion.md](hallazgos/inyeccion.md).
+- Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).
+- Replicación en Colorado (el estudio de eventos sobre la cuenca DJ, con la regla fijada de antemano): [replicacion.md](hallazgos/replicacion.md).
 - Grafo: [grafo.json](grafo.json) con 2014 nodos y 4069 aristas vigentes.
 
 ## Operadores

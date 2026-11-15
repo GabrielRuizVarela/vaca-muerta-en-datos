@@ -78,3 +78,16 @@ def test_registro_real_tiene_el_orden_documentado():
     assert nombres[:4] == ["ingest", "build", "costo", "robustez"]
     assert nombres[-3:] == ["report", "replay", "claims"]
     assert next(p for p in run_all.PASOS if p.nombre == "ingest").solo_con_flag
+
+
+def test_pasos_de_colorado_son_opcionales_y_estan_en_la_lista(capsys):
+    co = [p for p in run_all.PASOS if p.solo_con_colorado]
+    assert [p.nombre for p in co] == ["colorado_ingest", "colorado_build", "replicacion"]
+    por_defecto = [p.nombre for p in run_all.seleccionar(run_all.PASOS)]
+    assert not {p.nombre for p in co} & set(por_defecto)
+    con_flag = [p.nombre for p in run_all.seleccionar(run_all.PASOS, con_colorado=True)]
+    assert con_flag.index("colorado_ingest") < con_flag.index("colorado_build") < con_flag.index("replicacion") < con_flag.index("wiki")
+    assert run_all.main(["--list"]) == 0
+    assert "con --with-colorado" in capsys.readouterr().out
+    corren, omitidos = run_all.pasos_muestra()
+    assert not {"colorado_ingest", "colorado_build", "replicacion"} & (set(omitidos) | {p.nombre for p in corren})
