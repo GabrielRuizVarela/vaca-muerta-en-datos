@@ -117,6 +117,13 @@ def test_razones_eje_no_firme_lee_los_marts():
 
 
 def test_solo_la_hipotesis_del_eje_exige_firmeza():
-    assert [h.id for h in hz.HIPOTESIS if h.firmeza] == ["anisotropia"]
+    assert [h.id for h in hz.HIPOTESIS if h.firmeza] == ["asimetria_de_superficie"]
     sin = hz.Hipotesis("x", "e", "select 1", "<", 0.0, "u")
     assert hz.firma(sin) != hz.firma(hz.Hipotesis("x", "e", "select 1", "<", 0.0, "u", firmeza=True))
+
+
+def test_id_renombrado_sigue_siendo_valido_en_la_operacion_del_agente():
+    import duckdb
+    from agente.ops import ArgsLibro, libro_hallazgos
+    r = libro_hallazgos(duckdb.connect(), ArgsLibro(id="anisotropia"))
+    assert r["texto"].startswith("asimetria_de_superficie")

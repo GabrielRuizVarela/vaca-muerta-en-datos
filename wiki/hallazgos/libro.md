@@ -4,7 +4,7 @@ Cada hallazgo es una hipótesis en código (`pipeline/hallazgos.py`) que se re-e
 
 Estado: confirmado si cumple el umbral; debilitado si falla por menos del 25% del umbral; refutado si falla por más.
 
-Estado no firme: la hipótesis del eje (`anisotropia`) cumple el umbral, pero se marca no firme si el eje no es firme según la robustez y la validación fuera de tiempo. Eso pasa si el eje no está definido en algún subconjunto de `mart_robustez_eje` (IC de 90 grados o más, o p de permutación de 0,10 o más), si el IC de la muestra completa mide 90 grados o más, o si el eje estimado con datos viejos no se separa del SHmax publicado ni de ejes al azar en `mart_validacion_holdout`. Se lee de esos marts; no es un análisis nuevo. Los umbrales de las demás hipótesis no cambian.
+Estado no firme: la hipótesis del eje (`asimetria_de_superficie`, antes `anisotropia`) cumple el umbral, pero se marca no firme si el eje no es firme según la robustez y la validación fuera de tiempo. Eso pasa si el eje no está definido en algún subconjunto de `mart_robustez_eje` (IC de 90 grados o más, o p de permutación de 0,10 o más), si el IC de la muestra completa mide 90 grados o más, o si el eje estimado con datos viejos no se separa del SHmax publicado ni de ejes al azar en `mart_validacion_holdout`, o si dispara alguna pata de la regla de parada (`mart_eje_parada`: potencia, ventana previa, exposición, bloques). Se lee de esos marts; no es un análisis nuevo. Los umbrales de las demás hipótesis no cambian.
 
 Estado de `hijo_depletado`: sale del veredicto de su propia regla (`pipeline/hijo.py`), no del umbral del valor. Confirmado si el veredicto es sostiene, refutado si es no se sostiene, y no firme en cualquier otro caso (ubicación, no firme o sin muestra). Su valor es el límite superior del IC del grupo muy depletado y no existe (s/d) cuando el control negativo no es nulo.
 
@@ -18,7 +18,7 @@ El ledger solo agrega filas: cuando cambia la regla de una hipótesis se registr
 | `recuperacion_mes6` | confirmado | -0,021 | abs< 0,050 | 2026-09 (1f07aee9b988) |
 | `salto_agua` | confirmado | 0,188 | > 0,100 | 2026-09 (1f07aee9b988) |
 | `parado_declarado` | confirmado | 0,070 | > 0,030 | 2026-09 (1f07aee9b988) |
-| `anisotropia` | no firme | -0,260 | < -0,100 | 2026-09 (1f07aee9b988) |
+| `asimetria_de_superficie` | no firme | -0,260 | < -0,100 | 2026-09 (1f07aee9b988) |
 | `sincronia_mes0` | confirmado | -0,097 | < -0,020 | 2026-09 (1f07aee9b988) |
 | `brecha_mes1_bloques` | confirmado | -0,168 | < -0,100 | 2026-09 (1f07aee9b988) |
 | `sincronia_mes0_bloques` | confirmado | -0,080 | < -0,020 | 2026-09 (1f07aee9b988) |
@@ -70,15 +70,16 @@ Expectativa: valor > 0,030 (proporción).
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | 0,070 | confirmado |
 
-## anisotropia
+## asimetria_de_superficie
 
-Entre eventos cercanos a 0,3 a 1 km, el eje de 56,25 a 101,25 grados pierde más producción al mes 1 que el eje de 0 +/- 22,5 grados (diferencia de medianas del índice).
+Entre eventos cercanos a 0,3 a 1 km, el sector de rumbos de superficie de 56,25 a 101,25 grados pierde más producción al mes 1 que el sector de 0 +/- 22,5 grados (diferencia de medianas del índice). Es una descripción de la muestra: el sector contiene a la vez el eje estimado (93 grados) y el SHmax publicado (67,5), así que no distingue entre ellos, y con datos públicos esa dirección no se separa de cómo se disponen los pads, y la geometría de las ramas no se pudo probar (regla de parada, eje_parada.md). Antes se llamaba `anisotropia` y figuraba como confirmado.
 
 Expectativa: valor < -0,100 (índice).
 
 | Datos a | Hash de datos | Valor | Estado |
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | -0,260 | confirmado |
+| 2026-09 | 1f07aee9b988 | -0,260 | no firme |
 | 2026-09 | 1f07aee9b988 | -0,260 | no firme |
 
 ## sincronia_mes0

@@ -35,7 +35,7 @@ This is a measured footprint that passes placebo and permutation tests, not a de
 | Resultado | Cifra | Intervalo | Veredicto |
 | --- | --- | --- | --- |
 | Interferencia al mes 1 (padres a menos de 1 km contra controles) | 19 a 23 puntos menos | IC 95% por bloques de 5 km de la brecha de 23: 17 a 29 | sostiene, con pretendencia |
-| Eje de mayor merma (cuenca) | 93 grados (E-O) | 70 a 122 grados | no firme: no se separa del SHmax publicado (67,5) |
+| Eje de mayor merma (cuenca) | 93 grados (E-O) | 70 a 122 grados | regla de parada cumplida: es una descripción de la muestra y ya no se presenta como hallazgo; la dirección no se separa del SHmax publicado (67,5) ni de cómo se disponen pads y ramas (`wiki/hallazgos/eje_parada.md`) |
 | Validación del eje fuera de tiempo | 92 grados con datos viejos, 88 en los nuevos | no se separa del SHmax ni de ejes al azar | no firme |
 | Modelo de costo de la interferencia | R2 fuera de muestra -0,15 (la media del área da 0,01) | ningún coeficiente excluye cero | no predice |
 | Placebo y permutación | fechas falsas de -2,4 a 0,6 puntos; permutadas de -8,4 a -4,8; real -22,9 | los intervalos de las fechas falsas incluyen cero | sostiene, con pretendencia |
@@ -65,7 +65,9 @@ Preguntas con un modelo propio (cualquier endpoint compatible con OpenAI, con `V
 - Los intervalos de las demás pruebas remuestrean pads hijo; con bloques espaciales de 5 km (144 bloques) el IC de la brecha del mes 1 es 1,29 veces más ancho y ningún veredicto cambia (`wiki/hallazgos/bloques.md`).
 - Datos mensuales: un cierre preventivo del operador se ve igual que un daño por interferencia.
 - No se afirma causalidad: es una huella medida contra un control, con una brecha previa a la fractura.
-- El eje de mayor merma no es una medición de esfuerzos; los ejes de las áreas chicas dependen de pocos pads.
+- La caída de los padres cercanos no es igual en todas las direcciones de superficie en la muestra completa (con intervalos por pads), pero con datos públicos esa dirección no se separa del SHmax publicado ni de la forma en que se disponen los pads; la geometría de las ramas no se pudo probar. No es un hallazgo sobre esfuerzos ni sobre la fractura. La regla de parada fijada antes de correr se cumplió (`wiki/hallazgos/eje_parada.md`): la hipótesis del libro pasó de `anisotropia` a `asimetria_de_superficie`.
+- Dosis y respuesta: con datos públicos no se ve que la caída del mes 1 crezca con la arena por etapa, la arena por metro de rama, la presión máxima de tratamiento ni la depleción del padre (modelo conjunto con Holm e intervalos por pads hijo: ninguna cumple y los quintiles no muestran orden; tampoco en la parte de caudal por día). Es compatible con cierre preventivo o con variables no observadas (espaciamiento real) y no dice que no haya golpes de fractura (`wiki/hallazgos/dosis.md`). Tampoco aparece una respuesta tardía en los meses 2 a 4 (16 pruebas con Holm; la más cercana es la depleción al mes 4, con p de 0,016 sin ajustar y de 0,26 ajustado; `wiki/hallazgos/dosis_meses.md`). Tampoco con la arena de todo el pad del hijo (pozos del pad fracturados en el mismo mes o a un mes) ni en los eventos a menos de 0,5 km con la interacción depleción por cercanía: ninguna de las nueve pruebas cumple tras Holm, y los intervalos descartan efectos de más de 0,19 desvíos de la caída en la muestra completa y de 0,33 en el subconjunto cercano (prueba agregada después de ver los resultados; `wiki/hallazgos/dosis_pad.md`).
+- Control de la brecha: la brecha del mes 1 (de -23 a -24 puntos) y su cierre a los 6 meses no dependen de cuál de cuatro controles se use (2 a 5 km, 5 a 10 km, 2 a 10 km, y 2 a 5 km sin otro hijo a menos de 2 km); a los 6 meses la brecha queda dentro de 5 puntos con los cuatro (entre -2,1 y -4,7), pero con tres de ellos su IC excluye cero, así que "se cierra" quiere decir menos de 5 puntos y no cero (`wiki/hallazgos/anillo.md`).
 - El modelo de costo no predice un evento puntual: sus coeficientes describen asociaciones en la muestra.
 - Lado del hijo: el grupo muy depletado se ubica en zonas de desarrollo más denso y el control negativo da efecto, así que su nulo no se lee como ausencia de degradación.
 - Datos públicos declarados por las operadoras; pueden rectificarse después.
@@ -75,7 +77,7 @@ Preguntas con un modelo propio (cualquier endpoint compatible con OpenAI, con `V
 ## Cómo se hizo
 
 Ingesta con hash (raw inmutable por versión), modelo en DuckDB, 28 controles de calidad (los bloqueantes frenan la publicación) y linaje de cada tabla en `wiki/hallazgos/linaje.md`.
-Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 343 tests.
+Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 413 tests.
 Preguntas en lenguaje natural sobre 16 operaciones tipadas de solo lectura (`agente/`, también como servidor MCP): exactitud 40/41 en desarrollo y 23/27 en reservadas, con la respuesta correcta calculada sobre el warehouse vigente.
 
 ## Decisiones de diseño

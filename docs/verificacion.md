@@ -16,7 +16,7 @@ Las cinco preguntas que haría un revisor externo de ingeniería de datos, dónd
 | --- | --- | --- |
 | 1. El número de hoy sale del dato de hoy | `uv run python -m pipeline.claims` y `wiki/hallazgos/linaje.md` | todas las verificaciones en PASS contra el warehouse; el linaje muestra de qué tabla cruda sale cada cifra |
 | 2. Causalidad | `uv run python -m pipeline.placebo` (y `wiki/hallazgos/placebo.md`) | Fechas falsas y permutación pasan; la pretendencia existe y la página lo dice |
-| 3. Dirección contra los esfuerzos | `uv run python -m pipeline.validacion` (y `wiki/hallazgos/validacion.md`) | Eje estable de 82 a 93 grados pero no firme; no se separa del SHmax |
+| 3. Dirección contra los esfuerzos | `uv run python -m pipeline.validacion` (y `wiki/hallazgos/validacion.md`) | Eje estable de 82 a 93 grados pero no firme; no se separa del SHmax; regla de parada cumplida (`eje_parada.md`) |
 | 4. Más volumen o frecuencia | `uv run python -m pipeline.run_all` | Cadena completa con tiempos por paso; solo la ingesta toca la red (`--with-ingest`) |
 | 5. El agente no inventa | `uv run python -m agente.eval.run --split holdout` y `uv run pytest tests/test_agente.py -q` | Argumentos validados, solo lectura, abstención ante lo que no está en los datos; 23/27 en reservadas con `nemotron-3.5-super` (no el modelo local) |
 
@@ -46,7 +46,7 @@ Raw inmutable y controles publicados. Intervalos por bootstrap de pads hijo, tes
 
 - Coordenadas de superficie, sin trayectoria de la rama: no se mide el espaciamiento real ni la pérdida del pozo hijo.
 - Datos mensuales: un cierre preventivo y un golpe de interferencia se ven igual.
-- Eje de mayor merma: unos 93 grados (IC 70 a 122), consistente en los subconjuntos pero no firme (sin Loma Campana deja de estar definido). No se puede afirmar que difiera del SHmax publicado (unos 67,5). No es una medición de esfuerzos.
+- Eje de mayor merma: unos 93 grados (IC 70 a 122), consistente en los subconjuntos pero no firme (sin Loma Campana deja de estar definido). No se puede afirmar que difiera del SHmax publicado (unos 67,5). La regla de parada fijada antes de correr se cumplió (`wiki/hallazgos/eje_parada.md`): La caída de los padres cercanos no es igual en todas las direcciones de superficie en la muestra completa (con intervalos por pads), pero con datos públicos esa dirección no se separa del SHmax publicado ni de la forma en que se disponen los pads; la geometría de las ramas no se pudo probar. No es un hallazgo sobre esfuerzos ni sobre la fractura.
 - El modelo de costo no le gana a la media fuera de muestra y ningún factor tiene un intervalo que excluya cero.
 - Los 23 puntos incluyen una brecha previa a la fractura (ver arriba).
 - Datos públicos declarados por las operadoras; pueden rectificarse. Proyecto personal, no afiliado a ninguna empresa.

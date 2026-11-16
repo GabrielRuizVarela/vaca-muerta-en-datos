@@ -1,6 +1,6 @@
 """One command for the whole chain, with timings.
 
-  uv run python -m pipeline.run_all                  # build, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, inyeccion, hijo, figuras, wiki, report, replay, claims
+  uv run python -m pipeline.run_all                  # build, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, anillo, inyeccion, hijo, figuras, wiki, report, replay, claims
   uv run python -m pipeline.run_all --with-ingest    # also download first (needs the Secretaria server)
   uv run python -m pipeline.run_all --with-colorado  # also download and build the Colorado (DJ basin) warehouse and run its replication; opt-in, needs the network
   uv run python -m pipeline.run_all --only build,wiki
@@ -46,6 +46,14 @@ PASOS: list[Paso] = [
     Paso("diferido", "pipeline.diferido"),
     Paso("sincronia", "pipeline.sincronia"),
     Paso("bloques", "pipeline.bloques"),
+    Paso("potencia", "pipeline.potencia"),
+    Paso("eje_controles", "pipeline.eje_controles"),
+    Paso("eje_exposicion", "pipeline.eje_exposicion"),
+    Paso("eje_parada", "pipeline.eje_parada"),
+    Paso("dosis", "pipeline.dosis"),
+    Paso("dosis_meses", "pipeline.dosis_meses"),
+    Paso("dosis_pad", "pipeline.dosis_pad"),
+    Paso("anillo", "pipeline.anillo"),
     Paso("inyeccion", "pipeline.inyeccion"),
     Paso("hijo", "pipeline.hijo"),
     Paso("colorado_ingest", "pipeline.colorado.ingest", solo_con_colorado=True),

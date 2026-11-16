@@ -17,9 +17,14 @@ Salidas dentro de ``out_dir``:
     hallazgos/descomposicion.md  dias producidos contra caudal por dia y gradiente por distancia (si corrio pipeline.descomposicion)
     hallazgos/diferido.md      rango de barriles diferidos y cifra por evento (si corrio pipeline.diferido)
     hallazgos/sincronia.md     la brecha del mes 0 segun la fraccion del mes posterior al inicio de la fractura (si corrio pipeline.sincronia)
+    hallazgos/eje_parada.md    regla de parada del eje de merma; potencia.md, eje_controles.md y eje_exposicion.md son sus tres pruebas
     hallazgos/bloques.md       los intervalos principales con bootstrap por bloques espaciales de 2 y 5 km (si corrio pipeline.bloques)
     hallazgos/hijo.md          el rendimiento de 12 meses del hijo segun el petroleo ya producido a menos de 1 km (si corrio pipeline.hijo)
     hallazgos/inyeccion.md     efectos plantados contra efectos recuperados por los estimadores (si corrio pipeline.inyeccion)
+    hallazgos/dosis.md          dosis y respuesta: la caida contra el trabajo del hijo y la deplecion (si corrio pipeline.dosis)
+    hallazgos/dosis_meses.md    dosis y respuesta mes a mes: el caudal por dia en k = 1 a 4 (si corrio pipeline.dosis_meses)
+    hallazgos/dosis_pad.md      dosis del pad y cercania: la caida contra la arena de todo el pad y la interaccion (si corrio pipeline.dosis_pad)
+    hallazgos/anillo.md         la brecha del mes 1 y el cierre a 6 meses con cuatro controles (si corrio pipeline.anillo)
     hallazgos/replicacion.md   el estudio de eventos sobre Colorado (lo escribe pipeline.replicacion, solo con --with-colorado)
     hallazgos/placebo.md       pretendencia, fechas falsas y permutacion del estudio de eventos (si corrio pipeline.placebo)
     grafo.json                grafo de operadores, areas, pads y pozos
@@ -34,7 +39,7 @@ from pathlib import Path
 
 import duckdb
 
-from pipeline import bloques, costo, descomposicion, diferido, hijo, inyeccion, linaje, mapa, placebo, robustez, sincronia, validacion
+from pipeline import anillo, bloques, costo, descomposicion, diferido, dosis, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, potencia, hijo, inyeccion, linaje, mapa, placebo, robustez, sincronia, validacion
 from pipeline import hallazgos as hz
 from pipeline.ingest import DATA, ROOT, load_manifest
 
@@ -542,7 +547,11 @@ def build_wiki(con, manifest, out_dir) -> dict:
                             ).fetchall()[0][0] > 0
     anis_path = out_dir / "hallazgos" / "anisotropia.md"
     if hay_costo:
-        anis_path.write_text(_clean(costo.pagina_anisotropia(con)), encoding="utf-8")
+        anis = costo.pagina_anisotropia(con)
+        aviso = eje_parada.aviso_anisotropia(con)
+        if aviso:
+            anis = anis.replace("## Eje de máxima merma", "\n".join(aviso) + "\n## Eje de máxima merma", 1)
+        anis_path.write_text(_clean(anis), encoding="utf-8")
         paginas += 1
         (out_dir / "hallazgos" / "anisotropia_mapa.svg").write_text(_clean(mapa.mapa_areas_svg(con)), encoding="utf-8")
     elif anis_path.exists():
@@ -640,6 +649,57 @@ def build_wiki(con, manifest, out_dir) -> dict:
     elif iny_path.exists():
         iny_path.unlink()
 
+    # dosis y respuesta (necesita pipeline.dosis corrido despues de pipeline.descomposicion)
+    hay_dosis = con.execute("select count(*) from information_schema.tables where table_name = 'mart_dosis_veredicto'").fetchall()[0][0] > 0
+    dosis_path = out_dir / "hallazgos" / "dosis.md"
+    if hay_dosis:
+        dosis_path.write_text(_clean(dosis.pagina_dosis(con)), encoding="utf-8")
+        paginas += 1
+    elif dosis_path.exists():
+        dosis_path.unlink()
+
+    # dosis mes a mes (necesita pipeline.dosis_meses corrido despues de pipeline.dosis)
+    hay_dosis_meses = con.execute("select count(*) from information_schema.tables where table_name = 'mart_dosis_meses_veredicto'").fetchall()[0][0] > 0
+    dosis_meses_path = out_dir / "hallazgos" / "dosis_meses.md"
+    if hay_dosis_meses:
+        dosis_meses_path.write_text(_clean(dosis_meses.pagina_dosis_meses(con)), encoding="utf-8")
+        paginas += 1
+    elif dosis_meses_path.exists():
+        dosis_meses_path.unlink()
+
+    # dosis del pad y cercania (necesita pipeline.dosis_pad corrido despues de pipeline.dosis)
+    hay_dosis_pad = con.execute("select count(*) from information_schema.tables where table_name = 'mart_dosis_pad_veredicto'").fetchall()[0][0] > 0
+    dosis_pad_path = out_dir / "hallazgos" / "dosis_pad.md"
+    if hay_dosis_pad:
+        dosis_pad_path.write_text(_clean(dosis_pad.pagina_dosis_pad(con)), encoding="utf-8")
+        paginas += 1
+    elif dosis_pad_path.exists():
+        dosis_pad_path.unlink()
+
+    # anillo de control (necesita pipeline.anillo corrido despues de pipeline.descomposicion)
+    hay_anillo = con.execute("select count(*) from information_schema.tables where table_name = 'mart_anillo_veredicto'").fetchall()[0][0] > 0
+    anillo_path = out_dir / "hallazgos" / "anillo.md"
+    if hay_anillo:
+        anillo_path.write_text(_clean(anillo.pagina_anillo(con)), encoding="utf-8")
+        paginas += 1
+    elif anillo_path.exists():
+        anillo_path.unlink()
+
+    # regla de parada del eje: potencia, controles negativos y exposicion (necesitan pipeline.potencia, eje_controles y eje_exposicion)
+    paginas_eje = [("mart_potencia_resumen", "potencia.md", potencia.pagina_potencia),
+                   ("mart_eje_controles", "eje_controles.md", eje_controles.pagina_eje_controles),
+                   ("mart_eje_exposicion", "eje_exposicion.md", eje_exposicion.pagina_eje_exposicion),
+                   ("mart_eje_parada", "eje_parada.md", eje_parada.pagina_eje_parada)]
+    hay_eje = {}
+    for tabla, archivo, funcion in paginas_eje:
+        hay_eje[archivo] = con.execute("select count(*) from information_schema.tables where table_name = ?", [tabla]).fetchall()[0][0] > 0
+        ruta = out_dir / "hallazgos" / archivo
+        if hay_eje[archivo]:
+            ruta.write_text(_clean(funcion(con)), encoding="utf-8")
+            paginas += 1
+        elif ruta.exists():
+            ruta.unlink()
+
     # indice
     grafo = _grafo(con, data)
     grafo_path = out_dir / "grafo.json"
@@ -682,10 +742,20 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Lado del hijo (rendimiento de 12 meses según el petróleo ya producido a menos de 1 km): [hijo.md](hallazgos/hijo.md).")
     if hay_iny:
         L.append("- Validación por inyección (efectos plantados contra efectos recuperados por los estimadores): [inyeccion.md](hallazgos/inyeccion.md).")
+    if hay_dosis:
+        L.append("- Dosis y respuesta (la caída del padre contra el trabajo del hijo y la depleción): [dosis.md](hallazgos/dosis.md).")
+    if hay_dosis_meses:
+        L.append("- Dosis mes a mes (la caída del caudal por día contra el trabajo del hijo, k = 1 a 4): [dosis_meses.md](hallazgos/dosis_meses.md).")
+    if hay_dosis_pad:
+        L.append("- Dosis del pad y cercanía (la caída contra la arena de todo el pad y la interacción depleción por cercanía): [dosis_pad.md](hallazgos/dosis_pad.md).")
+    if hay_anillo:
+        L.append("- Anillo de control (la brecha del mes 1 y el cierre a 6 meses con cuatro controles): [anillo.md](hallazgos/anillo.md).")
     if (out_dir / "hallazgos" / "colorado_datos.md").exists():
         L.append("- Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).")
     if (out_dir / "hallazgos" / "replicacion.md").exists():
         L.append("- Replicación en Colorado (el estudio de eventos sobre la cuenca DJ, con la regla fijada de antemano): [replicacion.md](hallazgos/replicacion.md).")
+    if hay_eje.get("eje_parada.md"):
+        L.append("- Regla de parada del eje de merma (potencia, ventana previa, bloques y exposición): [eje_parada.md](hallazgos/eje_parada.md), con [potencia.md](hallazgos/potencia.md), [eje_controles.md](hallazgos/eje_controles.md) y [eje_exposicion.md](hallazgos/eje_exposicion.md).")
     L.append(f"- Grafo: [grafo.json](grafo.json) con {len(grafo['nodos'])} nodos y "
              f"{_vigentes(grafo['aristas'])} aristas vigentes.")
     L.append("")

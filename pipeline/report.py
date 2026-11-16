@@ -51,6 +51,13 @@ def eje_cuenca(con) -> dict | None:
     return eje
 
 
+def regla_parada_cumplida(con) -> bool:
+    """True si mart_eje_parada (pipeline.eje_parada) dice que alguna pata de la regla de parada del eje disparó."""
+    if not tabla_existe(con, "mart_eje_parada"):
+        return False
+    return bool(con.execute("select count(*) from mart_eje_parada where dispara").fetchone()[0])
+
+
 def costo_cv(con) -> dict | None:
     """R2 fuera de muestra del modelo de costo y de la media del entrenamiento (mart_costo_cv, modelos 'modelo' y
     'media_entrenamiento'), o None si el mart no existe."""
@@ -151,6 +158,7 @@ def collect(con, dq_path: Path | None = None) -> dict:
         "interferencia": interf,
         "evals": evals,
         "eje": eje_cuenca(con),
+        "eje_parada": regla_parada_cumplida(con),
         "costo_cv": costo_cv(con),
         "dq": {k: dq[k] for k in ("filas_origen_produccion", "bloqueantes_fallidos", "checks", "fuentes")},
     }
@@ -338,6 +346,9 @@ def bloque_eje(data: dict) -> str:
     linea = (f"Eje de mayor merma en la cuenca: <strong>{fmt(eje['eje_grados'])} grados</strong> "
              f"(IC 95% de {fmt(eje['ic_bajo'])} a {fmt(eje['ic_alto'])}, p de permutación {fmt(eje['p_perm'], 3)}); "
              f"{sentido}, {firmeza}.")
+    if data.get("eje_parada"):
+        linea += (" La regla de parada fijada antes de correr se cumplió: la dirección no se separa del SHmax publicado ni de la "
+                  "forma en que se disponen los pads (la geometría de las ramas no se pudo probar), y no se presenta como hallazgo sobre esfuerzos ni sobre la fractura.")
     cv = data.get("costo_cv")
     costo = ""
     if cv:

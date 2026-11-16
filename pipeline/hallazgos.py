@@ -109,6 +109,9 @@ select
   - (select median(indice) from idx where rumbo < 22.5 or rumbo >= 157.5)
 """
 
+# Hipotesis renombradas: su historial en el ledger (solo agrega filas) sigue bajo el id anterior y se muestra junto al nuevo.
+RENOMBRADAS = {"asimetria_de_superficie": "anisotropia"}
+
 HIPOTESIS = [
     Hipotesis("brecha_mes1",
               "Al mes 1 de la fractura del hijo, el índice de los padres cercanos queda por debajo "
@@ -125,9 +128,12 @@ HIPOTESIS = [
               "Los padres cercanos figuran como Parado Transitoriamente en el mes de la fractura con "
               "más frecuencia que los controles (diferencia de proporciones).",
               _SQL_PARADO, ">", 0.03, "proporción"),
-    Hipotesis("anisotropia",
-              "Entre eventos cercanos a 0,3 a 1 km, el eje de 56,25 a 101,25 grados pierde más "
-              "producción al mes 1 que el eje de 0 +/- 22,5 grados (diferencia de medianas del índice).",
+    Hipotesis("asimetria_de_superficie",
+              "Entre eventos cercanos a 0,3 a 1 km, el sector de rumbos de superficie de 56,25 a 101,25 grados pierde más "
+              "producción al mes 1 que el sector de 0 +/- 22,5 grados (diferencia de medianas del índice). Es una descripción de la "
+              "muestra: el sector contiene a la vez el eje estimado (93 grados) y el SHmax publicado (67,5), así que no distingue "
+              "entre ellos, y con datos públicos esa dirección no se separa de cómo se disponen los pads, y la geometría de las ramas no se pudo probar (regla de parada, "
+              "eje_parada.md). Antes se llamaba `anisotropia` y figuraba como confirmado.",
               _SQL_ANISOTROPIA, "<", -0.10, "índice", firmeza=True),
     Hipotesis("sincronia_mes0",
               "La brecha del mes de la fractura crece con la fracción del mes posterior al inicio de la fractura del hijo: "
@@ -243,6 +249,9 @@ def razones_eje_no_firme(con) -> list[str] | None:
     cur = con.execute("select * from mart_validacion_holdout")
     cols = [d[0] for d in cur.description]
     razones += holdout_razones([dict(zip(cols, r)) for r in cur.fetchall()])
+    if _existe(con, "mart_eje_parada"):
+        for pata, nombre in con.execute("select pata, nombre from mart_eje_parada where dispara order by pata").fetchall():
+            razones.append(f"regla de parada, pata {pata}: {nombre}")
     return razones
 
 
@@ -353,6 +362,8 @@ def pagina_libro(ledger_rows) -> str:
     por_id: dict[str, list[dict]] = {}
     for r in ledger_rows:
         por_id.setdefault(r["id"], []).append(r)
+    for nuevo, viejo in RENOMBRADAS.items():
+        por_id[nuevo] = por_id.get(viejo, []) + por_id.get(nuevo, [])
     L = ["# Libro de hallazgos", ""]
     L.append("Cada hallazgo es una hipótesis en código (`pipeline/hallazgos.py`) que se re-evalúa en cada "
              "build. El historial muestra cómo cambia el veredicto entre versiones de los datos.")
@@ -360,11 +371,12 @@ def pagina_libro(ledger_rows) -> str:
     L.append("Estado: confirmado si cumple el umbral; debilitado si falla por menos del 25% del umbral; "
              "refutado si falla por más.")
     L.append("")
-    L.append("Estado no firme: la hipótesis del eje (`anisotropia`) cumple el umbral, pero se marca no firme si el eje no es "
+    L.append("Estado no firme: la hipótesis del eje (`asimetria_de_superficie`, antes `anisotropia`) cumple el umbral, pero se marca no firme si el eje no es "
              "firme según la robustez y la validación fuera de tiempo. Eso pasa si el eje no está definido en algún "
              "subconjunto de `mart_robustez_eje` (IC de 90 grados o más, o p de permutación de 0,10 o más), si el IC de la "
              "muestra completa mide 90 grados o más, o si el eje estimado con datos viejos no se separa del SHmax publicado "
-             "ni de ejes al azar en `mart_validacion_holdout`. Se lee de esos marts; no es un análisis nuevo. "
+             "ni de ejes al azar en `mart_validacion_holdout`, o si dispara alguna pata de la regla de parada (`mart_eje_parada`: potencia, "
+             "ventana previa, exposición, bloques). Se lee de esos marts; no es un análisis nuevo. "
              "Los umbrales de las demás hipótesis no cambian.")
     L.append("")
     L.append("Estado de `hijo_depletado`: sale del veredicto de su propia regla (`pipeline/hijo.py`), no del umbral del valor. "

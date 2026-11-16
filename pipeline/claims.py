@@ -142,12 +142,13 @@ def _n_ops(_con) -> float:
 
 def _hipotesis(_con) -> float:
     """Distinct hypotheses evaluated under the newest data signature in the (append-only) ledger."""
-    from pipeline.hallazgos import leer_ledger
+    from pipeline.hallazgos import RENOMBRADAS, leer_ledger
     rows = leer_ledger(ROOT / "wiki" / "hallazgos" / "ledger.csv")
     if not rows:
         return 0.0
     ultima = rows[-1]["sha_datos"]
-    return float(len({r["id"] for r in rows if r["sha_datos"] == ultima}))
+    # una hipotesis renombrada cuenta una vez: el id viejo sigue en el ledger (solo agrega filas)
+    return float(len({r["id"] for r in rows if r["sha_datos"] == ultima} - set(RENOMBRADAS.values())))
 
 
 def _eventos_cercanos(con) -> float:

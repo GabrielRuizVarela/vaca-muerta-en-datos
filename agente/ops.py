@@ -17,7 +17,7 @@ import duckdb
 import numpy as np
 from pydantic import BaseModel, Field
 
-from pipeline.hallazgos import HIPOTESIS, leer_ledger
+from pipeline.hallazgos import HIPOTESIS, RENOMBRADAS, leer_ledger
 from pipeline.ingest import DATA, ROOT, load_manifest
 
 BBL = 6.2898
@@ -326,6 +326,8 @@ def clases_interferencia(con, a: ArgsClases) -> dict:
 
 def libro_hallazgos(con, a: ArgsLibro) -> dict:
     ids = [h.id for h in HIPOTESIS]
+    if a.id in RENOMBRADAS.values():  # un id renombrado sigue valido: apunta al nuevo
+        a = a.model_copy(update={"id": next(n for n, v in RENOMBRADAS.items() if v == a.id)})
     if a.id is not None and a.id not in ids:
         raise ErrorOperacion(f"No existe la hipótesis '{a.id}'. Ids válidos: {', '.join(ids)}.")
     ultimas: dict[str, dict] = {}

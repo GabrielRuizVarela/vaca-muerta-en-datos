@@ -61,7 +61,7 @@ Pasar estas pruebas descarta una brecha que aparezca en cualquier fecha; no demu
 
 ## 6. Lo que no funcionó y por qué informa
 
-- **El eje este-oeste no es firme.** El eje de mayor merma de la cuenca es de 93 grados (IC de 70 a 122) y no se separa del SHmax publicado, de 67,5 grados. No es una medición de esfuerzos.
+- **El eje este-oeste no es hallazgo.** El eje de merma de la cuenca es de 93 grados (IC de 70 a 122) y no se separa del SHmax publicado, de 67,5 grados; la regla de parada se cumplió (`wiki/hallazgos/eje_parada.md`).
 - **El modelo de costo no predice un evento.** Fuera de muestra su R2 es -0,15 contra 0,01 de predecir la media del área, y ningún coeficiente excluye cero. Sirve para describir la huella, no para anticipar un pozo.
 - **El lado del hijo no se puede leer.** Un hijo con más de 435 bbl por metro de rama de petróleo ya producido a menos de 1 km difiere de uno en zona virgen en -0,2 bbl por metro a 12 meses (IC 95%: -12,8 a 12,4; la mediana virgen es de 83,9), pero el control negativo, con pozos posteriores del hijo, da 8,9 (IC 2,1 a 15,7). Resultado: no firme.
 - **En otra cuenca.**

@@ -2,6 +2,8 @@
 
 Página generada por `pipeline/costo.py`. Sale de eventos entre 0,3 y 1 km de distancia de superficie, con el índice del padre al mes 1 de la fractura del hijo restado al del control de igual edad. El rumbo es el del eje hijo a padre (0 grados es norte, 90 es este).
 
+> **Regla de parada cumplida** ([eje_parada.md](eje_parada.md)). El eje de abajo es una descripción de la muestra, no un hallazgo. La caída de los padres cercanos no es igual en todas las direcciones de superficie en la muestra completa (con intervalos por pads), pero con datos públicos esa dirección no se separa del SHmax publicado ni de la forma en que se disponen los pads; la geometría de las ramas no se pudo probar. No es un hallazgo sobre esfuerzos ni sobre la fractura.
+
 ## Eje de máxima merma
 
 En toda la cuenca (n = 1.734, efectos fijos de área) el eje de mayor merma queda en 93 grados (E-O), con intervalo de 95% de 70 a 122 grados. El contraste entre el eje y su perpendicular es de 14,2 puntos de índice (p de permutación 0,022).
