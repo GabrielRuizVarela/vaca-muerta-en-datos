@@ -25,6 +25,13 @@ Salidas dentro de ``out_dir``:
     hallazgos/dosis_meses.md    dosis y respuesta mes a mes: el caudal por dia en k = 1 a 4 (si corrio pipeline.dosis_meses)
     hallazgos/dosis_pad.md      dosis del pad y cercania: la caida contra la arena de todo el pad y la interaccion (si corrio pipeline.dosis_pad)
     hallazgos/anillo.md         la brecha del mes 1 y el cierre a 6 meses con cuatro controles (si corrio pipeline.anillo)
+    hallazgos/decision_operador.md  brecha, diferido y valor por edad del padre y banda de distancia (si corrio pipeline.decision)
+    hallazgos/potencia_dosis.md  potencia del nulo de dosis y respuesta (si corrio pipeline.potencia_dosis)
+    hallazgos/robustez_operador.md  brecha del mes 1 y cierre del mes 6 sacando de a un operador y de a un area (si corrio pipeline.robustez_operador)
+    hallazgos/hijo_celdas.md   el lado del hijo comparando hijos del mismo cuadrado de 2 km (si corrio pipeline.hijo_celdas)
+    hallazgos/gas.md           el padre gasifero con el gas como resultado (si corrio pipeline.gas)
+    hallazgos/literatura.md    comparacion con la literatura (escrita a mano; el indice la enlaza si existe)
+    hallazgos/prospectiva.md   prueba prospectiva congelada (la escribe pipeline.prospectiva; el indice la enlaza si existe)
     hallazgos/replicacion.md   el estudio de eventos sobre Colorado (lo escribe pipeline.replicacion, solo con --with-colorado)
     hallazgos/placebo.md       pretendencia, fechas falsas y permutacion del estudio de eventos (si corrio pipeline.placebo)
     grafo.json                grafo de operadores, areas, pads y pozos
@@ -39,7 +46,7 @@ from pathlib import Path
 
 import duckdb
 
-from pipeline import anillo, bloques, costo, descomposicion, diferido, dosis, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, potencia, hijo, inyeccion, linaje, mapa, placebo, robustez, sincronia, validacion
+from pipeline import anillo, bloques, costo, decision, descomposicion, diferido, dosis, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, gas, potencia, potencia_dosis, hijo, hijo_celdas, inyeccion, linaje, mapa, placebo, robustez, robustez_operador, sincronia, validacion
 from pipeline import hallazgos as hz
 from pipeline.ingest import DATA, ROOT, load_manifest
 
@@ -685,6 +692,51 @@ def build_wiki(con, manifest, out_dir) -> dict:
     elif anillo_path.exists():
         anillo_path.unlink()
 
+    # capa de decision para un operador (necesita pipeline.decision corrido despues de pipeline.hijo)
+    hay_decision = con.execute("select count(*) from information_schema.tables where table_name = 'mart_decision_cierre'").fetchall()[0][0] > 0
+    decision_path = out_dir / "hallazgos" / "decision_operador.md"
+    if hay_decision:
+        decision_path.write_text(_clean(decision.pagina_decision(con)), encoding="utf-8")
+        paginas += 1
+    elif decision_path.exists():
+        decision_path.unlink()
+
+    # potencia del nulo de dosis (necesita pipeline.potencia_dosis corrido despues de pipeline.dosis_pad)
+    hay_potencia_dosis = con.execute("select count(*) from information_schema.tables where table_name = 'mart_potencia_dosis_veredicto'").fetchall()[0][0] > 0
+    potencia_dosis_path = out_dir / "hallazgos" / "potencia_dosis.md"
+    if hay_potencia_dosis:
+        potencia_dosis_path.write_text(_clean(potencia_dosis.pagina_potencia_dosis(con)), encoding="utf-8")
+        paginas += 1
+    elif potencia_dosis_path.exists():
+        potencia_dosis_path.unlink()
+
+    # el padre en la ventana de gas (necesita pipeline.gas)
+    hay_gas = con.execute("select count(*) from information_schema.tables where table_name = 'mart_gas_veredicto'").fetchall()[0][0] > 0
+    gas_path = out_dir / "hallazgos" / "gas.md"
+    if hay_gas:
+        gas_path.write_text(_clean(gas.pagina_gas(con)), encoding="utf-8")
+        paginas += 1
+    elif gas_path.exists():
+        gas_path.unlink()
+
+    # lado del hijo dentro de celdas de 2 km (necesita pipeline.hijo_celdas)
+    hay_hijo_celdas = con.execute("select count(*) from information_schema.tables where table_name = 'mart_hijo_celdas_resumen'").fetchall()[0][0] > 0
+    hijo_celdas_path = out_dir / "hallazgos" / "hijo_celdas.md"
+    if hay_hijo_celdas:
+        hijo_celdas_path.write_text(_clean(hijo_celdas.pagina_hijo_celdas(con)), encoding="utf-8")
+        paginas += 1
+    elif hijo_celdas_path.exists():
+        hijo_celdas_path.unlink()
+
+    # robustez por operador y area (necesita pipeline.robustez_operador, que corre despues de pipeline.placebo)
+    hay_rob_op = con.execute("select count(*) from information_schema.tables where table_name = 'mart_robustez_operador_veredicto'").fetchall()[0][0] > 0
+    rob_op_path = out_dir / "hallazgos" / "robustez_operador.md"
+    if hay_rob_op:
+        rob_op_path.write_text(_clean(robustez_operador.pagina_robustez_operador(con)), encoding="utf-8")
+        paginas += 1
+    elif rob_op_path.exists():
+        rob_op_path.unlink()
+
     # regla de parada del eje: potencia, controles negativos y exposicion (necesitan pipeline.potencia, eje_controles y eje_exposicion)
     paginas_eje = [("mart_potencia_resumen", "potencia.md", potencia.pagina_potencia),
                    ("mart_eje_controles", "eje_controles.md", eje_controles.pagina_eje_controles),
@@ -740,6 +792,15 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Bloques espaciales (los intervalos principales remuestreando bloques de 2 y 5 km en vez de pads): [bloques.md](hallazgos/bloques.md).")
     if hay_hijo:
         L.append("- Lado del hijo (rendimiento de 12 meses según el petróleo ya producido a menos de 1 km): [hijo.md](hallazgos/hijo.md).")
+    if hay_hijo_celdas:
+        L.append("- Lado del hijo dentro de celdas de 2 km (hijos del mismo lugar fracturados antes y después de que sus vecinos produjeran): [hijo_celdas.md](hallazgos/hijo_celdas.md).")
+    if hay_gas:
+        L.append("- El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).")
+    if (out_dir / "hallazgos" / "literatura.md").exists():
+        L.append("- Comparación con la literatura (las cifras de este trabajo al lado de las publicadas): [literatura.md](hallazgos/literatura.md).")
+    if (out_dir / "hallazgos" / "prospectiva.md").exists():
+        L.append("- Prueba prospectiva (predicciones congeladas con los datos hasta un mes y puntuadas cuando se publican los meses siguientes): "
+                 "[prospectiva.md](hallazgos/prospectiva.md).")
     if hay_iny:
         L.append("- Validación por inyección (efectos plantados contra efectos recuperados por los estimadores): [inyeccion.md](hallazgos/inyeccion.md).")
     if hay_dosis:
@@ -750,6 +811,12 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Dosis del pad y cercanía (la caída contra la arena de todo el pad y la interacción depleción por cercanía): [dosis_pad.md](hallazgos/dosis_pad.md).")
     if hay_anillo:
         L.append("- Anillo de control (la brecha del mes 1 y el cierre a 6 meses con cuatro controles): [anillo.md](hallazgos/anillo.md).")
+    if hay_decision:
+        L.append("- Capa de decisión para un operador (brecha, diferido y valor por edad del padre y banda de distancia): [decision_operador.md](hallazgos/decision_operador.md).")
+    if hay_potencia_dosis:
+        L.append("- Potencia del nulo de dosis y respuesta (qué efecto mínimo habría podido verse): [potencia_dosis.md](hallazgos/potencia_dosis.md).")
+    if hay_rob_op:
+        L.append("- Robustez por operador y área (la brecha del mes 1 y el cierre del mes 6 sacando de a un operador y de a un área): [robustez_operador.md](hallazgos/robustez_operador.md).")
     if (out_dir / "hallazgos" / "colorado_datos.md").exists():
         L.append("- Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).")
     if (out_dir / "hallazgos" / "replicacion.md").exists():

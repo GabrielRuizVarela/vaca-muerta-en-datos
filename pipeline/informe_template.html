@@ -1,0 +1,471 @@
+<title>Interferencia padre-hijo en Vaca Muerta</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Qué le pasa a un pozo padre cuando se fractura un hijo cerca, medido con el dato público mensual de la Secretaría de Energía.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: una columna de lectura de 68ch; las figuras se abren a 1040px; ficha técnica arriba, calculadora al final. */
+:root {
+  --paper: #f3f4f1; --card: #ffffff; --ink: #14181b; --ink-2: #48525a; --ink-3: #727c84;
+  --rule: #d9ddd8; --grid: #e7e9e5;
+  --padre: #b0640c; --padre-soft: #f3e3cc; --control: #3f5d76; --inter: #949d95;
+  --focus: #1d6fb8;
+  --f-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121517; --card: #1a1e21; --ink: #eceeeb; --ink-2: #b7bfc4; --ink-3: #8a949b;
+    --rule: #2c3236; --grid: #23282b;
+    --padre: #e6a04a; --padre-soft: #3a2a14; --control: #8db3d3; --inter: #6f7a72;
+    --focus: #79b4ec; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121517; --card: #1a1e21; --ink: #eceeeb; --ink-2: #b7bfc4; --ink-3: #8a949b;
+  --rule: #2c3236; --grid: #23282b;
+  --padre: #e6a04a; --padre-soft: #3a2a14; --control: #8db3d3; --inter: #6f7a72;
+  --focus: #79b4ec; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; }
+.envoltura { max-width: 1040px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+.texto { max-width: 68ch; }
+h1, h2, .cifra .v { font-family: var(--f-display); font-stretch: 78%; text-wrap: balance; }
+h1 { font-size: clamp(34px, 6.4vw, 60px); line-height: 1.02; font-weight: 750; letter-spacing: -0.01em; margin: 10px 0 18px; max-width: 18ch; }
+h2 { font-size: clamp(24px, 3.6vw, 32px); line-height: 1.1; font-weight: 700; margin: 0 0 10px; }
+p { margin: 0 0 12px; }
+.ojo { font: 500 12px/1.4 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.bajada { font-size: 19px; line-height: 1.55; color: var(--ink-2); max-width: 60ch; }
+em.u { font-style: normal; font-family: var(--f-mono); font-size: 0.92em; color: var(--ink-2); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ficha técnica: cuatro cifras con su unidad y su fuente */
+.ficha { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); }
+.cifra { padding: 16px 16px 18px 0; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.cifra + .cifra { padding-left: 16px; border-left: 1px solid var(--rule); }
+.cifra .v { font-size: clamp(34px, 5vw, 50px); font-weight: 760; line-height: 1; font-variant-numeric: tabular-nums; }
+.cifra .v small { font-size: 0.42em; font-weight: 600; margin-left: 4px; color: var(--ink-2); font-stretch: 100%; }
+.cifra.clave .v { color: var(--padre); }
+.cifra .d { font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.cifra .f { font: 11px/1.4 var(--f-mono); color: var(--ink-3); }
+@media (max-width: 760px) {
+  .ficha { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cifra:nth-child(3) { padding-left: 0; border-left: 0; }
+  .cifra:nth-child(n+3) { border-top: 1px solid var(--rule); }
+}
+
+section { display: grid; gap: 14px; }
+figure { margin: 6px 0 0; display: grid; gap: 8px; min-width: 0; }
+figcaption { font-size: 13.5px; color: var(--ink-3); max-width: 80ch; line-height: 1.5; }
+.lienzo { background: var(--card); border: 1px solid var(--rule); border-radius: 4px; padding: 14px 10px 8px; overflow-x: auto; }
+.lienzo svg { display: block; width: 100%; height: auto; min-width: 520px; }
+.lienzo.angosto svg { min-width: 0; }
+svg text { font-family: var(--f-mono); fill: var(--ink-2); font-size: 11px; }
+svg .t-fuerte { font-family: var(--f-body); font-weight: 600; font-size: 12.5px; fill: var(--ink); }
+svg .t-padre { fill: var(--padre); }
+svg .t-control { fill: var(--control); }
+svg .t-inter { fill: var(--inter); }
+.dos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .dos { grid-template-columns: minmax(0, 1fr); } }
+.dos h3 { font: 600 13px/1.3 var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 6px; }
+
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 11.5px/1.3 var(--f-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+td.n, th.n { text-align: right; }
+.tabla { overflow-x: auto; }
+
+/* calculadora */
+.calc { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0; background: var(--card); border: 1px solid var(--rule); border-radius: 4px; }
+@media (max-width: 760px) { .calc { grid-template-columns: minmax(0, 1fr); } }
+.calc form { padding: 20px; display: grid; gap: 14px; border-right: 1px solid var(--rule); }
+@media (max-width: 760px) { .calc form { border-right: 0; border-bottom: 1px solid var(--rule); } }
+.campo { display: grid; gap: 4px; }
+.campo label { font-size: 14px; font-weight: 500; }
+.campo .ayuda { font-size: 12.5px; color: var(--ink-3); }
+.campo .fila { display: flex; align-items: center; gap: 10px; }
+.campo input[type=range] { flex: 1; min-width: 0; accent-color: var(--padre); }
+.campo output, .campo select { font: 500 15px var(--f-mono); color: var(--ink); min-width: 7ch; text-align: right; }
+.campo select { text-align: left; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 6px 8px; min-width: 0; width: 100%; }
+input:focus-visible, select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.resultado { padding: 20px; display: grid; gap: 18px; align-content: start; }
+.resultado .r { display: grid; gap: 4px; }
+.resultado .r .v { font: 750 clamp(30px, 4.6vw, 42px)/1 var(--f-display); font-stretch: 80%; font-variant-numeric: tabular-nums; }
+.resultado .r.principal .v { color: var(--padre); }
+.resultado .r .d { font-size: 13.5px; color: var(--ink-2); }
+.formula { font: 12px/1.6 var(--f-mono); color: var(--ink-3); border-top: 1px dashed var(--rule); padding-top: 12px; overflow-wrap: anywhere; }
+
+.limites { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
+.limites > div { padding: 14px 16px 4px 0; min-width: 0; }
+.limites > div + div { padding-left: 16px; border-left: 1px solid var(--rule); }
+@media (max-width: 760px) { .limites { grid-template-columns: minmax(0, 1fr); } .limites > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--rule); } }
+.limites h3 { font: 700 18px/1.25 var(--f-display); font-stretch: 85%; margin: 0 0 6px; }
+.limites p { font-size: 14.5px; color: var(--ink-2); }
+code { font: 13.5px var(--f-mono); background: var(--card); border: 1px solid var(--rule); border-radius: 3px; padding: 1px 5px; overflow-wrap: anywhere; }
+.comando { display: block; padding: 10px 12px; margin: 6px 0 12px; }
+footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; color: var(--ink-3); display: grid; gap: 6px; }
+@media (prefers-reduced-motion: no-preference) { .lienzo path.serie { transition: opacity .2s; } }
+</style>
+<!--FIN_HEAD-->
+<div class="envoltura">
+
+<header>
+  <div class="ojo">Vaca Muerta · interferencia padre-hijo · dato público mensual hasta {{mes_dato}}</div>
+  <h1>Qué le pasa a un pozo padre cuando fracturás un hijo al lado</h1>
+  <p class="bajada">Un estudio de {{eventos}} eventos en los que un padre en producción tuvo un hijo fracturado a menos de 1 km ({{padres_distintos}} padres distintos), contra padres de la misma cuenca con el hijo más cercano a 2 a 5 km. La caída del primer mes es grande y no depende de un operador ni de un área. A los 6 meses casi se cierra, pero no del todo.</p>
+</header>
+
+<div class="ficha" role="list">
+  <div class="cifra clave" role="listitem">
+    <div class="ojo">Mes 1</div>
+    <div class="v num">{{gap1}}<small>puntos</small></div>
+    <div class="d">del caudal propio del padre, contra el control. Entre {{edad_menos}} y {{edad_mas}} según la edad del padre.</div>
+    <div class="f">{{eventos}} eventos · {{pads_hijo}} pads hijo</div>
+  </div>
+  <div class="cifra" role="listitem">
+    <div class="ojo">Mes 6</div>
+    <div class="v num">{{gap6}}<small>puntos</small></div>
+    <div class="d">con el control principal; hasta {{cierre_peor}} con el control más exigente de cuatro. Dentro de 5 puntos, no en cero.</div>
+    <div class="f">4 definiciones de control</div>
+  </div>
+  <div class="cifra" role="listitem">
+    <div class="ojo">Diferido</div>
+    <div class="v num">{{dif_m3}}<small>m³</small></div>
+    <div class="d">de petróleo por padre que falta contra el control en los meses 0 a 6 (IC 95%: {{dif_bajo_m3}} a {{dif_alto_m3}}).</div>
+    <div class="f">{{dif_bbl}} bbl por padre</div>
+  </div>
+  <div class="cifra" role="listitem">
+    <div class="ojo">Cota de pérdida</div>
+    <div class="v num">{{cota_bbl}}<small>bbl</small></div>
+    <div class="d">por evento: cota superior de lo que podría no volver a 24 meses ({{cota_m3}} m³). Es un techo, no una estimación.</div>
+    <div class="f">límite alto del IC 95% del acumulado</div>
+  </div>
+</div>
+
+<section id="curva">
+  <div class="texto">
+    <h2>La curva: el padre cae y después se acerca al control</h2>
+    <p>Cada línea es la mediana del caudal del padre dividido por su propio promedio de los meses -3 a -1, por 100. En el mes 1 los padres a menos de 1 km del hijo quedan a {{gap1}} puntos del control. Los de 1 a 2 km quedan en el medio. En el mes 6 la distancia con el control es de {{gap6}} puntos.</p>
+  </div>
+  <figure>
+    <div class="lienzo"><svg id="g-curva" viewBox="0 0 960 410" role="img" aria-label="Índice mediano del padre por mes desde la fractura del hijo, para padres cercanos, intermedios y de control"></svg></div>
+    <figcaption>Índice mediano por mes desde la fractura del hijo (mes 0). Cercano: hijo a menos de 1 km. Intermedio: 1 a 2 km. Control: 2 a 5 km. Todos los padres de cada banda, sin separar por edad.</figcaption>
+  </figure>
+</section>
+
+<section id="distancia">
+  <div class="texto">
+    <h2>La distancia manda: por debajo de 1 km la caída es de otro orden</h2>
+    <p>Con hijos a menos de 1 km la caída del mes 1 va de {{dist_cerca_min}} a {{dist_cerca_max}} puntos en las tres bandas. De 1 a 2 km queda en {{dist_12}}, y de 2 a 5 km en {{dist_25}}. El dato público no trae el espaciamiento real entre ramas: la distancia es entre cabezas de pozo.</p>
+  </div>
+  <figure>
+    <div class="lienzo"><svg id="g-distancia" viewBox="0 0 960 300" role="img" aria-label="Brecha del mes 1 por banda de distancia al hijo, con intervalo del 95%"></svg></div>
+    <figcaption>Brecha del mes 1 en puntos con intervalo del 95% (bootstrap por pads hijo). Base de los meses -6 a -4 y control de 5 a 10 km: no es la misma base que la ficha de arriba, por eso las cifras no se comparan una a una.</figcaption>
+  </figure>
+</section>
+
+<section id="edad">
+  <div class="texto">
+    <h2>Los padres viejos caen más y cierran menos</h2>
+    <p>La caída del mes 1 va de {{edad_menos}} puntos con padres de 6 a 11 meses de producción a {{edad_mas}} con padres de 48 meses o más. {{frase_viejos}}</p>
+  </div>
+  <figure>
+    <div class="lienzo"><svg id="g-edad" viewBox="0 0 960 290" role="img" aria-label="Brecha del mes 1 y del mes 6 por edad del padre"></svg></div>
+    <figcaption>Brecha del mes 1 (punto lleno) y del mes 6 (punto hueco) por edad del padre al fracturar el hijo. Diferencias de medianas contra un control de la misma edad a 2 a 5 km, sin intervalo.</figcaption>
+  </figure>
+</section>
+
+<section id="robustez">
+  <div class="texto">
+    <h2>No es un operador ni un área</h2>
+    <p>Sacando de a un operador ({{op_n}} con al menos 50 eventos cercanos) la brecha del mes 1 queda entre {{op_min}} y {{op_max}} puntos; sacando de a un área ({{ar_n}}), entre {{ar_min}} y {{ar_max}}. El intervalo del 95% nunca toca el cero: su límite alto más alto es {{ic_alto_max}}. En el mes 6, en todas las salidas, la brecha queda entre {{seis_min}} y {{seis_max}}. La regla para decir esto se fijó antes de correrlo.</p>
+  </div>
+  <figure>
+    <div class="dos">
+      <div><h3>Sin cada operador</h3><div class="lienzo angosto"><svg id="g-rob-operador" viewBox="0 0 470 300" role="img" aria-label="Brecha del mes 1 sacando de a un operador"></svg></div></div>
+      <div><h3>Sin cada área</h3><div class="lienzo angosto"><svg id="g-rob-area" viewBox="0 0 470 330" role="img" aria-label="Brecha del mes 1 sacando de a un área"></svg></div></div>
+    </div>
+    <figcaption>Brecha del mes 1 en puntos con intervalo del 95% (bootstrap por pads hijo) al sacar a cada operador o área del padre. La línea vertical marca la muestra completa ({{gap1}}).</figcaption>
+  </figure>
+</section>
+
+<section id="cierre">
+  <div class="texto">
+    <h2>A los 6 meses: cerca, no en cero</h2>
+    <p>Los padres cercanos son siempre los mismos; lo que cambia es contra quién se los mide. Con cualquiera de los cuatro controles, lo que queda en el mes 6 está entre {{gap6}} y {{cierre_peor}} puntos. A 24 meses, el intervalo del 95% del acumulado por evento va de {{media24_bajo_bbl}} a {{media24_alto_bbl}} bbl: no se distingue de cero, y su límite alto es la cota de la ficha.</p>
+  </div>
+  <div class="tabla">
+    <table>
+      <thead><tr><th>Control</th><th class="n">Mes 1</th><th class="n">Mes 6</th><th class="n">Parte que se cierra</th></tr></thead>
+      <tbody id="t-cierre"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="valor">
+  <div class="texto">
+    <h2>Cuánto vale con tu precio y tu tasa</h2>
+    <p>El diferido es volumen que llega tarde, si llega. Su costo es el valor tiempo de cobrarlo más tarde. La cota, en cambio, es lo más que podría no volver según el dato: valuarla sin descontar da un techo. El precio, la tasa y el rezago los ponés vos; los de arranque son un ejemplo.</p>
+  </div>
+  <div class="calc">
+    <form id="calc" autocomplete="off">
+      <div class="campo">
+        <label for="c-vol">Volumen diferido por padre</label>
+        <select id="c-vol"></select>
+        <span class="ayuda">Media de la cuenca o los extremos de su intervalo del 95%.</span>
+      </div>
+      <div class="campo">
+        <label for="c-padres">Padres a menos de 1 km del hijo</label>
+        <span class="ayuda">Mediana de la cuenca: {{padres_mediana}} padres por hijo.</span>
+        <div class="fila"><input id="c-padres" type="range" min="1" max="8" step="1" value="{{ej_padres}}"><output id="o-padres" for="c-padres">{{ej_padres}}</output></div>
+      </div>
+      <div class="campo">
+        <label for="c-precio">Precio del petróleo (USD/bbl)</label>
+        <div class="fila"><input id="c-precio" type="range" min="30" max="100" step="1" value="{{ej_precio}}"><output id="o-precio" for="c-precio">{{ej_precio}}</output></div>
+      </div>
+      <div class="campo">
+        <label for="c-tasa">Tasa de descuento anual (%)</label>
+        <div class="fila"><input id="c-tasa" type="range" min="5" max="25" step="1" value="{{ej_tasa}}"><output id="o-tasa" for="c-tasa">{{ej_tasa}}</output></div>
+      </div>
+      <div class="campo">
+        <label for="c-rezago">Rezago hasta cobrar el diferido (meses)</label>
+        <div class="fila"><input id="c-rezago" type="range" min="3" max="36" step="1" value="{{ej_rezago}}"><output id="o-rezago" for="c-rezago">{{ej_rezago}}</output></div>
+      </div>
+    </form>
+    <div class="resultado" aria-live="polite">
+      <div class="r principal">
+        <div class="ojo">Costo de diferir, por hijo</div>
+        <div class="v num" id="r-costo">USD {{ej_costo}}</div>
+        <div class="d">Valor tiempo del volumen diferido de todos los padres cercanos, si se recupera.</div>
+      </div>
+      <div class="r">
+        <div class="ojo">Techo de pérdida, por hijo</div>
+        <div class="v num" id="r-cota">USD {{ej_cota}}</div>
+        <div class="d">Cota de {{cota_m3}} m³ por padre, sin descontar. No es una estimación de la pérdida.</div>
+      </div>
+      <div class="formula">costo = padres × bbl × precio × (1 - (1 + tasa)^(-rezago/12))<br>techo = padres × cota en bbl × precio<br>1 m³ = 6,2898 bbl</div>
+    </div>
+  </div>
+</section>
+
+<section id="limites">
+  <div class="texto"><h2>Lo que este dato no dice</h2></div>
+  <div class="limites">
+    <div>
+      <h3>Si lo diferido vuelve</h3>
+      <p>A 24 meses el acumulado no se distingue de cero, pero eso no prueba que el volumen se recupere. Tampoco se sabe si el padre se cerró de forma preventiva o se dañó: el dato mensual no lo separa.</p>
+    </div>
+    <div>
+      <h3>Si la dosis explica la caída</h3>
+      <p>Con este dato no se ve que la dosis (arena por etapa o por metro del hijo, presión de tratamiento, depleción del padre) agrande la caída. La potencia no alcanza para descartarlo: el efecto mínimo detectable con 80% de potencia es de {{mde}} desvíos, y uno de 0,2 puede pasar inadvertido.</p>
+    </div>
+    <div>
+      <h3>Lo que pasa bajo tierra</h3>
+      <p>No hay espaciamiento real entre ramas, presión de monitoreo del padre durante la fractura ni registros de cierre. Son las tres cosas que más achicarían la duda, y un operador las tiene.</p>
+    </div>
+  </div>
+</section>
+
+<section id="tus-pozos">
+  <div class="texto">
+    <h2>Corré el mismo estudio con tus pozos</h2>
+    <p>El repositorio trae un modo con datos propios: el mismo estudio de eventos y de dosis sobre CSV del operador, en tu máquina y sin subir nada. Se niega a leer o escribir en rutas del repositorio que git versionaría, para que tus datos no terminen en un commit por error.</p>
+    <code class="comando">uv run python -m pipeline.local --wells /ruta/fuera/del/repo/pozos.csv --monthly /ruta/fuera/del/repo/mensual.csv --out /ruta/fuera/del/repo/salida/</code>
+    <p>Las columnas que espera están en <code>docs/operador-datos-propios.md</code>. Con la presión de monitoreo y las fechas de cierre a mano se puede separar un cierre preventivo de un daño, algo que el dato público no permite.</p>
+  </div>
+</section>
+
+<footer>
+  <div>Fuente: producción de pozos no convencionales y datos de fractura (Adjunto IV) de la Secretaría de Energía de la Nación, datos abiertos, hasta {{mes_dato}}. Cada cifra de esta página se lee de los marts del warehouse y se verifica con <code>uv run python -m pipeline.claims</code>.</div>
+  <div>Describe asociaciones en pozos de varios operadores. No es una recomendación de operación.</div>
+</footer>
+
+</div>
+
+<script id="datos" type="application/json">/*__DATOS__*/null</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("datos").textContent);
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, at, padre) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in at) { if (at[k] !== null && at[k] !== undefined) n.setAttribute(k, at[k]); }
+    if (padre) padre.appendChild(n);
+    return n;
+  }
+  function txt(padre, x, y, s, at) {
+    var t = el("text", Object.assign({ x: x, y: y }, at || {}), padre);
+    t.textContent = s;
+    return t;
+  }
+  function num(x, d) {
+    var s = Math.abs(x).toFixed(d);
+    var partes = s.split(".");
+    partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (x < 0 && Number(s) !== 0 ? "-" : "") + partes.join(",");
+  }
+  function pts(x) { return num(100 * x, 1); }
+  function escala(d0, d1, r0, r1) { return function (v) { return r0 + (v - d0) * (r1 - r0) / (d1 - d0); }; }
+  var css = function (v) { return "var(--" + v + ")"; };
+
+  /* 1. Curva del estudio de eventos */
+  (function () {
+    var svg = document.getElementById("g-curva");
+    var M = { l: 56, r: 150, t: 34, b: 44 }, W = 960, H = 410;
+    var x = escala(-3, 6, M.l, W - M.r), y = escala(50, 110, H - M.b, M.t);
+    for (var v = 50; v <= 110; v += 10) {
+      el("line", { x1: M.l, x2: W - M.r, y1: y(v), y2: y(v), stroke: css(v === 100 ? "inter" : "grid"), "stroke-width": 1, "stroke-dasharray": v === 100 ? "4 4" : null }, svg);
+      txt(svg, M.l - 10, y(v) + 4, String(v), { "text-anchor": "end" });
+    }
+    for (var k = -3; k <= 6; k++) txt(svg, x(k), H - M.b + 20, String(k), { "text-anchor": "middle" });
+    txt(svg, (M.l + W - M.r) / 2, H - 6, "meses desde la fractura del hijo", { "text-anchor": "middle" });
+    el("line", { x1: x(0), x2: x(0), y1: M.t, y2: H - M.b, stroke: css("ink-3"), "stroke-width": 1 }, svg);
+    txt(svg, x(0) + 6, M.t + 12, "fractura del hijo", {});
+    txt(svg, M.l - 10, 14, "índice", { "text-anchor": "end" });
+    var series = [["control", "control", "2 a 5 km (control)", 2], ["intermedio", "inter", "1 a 2 km", 1.75], ["cercano", "padre", "menos de 1 km", 3.25]];
+    var fin = {};
+    series.forEach(function (s) {
+      var pts_ = D.curva[s[0]];
+      var dpath = pts_.map(function (p, i) { return (i ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(100 * p[1]).toFixed(1); }).join(" ");
+      el("path", { d: dpath, fill: "none", stroke: css(s[1]), "stroke-width": s[3], "stroke-linejoin": "round", "class": "serie" }, svg);
+      pts_.forEach(function (p) { el("circle", { cx: x(p[0]), cy: y(100 * p[1]), r: s[0] === "cercano" ? 3.6 : 2.6, fill: css(s[1]) }, svg); });
+      fin[s[0]] = pts_[pts_.length - 1];
+    });
+    /* etiquetas directas al final, separadas para que no se pisen */
+    var orden = series.map(function (s) { return { s: s, y: y(100 * fin[s[0]][1]) }; }).sort(function (a, b) { return a.y - b.y; });
+    for (var i = 1; i < orden.length; i++) if (orden[i].y - orden[i - 1].y < 16) orden[i].y = orden[i - 1].y + 16;
+    orden.forEach(function (o) { txt(svg, x(6) + 12, o.y + 4, o.s[2], { "class": "t-fuerte t-" + o.s[1] }); });
+    /* brecha del mes 1 y del mes 6 */
+    function brecha(k, etiqueta, dx) {
+      var c = D.curva.cercano.filter(function (p) { return p[0] === k; })[0][1];
+      var t = D.curva.control.filter(function (p) { return p[0] === k; })[0][1];
+      var xx = x(k) + dx;
+      el("line", { x1: xx, x2: xx, y1: y(100 * t), y2: y(100 * c), stroke: css("padre"), "stroke-width": 1.5 }, svg);
+      el("line", { x1: xx - 4, x2: xx + 4, y1: y(100 * t), y2: y(100 * t), stroke: css("padre"), "stroke-width": 1.5 }, svg);
+      el("line", { x1: xx - 4, x2: xx + 4, y1: y(100 * c), y2: y(100 * c), stroke: css("padre"), "stroke-width": 1.5 }, svg);
+      txt(svg, xx + 8, (y(100 * t) + y(100 * c)) / 2 + 4, etiqueta, { "class": "t-fuerte t-padre" });
+    }
+    brecha(1, pts(D.todos.brecha1) + " puntos", 14);
+    brecha(6, pts(D.todos.brecha6), -14);
+    svg.lastChild.setAttribute("text-anchor", "end");
+    svg.lastChild.setAttribute("x", x(6) - 22);
+  })();
+
+  /* barras de intervalo horizontales, compartido por distancia y robustez */
+  function intervalos(svg, filas, o) {
+    var W = o.W, M = o.M, alto = o.fila;
+    var x = escala(o.x0, o.x1, M.l, W - M.r);
+    var H = M.t + Math.max(filas.length, o.filas_min || 0) * alto + M.b;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    for (var v = o.x0; v <= o.x1 + 1e-9; v += o.paso) {
+      el("line", { x1: x(v), x2: x(v), y1: M.t - 4, y2: H - M.b + 4, stroke: css(v === 0 ? "ink-3" : "grid"), "stroke-width": 1 }, svg);
+      txt(svg, x(v), H - M.b + 20, String(v), { "text-anchor": "middle" });
+    }
+    if (o.ref !== undefined) {
+      el("line", { x1: x(o.ref), x2: x(o.ref), y1: M.t - 4, y2: H - M.b + 4, stroke: css("padre"), "stroke-width": 1, "stroke-dasharray": "3 3" }, svg);
+    }
+    filas.forEach(function (f, i) {
+      var cy = M.t + i * alto + alto / 2;
+      var color = f.color || "padre";
+      txt(svg, M.l - 12, cy + 4, f.etiqueta, { "text-anchor": "end", "class": f.fuerte ? "t-padre" : null });
+      el("line", { x1: x(100 * f.ic_bajo), x2: x(100 * f.ic_alto), y1: cy, y2: cy, stroke: css(color), "stroke-width": 2, "stroke-linecap": "round" }, svg);
+      el("circle", { cx: x(100 * f.brecha), cy: cy, r: 4.5, fill: css(color) }, svg);
+      if (o.valores) txt(svg, W - M.r + 10, cy + 4, pts(f.brecha), { "class": "t-" + (color === "padre" ? "padre" : "inter") });
+    });
+  }
+
+  /* 2. Distancia */
+  intervalos(document.getElementById("g-distancia"), D.distancia.map(function (f) {
+    return { etiqueta: f.banda + " km (" + num(f.n, 0) + ")", brecha: f.brecha, ic_bajo: f.ic_bajo, ic_alto: f.ic_alto, color: f.cercana ? "padre" : "inter", fuerte: f.cercana };
+  }), { W: 960, M: { l: 170, r: 70, t: 14, b: 36 }, fila: 46, x0: -45, x1: 0, paso: 5, valores: true });
+
+  /* 3. Edad: mes 1 lleno, mes 6 hueco */
+  (function () {
+    var svg = document.getElementById("g-edad");
+    var W = 960, M = { l: 190, r: 40, t: 30, b: 36 }, alto = 52;
+    var H = M.t + D.edad.length * alto + M.b;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var x = escala(-30, 5, M.l, W - M.r);
+    for (var v = -30; v <= 5; v += 5) {
+      el("line", { x1: x(v), x2: x(v), y1: M.t - 6, y2: H - M.b + 4, stroke: css(v === 0 ? "ink-3" : "grid"), "stroke-width": 1 }, svg);
+      txt(svg, x(v), H - M.b + 20, String(v), { "text-anchor": "middle" });
+    }
+    el("rect", { x: x(-5), y: M.t - 6, width: x(5) - x(-5), height: H - M.b - M.t + 10, fill: css("grid"), opacity: 0.6 }, svg);
+    txt(svg, x(0), M.t - 12, "± 5 puntos", { "text-anchor": "middle" });
+    D.edad.forEach(function (e, i) {
+      var cy = M.t + i * alto + alto / 2;
+      txt(svg, M.l - 14, cy + 4, e.etiqueta + " (" + num(e.eventos, 0) + ")", { "text-anchor": "end" });
+      el("line", { x1: x(100 * e.brecha1), x2: x(100 * e.brecha6), y1: cy, y2: cy, stroke: css("inter"), "stroke-width": 2 }, svg);
+      el("circle", { cx: x(100 * e.brecha1), cy: cy, r: 6, fill: css("padre") }, svg);
+      el("circle", { cx: x(100 * e.brecha6), cy: cy, r: 5.5, fill: css("card"), stroke: css("control"), "stroke-width": 2.5 }, svg);
+      txt(svg, x(100 * e.brecha1), cy - 12, pts(e.brecha1), { "text-anchor": "middle", "class": "t-padre" });
+      txt(svg, x(100 * e.brecha6), cy - 12, pts(e.brecha6), { "text-anchor": "middle", "class": "t-control" });
+    });
+  })();
+
+  /* 4. Robustez: sacar de a uno */
+  var filas_max = Math.max.apply(null, ["operador", "area"].map(function (eje) {
+    return D.robustez.filter(function (f) { return f.eje === eje && f.k === 1 && f.salida !== "(muestra completa)"; }).length;
+  }));
+  ["operador", "area"].forEach(function (eje) {
+    var completa = D.robustez.filter(function (f) { return f.eje === eje && f.k === 1 && f.salida === "(muestra completa)"; })[0];
+    var filas = D.robustez.filter(function (f) { return f.eje === eje && f.k === 1 && f.salida !== "(muestra completa)"; })
+      .sort(function (a, b) { return a.brecha - b.brecha; })
+      .map(function (f) {
+        var nombre = f.salida.toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); })
+          .replace(/ (De|Del) /g, function (m) { return m.toLowerCase(); });
+        if (eje === "operador") nombre = f.salida;
+        return { etiqueta: "sin " + nombre, brecha: f.brecha, ic_bajo: f.ic_bajo, ic_alto: f.ic_alto };
+      });
+    intervalos(document.getElementById("g-rob-" + eje), filas,
+      { W: 470, M: { l: 190, r: 18, t: 8, b: 34 }, fila: 32, x0: -40, x1: 0, paso: 10, ref: 100 * completa.brecha, filas_min: filas_max });
+  });
+
+  /* 5. Tabla de cierre */
+  (function () {
+    var tb = document.getElementById("t-cierre");
+    D.cierre.forEach(function (c) {
+      var tr = document.createElement("tr");
+      var parte = c.parte;
+      [c.control, pts(c.brecha1), pts(c.brecha6), parte === null ? "s/d" : num(100 * parte, 1) + "%"].forEach(function (v, i) {
+        var td = document.createElement("td");
+        td.textContent = v;
+        if (i) td.className = "n";
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+  })();
+
+  /* 6. Calculadora (misma fórmula que pipeline.decision.valor_indicativo) */
+  (function () {
+    var t = D.todos, sel = document.getElementById("c-vol");
+    [["media", t.dif_m3, "media"], ["bajo", t.dif_bajo_m3, "IC bajo"], ["alto", t.dif_alto_m3, "IC alto"]].forEach(function (o) {
+      var op = document.createElement("option");
+      op.value = String(o[1]);
+      op.textContent = num(o[1], 0) + " m³ (" + o[2] + ")";
+      sel.appendChild(op);
+    });
+    var ids = ["padres", "precio", "tasa", "rezago"];
+    function leer(id) { return Number(document.getElementById("c-" + id).value); }
+    function calcular() {
+      ids.forEach(function (id) { document.getElementById("o-" + id).textContent = String(leer(id)); });
+      var padres = leer("padres"), precio = leer("precio"), tasa = leer("tasa") / 100, rezago = leer("rezago");
+      var bbl = Number(sel.value) * D.bbl_m3;
+      var costo = padres * bbl * precio * (1 - Math.pow(1 + tasa, -rezago / 12));
+      var techo = padres * D.cota_m3 * D.bbl_m3 * precio;
+      document.getElementById("r-costo").textContent = "USD " + num(costo, 0);
+      document.getElementById("r-cota").textContent = "USD " + num(techo, 0);
+    }
+    document.getElementById("calc").addEventListener("input", calcular);
+    document.getElementById("calc").addEventListener("submit", function (e) { e.preventDefault(); });
+    calcular();
+  })();
+})();
+</script>

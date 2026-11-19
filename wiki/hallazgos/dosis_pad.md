@@ -7,8 +7,8 @@ más favorable a la física para que un nulo pese más.
 
 ## Veredicto
 
-Resultado A: **sigue sin dosis y respuesta**: ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta; el semiancho mayor de los IC sin ajustar es de 0,19 desvíos de la caída en la muestra completa y 0,33 en la cercanía, que es cuanto efecto queda descartado.
-Resultado B: **sigue sin dosis y respuesta**: ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta; el semiancho mayor de los IC sin ajustar es de 0,19 desvíos de la caída en la muestra completa y 0,32 en la cercanía, que es cuanto efecto queda descartado.
+Resultado A: **sigue sin dosis y respuesta**: ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta; la cota superior mayor de los IC sin ajustar es de 0,29 desvíos de la caída en la muestra completa y 0,43 en la cercanía: el efecto positivo compatible con los datos llega, como mucho, a eso.
+Resultado B: **sigue sin dosis y respuesta**: ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta; la cota superior mayor de los IC sin ajustar es de 0,25 desvíos de la caída en la muestra completa y 0,54 en la cercanía: el efecto positivo compatible con los datos llega, como mucho, a eso.
 
 ### Resultado A, caída del índice, muestra completa (n = 1.552, pads = 264)
 
@@ -69,6 +69,21 @@ Modelo de muestra completa con la ventana de mismo mes (se informa, no entra en 
 | arena por metro de rama del pad | 0,003 | -0,209 a 0,197 | 1,000 | no |
 | presión máxima del pad | -0,044 | -0,204 a 0,056 | 1,000 | no |
 | depleción del padre | 0,092 | -0,098 a 0,304 | 1,000 | no |
+
+## Cada variable sola (agregado después de ver los resultados)
+
+Diagnóstico agregado después de ver los resultados, a pedido de una revisión: cada variable del pad sola con los controles, y el FIV en el modelo conjunto. No entra en el veredicto.
+
+| Resultado | Variable | Coef por desvío (IC 95%) | FIV conjunto |
+| --- | --- | --- | ---: |
+| A | arena total del pad | 0,035 (-0,043 a 0,120) | 1,5 |
+| A | arena por metro de rama del pad | -0,048 (-0,142 a 0,027) | 1,2 |
+| A | presión máxima del pad | 0,037 (-0,012 a 0,101) | 1,1 |
+| A | depleción del padre | 0,024 (-0,074 a 0,117) | 2,2 |
+| B | arena total del pad | 0,046 (-0,209 a 0,267) | 1,5 |
+| B | arena por metro de rama del pad | -0,042 (-0,299 a 0,126) | 1,2 |
+| B | presión máxima del pad | -0,029 (-0,193 a 0,104) | 1,1 |
+| B | depleción del padre | 0,096 (-0,109 a 0,290) | 2,6 |
 
 ## Qué no prueba
 

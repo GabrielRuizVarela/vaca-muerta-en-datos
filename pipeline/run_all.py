@@ -1,6 +1,6 @@
 """One command for the whole chain, with timings.
 
-  uv run python -m pipeline.run_all                  # build, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, anillo, inyeccion, hijo, figuras, wiki, report, replay, claims
+  uv run python -m pipeline.run_all                  # build, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, potencia_dosis, robustez_operador, anillo, inyeccion, hijo, hijo_celdas, gas, decision, figuras, wiki, informe, report, replay, claims
   uv run python -m pipeline.run_all --with-ingest    # also download first (needs the Secretaria server)
   uv run python -m pipeline.run_all --with-colorado  # also download and build the Colorado (DJ basin) warehouse and run its replication; opt-in, needs the network
   uv run python -m pipeline.run_all --only build,wiki
@@ -53,14 +53,20 @@ PASOS: list[Paso] = [
     Paso("dosis", "pipeline.dosis"),
     Paso("dosis_meses", "pipeline.dosis_meses"),
     Paso("dosis_pad", "pipeline.dosis_pad"),
+    Paso("potencia_dosis", "pipeline.potencia_dosis"),
+    Paso("robustez_operador", "pipeline.robustez_operador"),
     Paso("anillo", "pipeline.anillo"),
     Paso("inyeccion", "pipeline.inyeccion"),
     Paso("hijo", "pipeline.hijo"),
+    Paso("hijo_celdas", "pipeline.hijo_celdas"),
+    Paso("gas", "pipeline.gas"),
+    Paso("decision", "pipeline.decision"),
     Paso("colorado_ingest", "pipeline.colorado.ingest", solo_con_colorado=True),
     Paso("colorado_build", "pipeline.colorado.build", solo_con_colorado=True),
     Paso("replicacion", "pipeline.replicacion", solo_con_colorado=True),
     Paso("figuras", "pipeline.figuras"),
     Paso("wiki", "pipeline.wiki"),
+    Paso("informe", "pipeline.informe"),
     Paso("report", "pipeline.report"),
     Paso("replay", "pipeline.replay"),
     Paso("claims", "pipeline.claims"),

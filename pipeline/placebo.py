@@ -132,7 +132,7 @@ def _media(D: dict, padre: np.ndarray, mes: np.ndarray, lo: int, hi: int) -> np.
 
 
 def marco(D: dict, mes_hijo: np.ndarray, ks=(1,), base=BASE_ORIGINAL, solo_reales: bool = False,
-          sin_previos: bool = False) -> dict:
+          sin_previos: bool = False, base_min: float = BASE_MIN) -> dict:
     """Eventos (padre, mes de fractura) para unas fechas de fractura de los hijos dadas, con el indice a los meses `ks`.
 
     Mismas reglas que pipeline/sql/04_interferencia.sql: el hijo mas cercano (desempate por el menor id) fija la banda,
@@ -158,7 +158,7 @@ def marco(D: dict, mes_hijo: np.ndarray, ks=(1,), base=BASE_ORIGINAL, solo_reale
     padre, hijo, km, mes, rumbo = padre[primero], hijo[primero], km[primero], mes[primero], rumbo[primero]
     b0 = _media(D, padre, mes, *BASE_ORIGINAL)
     b1 = b0 if tuple(base) == BASE_ORIGINAL else _media(D, padre, mes, *base)
-    ok = (b0 > BASE_MIN) & (b1 > BASE_MIN)
+    ok = (b0 > base_min) & (b1 > base_min)
     if sin_previos:  # fracturas de otros hijos cercanos del mismo padre en los meses mes - VENTANA_PREVIOS .. mes - 1
         base_k = padre * 100_000 + mes
         n_prev = (np.searchsorted(k_cerca, base_k, side="left") - np.searchsorted(k_cerca, base_k - VENTANA_PREVIOS, side="left"))
@@ -207,8 +207,9 @@ def brecha_ic(vals: np.ndarray, banda: np.ndarray, clave: np.ndarray, reps: int 
 
 # ------------------------------------------------------------------ pruebas
 
-def tabla_pretendencia(D: dict, base=BASE_LIMPIA, ks=KS_PRE, reps: int = REPS_BOOT, sin_previos: bool = False) -> list[tuple]:
-    m = marco(D, D["hijo_mes"], ks=ks, base=base, sin_previos=sin_previos)
+def tabla_pretendencia(D: dict, base=BASE_LIMPIA, ks=KS_PRE, reps: int = REPS_BOOT, sin_previos: bool = False,
+                       base_min: float = BASE_MIN) -> list[tuple]:
+    m = marco(D, D["hijo_mes"], ks=ks, base=base, sin_previos=sin_previos, base_min=base_min)
     filas = []
     for j, k in enumerate(ks):
         r = brecha_ic(m["idx"][k], m["banda"], m["clave"], reps, SEMILLA_PLACEBO + 100 + j)
@@ -216,13 +217,14 @@ def tabla_pretendencia(D: dict, base=BASE_LIMPIA, ks=KS_PRE, reps: int = REPS_BO
     return filas
 
 
-def tabla_fechas(D: dict, desplazamientos=DESPLAZAMIENTOS, reps: int = REPS_BOOT) -> list[tuple]:
+def tabla_fechas(D: dict, desplazamientos=DESPLAZAMIENTOS, reps: int = REPS_BOOT,
+                 base_min: float = BASE_MIN) -> list[tuple]:
     """Brecha del mes 1 con la fecha de fractura corrida d meses. brecha_real: la brecha real en los mismos eventos."""
-    real = marco(D, D["hijo_mes"], solo_reales=True)
+    real = marco(D, D["hijo_mes"], solo_reales=True, base_min=base_min)
     clave_real = real["padre"] * 100_000 + real["mes"]
     filas = []
     for j, d in enumerate((0,) + tuple(desplazamientos)):
-        m = marco(D, D["hijo_mes"] + d, solo_reales=True)
+        m = marco(D, D["hijo_mes"] + d, solo_reales=True, base_min=base_min)
         r = brecha_ic(m["idx"][1], m["banda"], m["clave"], reps, SEMILLA_PLACEBO + 200 + j)
         # los mismos eventos con su fecha real: el evento (padre, mes + d) corresponde a (padre, mes)
         en = np.isin(clave_real, m["padre"] * 100_000 + m["mes"] - d)

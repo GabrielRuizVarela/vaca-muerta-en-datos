@@ -75,6 +75,10 @@ da "dosis y respuesta" y B tiene menos de dos variables que cumplan, la frase se
 lo muestra por separado"; si B tiene dos o mas, con "y la parte de caudal por dia lo confirma". Un golpe de fractura baja el
 caudal por dia producido; si la dosis solo mueve los dias (cierres), la regla lo deja dicho.
 
+CORRECCION DE REDACCION (2026-11-17, despues de ver los resultados, revision de Opus; no cambia ningun codigo ni la regla): el semiancho
+del IC mide la precision, no cuanto efecto queda descartado; lo descartado es lo que supera la cota superior del IC (limite alto en
+desvios de la caida), y el texto del veredicto la publica. "Falsar el mecanismo" se lee como "no se detecto dosis y respuesta".
+
 Que NO prueba:
   * Un coeficiente nulo no dice que no haya golpes de fractura: el espaciamiento real y la geometria de la fractura no estan en el
     dato publico, y el hijo mas cercano puede no ser el que golpeo al padre.
@@ -213,7 +217,7 @@ def _es_base(term) -> bool:
 
 
 def veredicto(cumplen: list[str], contrarias: list[str], ordenes: list[str], n_caso_completo: int, pads: int,
-              semiancho: float | None = None) -> tuple[str, str]:
+              semiancho: float | None = None, cota: float | None = None) -> tuple[str, str]:
     """Codigo y texto del veredicto de la regla. `cumplen`, `contrarias` y `ordenes` llevan nombres para mostrar.
 
     `semiancho` es el semiancho del IC sin ajustar por Holm mas ancho, en desvios de la caida, y solo se usa
@@ -239,10 +243,15 @@ def veredicto(cumplen: list[str], contrarias: list[str], ordenes: list[str], n_c
         texto = ("el dato público no muestra dosis y respuesta: ninguna variable cumple en el modelo conjunto y ninguna "
                  "tiene orden en los quintiles, lo que es compatible con cierre preventivo o con variables no observadas "
                  "(espaciamiento real)")
-        if semiancho is not None:
+        if cota is not None:
+            texto += (f"; la cota superior mayor de los IC sin ajustar por Holm es de {_g(cota, 2)} desvíos de la "
+                      "caída: el efecto positivo compatible con los datos llega, como mucho, a eso")
+            if semiancho is not None:
+                texto += f" (el semiancho mayor, {_g(semiancho, 2)}, mide la precisión y no el efecto descartado)"
+        elif semiancho is not None:
             texto += (f"; el semiancho mayor de los IC sin ajustar por Holm es de {_g(semiancho, 2)} desvíos de la "
-                      "caída, que es cuanto efecto queda descartado")
-        texto += ". Esto es falsar el mecanismo con datos públicos: no dice que no haya golpes de fractura"
+                      "caída (mide la precisión, no el efecto descartado)")
+        texto += ". No se detectó dosis y respuesta con datos públicos; eso no dice que no haya golpes de fractura"
     elif codigo == "orden sin coeficiente":
         texto = (f"ninguna variable cumple en el modelo conjunto pero hay orden en los quintiles en {_unir(ordenes)}: "
                  "no se afirma ni se descarta")
@@ -547,6 +556,8 @@ def analizar(res, y, d):
     sd_y = float(y[cc].std())
     # AMBIGUO: los "desvios de la caida" usan ddof = 0, igual que la estandarizacion de las dosis.
     semiancho = max((ics[j][1] - ics[j][0]) / 2 for j in range(4)) / sd_y if sd_y > 0 else float("nan")
+    # Cota superior: el mayor limite alto de los IC sin ajustar, en desvios de la caida (efecto positivo mas grande compatible).
+    cota = max(ics[j][1] for j in range(4)) / sd_y if sd_y > 0 else float("nan")
     # Sensibilidades (B = 1000): varian el modelo sobre la muestra de caso completo, salvo 'solo_tapon'.
     # AMBIGUO: 'sola' y 'rangos' usan caso completo (la sensibilidad varia el modelo, no la muestra).
     C0, g0 = _controles(d, cc, sin_term=True)
@@ -572,7 +583,7 @@ def analizar(res, y, d):
                             SEMILLA_DOSIS + RES_OFFSET[res] + ANA_SOLA[var], B_SENS)
         fsens.append((res, "sola", var, float(c[0]), float(ic[0][0]), float(ic[0][1]), n))
     return {"modelo": fmod, "quintiles": fq, "orden": ford, "sens": fsens, "cumplen": cumplen,
-            "contrarias": contrarias, "ordenes": ordenes, "n": n, "pads": pads, "semiancho": semiancho}
+            "contrarias": contrarias, "ordenes": ordenes, "n": n, "pads": pads, "semiancho": semiancho, "cota": cota}
 
 
 COLS_MODELO = [("resultado", "varchar"), ("variable", "varchar"), ("coef_sd", "double"), ("ic_bajo", "double"),
@@ -671,8 +682,8 @@ def main(path=DATA / "warehouse.duckdb") -> None:
     _escribir(con, "mart_dosis_quintiles", COLS_QUINTILES, rA["quintiles"] + rB["quintiles"])
     _escribir(con, "mart_dosis_orden", COLS_ORDEN, rA["orden"] + rB["orden"])
     _escribir(con, "mart_dosis_sens", COLS_SENS, rA["sens"] + rB["sens"])
-    codA, texA = veredicto(rA["cumplen"], rA["contrarias"], rA["ordenes"], rA["n"], rA["pads"], rA["semiancho"])
-    codB, texB = veredicto(rB["cumplen"], rB["contrarias"], rB["ordenes"], rB["n"], rB["pads"], rB["semiancho"])
+    codA, texA = veredicto(rA["cumplen"], rA["contrarias"], rA["ordenes"], rA["n"], rA["pads"], rA["semiancho"], rA["cota"])
+    codB, texB = veredicto(rB["cumplen"], rB["contrarias"], rB["ordenes"], rB["n"], rB["pads"], rB["semiancho"], rB["cota"])
     if codA == "dosis y respuesta":
         texA += ", " + ("y la parte de caudal por día lo confirma" if len(rB["cumplen"]) >= 2
                         else "pero la parte de caudal por día no lo muestra por separado")

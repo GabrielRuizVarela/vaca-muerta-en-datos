@@ -61,6 +61,9 @@ Sensibilidad (se informa, NO entra en el veredicto): el modelo de muestra comple
 Cualquier otro diagnostico agregado despues de ver los resultados se rotula "agregado despues de ver los resultados" y no cambia el
 veredicto.
 
+CORRECCION DE REDACCION (2026-11-17, despues de ver los resultados, revision de Opus; no cambia ningun codigo ni la regla): el semiancho
+mide la precision, no el efecto descartado; el texto del veredicto publica la cota superior del IC (limite alto, en desvios de la caida).
+
 Que NO prueba:
   * Un coeficiente nulo no dice que no haya golpes de fractura: el espaciamiento real, la geometria de la fractura y el hijo que de
     verdad golpeo al padre no estan en el dato publico; la dosis del pad suma pozos que pueden estar lejos del padre.
@@ -96,6 +99,7 @@ OFFSET_PAD = 600
 ANA_COMPLETO = 10
 ANA_CERCANIA = 11
 ANA_MISMO_MES = 12
+ANA_SOLA = 20  # agregado despues de ver los resultados: 20 + indice de la variable
 
 COLS_PAD = [("resultado", "varchar"), ("modelo", "varchar"), ("variable", "varchar"),
             ("coef_sd", "double"), ("ic_bajo", "double"), ("ic_alto", "double"),
@@ -239,6 +243,13 @@ def interaccion_cercania(v4_sub, km_sub):
     return dosis._std(v4s * kxs)
 
 
+def _cota(ics, y_std):
+    """Mayor limite alto de los IC sin ajustar, en desvios de la caida (efecto positivo mas grande compatible)."""
+    if not np.isfinite(y_std) or y_std <= 0:
+        return float("nan")
+    return float(np.max(np.asarray(ics, dtype=float)[:, 1]) / y_std)
+
+
 def _semiancho(ics, y_std):
     if not np.isfinite(y_std) or y_std <= 0:
         return float("nan")
@@ -254,14 +265,14 @@ def _modelo_completo(y, d2, res, semilla, reps):
     if len(cc) == 0:
         nan4 = np.full(4, np.nan)
         return {"coefs": nan4, "ics": np.full((4, 2), np.nan), "ps": np.ones(4),
-                "ph": np.ones(4), "n": 0, "pads": 0, "cc": cc, "semiancho": float("nan")}
+                "ph": np.ones(4), "n": 0, "pads": 0, "cc": cc, "semiancho": float("nan"), "cota": float("nan")}
     X = np.column_stack([dosis._std(d2[f"v{j + 1}"][cc]) for j in range(4)])
     C, grupo = dosis._controles(d2, cc)
     coefs, ics, ps = dosis._ajuste(y[cc], X, C, grupo, d2["cluster"][cc], semilla, reps)
     ph = dosis._holm(ps)
     sd = float(y[cc].std())
     return {"coefs": coefs, "ics": ics, "ps": ps, "ph": ph, "n": len(cc),
-            "pads": len(set(d2["cluster"][cc])), "cc": cc, "semiancho": _semiancho(ics, sd)}
+            "pads": len(set(d2["cluster"][cc])), "cc": cc, "semiancho": _semiancho(ics, sd), "cota": _cota(ics, sd)}
 
 
 def _modelo_cercania(y, d2, cc, res, semilla):
@@ -271,7 +282,7 @@ def _modelo_cercania(y, d2, cc, res, semilla):
     if len(sub) == 0:
         nan5 = np.full(5, np.nan)
         return {"coefs": nan5, "ics": np.full((5, 2), np.nan), "ps": np.ones(5),
-                "ph": np.ones(5), "n": 0, "pads": 0, "sub": sub, "semiancho": float("nan")}
+                "ph": np.ones(5), "n": 0, "pads": 0, "sub": sub, "semiancho": float("nan"), "cota": float("nan")}
     X4 = np.column_stack([dosis._std(d2[f"v{j + 1}"][sub]) for j in range(4)])
     inter = interaccion_cercania(d2["v4"][sub], d2["km"][sub])
     X = np.column_stack([X4, inter])
@@ -280,11 +291,35 @@ def _modelo_cercania(y, d2, cc, res, semilla):
     ph = dosis._holm(ps)
     sd = float(y[sub].std())
     return {"coefs": coefs, "ics": ics, "ps": ps, "ph": ph, "n": len(sub),
-            "pads": len(set(d2["cluster"][sub])), "sub": sub, "semiancho": _semiancho(ics, sd)}
+            "pads": len(set(d2["cluster"][sub])), "sub": sub, "semiancho": _semiancho(ics, sd), "cota": _cota(ics, sd)}
+
+
+def _diagnostico_sola(res, y, d2, cc):
+    """Agregado despues de ver los resultados (revision de Opus, 2026-11-17): cada variable del pad sola con los controles y el FIV.
+
+    No entra en el veredicto. Filas del mart con modelo 'sola' (coeficientes) y 'vif' (coef_sd lleva el FIV, el resto nan).
+    """
+    cc = np.asarray(cc)
+    if len(cc) == 0:
+        return []
+    y = np.asarray(y, dtype=float)
+    X = np.column_stack([dosis._std(d2[f"v{j + 1}"][cc]) for j in range(4)])
+    C, grupo = dosis._controles(d2, cc)
+    n, pads = len(cc), len(set(d2["cluster"][cc]))
+    vif = dosis._vif(X, C, grupo)
+    nan = float("nan")
+    filas = []
+    for j, var in enumerate(VARIABLES_PAD):
+        c, ic, p = dosis._ajuste(y[cc], X[:, [j]], C, grupo, d2["cluster"][cc],
+                                 _semilla(res, ANA_SOLA + j), dosis.B_SENS)
+        filas.append((res, "sola", var, float(c[0]), float(ic[0][0]), float(ic[0][1]), float(p[0]), nan, n, pads,
+                      False, False))
+        filas.append((res, "vif", var, float(vif[j]), nan, nan, nan, nan, n, pads, False, False))
+    return filas
 
 
 def veredicto(cum_completo: list[str], cum_cercania: list[str], contra: list[str],
-              n_c, pads_c, n_s, pads_s, semiancho_c=None, semiancho_s=None) -> tuple[str, str]:
+              n_c, pads_c, n_s, pads_s, semiancho_c=None, semiancho_s=None, cota_c=None, cota_s=None) -> tuple[str, str]:
     """Codigo y texto del veredicto de la regla, para un resultado (A o B)."""
     cum_completo = list(cum_completo)
     cum_cercania = list(cum_cercania)
@@ -320,10 +355,14 @@ def veredicto(cum_completo: list[str], cum_cercania: list[str], contra: list[str
     elif codigo == "sigue sin dosis y respuesta":
         texto = ("ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple "
                  "en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta")
-        if semiancho_c is not None and semiancho_s is not None:
+        if cota_c is not None and cota_s is not None:
+            texto += (f"; la cota superior mayor de los IC sin ajustar es de {_g(cota_c, 2)} desvíos de la "
+                      f"caída en la muestra completa y {_g(cota_s, 2)} en la cercanía: el efecto positivo "
+                      "compatible con los datos llega, como mucho, a eso")
+        elif semiancho_c is not None and semiancho_s is not None:
             texto += (f"; el semiancho mayor de los IC sin ajustar es de {_g(semiancho_c, 2)} desvíos de la "
-                      f"caída en la muestra completa y {_g(semiancho_s, 2)} en la cercanía, que es cuanto "
-                      "efecto queda descartado")
+                      f"caída en la muestra completa y {_g(semiancho_s, 2)} en la cercanía (mide la precisión, "
+                      "no el efecto descartado)")
     else:
         texto = (f"muestra chica para juzgar (muestra completa n = {_g(n_c)}, {_g(pads_c)} pads hijo; "
                  f"cercanía n = {_g(n_s)}, {_g(pads_s)} pads hijo; la regla pide 1.000 eventos y 150 pads "
@@ -372,6 +411,20 @@ def pagina_dosis_pad(con) -> str:
             _re, _mo, _va, c, lo, hi, ph, _n, _pa, cu = mod[(res, "mismo_mes", var)]
             L.append(f"| {NOMBRES_PAD[var]} | {_g(c, 3)} | {_g(lo, 3)} a {_g(hi, 3)} | {_g(ph, 3)} | "
                      f"{'sí' if cu else 'no'} |")
+        L.append("")
+    sola = [(r[0], r[2], r[3], r[4], r[5]) for r in con.execute(
+        "select resultado, modelo, variable, coef_sd, ic_bajo, ic_alto from mart_dosis_pad where modelo = 'sola' "
+        "order by resultado").fetchall()]
+    vifs = {(r[0], r[1]): r[2] for r in con.execute(
+        "select resultado, variable, coef_sd from mart_dosis_pad where modelo = 'vif'").fetchall()}
+    if sola:
+        L += ["## Cada variable sola (agregado después de ver los resultados)", "",
+              "Diagnóstico agregado después de ver los resultados, a pedido de una revisión: cada variable del pad sola con los "
+              "controles, y el FIV en el modelo conjunto. No entra en el veredicto.", "",
+              "| Resultado | Variable | Coef por desvío (IC 95%) | FIV conjunto |", "| --- | --- | --- | ---: |"]
+        for res, var, c, lo, hi in sola:
+            L.append(f"| {res} | {NOMBRES_PAD[var]} | {_g(c, 3)} ({_g(lo, 3)} a {_g(hi, 3)}) | "
+                     f"{_g(vifs.get((res, var), float('nan')), 1)} |")
         L.append("")
     L += ["## Qué no prueba", "",
           "- Un coeficiente nulo no dice que no haya golpes de fractura: el espaciamiento real, la geometría de la ",
@@ -422,9 +475,10 @@ def main(path=DATA / "warehouse.duckdb") -> None:
         fc, cum_c, contra_c = _filas_modelo(res, "completo", VARIABLES_PAD, rc)
         fs, cum_s, contra_s = _filas_modelo(res, "cercania", VARIABLES_CERCA, rs)
         fm, _, _ = _filas_modelo(res, "mismo_mes", VARIABLES_PAD, rm)
+        fm += _diagnostico_sola(res, y, d2, rc["cc"])
         contra = contra_c + [x for x in contra_s if x not in contra_c]
         codigo, texto = veredicto(cum_c, cum_s, contra, rc["n"], rc["pads"], rs["n"], rs["pads"],
-                                  rc["semiancho"], rs["semiancho"])
+                                  rc["semiancho"], rs["semiancho"], rc["cota"], rs["cota"])
         print(f"[dosis_pad] resultado {res}: caso completo n={rc['n']} pads={rc['pads']}, "
               f"cercania km<0.5 n={rs['n']} pads={rs['pads']}, mismo_mes n={rm['n']}")
         todas += fc + fs + fm

@@ -3,6 +3,7 @@ import math
 
 import duckdb
 import numpy as np
+import pytest
 
 from pipeline import dosis, dosis_pad
 from pipeline.costo import _escribir
@@ -38,6 +39,20 @@ def test_veredicto_sigue_sin_con_semianchos():
     assert "tampoco con la dosis del pad ni en la cercanía aparece respuesta" in tex
     assert _g(0.12, 2) in tex and _g(0.25, 2) in tex
     assert "desvíos de la caída" in tex
+
+
+def test_veredicto_sigue_sin_publica_la_cota_superior():
+    cod, tex = dosis_pad.veredicto([], [], [], 1500, 200, 600, 120, 0.12, 0.25, 0.31, 0.44)
+    assert cod == "sigue sin dosis y respuesta"
+    assert _g(0.31, 2) in tex and _g(0.44, 2) in tex
+    assert "cota superior" in tex and "como mucho" in tex
+    assert "cuanto efecto queda descartado" not in tex
+
+
+def test_cota_es_el_limite_alto_sobre_el_desvio():
+    ics = np.array([[-0.1, 0.30], [-0.2, 0.10]])
+    assert dosis_pad._cota(ics, 0.5) == pytest.approx(0.6)
+    assert np.isnan(dosis_pad._cota(ics, 0.0))
 
 
 def test_veredicto_no_concluyente_por_completa():
@@ -170,6 +185,11 @@ def _marts_a_mano(con):
         for j, var in enumerate(dosis_pad.VARIABLES_PAD):
             filas.append((res, "mismo_mes", var, 0.015 * (j + 1), -0.02, 0.05, 0.30, 0.45,
                           1400, 190, False, False))
+    nan = float("nan")
+    for res in ("A", "B"):
+        for j, var in enumerate(dosis_pad.VARIABLES_PAD):
+            filas.append((res, "sola", var, 0.01 * (j + 1), -0.05, 0.08, 0.30, nan, 1500, 200, False, False))
+            filas.append((res, "vif", var, 1.5 + j, nan, nan, nan, nan, 1500, 200, False, False))
     _escribir(con, "mart_dosis_pad", dosis_pad.COLS_PAD, filas)
     _escribir(con, "mart_dosis_pad_veredicto", dosis_pad.COLS_VEREDICTO_PAD,
               [("A", "sigue sin dosis y respuesta", "texto A de prueba"),
@@ -188,4 +208,5 @@ def test_pagina_sobre_marts_a_mano():
     assert "## Qué no prueba" in txt
     assert "agregada después de ver los resultados" in txt
     assert "| Variable | Coef por desvío | IC 95% | p Holm | Cumple |" in txt
-    assert len(txt.splitlines()) <= 90
+    assert "## Cada variable sola (agregado después de ver los resultados)" in txt
+    assert len(txt.splitlines()) <= 110

@@ -414,6 +414,8 @@ W_ROB = "wiki/hallazgos/robustez.md"
 W_DES = "wiki/hallazgos/descomposicion.md"
 W_DIF = "wiki/hallazgos/diferido.md"
 W_SINC = "wiki/hallazgos/sincronia.md"
+W_DEC = "wiki/hallazgos/decision_operador.md"
+W_POT = "wiki/hallazgos/potencia_dosis.md"
 CASO = "docs/caso-interferencia.md"
 DQ = "data/dq_report.json"
 N = r"([\d.]+)"          # integer with thousands dots
@@ -650,6 +652,266 @@ def _claims_sincronia() -> list[Claim]:
     return cl
 
 
+def _claims_potencia_dosis() -> list[Claim]:
+    """Numeros de la pagina de potencia del nulo de dosis: MDE80 del modelo conjunto A, mayor MDE de Holm de A y B,
+    potencia empirica de la simulacion a 0,2 desvios y pads para ver 0,2 con Holm. Todo se lee de los marts."""
+    nombres = {"arena_etapa": "arena por etapa", "arena_rama": "arena por metro de rama",
+               "presion": "presión máxima de tratamiento", "deplecion": "depleción del padre"}
+
+    def _mde(var: str, col: str) -> Callable:
+        return lambda con: con.execute(
+            f"select {col} from mart_potencia_dosis where resultado = 'A' and modelo = 'conjunto' "
+            f"and variable = '{var}'").fetchone()[0]
+
+    def _mayor(res: str) -> Callable:
+        return lambda con: con.execute(
+            f"select max(mde80_holm_desvios) from mart_potencia_dosis where resultado = '{res}' "
+            f"and modelo = 'conjunto'").fetchone()[0]
+
+    def _menor_a() -> Callable:
+        return lambda con: con.execute(
+            "select min(mde80_holm_desvios) from mart_potencia_dosis where resultado = 'A' "
+            "and modelo = 'conjunto'").fetchone()[0]
+
+    def _sim(var: str, regla: str) -> Callable:
+        return lambda con: con.execute(
+            f"select potencia from mart_potencia_dosis_sim where variable = '{nombres[var]}' and nivel = '0,2' "
+            f"and regla = '{regla}'").fetchone()[0]
+
+    cl = []
+    for var, nom in nombres.items():
+        fila = r"\| " + re.escape(nom) + r" \| -?\d+,\d+ \| \d+,\d+ \| "
+        cl.append(_c(f"pot_dosis_mde_{var}@wiki", W_POT, fila + DEC + r" \| \d+,\d+ \|", _mde(var, "mde80_desvios"),
+                     0.0006, "{:.3f}"))
+        cl.append(_c(f"pot_dosis_mde_holm_{var}@wiki", W_POT, fila + r"\d+,\d+ \| " + DEC + r" \|",
+                     _mde(var, "mde80_holm_desvios"), 0.0006, "{:.3f}"))
+    cl += [
+        _c("pot_dosis_mayor_A@wiki", W_POT, r"Resultado A: \*\*no alcanza para 0,2\*\*: el mayor MDE80 de Holm del modelo "
+           r"conjunto es de " + DEC, _mayor("A"), 0.006, "{:.2f}"),
+        _c("pot_dosis_mayor_B@wiki", W_POT, r"Resultado B: \*\*no alcanza para 0,2\*\*: el mayor MDE80 de Holm del modelo "
+           r"conjunto es de " + DEC, _mayor("B"), 0.006, "{:.2f}"),
+        _c("pot_dosis_sim_presion_holm@wiki", W_POT,
+           r"\| presión máxima de tratamiento \| 0,2 \| 0,200 \| Holm \| 200 \| \d+ \| " + DEC + r" \|",
+           _sim("presion", "holm"), 0.0006, "{:.3f}"),
+        _c("pot_dosis_sim_etapa_sin_ajustar@wiki", W_POT,
+           r"\| arena por etapa \| 0,2 \| 0,200 \| sin ajustar \| 200 \| \d+ \| " + DEC + r" \|",
+           _sim("arena_etapa", "sin_ajustar"), 0.0006, "{:.3f}"),
+        _c("pot_dosis_pads_02_holm_etapa@wiki", W_POT,
+           r"\| arena por etapa \| [\d.]+ \| [\d.]+ \| [\d.]+ \| [\d.]+ \| [\d.]+ \| [\d.]+ \| " + N + r" \|",
+           _mde("arena_etapa", "pads_02_holm"), 0.5),
+        _c("pot_dosis_readme_menor@readme", R, r"va de " + DEC + r" a \d+,\d+ desvíos de la caída por desvío de la dosis",
+           _menor_a(), 0.006, "{:.2f}"),
+        _c("pot_dosis_readme_mayor@readme", R, r"va de \d+,\d+ a " + DEC + r" desvíos de la caída por desvío de la dosis",
+           _mayor("A"), 0.006, "{:.2f}"),
+    ]
+    return cl
+
+
+W_ROBOP = "wiki/hallazgos/robustez_operador.md"
+EJES_ROB = ("operador", "area")
+
+
+def _claims_robustez_operador() -> list[Claim]:
+    """Numeros de la pagina de robustez por operador y area: brecha completa, rango de las salidas de grupo y cota superior del peor caso."""
+    def _agr(eje: str, k: int, agregado: str, col: str = "brecha") -> Callable:
+        return lambda con: 100 * con.execute(
+            f"select {agregado}({col}) from mart_robustez_operador where eje = '{eje}' and k = {k} "
+            f"and salida <> '(muestra completa)'").fetchone()[0]
+
+    def _completa(k: int) -> Callable:
+        return lambda con: 100 * con.execute(
+            f"select brecha from mart_robustez_operador where eje = 'operador' and k = {k} and salida = '(muestra completa)'").fetchone()[0]
+
+    def _peor_cota(eje: str) -> Callable:
+        return lambda con: 100 * con.execute(
+            f"select ic_alto from mart_robustez_operador where eje = '{eje}' and k = 1 and salida <> '(muestra completa)' "
+            f"order by brecha desc limit 1").fetchone()[0]
+
+    def _n(eje: str) -> Callable:
+        return lambda con: con.execute(
+            f"select count(*) from mart_robustez_operador where eje = '{eje}' and k = 1 and salida <> '(muestra completa)'").fetchone()[0]
+
+    cl = [
+        _c("rob_op_completa_mes1@wiki", W_ROBOP, r"\| \(muestra completa\) \| [\d.]+ \| [\d.]+ \| " + SD + r" \|", _completa(1), 0.05, "{:.1f}"),
+        _c("rob_op_completa_mes6@wiki", W_ROBOP,
+           r"\| \(muestra completa\) \| [\d.]+ \| [\d.]+ \| -?\d+,\d+ \| -?\d+,\d+ a -?\d+,\d+ \| " + SD + r" \|",
+           _completa(6), 0.05, "{:.1f}"),
+    ]
+    for eje in EJES_ROB:
+        base = r"al sacar de a un " + {"operador": "operador", "area": "área"}[eje] + r": en las "
+        cl += [
+            _c(f"rob_op_{eje}_n@wiki", W_ROBOP, base + N + r" salidas", _n(eje), 0),
+            _c(f"rob_op_{eje}_min1@wiki", W_ROBOP, base + r"\d+ salidas.{0,120}?queda entre " + SD + r" y", _agr(eje, 1, "min"), 0.05, "{:.1f}"),
+            _c(f"rob_op_{eje}_max1@wiki", W_ROBOP, base + r"\d+ salidas.{0,120}?queda entre -?\d+,\d+ y " + SD + r" puntos",
+               _agr(eje, 1, "max"), 0.05, "{:.1f}"),
+            _c(f"rob_op_{eje}_cota@wiki", W_ROBOP, base + r"\d+ salidas.{0,300}?cota superior " + SD + r"\)", _peor_cota(eje), 0.05, "{:.1f}"),
+        ]
+    for eje in EJES_ROB:
+        nom = {"operador": "operador", "area": "área"}[eje]
+        cl += [
+            _c(f"rob_op_{eje}_min6@wiki", W_ROBOP, r"al sacar de a un " + nom + r": en las .{0,500}?El cierre del mes 6 se sostiene: la brecha puntual del mes 6 queda entre " + SD + r" y",
+               _agr(eje, 6, "min"), 0.05, "{:.1f}"),
+            _c(f"rob_op_{eje}_max6@wiki", W_ROBOP, r"al sacar de a un " + nom + r": en las .{0,500}?El cierre del mes 6 se sostiene: la brecha puntual del mes 6 queda entre -?\d+,\d+ y " + SD + r" puntos",
+               _agr(eje, 6, "max"), 0.05, "{:.1f}"),
+            _c(f"rob_op_{eje}_peor6@wiki", W_ROBOP, r"al sacar de a un " + nom + r": en las .{0,700}?el peor caso es sin [^(]+ \(" + SD + r" puntos\)\.",
+               _agr(eje, 6, "min"), 0.05, "{:.1f}"),
+            _c(f"rob_op_{eje}_posthoc@wiki", W_ROBOP, r"entre las salidas es " + SD + r" puntos, sin " + ("YPF" if eje == "operador" else "LA AMARGA CHICA"),
+               lambda con, e=eje: 100 * con.execute(f"select max(ic_alto) from mart_robustez_operador where eje = '{e}' and k = 1 and salida <> '(muestra completa)'").fetchone()[0],
+               0.05, "{:.1f}"),
+        ]
+    cl += [
+        _c("rob_op_readme_cierre@readme", R, r"el cierre del mes 6 queda dentro de " + N + r" puntos", lambda con: 5, 0),
+        _c("rob_op_readme_area_min@readme", R, r"queda entre " + SD + r" y -?\d+,\d+ puntos con el IC 95% siempre por debajo de cero", _agr("area", 1, "min"), 0.05, "{:.1f}"),
+        _c("rob_op_readme_area_max@readme", R, r"queda entre -?\d+,\d+ y " + SD + r" puntos con el IC 95% siempre por debajo de cero", _agr("area", 1, "max"), 0.05, "{:.1f}"),
+        _c("rob_op_readme_ypf@readme", R, r"\(sin YPF: " + SD + r"\)",
+           lambda con: 100 * con.execute("select brecha from mart_robustez_operador where eje = 'operador' and k = 1 and salida = 'YPF'").fetchone()[0],
+           0.05, "{:.1f}"),
+        _c("rob_op_readme_n_op@readme", R, r"de a un operador \(" + N + r"\)", _n("operador"), 0),
+        _c("rob_op_readme_n_area@readme", R, r"o de a un área \(" + N + r"\)", _n("area"), 0),
+    ]
+    return cl
+
+
+W_RESUMEN = "docs/resumen-operador.md"
+
+
+def _claims_resumen_operador() -> list[Claim]:
+    """Cada cifra de la hoja resumen para un operador, leida de los marts de decision, de robustez y de potencia de dosis."""
+    def _q(sql: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(sql).fetchone()[0]
+
+    ed = "select {c} from mart_decision_edad where grupo_edad = '{g}'"
+    rb = "select {a}(brecha) from mart_robustez_operador where eje = '{e}' and k = 1 and salida <> '(muestra completa)'"
+    return [
+        _c("resumen_gap1@doc", W_RESUMEN, r"rinden " + DEC + r" puntos menos de su caudal previo", _q(ed.format(c="-brecha_mes1", g="todos"), 100), 0.05, "{:.1f}"),
+        _c("resumen_eventos@doc", W_RESUMEN, r"\(" + N + r" eventos\)", _q(ed.format(c="eventos", g="todos")), 0),
+        _c("resumen_edad_min@doc", W_RESUMEN, r"Va de " + DEC + r" puntos menos con padres", _q("select min(-brecha_mes1) from mart_decision_edad where grupo_edad <> 'todos'", 100), 0.05, "{:.1f}"),
+        _c("resumen_edad_max@doc", W_RESUMEN, r"a " + DEC + r" puntos menos con padres de 48", _q("select max(-brecha_mes1) from mart_decision_edad where grupo_edad <> 'todos'", 100), 0.05, "{:.1f}"),
+        _c("resumen_op_min@doc", W_RESUMEN, r"un operador, la brecha queda entre " + DEC + r" y", _q(rb.format(a="max", e="operador"), -100), 0.05, "{:.1f}"),
+        _c("resumen_op_max@doc", W_RESUMEN, r"un operador, la brecha queda entre \d+,\d+ y " + DEC + r" puntos menos", _q(rb.format(a="min", e="operador"), -100), 0.05, "{:.1f}"),
+        _c("resumen_sin_ypf@doc", W_RESUMEN, r"\(sin YPF, " + DEC + r"\)",
+           _q("select -brecha from mart_robustez_operador where eje = 'operador' and k = 1 and salida = 'YPF'", 100), 0.05, "{:.1f}"),
+        _c("resumen_area_min@doc", W_RESUMEN, r"un área, entre " + DEC + r" y", _q(rb.format(a="max", e="area"), -100), 0.05, "{:.1f}"),
+        _c("resumen_area_max@doc", W_RESUMEN, r"un área, entre \d+,\d+ y " + DEC + r" puntos menos", _q(rb.format(a="min", e="area"), -100), 0.05, "{:.1f}"),
+        _c("resumen_mes6@doc", W_RESUMEN, r"queda en " + DEC + r" puntos menos con el control principal", _q(ed.format(c="-brecha_mes6", g="todos"), 100), 0.05, "{:.1f}"),
+        _c("resumen_mes6_max@doc", W_RESUMEN, r"llega a " + DEC + r" puntos menos con la variante de control de mayor brecha", _q("select max(-brecha_mes6) from mart_decision_cierre", 100), 0.05, "{:.1f}"),
+        _c("resumen_diferido@doc", W_RESUMEN, r"es de " + N + r" m3 de petróleo por padre", _q(ed.format(c="diferido_medio_m3", g="todos")), 0.5),
+        _c("resumen_dif_ic_bajo@doc", W_RESUMEN, r"intervalo del 95%: " + N + r" a", _q(ed.format(c="diferido_ic_bajo_m3", g="todos")), 0.5),
+        _c("resumen_dif_ic_alto@doc", W_RESUMEN, r"intervalo del 95%: [\d.]+ a " + N + r"\)", _q(ed.format(c="diferido_ic_alto_m3", g="todos")), 0.5),
+        _c("resumen_ic_alto@doc", W_RESUMEN, r"el límite alto más alto es de " + SD + r"\)",
+           _q("select max(ic_alto) from mart_robustez_operador where k = 1 and salida <> '(muestra completa)'", 100), 0.05, "{:.1f}"),
+        _c("resumen_mde@doc", W_RESUMEN, r"con 80% de potencia, de " + DEC + r" desvíos",
+           _q("select max(mde80_holm_desvios) from mart_potencia_dosis where resultado = 'A' and modelo = 'conjunto'"), 0.006, "{:.2f}"),
+    ]
+
+
+W_INFORME = "site/informe.html"
+
+
+def _claims_informe() -> list[Claim]:
+    """Cifras del informe para un operador (site/informe.html), leidas de los mismos marts que la hoja resumen."""
+    def _q(sql: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(sql).fetchone()[0]
+
+    ed = "select {c} from mart_decision_edad where grupo_edad = '{g}'"
+    rb = "select {a}(brecha) from mart_robustez_operador where eje = '{e}' and k = 1 and salida <> '(muestra completa)'"
+    ficha = r'{t}</div>\s*<div class="v num">'
+    return [
+        _c("informe_gap1@site", W_INFORME, ficha.format(t="Mes 1") + SD, _q(ed.format(c="brecha_mes1", g="todos"), 100), 0.05, "{:.1f}"),
+        _c("informe_gap6@site", W_INFORME, ficha.format(t="Mes 6") + SD, _q(ed.format(c="brecha_mes6", g="todos"), 100), 0.05, "{:.1f}"),
+        _c("informe_eventos@site", W_INFORME, r"Un estudio de " + N + r" eventos en los que", _q(ed.format(c="eventos", g="todos")), 0),
+        _c("informe_padres@site", W_INFORME, r"a menos de 1 km \(" + N + r" padres distintos\)",
+           _q("select count(distinct padre) from mart_interferencia_diferida"), 0),
+        _c("informe_diferido@site", W_INFORME, ficha.format(t="Diferido") + N, _q(ed.format(c="diferido_medio_m3", g="todos")), 0.5),
+        _c("informe_dif_ic_bajo@site", W_INFORME, r"0 a 6 \(IC 95%: " + N + r" a", _q(ed.format(c="diferido_ic_bajo_m3", g="todos")), 0.5),
+        _c("informe_dif_ic_alto@site", W_INFORME, r"0 a 6 \(IC 95%: [\d.]+ a " + N + r"\)", _q(ed.format(c="diferido_ic_alto_m3", g="todos")), 0.5),
+        _c("informe_cota@site", W_INFORME, ficha.format(t="Cota de pérdida") + N, _q("select cota_bbl from mart_decision_perdida"), 0.5),
+        _c("informe_cierre_peor@site", W_INFORME, r"hasta " + SD + r" con el control más exigente",
+           _q("select min(brecha_mes6) from mart_decision_cierre", 100), 0.05, "{:.1f}"),
+        _c("informe_op_min@site", W_INFORME, r"la brecha del mes 1 queda entre " + SD, _q(rb.format(a="max", e="operador"), 100), 0.05, "{:.1f}"),
+        _c("informe_op_max@site", W_INFORME, r"la brecha del mes 1 queda entre -?\d+,\d+ y " + SD, _q(rb.format(a="min", e="operador"), 100), 0.05, "{:.1f}"),
+        _c("informe_ar_min@site", W_INFORME, r"de a un área \(\d+\), entre " + SD, _q(rb.format(a="max", e="area"), 100), 0.05, "{:.1f}"),
+        _c("informe_ar_max@site", W_INFORME, r"de a un área \(\d+\), entre -?\d+,\d+ y " + SD, _q(rb.format(a="min", e="area"), 100), 0.05, "{:.1f}"),
+        _c("informe_ic_alto@site", W_INFORME, r"su límite alto más alto es " + SD,
+           _q("select max(ic_alto) from mart_robustez_operador where k = 1 and salida <> '(muestra completa)'", 100), 0.05, "{:.1f}"),
+        _c("informe_mde@site", W_INFORME, r"con 80% de potencia es de " + DEC + r" desvíos",
+           _q("select max(mde80_holm_desvios) from mart_potencia_dosis where resultado = 'A' and modelo = 'conjunto'"), 0.006, "{:.2f}"),
+    ]
+
+
+def _claims_decision() -> list[Claim]:
+    """Numeros de la pagina de decision: brechas por edad, parte recuperada entre variantes, diferido por evento,
+    cota de perdida y celdas de la grilla de valor. Cada valor se lee de los marts de decision."""
+    from pipeline.decision import valor_indicativo
+
+    def _edad(grupo: str, col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(
+            f"select {col} from mart_decision_edad where grupo_edad = '{grupo}'").fetchone()[0]
+
+    def _cierre(agregado: str) -> Callable:
+        return lambda con: 100 * con.execute(
+            f"select {agregado}(parte_recuperada) from mart_decision_cierre").fetchone()[0]
+
+    def _grilla(precio: float, tasa: float, rezago: float) -> Callable:
+        def f(con):
+            m3 = con.execute("select diferido_medio_m3 from mart_decision_edad "
+                             "where grupo_edad = 'todos'").fetchone()[0]
+            return valor_indicativo(m3, precio, tasa, rezago)["costo_de_diferir"]
+        return f
+
+    def _grilla_cota(precio: float) -> Callable:
+        def f(con):
+            m3 = con.execute("select cota_m3 from mart_decision_perdida").fetchone()[0]
+            return valor_indicativo(m3, precio, 0.0, 0)["valor_cota_perdida"]
+        return f
+
+    cl = []
+    for g in ("06-11", "12-23", "24-47", "48+", "todos"):
+        fila = r"\| " + re.escape(g) + r" \| [\d.]+ \| "
+        cl.append(_c(f"dec_edad_{g}_b1@wiki", W_DEC, fila + SD + r" \|", _edad(g, "brecha_mes1", 100), 0.05,
+                     "{:.1f}"))
+        cl.append(_c(f"dec_edad_{g}_b6@wiki", W_DEC, fila + r"-?\d+,\d+ \| " + SD + r" \|",
+                     _edad(g, "brecha_mes6", 100), 0.05, "{:.1f}"))
+    cl += [
+        _c("dec_parte_min@wiki", W_DEC, r"La parte recuperada va de " + DEC + r"% a", _cierre("min"), 0.05,
+           "{:.1f}"),
+        _c("dec_parte_max@wiki", W_DEC, r"La parte recuperada va de \d+,\d+% a " + DEC + r"% entre variantes",
+           _cierre("max"), 0.05, "{:.1f}"),
+        _c("dec_diferido_central@wiki", W_DEC,
+           r"El diferido medio por evento de todos los cercanos es " + N + r" m3 por padre",
+           _edad("todos", "diferido_medio_m3"), 0.5),
+        _c("dec_diferido_bajo@wiki", W_DEC, r"rango bajo a alto: " + N + r" a",
+           _edad("todos", "diferido_bajo_m3"), 0.5),
+        _c("dec_diferido_alto@wiki", W_DEC, r"rango bajo a alto: [\d.]+ a " + N + r" m3",
+           _edad("todos", "diferido_alto_m3"), 0.5),
+        _c("dec_cota_m3@wiki", W_DEC, r"La cota superior de pérdida es de [\d.]+ bbl \(([\d.]+) m3\)",
+           lambda con: con.execute("select cota_m3 from mart_decision_perdida").fetchone()[0], 0.5),
+        _c("dec_readme_parte_min@readme", R, r"se cierra a los 6 meses \((\d+) a \d+% según", _cierre("min"), 0.5),
+        _c("dec_readme_parte_max@readme", R, r"se cierra a los 6 meses \(\d+ a (\d+)% según", _cierre("max"), 0.5),
+        _c("dec_readme_diferido_bajo@readme", R, r"\((\d+) a \d+ m3 de petróleo en los meses 0 a 6",
+           _edad("todos", "diferido_bajo_m3"), 0.5),
+        _c("dec_readme_diferido_alto@readme", R, r"\(\d+ a (\d+) m3 de petróleo en los meses 0 a 6",
+           _edad("todos", "diferido_alto_m3"), 0.5),
+        _c("dec_readme_cota@readme", R, r"\((\d+) m3 por evento\), por edad del padre",
+           lambda con: con.execute("select cota_m3 from mart_decision_perdida").fetchone()[0], 0.5),
+        _c("dec_cota_bbl@wiki", W_DEC, r"La cota superior de pérdida es de " + N + r" bbl",
+           lambda con: con.execute("select cota_bbl from mart_decision_perdida").fetchone()[0], 0.5),
+        _c("dec_48_b6@wiki", W_DEC, r"La fila de 48 meses o más queda en " + SD + r" puntos en el mes 6",
+           _edad("48+", "brecha_mes6", 100), 0.05, "{:.1f}"),
+        _c("dec_acum24_media@wiki", W_DEC, r"toda la cuenca\): media (-?[\d.]+) bbl",
+           lambda con: con.execute("select media_24m_bbl from mart_decision_perdida").fetchone()[0], 0.5),
+        _c("dec_exceso@wiki", W_DEC, r"al mes 12 es de " + SD + r" puntos",
+           lambda con: 100 * con.execute("select exceso from mart_decision_perdida").fetchone()[0], 0.05, "{:.1f}"),
+        _c("dec_grilla_60_10_12@wiki", W_DEC, r"\| 60 \| 10% \| 12 \| " + N + r" \|", _grilla(60, 0.10, 12),
+           0.5),
+        _c("dec_grilla_80_15_24@wiki", W_DEC, r"\| 80 \| 15% \| 24 \| " + N + r" \|", _grilla(80, 0.15, 24),
+           0.5),
+        _c("dec_grilla_cota_60@wiki", W_DEC, r"Sobre la cota de pérdida[\s\S]*?\| 60 \| " + N + r" \|",
+           _grilla_cota(60), 0.5),
+    ]
+    return cl
+
+
 W_HIJO = "wiki/hallazgos/hijo.md"
 NG = r"-?[\d.]+(?:,\d+)?"   # signed number with thousands dots and optional decimal comma
 
@@ -672,6 +934,198 @@ def _fr(idx: int, *lit: str) -> str:
     for k, s in enumerate(lit[1:]):
         out += (f"({NG})" if k == idx else f"(?:{NG})") + re.escape(s)
     return out
+
+
+W_HCEL = "wiki/hallazgos/hijo_celdas.md"
+
+
+def _claims_hijo_celdas() -> list[Claim]:
+    """Numbers of the summary of the child side within 2 km cells: main coefficient and CI, control, bound, cells and descriptive rows."""
+    def hc(modelo: str, termino: str, col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(
+            f"select {col} from mart_hijo_celdas_coef where modelo = '{modelo}' and termino = '{termino}'").fetchone()[0]
+
+    def rs(col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(f"select {col} from mart_hijo_celdas_resumen").fetchone()[0]
+
+    cl = []
+
+    def frase(clave, lits, fns, tols, fmts):
+        for k, (fn, tol, fmt) in enumerate(zip(fns, tols, fmts)):
+            cl.append(_c(f"hcel_{clave}_{k}@wiki", W_HCEL, _fr(k, *lits), fn, tol, fmt))
+
+    P, C, C2 = ("principal", "muy_depletado"), ("control_negativo", "muy_depletado"), ("control_negativo", "poco_depletado")
+    K5, K1 = ("celdas_5_km", "muy_depletado"), ("celdas_1_km", "muy_depletado")
+    d1, n0 = "{:.1f}", "{:,.0f}"
+    frase("principal", ["Muy depletado contra virgen, dentro de celdas de 2 km: ", " bbl por metro de rama (IC 95%: ", " a ", "), o sea ",
+                        "% del rendimiento virgen (IC 95%: ", "% a ", "%), sobre ", " hijos en ", " celdas."],
+          [hc(*P, "coef_bbl_m"), hc(*P, "ic_bajo"), hc(*P, "ic_alto"), hc(*P, "pct_del_virgen"), hc(*P, "pct_ic_bajo"),
+           hc(*P, "pct_ic_alto"), hc(*P, "n"), hc(*P, "conglomerados")], [0.05] * 6 + [0, 0], [d1] * 6 + [n0] * 2)
+    frase("virgen", ["Rendimiento de los hijos en zona virgen a 12 meses: mediana de ", " bbl por metro de rama."],
+          [rs("virgen_mediana_bbl_m")], [0.05], [d1])
+    frase("control", ["Control negativo, muy depletado contra virgen: ", " bbl por metro de rama (IC 95%: ", " a ", ")."],
+          [hc(*C, "coef_bbl_m"), hc(*C, "ic_bajo"), hc(*C, "ic_alto")], [0.05] * 3, [d1] * 3)
+    frase("control2", ["El del grupo poco depletado, que la regla no usa, da ", " (IC 95%: ", " a ", ")"],
+          [hc(*C2, "coef_bbl_m"), hc(*C2, "ic_bajo"), hc(*C2, "ic_alto")], [0.05] * 3, [d1] * 3)
+    frase("cota", ["Cota superior de la pérdida del hijo muy depletado: ", " bbl por metro de rama, o ", "% del rendimiento virgen."],
+          [rs("cota_bbl_m", -1), rs("cota_pct", -1)], [0.05] * 2, [d1] * 2)
+    frase("celdas", ["Celdas que comparan: ", " celdas tienen a la vez hijos virgen y muy depletados, con ", " de los ", " hijos;"],
+          [rs("celdas_informativas"), rs("hijos_en_informativas"), rs("hijos")], [0] * 3, [n0] * 3)
+    frase("tamanos", ["Con celdas de 5 km (descriptivo) el muy depletado da ", " bbl por metro (IC 95%: ", " a ",
+                      "); con celdas de 1 km, ", " (IC 95%: ", " a ", ")."],
+          [hc(*K5, "coef_bbl_m"), hc(*K5, "ic_bajo"), hc(*K5, "ic_alto"), hc(*K1, "coef_bbl_m"), hc(*K1, "ic_bajo"), hc(*K1, "ic_alto")],
+          [0.05] * 6, [d1] * 6)
+    cl.append(_c("hcel_readme_punto@readme", R, r"dentro de cuadrados de 2 km el hijo muy depletado da " + SD + r"% del virgen",
+                 hc(*P, "pct_del_virgen"), 0.05, d1))
+    cl.append(_c("hcel_readme_bajo@readme", R, r"dentro de cuadrados de 2 km el hijo muy depletado da -?\d+,\d+% del virgen \(IC 95%: " + SD + r"%",
+                 hc(*P, "pct_ic_bajo"), 0.05, d1))
+    cl.append(_c("hcel_readme_alto@readme", R, r"dentro de cuadrados de 2 km el hijo muy depletado da -?\d+,\d+% del virgen \(IC 95%: -?\d+,\d+% a " + SD + r"%",
+                 hc(*P, "pct_ic_alto"), 0.05, d1))
+    return cl
+
+
+W_GAS = "wiki/hallazgos/gas.md"
+
+
+def _claims_gas() -> list[Claim]:
+    """Numbers of the summary of the gas window parent study: month 1 and 6 gaps with CIs, pretrend, bound, deferred gas and GOR."""
+    def gb(res: str, k: int, col: str) -> Callable:
+        return lambda con: 100 * con.execute(f"select {col} from mart_gas where resultado = '{res}' and k = {k}").fetchone()[0]
+
+    def gn(res: str, k: int, col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_gas where resultado = '{res}' and k = {k}").fetchone()[0]
+
+    def tab(tabla: str, k: int, col: str) -> Callable:
+        return lambda con: 100 * con.execute(f"select {col} from {tabla} where k = {k}").fetchone()[0]
+
+    def vd(col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(f"select {col} from mart_gas_veredicto").fetchone()[0]
+
+    cl = []
+
+    def frase(clave, lits, fns, tols, fmts):
+        for k, (fn, tol, fmt) in enumerate(zip(fns, tols, fmts)):
+            cl.append(_c(f"gas_{clave}_{k}@wiki", W_GAS, _fr(k, *lits), fn, tol, fmt))
+
+    d1, d2, n0 = "{:.1f}", "{:.2f}", "{:,.0f}"
+    pre, gor = "mart_gas_pretendencia", "mart_gas_gor"
+    frase("mes1", ["Brecha del gas del mes 1 (volumen, por día calendario): ", " puntos de índice (IC 95% por bloques de 5 km: ", " a ",
+                   "; por pads hijo: ", " a ", "), con ", " eventos cercanos y ", " controles en ", " bloques de 5 km."],
+          [gb("V", 1, "brecha"), gb("V", 1, "ic_bajo_5km"), gb("V", 1, "ic_alto_5km"), gb("V", 1, "ic_bajo_pad"), gb("V", 1, "ic_alto_pad"),
+           gn("V", 1, "n_near"), gn("V", 1, "n_ctrl"), gn("V", 1, "bloques_5km")], [0.05] * 5 + [0] * 3, [d1] * 5 + [n0] * 3)
+    frase("pre", ["ya es de ", " puntos en el mes -1, antes de la fractura (IC 95% por pads: ", " a ", "), y llega a ", " en el mes 1."],
+          [tab(pre, -1, "brecha"), tab(pre, -1, "ic_bajo"), tab(pre, -1, "ic_alto"), tab(pre, 1, "brecha")], [0.05] * 4, [d1] * 4)
+    frase("cota", ["Cota superior de la caída del mes 1 compatible con el dato público: ", " puntos de índice."],
+          [vd("cota_mes1", -100)], [0.05], [d1])
+    frase("mes6", ["- Mes 6: ", " puntos (IC 95% por bloques de 5 km: ", " a ", "):"],
+          [gb("V", 6, "brecha"), gb("V", 6, "ic_bajo_5km"), gb("V", 6, "ic_alto_5km")], [0.05] * 3, [d1] * 3)
+    frase("efectivo", ["Por día efectivo la brecha del mes 1 es ", " puntos (IC 95% por bloques de 5 km: ", " a ", ")."],
+          [gb("E", 1, "brecha"), gb("E", 1, "ic_bajo_5km"), gb("E", 1, "ic_alto_5km")], [0.05] * 3, [d1] * 3)
+    frase("diferido", ["contra el índice mediano de los controles: mediana de ", " millones de m3 (", " eventos con los 7 meses)."],
+          [vd("diferido_mediana", 1 / 1000), vd("diferido_eventos")], [0.005, 0], [d2, n0])
+    frase("gor", ["la brecha del índice de la relación gas petróleo es ", " puntos al mes 1 (IC 95% por pads: ", " a ", ") y ",
+                  " al mes 6 (IC 95%: ", " a ", ")."],
+          [tab(gor, 1, "brecha"), tab(gor, 1, "ic_bajo"), tab(gor, 1, "ic_alto"), tab(gor, 6, "brecha"), tab(gor, 6, "ic_bajo"),
+           tab(gor, 6, "ic_alto")], [0.05] * 6, [d1] * 6)
+    ic = r"IC 95% por bloques de 5 km de la brecha de gas: "
+    cl += [_c("gas_readme_brecha@readme", R, r"el padre gasífero cercano da " + SD + r" puntos de gas al mes 1", gb("V", 1, "brecha"), 0.05, d1),
+           _c("gas_readme_bajo@readme", R, ic + SD + r" a", gb("V", 1, "ic_bajo_5km"), 0.05, d1),
+           _c("gas_readme_alto@readme", R, ic + r"-?\d+,\d+ a " + SD, gb("V", 1, "ic_alto_5km"), 0.05, d1),
+           _c("gas_readme_pre@readme", R, r"ya va " + SD + r" puntos abajo en el mes -1", tab(pre, -1, "brecha"), 0.05, d1),
+           _c("gas_readme_efectivo@readme", R, r"por día efectivo la brecha es " + SD, gb("E", 1, "brecha"), 0.05, d1)]
+    return cl
+
+
+W_PROS = "wiki/hallazgos/prospectiva.md"
+
+
+def _cong(pred: str, campo: str, factor: float = 1.0) -> Callable:
+    """Number of the frozen prospective file (verified against its sha256 on every read; the warehouse is not used)."""
+    def f(con):
+        from pipeline import prospectiva
+        return factor * prospectiva.leer_congelada()[pred][campo]
+    return f
+
+
+def _claims_prospectiva() -> list[Claim]:
+    """Frozen numbers of the prospective test on its page and in the README row: they must not move after the freeze."""
+    cl = []
+
+    def frase(clave, lits, fns, tols, fmts):
+        for k, (fn, tol, fmt) in enumerate(zip(fns, tols, fmts)):
+            cl.append(_c(f"pros_{clave}_{k}@wiki", W_PROS, _fr(k, *lits), fn, tol, fmt, wh=False))
+
+    d1, n0 = "{:.1f}", "{:,.0f}"
+    frase("p1", ["- P1: brecha del mes 1 de ", " puntos de índice, con intervalo predicho de ", " a ", " (IC 95%"],
+          [_cong("p1", "prediccion", 100), _cong("p1", "intervalo_bajo", 100), _cong("p1", "intervalo_alto", 100)], [0.05] * 3, [d1] * 3)
+    frase("p1n", ["al congelar se conocían ", " cercanos y ", " controles.\n- P2"],
+          [_cong("p1", "conocidos_cercanos"), _cong("p1", "conocidos_controles")], [0, 0], [n0] * 2)
+    frase("p2", ["- P2: brecha del mes 6 a menos de ", " puntos de cero (", " puntos con los datos hasta"],
+          [_cong("p2", "umbral", 100), _cong("p2", "prediccion", 100)], [0.05] * 2, [d1] * 2)
+    frase("p2n", ["desde 2026-04; al congelar se conocían ", " cercanos y ", " controles."],
+          [_cong("p2", "conocidos_cercanos"), _cong("p2", "conocidos_controles")], [0, 0], [n0] * 2)
+    pre = r"Prueba prospectiva \(`wiki/hallazgos/prospectiva.md`\) \| congelada el 2026-11-18 con los datos hasta 2026-09: brecha del mes 1 de "
+    cl += [_c("pros_readme_pred@readme", R, pre + SD, _cong("p1", "prediccion", 100), 0.05, d1, wh=False),
+           _c("pros_readme_bajo@readme", R, pre + r"-?\d+,\d+ puntos \(intervalo predicho " + SD, _cong("p1", "intervalo_bajo", 100), 0.05, d1,
+              wh=False),
+           _c("pros_readme_alto@readme", R, pre + r"-?\d+,\d+ puntos \(intervalo predicho -?\d+,\d+ a " + SD, _cong("p1", "intervalo_alto", 100),
+              0.05, d1, wh=False)]
+    return cl
+
+
+W_LIT = "wiki/hallazgos/literatura.md"
+
+
+def _quiebre(banda: str, col: str) -> Callable:
+    """Descriptive share of events with mean index under 0.75 in months 0 and 1 (literature page, post hoc)."""
+    def f(con):
+        n, p = con.execute(
+            "with e as (select padre, mes_frac, avg(indice) m from int_interferencia_mes where k in (0, 1) and banda = ? "
+            "group by 1, 2 having count(*) = 2) select count(*), 100 * avg(case when m < 0.75 then 1.0 else 0 end) from e",
+            [banda]).fetchone()
+        return n if col == "n" else p
+    return f
+
+
+def _claims_literatura() -> list[Claim]:
+    """Own numbers quoted on the hand-written literature page: oil gap, month-6 range, post hoc drop shares, child side and gas."""
+    cl = []
+
+    def frase(clave, lits, fns, tols, fmts):
+        for k, (fn, tol, fmt) in enumerate(zip(fns, tols, fmts)):
+            cl.append(_c(f"lit_{clave}_{k}@wiki", W_LIT, _fr(k, *lits), fn, tol, fmt))
+
+    def ani6(agg: str) -> Callable:
+        return lambda con: 100 * con.execute(f"select {agg}(brecha) from mart_anillo where k = 6").fetchone()[0]
+
+    def gb(res: str, k: int, col: str) -> Callable:
+        return lambda con: 100 * con.execute(f"select {col} from mart_gas where resultado = '{res}' and k = {k}").fetchone()[0]
+
+    def tab(tabla: str, k: int, col: str) -> Callable:
+        return lambda con: 100 * con.execute(f"select {col} from {tabla} where k = {k}").fetchone()[0]
+
+    def hc(col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_hijo_celdas_coef where modelo = 'principal' "
+                                       "and termino = 'muy_depletado'").fetchone()[0]
+
+    d1, n0 = "{:.1f}", "{:,.0f}"
+    frase("petroleo", ["Padres a menos de 1 km: entre ", " y ", " puntos menos que controles de 2 a 5 km un mes después de la fractura del hijo (",
+                       " eventos)"],
+          [_pretrend_descontada("mart_placebo_pretrend"), _brecha_mes1, _eventos_cercanos], [0.5, 0.5, 0], [n0] * 3)
+    frase("mes6", ["con los cuatro controles probados (de ", " a ", ")"], [ani6("max"), ani6("min")], [0.05] * 2, [d1] * 2)
+    frase("quiebre", ["el ", "% de ", " eventos cercanos con los meses 0 y 1 tiene un índice medio menor que 0,75 en esos dos meses, contra el ",
+                      "% de ", " eventos de control."],
+          [_quiebre("cercano", "p"), _quiebre("cercano", "n"), _quiebre("control", "p"), _quiebre("control", "n")],
+          [0.05, 0, 0.05, 0], [d1, n0, d1, n0])
+    frase("hijo", ["mismo cuadrado de 2 km: ", "% del rendimiento virgen a 12 meses (IC 95%: ", "% a ", "%)."],
+          [hc("pct_del_virgen"), hc("pct_ic_bajo"), hc("pct_ic_alto")], [0.05] * 3, [d1] * 3)
+    frase("gas", ["Padres gasíferos a menos de 1 km: ", " puntos de gas al mes 1 (IC 95% por bloques de 5 km: ", " a ", "), pero ya ",
+                  " en el mes -1, antes de la fractura; por día efectivo ", " puntos,"],
+          [gb("V", 1, "brecha"), gb("V", 1, "ic_bajo_5km"), gb("V", 1, "ic_alto_5km"), tab("mart_gas_pretendencia", -1, "brecha"),
+           gb("E", 1, "brecha")], [0.05] * 5, [d1] * 5)
+    frase("gor", ["el GOR no muestra un cambio (IC que incluye cero): ", " puntos al mes 1 (IC 95% por pads: ", " a ", ")."],
+          [tab("mart_gas_gor", 1, "brecha"), tab("mart_gas_gor", 1, "ic_bajo"), tab("mart_gas_gor", 1, "ic_alto")], [0.05] * 3, [d1] * 3)
+    return cl
 
 
 def _claims_hijo() -> list[Claim]:
@@ -1155,9 +1609,18 @@ CLAIMS: list[Claim] = [
        0.5),
     # synchrony within the month (finding page)
     *_claims_sincronia(),
+    *_claims_decision(),
+    *_claims_potencia_dosis(),
+    *_claims_robustez_operador(),
+    *_claims_resumen_operador(),
+    *_claims_informe(),
     *_claims_bloques(),
     # child side (finding page, README row and case study paragraph)
     *_claims_hijo(),
+    *_claims_hijo_celdas(),
+    *_claims_gas(),
+    *_claims_literatura(),
+    *_claims_prospectiva(),
     *_claims_inyeccion(),
     *_claims_colorado(),
     *_claims_replicacion(),

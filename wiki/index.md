@@ -15,11 +15,18 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Sincronía dentro del mes (la brecha del mes 0 según la fracción posterior al inicio de la fractura): [sincronia.md](hallazgos/sincronia.md).
 - Bloques espaciales (los intervalos principales remuestreando bloques de 2 y 5 km en vez de pads): [bloques.md](hallazgos/bloques.md).
 - Lado del hijo (rendimiento de 12 meses según el petróleo ya producido a menos de 1 km): [hijo.md](hallazgos/hijo.md).
+- Lado del hijo dentro de celdas de 2 km (hijos del mismo lugar fracturados antes y después de que sus vecinos produjeran): [hijo_celdas.md](hallazgos/hijo_celdas.md).
+- El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).
+- Comparación con la literatura (las cifras de este trabajo al lado de las publicadas): [literatura.md](hallazgos/literatura.md).
+- Prueba prospectiva (predicciones congeladas con los datos hasta un mes y puntuadas cuando se publican los meses siguientes): [prospectiva.md](hallazgos/prospectiva.md).
 - Validación por inyección (efectos plantados contra efectos recuperados por los estimadores): [inyeccion.md](hallazgos/inyeccion.md).
 - Dosis y respuesta (la caída del padre contra el trabajo del hijo y la depleción): [dosis.md](hallazgos/dosis.md).
 - Dosis mes a mes (la caída del caudal por día contra el trabajo del hijo, k = 1 a 4): [dosis_meses.md](hallazgos/dosis_meses.md).
 - Dosis del pad y cercanía (la caída contra la arena de todo el pad y la interacción depleción por cercanía): [dosis_pad.md](hallazgos/dosis_pad.md).
 - Anillo de control (la brecha del mes 1 y el cierre a 6 meses con cuatro controles): [anillo.md](hallazgos/anillo.md).
+- Capa de decisión para un operador (brecha, diferido y valor por edad del padre y banda de distancia): [decision_operador.md](hallazgos/decision_operador.md).
+- Potencia del nulo de dosis y respuesta (qué efecto mínimo habría podido verse): [potencia_dosis.md](hallazgos/potencia_dosis.md).
+- Robustez por operador y área (la brecha del mes 1 y el cierre del mes 6 sacando de a un operador y de a un área): [robustez_operador.md](hallazgos/robustez_operador.md).
 - Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).
 - Replicación en Colorado (el estudio de eventos sobre la cuenca DJ, con la regla fijada de antemano): [replicacion.md](hallazgos/replicacion.md).
 - Regla de parada del eje de merma (potencia, ventana previa, bloques y exposición): [eje_parada.md](hallazgos/eje_parada.md), con [potencia.md](hallazgos/potencia.md), [eje_controles.md](hallazgos/eje_controles.md) y [eje_exposicion.md](hallazgos/eje_exposicion.md).

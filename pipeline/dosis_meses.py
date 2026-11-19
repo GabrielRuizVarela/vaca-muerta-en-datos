@@ -93,7 +93,9 @@ def pagina_dosis_meses(con) -> str:
     L = ["# Dosis y respuesta mes a mes: caudal por día, k = 1 a 4", "",
          "Página generada por `pipeline/dosis_meses.py`. Pregunta si la caída del caudal por día del padre crece con el ",
          "trabajo del hijo y la depleción en cada mes k = 1 a 4, porque un golpe que se note con retraso no aparece ",
-         "en el mes 1. Mismo modelo conjunto de pipeline.dosis (resultado B) en cada mes, con Holm sobre 16 celdas.", "",
+         "en el mes 1. Mismo modelo conjunto de pipeline.dosis (resultado B) en cada mes, con Holm sobre 16 celdas.",
+         "Prueba agregada después de ver los resultados de pipeline.dosis: la regla se fijó antes de correr, pero la pregunta "
+         "nació de ese resultado.", "",
          "## Veredicto", "",
          f"**{codigo}**: {texto}.", "",
          f"Reproducción de pipeline.dosis en k = 1: {detalle}.", ""]

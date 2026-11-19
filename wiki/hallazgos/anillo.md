@@ -3,6 +3,7 @@
 Página generada por `pipeline/anillo.py`. Pregunta si la brecha del mes 1 y su cierre a los 6 meses dependen de usar como control a los padres cuyo hijo más cercano está a 2 a 5 km.
 Los cercanos son siempre los mismos (menos de 1 km); lo único que cambia entre variantes es el control.
 Cada variante informa la brecha en k = 1 y k = 6 con IC 95% por pads hijo.
+Prueba agregada después de ver los resultados anteriores: la regla se fijó antes de correr, pero la pregunta nació de ellos.
 
 ## Veredicto
 

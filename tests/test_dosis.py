@@ -36,9 +36,10 @@ def test_veredicto_los_cinco_codigos():
     cod, tex = dosis.veredicto(["arena por etapa"], [], [], 1400, 200)
     assert cod == "una sola variable"
     assert "arena por etapa" in tex and "la caída crece con" not in tex
-    cod, tex = dosis.veredicto([], [], [], 1400, 200, semiancho=0.15)
+    cod, tex = dosis.veredicto([], [], [], 1400, 200, semiancho=0.15, cota=0.31)
     assert cod == "sin dosis y respuesta"
     assert "cierre preventivo" in tex and "0,15" in tex and "no haya golpes de fractura" in tex
+    assert "cota superior" in tex and "0,31" in tex and "falsar" not in tex
     cod, tex = dosis.veredicto([], [], ["arena por etapa"], 1400, 200)
     assert cod == "orden sin coeficiente"
     assert "arena por etapa" in tex
