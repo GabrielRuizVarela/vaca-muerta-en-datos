@@ -99,6 +99,18 @@ def pretrend(con) -> list[dict]:
     return rows(con, "select k, n_near, brecha, ic_bajo, ic_alto from mart_placebo_pretrend order by k")
 
 
+def prueba_anual(con) -> dict | None:
+    """Prueba de la subida de 2026 con la misma antigüedad de carga en todos los años (mart_carga_anual_prueba, estadístico
+    de 2026): D, su IC 95% por bloques de 5 km y el veredicto de la regla fijada antes de correr (pipeline.carga_anual).
+    None si el mart no existe o la prueba no tiene cifra."""
+    if not tabla_existe(con, "mart_carga_anual_prueba"):
+        return None
+    r = rows(con, "select d, ic_bajo, ic_alto, veredicto from mart_carga_anual_prueba where estadistico = '2026'")
+    if not r or any(r[0][c] is None or r[0][c] != r[0][c] for c in ("d", "ic_bajo", "ic_alto")):
+        return None
+    return r[0]
+
+
 def collect(con, dq_path: Path | None = None) -> dict:
     ultimo = con.execute("select mes from ultimo_mes").fetchall()[0][0]
     top = [r["operador"] for r in rows(con, f"""
@@ -140,6 +152,7 @@ def collect(con, dq_path: Path | None = None) -> dict:
     interf["resumen"]["brecha_mes_1_neta"] = brecha_neta(con)
     interf["resumen"]["diferido_rango"] = diferido_rango(con)
     interf["pretrend"] = pretrend(con)
+    interf["prueba_anual"] = prueba_anual(con)
     evals = {}
     for split in ("dev", "holdout"):
         f = ROOT / "agente" / "eval" / "resultados" / f"{split}.json"
@@ -276,15 +289,29 @@ def leyenda_anual(data: dict) -> str:
     return f'<p class="leyenda-anual">Bajo cada año, n = eventos con padre a menos de 1 km. {marca}</p>'
 
 
+def lectura_anual(data: dict) -> str:
+    """Frase sobre el perfil por año. La decide la prueba de pipeline.carga_anual: solo habla de una suba si el veredicto de la
+    regla fijada antes de correr es "sostiene". Las fracturas se cargan con rezago, así que los últimos años están incompletos."""
+    p = data["interferencia"].get("prueba_anual")
+    if not p:
+        return ("El perfil por año no se lee como tendencia: las fracturas se cargan con rezago y a los últimos años les "
+                "faltan pozos hijos.")
+    cifra = (f"{fmt(100 * p['d'], 1)} puntos (IC 95% por bloques de 5 km: {fmt(100 * p['ic_bajo'], 1)} a "
+             f"{fmt(100 * p['ic_alto'], 1)})")
+    if p["veredicto"] == "sostiene":
+        return ("La brecha de 2026 es mayor que la de 2021 a 2024 también cuando todos los años se miran con la misma "
+                f"antigüedad de carga de fracturas: la diferencia es de {cifra}.")
+    return ("El perfil por año no se lee como tendencia: a los últimos años les faltan fracturas por cargar, y con la misma "
+            f"antigüedad de carga en todos los años la diferencia entre 2026 y 2021 a 2024 es de {cifra}: {p['veredicto']}.")
+
+
 def lectura_interferencia(data: dict) -> str:
     i = data["interferencia"]
-    r, ultimos = i["resumen"], i["anual"][-2:]
-    anios = " y ".join(f"{pts(a['brecha'], -1)} puntos en {a['anio']}" for a in ultimos)
-    en_curso = " (año en curso)" if ultimos and str(ultimos[-1]["anio"]) == data["ultimo_mes"][:4] else ""
+    r = i["resumen"]
     return ('<p class="finding" id="finding-interf"><strong>Lectura:</strong> un mes después de fracturar un pozo nuevo, '
             f'los padres a menos de 1 km rinden {pts(r["brecha_mes_1"], -1)} puntos menos que los padres de control a 2-5 km; '
             f'a los 6 meses la brecha casi se cierra ({pts(r["brecha_mes_6"], -1)} puntos). '
-            f'La brecha creció en los últimos años: {anios}{en_curso}. '
+            f'{lectura_anual(data)} '
             f'Contra un control de la misma edad, suma {diferido_texto(r, "entre")} millones de barriles diferidos '
             f'en los meses 0 a 6 ({"sin duplicar y descontando la brecha previa hasta el total original" if r.get("diferido_rango") else "cota superior"}). Límites: son coordenadas de superficie, no la trayectoria de la rama, '
             'y un cierre preventivo del operador se ve igual que un daño en datos mensuales. '

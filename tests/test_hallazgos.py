@@ -127,3 +127,21 @@ def test_id_renombrado_sigue_siendo_valido_en_la_operacion_del_agente():
     from agente.ops import ArgsLibro, libro_hallazgos
     r = libro_hallazgos(duckdb.connect(), ArgsLibro(id="anisotropia"))
     assert r["texto"].startswith("asimetria_de_superficie")
+
+
+def test_la_hipotesis_del_anio_2026_toma_el_estado_del_veredicto_de_su_regla():
+    h = next(h for h in hz.HIPOTESIS if h.id == "anio_2026_carga")
+    con = duckdb.connect()
+    con.execute("create table mart_carga_anual_prueba(estadistico varchar, d double, ic_bajo double, ic_alto double, "
+                "veredicto varchar)")
+    con.execute("insert into mart_carga_anual_prueba values ('2026', -0.15, -0.46, 0.13, 'no firme'), "
+                "('2025_2026', -0.22, -0.42, -0.02, null)")
+    assert con.execute(h.sql).fetchall() == [(0.13,)] and (h.op, h.umbral) == ("<", 0.0)
+    ver = con.execute(h.sql_estado).fetchall()[0][0]
+    assert hz.ESTADO_DE_VEREDICTO.get(ver, "no firme") == "no firme"
+    # un IC bajo cero no alcanza si la guarda de operador falla: el estado sale del veredicto, no del umbral
+    con.execute("update mart_carga_anual_prueba set ic_alto = -0.01 where estadistico = '2026'")
+    assert hz.clasificar(h.op, con.execute(h.sql).fetchall()[0][0], h.umbral) == "confirmado"
+    assert hz.ESTADO_DE_VEREDICTO.get(con.execute(h.sql_estado).fetchall()[0][0], "no firme") == "no firme"
+    con.execute("update mart_carga_anual_prueba set veredicto = 'sostiene' where estadistico = '2026'")
+    assert hz.ESTADO_DE_VEREDICTO.get(con.execute(h.sql_estado).fetchall()[0][0], "no firme") == "confirmado"

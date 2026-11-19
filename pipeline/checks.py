@@ -31,7 +31,7 @@ class Check:
 @dataclass(frozen=True)
 class Contexto:
     inputs: dict[str, Path] | None  # raw file per dataset, as pipeline.build received them; None: no raw layer
-    hoy: date                       # reference date of the run (freshness)
+    hoy: date                       # reference date of the freshness check: the extraction date, or the day of the run
 
 
 class Resultado(NamedTuple):
@@ -56,8 +56,7 @@ COLUMNAS_SIN_USO = {
         "cuenca", "tipo_de_recurso", "proyecto", "clasificacion", "subclasificacion", "fecha_data"},
     "fractura_adjunto_iv": {
         "sigla", "cuenca", "areapermisoconcesion", "yacimiento", "tipo_reservorio", "co2_inyectado_m3",
-        "potencia_equipos_fractura_hp", "fecha_data", "anio_if", "mes_if", "anio_ff", "mes_ff", "anio_carga",
-        "mes_carga", "mes", "anio"},
+        "potencia_equipos_fractura_hp", "fecha_data", "anio_if", "mes_if", "anio_ff", "mes_ff", "mes", "anio"},
 }
 
 
@@ -190,10 +189,10 @@ def _pozos_fractura(con, ctx: Contexto) -> Resultado:
     n_stg, n_fut, n_dim, trab_dim, trab_esp = con.execute(
         "select (select count(distinct pozo_id) from stg_fractura where pozo_id is not null), "
         "(select count(*) from (select pozo_id from stg_fractura where pozo_id is not null group by 1 "
-        "having count(*) filter (where fecha_inicio is null or fecha_inicio <= current_date) = 0)), "
+        "having count(*) filter (where fecha_inicio is null or fecha_inicio <= (select fecha from extraccion_fractura)) = 0)), "
         "(select count(*) from dim_fractura_pozo), (select coalesce(sum(trabajos), 0) from dim_fractura_pozo), "
         "(select count(*) from stg_fractura where pozo_id is not null "
-        "and (fecha_inicio is null or fecha_inicio <= current_date))").fetchall()[0]
+        "and (fecha_inicio is null or fecha_inicio <= (select fecha from extraccion_fractura)))").fetchall()[0]
     esperado = n_stg - n_fut
     texto = (f"stg_fractura tiene {_num(n_stg)} pozos distintos; los que tienen todos sus trabajos con fecha futura "
              f"({_num(n_fut)}) quedan fuera, así que dim_fractura_pozo debe tener {_num(esperado)} (tiene {_num(n_dim)}), "
@@ -221,6 +220,20 @@ def _frescura(con, ctx: Contexto) -> Resultado:
     filas = ([{"ultimo_mes": ultimo.strftime("%Y-%m"), "hoy": ctx.hoy.isoformat(), "meses_de_atraso": atraso}]
              if atraso > UMBRAL_MESES_ATRASO else [])
     return Resultado(filas, texto)
+
+
+def _carga_incompleta(con, ctx: Contexto) -> Resultado:
+    """Meses de inicio de fractura con carga estimada incompleta (definiciones en pipeline.carga)."""
+    from pipeline import carga
+    detalle = ("Meses de inicio de fractura cuya carga estimada en el dato público es menor que "
+               f"{str(carga.UMBRAL).replace('.', ',')} (cota superior; ver pipeline.carga). Descriptivo, no excluye filas.")
+    existe = con.execute("select count(*) from information_schema.tables where table_name = 'int_frac_hijo'").fetchall()[0][0]
+    if not existe:
+        return Resultado([], detalle, omitido=True)
+    filas = [m for m in carga.meses_incompletos(con) if m["completitud_estimada"] < carga.UMBRAL]
+    for m in filas:
+        m["mes_frac"] = m["mes_frac"].strftime("%Y-%m")
+    return Resultado(filas, detalle)
 
 
 CHECKS = [
@@ -255,7 +268,8 @@ CHECKS = [
           "where formacion = 'vaca muerta' and petroleo_m3 > 0",
           "Razones sociales con producción en Vaca Muerta que no están en seeds/operadores.csv."),
     Check("Fracturas con fecha futura", "aviso",
-          "select fractura_id, pozo_id, fecha_inicio, fecha_fin from stg_fractura where fecha_inicio > current_date",
+          "select fractura_id, pozo_id, fecha_inicio, fecha_fin from stg_fractura "
+          "where fecha_inicio > (select fecha from extraccion_fractura)",
           "Fecha de inicio posterior a la fecha de extracción. Excluidas del modelo."),
     Check("Fracturas que terminan antes de empezar", "aviso",
           "select fractura_id, pozo_id, fecha_inicio, fecha_fin from stg_fractura where fecha_fin < fecha_inicio",
@@ -269,6 +283,8 @@ CHECKS = [
     Check("Pozos con más de un trabajo de fractura", "aviso",
           "select pozo_id, count(*) n from stg_fractura group by 1 having n > 1",
           "Se suman en dim_fractura_pozo (refracturas o cargas repetidas)."),
+    Check("Meses de inicio de fractura con carga estimada incompleta", "aviso", "",
+          "Meses de inicio cuya carga estimada en el dato público es menor que 0,80.", fn=_carga_incompleta),
     Check("Eventos de pozos ausentes en dim_pozo", "aviso",
           "select distinct pozo_id from fct_evento anti join dim_pozo using (pozo_id)",
           "Eventos cuyo pozo_id no figura en dim_pozo."),
@@ -309,7 +325,8 @@ CHECKS = [
     Check("Deriva de esquema: columnas nuevas en el raw", "aviso", "",
           "Columnas que el último archivo trae y que el staging no lee ni figuran como conocidas.", fn=_chk_nuevas),
     Check("Frescura: meses de atraso del último mes publicado", "aviso", "",
-          "Meses entre el último mes de fct_produccion y la fecha de la corrida.", fn=_frescura),
+          "Meses entre el último mes de fct_produccion y la fecha de extracción del dato (la de la corrida si el manifiesto no la trae).",
+          fn=_frescura),
 ]
 
 

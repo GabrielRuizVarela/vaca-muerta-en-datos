@@ -12,7 +12,7 @@ Salidas dentro de ``out_dir``:
     hallazgos/interferencia.md pagina de hallazgos con historial acumulado
     hallazgos/anisotropia.md   eje de maxima merma por area y costo (si corrio pipeline.costo)
     hallazgos/robustez.md      estabilidad del eje y del costo en subconjuntos (si corrio pipeline.robustez)
-    hallazgos/linaje.md        de que dataset crudo sale cada tabla (se arma leyendo pipeline/sql)
+    hallazgos/linaje.md        de que dataset crudo sale cada tabla (se arma leyendo pipeline/sql y el codigo de los modulos)
     hallazgos/validacion.md    otros resultados, eje por ano y prueba fuera de tiempo (si corrio pipeline.validacion)
     hallazgos/descomposicion.md  dias producidos contra caudal por dia y gradiente por distancia (si corrio pipeline.descomposicion)
     hallazgos/diferido.md      rango de barriles diferidos y cifra por evento (si corrio pipeline.diferido)
@@ -32,8 +32,12 @@ Salidas dentro de ``out_dir``:
     hallazgos/gas.md           el padre gasifero con el gas como resultado (si corrio pipeline.gas)
     hallazgos/literatura.md    comparacion con la literatura (escrita a mano; el indice la enlaza si existe)
     hallazgos/prospectiva.md   prueba prospectiva congelada (la escribe pipeline.prospectiva; el indice la enlaza si existe)
+    hallazgos/carga_fracturas.md  rezago de carga de las fracturas en el dato publico (la escribe pipeline.carga; el indice la enlaza si existe)
+    hallazgos/carga_anual.md   la subida de 2026 con la misma antiguedad de carga (la escribe pipeline.carga_anual; el indice la enlaza si existe)
     hallazgos/replicacion.md   el estudio de eventos sobre Colorado (lo escribe pipeline.replicacion, solo con --with-colorado)
+    hallazgos/replicacion_cuencas.md   la lectura de la familia de cuencas (la escribe pipeline.familia)
     hallazgos/placebo.md       pretendencia, fechas falsas y permutacion del estudio de eventos (si corrio pipeline.placebo)
+    hallazgos/mapa_base.md     fuentes y licencias del mapa base del mundo 4D (la escribe pipeline.base_mapa; el indice la enlaza si existe)
     grafo.json                grafo de operadores, areas, pads y pozos
 """
 from __future__ import annotations
@@ -82,10 +86,6 @@ def num(value, decimals: int = 0) -> str:
 
 def ym(value) -> str:
     return "s/d" if value is None else f"{value.year:04d}-{value.month:02d}"
-
-
-def ymd(value) -> str:
-    return "s/d" if value is None else value.strftime("%Y-%m-%d")
 
 
 def _disp(value) -> str:
@@ -206,18 +206,11 @@ def _collect(con):
 
 
 def _brecha_mes1(con):
-    """Brecha del mes 1 con todas las edades: mediana cercanos menos mediana control."""
-    val = None
-    try:
-        val = _scalar(con, """
-            select median(indice) filter (where banda = 'cercano')
-                 - median(indice) filter (where banda = 'control')
-            from int_interferencia_mes where k = 1""")
-    except duckdb.Error:
-        val = None
-    if val is None:
-        val = _scalar(con, "select median(brecha) from mart_interferencia_brecha where k = 1")
-    return val
+    """Brecha del mes 1 con todas las edades: mediana cercanos menos mediana control. None si falta una de las dos bandas."""
+    return _scalar(con, """
+        select median(indice) filter (where banda = 'cercano')
+             - median(indice) filter (where banda = 'control')
+        from int_interferencia_mes where k = 1""")
 
 
 # --------------------------------------------------------------------------
@@ -387,6 +380,10 @@ def _pagina_hallazgos(data, manifest, historial, sha_prod, version) -> str:
     for r in data["anual"]:
         L.append(f"| {r['anio']} | {num(r['eventos_cercanos'])} | {num(r['brecha_mes_1'], 3)} |")
     L.append("")
+    L.append("Las fracturas se cargan con rezago, así que a los últimos años les faltan pozos hijos y la tabla no se lee como "
+             "tendencia." + (" La comparación con la misma antigüedad de carga en todos los años está en "
+                             "[carga_anual.md](carga_anual.md)." if data.get("hay_carga_anual") else ""))
+    L.append("")
     L.append("## Petróleo diferido")
     L.append("")
     L.append(f"Petróleo diferido total (meses 0 a 6 desde la fractura, eventos cercanos): "
@@ -436,6 +433,7 @@ def build_wiki(con, manifest, out_dir) -> dict:
     (out_dir / "hallazgos").mkdir(parents=True, exist_ok=True)
 
     data = _collect(con)
+    data["hay_carga_anual"] = (out_dir / "hallazgos" / "carga_anual.md").exists()   # la escribe pipeline.carga_anual
     data["top_operadores"] = sorted(
         [r for r in data["dif_operador"]],
         key=lambda r: (-(r["diferido"] or 0), r["operador"]))[:TOP_N]
@@ -565,177 +563,76 @@ def build_wiki(con, manifest, out_dir) -> dict:
         anis_path.unlink()
         (out_dir / "hallazgos" / "anisotropia_mapa.svg").unlink(missing_ok=True)
 
-    # robustez del eje y del costo (necesita pipeline.robustez corrido despues de pipeline.costo)
-    hay_robustez = con.execute("select count(*) from information_schema.tables where table_name = 'mart_robustez_eje'"
-                               ).fetchall()[0][0] > 0
-    rob_path = out_dir / "hallazgos" / "robustez.md"
-    if hay_robustez:
-        rob_path.write_text(_clean(robustez.pagina_robustez(con)), encoding="utf-8")
-        paginas += 1
-    elif rob_path.exists():
-        rob_path.unlink()
-
-    # linaje de datos (se arma del SQL y del codigo de los modulos, no del warehouse)
-    (out_dir / "hallazgos" / "linaje.md").write_text(_clean(linaje.pagina_linaje()), encoding="utf-8")
-    paginas += 1
-    # validacion del eje (necesita pipeline.validacion corrido despues de pipeline.costo)
-    hay_validacion = con.execute("select count(*) from information_schema.tables "
-                                 "where table_name = 'mart_validacion_resultados'").fetchall()[0][0] > 0
-    val_path = out_dir / "hallazgos" / "validacion.md"
-    if hay_validacion:
-        val_path.write_text(_clean(validacion.pagina_validacion(con)), encoding="utf-8")
-        paginas += 1
-    elif val_path.exists():
-        val_path.unlink()
-
-    # falsacion del estudio de eventos (necesita pipeline.placebo corrido despues de pipeline.costo)
-    hay_placebo = con.execute("select count(*) from information_schema.tables "
-                              "where table_name = 'mart_placebo_fechas'").fetchall()[0][0] > 0
-    pla_path = out_dir / "hallazgos" / "placebo.md"
-    if hay_placebo:
-        pla_path.write_text(_clean(placebo.pagina_placebo(con)), encoding="utf-8")
-        paginas += 1
-    elif pla_path.exists():
-        pla_path.unlink()
-
-    # descomposicion de la brecha (necesita pipeline.descomposicion corrido despues de pipeline.placebo)
-    hay_desc = con.execute("select count(*) from information_schema.tables "
-                           "where table_name = 'mart_descomposicion_k'").fetchall()[0][0] > 0
-    desc_path = out_dir / "hallazgos" / "descomposicion.md"
-    if hay_desc:
-        desc_path.write_text(_clean(descomposicion.pagina_descomposicion(con)), encoding="utf-8")
-        paginas += 1
-    elif desc_path.exists():
-        desc_path.unlink()
-
-    # barriles diferidos: rango y cifra por evento (necesita pipeline.diferido corrido despues de pipeline.descomposicion)
-    hay_dif = con.execute("select count(*) from information_schema.tables "
-                          "where table_name = 'mart_diferido_rango'").fetchall()[0][0] > 0
-    dif_path = out_dir / "hallazgos" / "diferido.md"
-    if hay_dif:
-        dif_path.write_text(_clean(diferido.pagina_diferido(con)), encoding="utf-8")
-        paginas += 1
-    elif dif_path.exists():
-        dif_path.unlink()
-
-    # sincronia dentro del mes (necesita pipeline.sincronia corrido despues de pipeline.diferido)
-    hay_sinc = con.execute("select count(*) from information_schema.tables "
-                           "where table_name = 'mart_sincronia_pendiente'").fetchall()[0][0] > 0
-    sinc_path = out_dir / "hallazgos" / "sincronia.md"
-    if hay_sinc:
-        sinc_path.write_text(_clean(sincronia.pagina_sincronia(con)), encoding="utf-8")
-        paginas += 1
-    elif sinc_path.exists():
-        sinc_path.unlink()
-
-    # bloques espaciales (necesita pipeline.bloques corrido despues de pipeline.sincronia)
-    hay_bloq = con.execute("select count(*) from information_schema.tables where table_name = 'mart_bloques'").fetchall()[0][0] > 0
-    bloq_path = out_dir / "hallazgos" / "bloques.md"
-    if hay_bloq:
-        bloq_path.write_text(_clean(bloques.pagina_bloques(con)), encoding="utf-8")
-        paginas += 1
-    elif bloq_path.exists():
-        bloq_path.unlink()
-
-    # lado del hijo (necesita pipeline.hijo corrido despues de pipeline.sincronia)
-    hay_hijo = con.execute("select count(*) from information_schema.tables "
-                           "where table_name = 'mart_hijo_coef'").fetchall()[0][0] > 0
-    hijo_path = out_dir / "hallazgos" / "hijo.md"
-    if hay_hijo:
-        hijo_path.write_text(_clean(hijo.pagina_hijo(con)), encoding="utf-8")
-        paginas += 1
-    elif hijo_path.exists():
-        hijo_path.unlink()
-
-    # validacion por inyeccion (necesita pipeline.inyeccion corrido despues de pipeline.sincronia)
-    hay_iny = con.execute("select count(*) from information_schema.tables where table_name = 'mart_inyeccion'").fetchall()[0][0] > 0
-    iny_path = out_dir / "hallazgos" / "inyeccion.md"
-    if hay_iny:
-        iny_path.write_text(_clean(inyeccion.pagina_inyeccion(con)), encoding="utf-8")
-        paginas += 1
-    elif iny_path.exists():
-        iny_path.unlink()
-
-    # dosis y respuesta (necesita pipeline.dosis corrido despues de pipeline.descomposicion)
-    hay_dosis = con.execute("select count(*) from information_schema.tables where table_name = 'mart_dosis_veredicto'").fetchall()[0][0] > 0
-    dosis_path = out_dir / "hallazgos" / "dosis.md"
-    if hay_dosis:
-        dosis_path.write_text(_clean(dosis.pagina_dosis(con)), encoding="utf-8")
-        paginas += 1
-    elif dosis_path.exists():
-        dosis_path.unlink()
-
-    # dosis mes a mes (necesita pipeline.dosis_meses corrido despues de pipeline.dosis)
-    hay_dosis_meses = con.execute("select count(*) from information_schema.tables where table_name = 'mart_dosis_meses_veredicto'").fetchall()[0][0] > 0
-    dosis_meses_path = out_dir / "hallazgos" / "dosis_meses.md"
-    if hay_dosis_meses:
-        dosis_meses_path.write_text(_clean(dosis_meses.pagina_dosis_meses(con)), encoding="utf-8")
-        paginas += 1
-    elif dosis_meses_path.exists():
-        dosis_meses_path.unlink()
-
-    # dosis del pad y cercania (necesita pipeline.dosis_pad corrido despues de pipeline.dosis)
-    hay_dosis_pad = con.execute("select count(*) from information_schema.tables where table_name = 'mart_dosis_pad_veredicto'").fetchall()[0][0] > 0
-    dosis_pad_path = out_dir / "hallazgos" / "dosis_pad.md"
-    if hay_dosis_pad:
-        dosis_pad_path.write_text(_clean(dosis_pad.pagina_dosis_pad(con)), encoding="utf-8")
-        paginas += 1
-    elif dosis_pad_path.exists():
-        dosis_pad_path.unlink()
-
-    # anillo de control (necesita pipeline.anillo corrido despues de pipeline.descomposicion)
-    hay_anillo = con.execute("select count(*) from information_schema.tables where table_name = 'mart_anillo_veredicto'").fetchall()[0][0] > 0
-    anillo_path = out_dir / "hallazgos" / "anillo.md"
-    if hay_anillo:
-        anillo_path.write_text(_clean(anillo.pagina_anillo(con)), encoding="utf-8")
-        paginas += 1
-    elif anillo_path.exists():
-        anillo_path.unlink()
-
-    # capa de decision para un operador (necesita pipeline.decision corrido despues de pipeline.hijo)
-    hay_decision = con.execute("select count(*) from information_schema.tables where table_name = 'mart_decision_cierre'").fetchall()[0][0] > 0
-    decision_path = out_dir / "hallazgos" / "decision_operador.md"
-    if hay_decision:
-        decision_path.write_text(_clean(decision.pagina_decision(con)), encoding="utf-8")
-        paginas += 1
-    elif decision_path.exists():
-        decision_path.unlink()
-
-    # potencia del nulo de dosis (necesita pipeline.potencia_dosis corrido despues de pipeline.dosis_pad)
-    hay_potencia_dosis = con.execute("select count(*) from information_schema.tables where table_name = 'mart_potencia_dosis_veredicto'").fetchall()[0][0] > 0
-    potencia_dosis_path = out_dir / "hallazgos" / "potencia_dosis.md"
-    if hay_potencia_dosis:
-        potencia_dosis_path.write_text(_clean(potencia_dosis.pagina_potencia_dosis(con)), encoding="utf-8")
-        paginas += 1
-    elif potencia_dosis_path.exists():
-        potencia_dosis_path.unlink()
-
-    # el padre en la ventana de gas (necesita pipeline.gas)
-    hay_gas = con.execute("select count(*) from information_schema.tables where table_name = 'mart_gas_veredicto'").fetchall()[0][0] > 0
-    gas_path = out_dir / "hallazgos" / "gas.md"
-    if hay_gas:
-        gas_path.write_text(_clean(gas.pagina_gas(con)), encoding="utf-8")
-        paginas += 1
-    elif gas_path.exists():
-        gas_path.unlink()
-
-    # lado del hijo dentro de celdas de 2 km (necesita pipeline.hijo_celdas)
-    hay_hijo_celdas = con.execute("select count(*) from information_schema.tables where table_name = 'mart_hijo_celdas_resumen'").fetchall()[0][0] > 0
-    hijo_celdas_path = out_dir / "hallazgos" / "hijo_celdas.md"
-    if hay_hijo_celdas:
-        hijo_celdas_path.write_text(_clean(hijo_celdas.pagina_hijo_celdas(con)), encoding="utf-8")
-        paginas += 1
-    elif hijo_celdas_path.exists():
-        hijo_celdas_path.unlink()
-
-    # robustez por operador y area (necesita pipeline.robustez_operador, que corre despues de pipeline.placebo)
-    hay_rob_op = con.execute("select count(*) from information_schema.tables where table_name = 'mart_robustez_operador_veredicto'").fetchall()[0][0] > 0
-    rob_op_path = out_dir / "hallazgos" / "robustez_operador.md"
-    if hay_rob_op:
-        rob_op_path.write_text(_clean(robustez_operador.pagina_robustez_operador(con)), encoding="utf-8")
-        paginas += 1
-    elif rob_op_path.exists():
-        rob_op_path.unlink()
+    # paginas que dependen de un mart: una fila por pagina (bandera, mart, archivo, funcion), en el orden del indice;
+    # sin mart (None) la pagina se escribe siempre
+    hay = {}
+    paginas_mart = [
+        # robustez del eje y del costo (necesita pipeline.robustez corrido despues de pipeline.costo)
+        ("robustez", "mart_robustez_eje", "robustez.md", robustez.pagina_robustez),
+        # linaje de datos (se arma del SQL y del codigo de los modulos, no del warehouse)
+        ("linaje", None, "linaje.md", lambda con: linaje.pagina_linaje()),
+        # validacion del eje (necesita pipeline.validacion corrido despues de pipeline.costo)
+        ("validacion", "mart_validacion_resultados", "validacion.md", validacion.pagina_validacion),
+        # falsacion del estudio de eventos (necesita pipeline.placebo corrido despues de pipeline.costo)
+        ("placebo", "mart_placebo_fechas", "placebo.md", placebo.pagina_placebo),
+        # descomposicion de la brecha (necesita pipeline.descomposicion corrido despues de pipeline.placebo)
+        ("desc", "mart_descomposicion_k", "descomposicion.md", descomposicion.pagina_descomposicion),
+        # barriles diferidos: rango y cifra por evento (necesita pipeline.diferido corrido despues de pipeline.descomposicion)
+        ("dif", "mart_diferido_rango", "diferido.md", diferido.pagina_diferido),
+        # sincronia dentro del mes (necesita pipeline.sincronia corrido despues de pipeline.diferido)
+        ("sinc", "mart_sincronia_pendiente", "sincronia.md", sincronia.pagina_sincronia),
+        # bloques espaciales (necesita pipeline.bloques corrido despues de pipeline.sincronia)
+        ("bloq", "mart_bloques", "bloques.md", bloques.pagina_bloques),
+        # lado del hijo (necesita pipeline.hijo corrido despues de pipeline.sincronia)
+        ("hijo", "mart_hijo_coef", "hijo.md", hijo.pagina_hijo),
+        # validacion por inyeccion (necesita pipeline.inyeccion corrido despues de pipeline.sincronia)
+        ("iny", "mart_inyeccion", "inyeccion.md", inyeccion.pagina_inyeccion),
+        # dosis y respuesta (necesita pipeline.dosis corrido despues de pipeline.descomposicion)
+        ("dosis", "mart_dosis_veredicto", "dosis.md", dosis.pagina_dosis),
+        # dosis mes a mes (necesita pipeline.dosis_meses corrido despues de pipeline.dosis)
+        ("dosis_meses", "mart_dosis_meses_veredicto", "dosis_meses.md", dosis_meses.pagina_dosis_meses),
+        # dosis del pad y cercania (necesita pipeline.dosis_pad corrido despues de pipeline.dosis)
+        ("dosis_pad", "mart_dosis_pad_veredicto", "dosis_pad.md", dosis_pad.pagina_dosis_pad),
+        # anillo de control (necesita pipeline.anillo corrido despues de pipeline.descomposicion)
+        ("anillo", "mart_anillo_veredicto", "anillo.md", anillo.pagina_anillo),
+        # capa de decision para un operador (necesita pipeline.decision corrido despues de pipeline.hijo)
+        ("decision", "mart_decision_cierre", "decision_operador.md", decision.pagina_decision),
+        # potencia del nulo de dosis (necesita pipeline.potencia_dosis corrido despues de pipeline.dosis_pad)
+        ("potencia_dosis", "mart_potencia_dosis_veredicto", "potencia_dosis.md", potencia_dosis.pagina_potencia_dosis),
+        # el padre en la ventana de gas (necesita pipeline.gas)
+        ("gas", "mart_gas_veredicto", "gas.md", gas.pagina_gas),
+        # lado del hijo dentro de celdas de 2 km (necesita pipeline.hijo_celdas)
+        ("hijo_celdas", "mart_hijo_celdas_resumen", "hijo_celdas.md", hijo_celdas.pagina_hijo_celdas),
+        # robustez por operador y area (necesita pipeline.robustez_operador, que corre despues de pipeline.placebo)
+        ("rob_op", "mart_robustez_operador_veredicto", "robustez_operador.md", robustez_operador.pagina_robustez_operador),
+    ]
+    for flag, tabla, archivo, funcion in paginas_mart:
+        hay[flag] = tabla is None or con.execute(
+            "select count(*) from information_schema.tables where table_name = ?", [tabla]).fetchall()[0][0] > 0
+        ruta = out_dir / "hallazgos" / archivo
+        if hay[flag]:
+            ruta.write_text(_clean(funcion(con)), encoding="utf-8")
+            paginas += 1
+        elif ruta.exists():
+            ruta.unlink()
+    hay_robustez = hay["robustez"]
+    hay_validacion = hay["validacion"]
+    hay_placebo = hay["placebo"]
+    hay_desc = hay["desc"]
+    hay_dif = hay["dif"]
+    hay_sinc = hay["sinc"]
+    hay_bloq = hay["bloq"]
+    hay_hijo = hay["hijo"]
+    hay_iny = hay["iny"]
+    hay_dosis = hay["dosis"]
+    hay_dosis_meses = hay["dosis_meses"]
+    hay_dosis_pad = hay["dosis_pad"]
+    hay_anillo = hay["anillo"]
+    hay_decision = hay["decision"]
+    hay_potencia_dosis = hay["potencia_dosis"]
+    hay_gas = hay["gas"]
+    hay_hijo_celdas = hay["hijo_celdas"]
+    hay_rob_op = hay["rob_op"]
 
     # regla de parada del eje: potencia, controles negativos y exposicion (necesitan pipeline.potencia, eje_controles y eje_exposicion)
     paginas_eje = [("mart_potencia_resumen", "potencia.md", potencia.pagina_potencia),
@@ -798,9 +695,16 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).")
     if (out_dir / "hallazgos" / "literatura.md").exists():
         L.append("- Comparación con la literatura (las cifras de este trabajo al lado de las publicadas): [literatura.md](hallazgos/literatura.md).")
+    if (out_dir / "hallazgos" / "limites.md").exists():
+        L.append("- Límites y robustez en detalle (lo que el dato público no deja afirmar, con cada cifra verificada): [limites.md](hallazgos/limites.md).")
     if (out_dir / "hallazgos" / "prospectiva.md").exists():
         L.append("- Prueba prospectiva (predicciones congeladas con los datos hasta un mes y puntuadas cuando se publican los meses siguientes): "
                  "[prospectiva.md](hallazgos/prospectiva.md).")
+    if (out_dir / "hallazgos" / "carga_fracturas.md").exists():
+        L.append("- Rezago de carga de las fracturas (cuándo aparece cada fractura en el dato público, por operador y por año de inicio; descriptivo): [carga_fracturas.md](hallazgos/carga_fracturas.md).")
+    if (out_dir / "hallazgos" / "carga_anual.md").exists():
+        L.append("- La subida de 2026 con la misma antigüedad de carga (prueba con regla fijada antes de correr sobre el perfil por año): "
+                 "[carga_anual.md](hallazgos/carga_anual.md).")
     if hay_iny:
         L.append("- Validación por inyección (efectos plantados contra efectos recuperados por los estimadores): [inyeccion.md](hallazgos/inyeccion.md).")
     if hay_dosis:
@@ -821,8 +725,16 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).")
     if (out_dir / "hallazgos" / "replicacion.md").exists():
         L.append("- Replicación en Colorado (el estudio de eventos sobre la cuenca DJ, con la regla fijada de antemano): [replicacion.md](hallazgos/replicacion.md).")
+    if (out_dir / "hallazgos" / "wyoming_datos.md").exists():
+        L.append("- Wyoming, datos y conteos de la replicación en otra cuenca: [wyoming_datos.md](hallazgos/wyoming_datos.md).")
+    if (out_dir / "hallazgos" / "replicacion_wyoming.md").exists():
+        L.append("- Replicación en Wyoming (el mismo estudio de eventos con la misma regla, fijada antes de bajar la producción): [replicacion_wyoming.md](hallazgos/replicacion_wyoming.md).")
+    if (out_dir / "hallazgos" / "replicacion_cuencas.md").exists():
+        L.append("- Replicación por cuenca (la lectura de la familia: en cuántas cuencas se replica la huella, sin estimación conjunta): [replicacion_cuencas.md](hallazgos/replicacion_cuencas.md).")
     if hay_eje.get("eje_parada.md"):
         L.append("- Regla de parada del eje de merma (potencia, ventana previa, bloques y exposición): [eje_parada.md](hallazgos/eje_parada.md), con [potencia.md](hallazgos/potencia.md), [eje_controles.md](hallazgos/eje_controles.md) y [eje_exposicion.md](hallazgos/eje_exposicion.md).")
+    if (out_dir / "hallazgos" / "mapa_base.md").exists():
+        L.append("- Mapa base del mundo 4D (fuente, licencia y huella del relieve, el agua, los límites, las localidades y las concesiones): [mapa_base.md](hallazgos/mapa_base.md).")
     L.append(f"- Grafo: [grafo.json](grafo.json) con {len(grafo['nodos'])} nodos y "
              f"{_vigentes(grafo['aristas'])} aristas vigentes.")
     L.append("")
@@ -992,17 +904,17 @@ def _grafo(con, data) -> dict:
 def main() -> None:
     manifest = load_manifest()
     db = DATA / "warehouse.duckdb"
-    db_co = DATA / "colorado" / "warehouse.duckdb"
+    from pipeline.cuencas import CUENCAS
     con = duckdb.connect(str(db), read_only=True)
-    con_co = duckdb.connect(str(db_co), read_only=True) if db_co.exists() else None
+    con_cuencas = {i: duckdb.connect(str(c.db), read_only=True) for i, c in CUENCAS.items() if c.db.exists()}
     try:
-        filas = hz.evaluar(con, manifest, con_colorado=con_co)
+        filas = hz.evaluar(con, manifest, con_cuencas=con_cuencas)
         hz.registrar(filas, ROOT / "wiki" / "hallazgos" / "ledger.csv")
         stats = build_wiki(con, manifest, ROOT / "wiki")
     finally:
         con.close()
-        if con_co is not None:
-            con_co.close()
+        for k in con_cuencas.values():
+            k.close()
     print(json.dumps(stats, ensure_ascii=False))
     for aviso in hz.lint_wiki(ROOT / "wiki"):
         print(f"[aviso] {aviso}")

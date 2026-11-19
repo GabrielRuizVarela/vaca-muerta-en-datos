@@ -246,6 +246,7 @@ def armar_base(pozos_csv, mensual_csv):
             nullif({_E_DBL.format(c='rama_m')}, 0) as rama_horizontal_m,
             {_E_INT.format(c='etapas')} as etapas, {_E_DBL.format(c='arena_tn')} as arena_tn,
             cast(null as varchar) as terminacion, {_E_DBL.format(c='presion_max_psi')} as presion_maxima_psi,
+            cast(null as date) as mes_carga,
             {op} as operador
         from raw_pozos where {fecha} is not null""")
     # la rama de cada pozo sale del archivo de pozos aunque no tenga fecha de fractura: un padre sin fecha aporta su rama a la depleccion

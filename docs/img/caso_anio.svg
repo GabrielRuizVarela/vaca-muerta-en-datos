@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 420" width="700" height="420" role="img" aria-labelledby="t d">
 <title id="t">Brecha del mes 1 por año de la fractura</title>
-<desc id="d">Brecha del petróleo al mes 1 entre padres a menos de 1 km y controles de la misma edad, por año de la fractura del hijo, con el número de eventos de cada año. Llega a 44 puntos menos en 2026, año en curso. Medida, no causa.</desc>
+<desc id="d">Brecha del petróleo al mes 1 entre padres a menos de 1 km y controles de la misma edad, por año de la fractura del hijo, con el número de eventos de cada año. En 2026, año en curso, marca 44 puntos menos, con fracturas todavía sin cargar. Medida, no causa.</desc>
 <style>text { fill: #222222; font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 11px; }
 .titulo { font-size: 15px; font-weight: bold; }
 .sub { fill: #6b6b6b; }
@@ -92,5 +92,5 @@
 <text class="pie" x="64.0" y="362.0" text-anchor="end">eventos</text>
 <text x="26.0" y="205.0" text-anchor="middle" transform="rotate(-90 26.0 205.0)">Brecha al mes 1 (puntos)</text>
 <text x="375.0" y="384.0" text-anchor="middle">Año de la fractura del pozo hijo</text>
-<text class="pie" x="20" y="412">Claro: menos de 30 eventos en el año. 2026 es el año en curso. Huella medida, no causa.</text>
+<text class="pie" x="20" y="412">Claro: menos de 30 eventos en el año. 2026 es el año en curso y le faltan fracturas por cargar. Huella medida, no causa.</text>
 </svg>

@@ -51,8 +51,9 @@ import duckdb
 import numpy as np
 
 from pipeline import bloques, placebo
+from pipeline.cuencas import COLORADO, Cuenca, cuenca as _cuenca
 from pipeline.costo import _escribir
-from pipeline.ingest import DATA, ROOT
+from pipeline.ingest import ROOT
 from pipeline.placebo import KS_PRE, REPS_BOOT, SEMILLA_PLACEBO
 
 # Reglas numericas (las usa este modulo; cambiarlas despues de ver resultados rompe la preregistracion).
@@ -64,7 +65,7 @@ K_PREVIO = -1                   # mes de la brecha previa del veredicto
 K_SECUNDARIOS = (6,)            # brecha del mes 6 con la base original
 DESPLAZAMIENTOS_PLACEBO = (-12, 12)
 
-DB = DATA / "colorado" / "warehouse.duckdb"
+DB = COLORADO.db
 CORTES = ("principal", "todos_los_padres", "por_dia_producido")
 
 COLS_VEREDICTO = [
@@ -226,7 +227,7 @@ def recuentos(D: dict, bloque: np.ndarray) -> list[tuple]:
 
 # ------------------------------------------------------------------ corrida
 
-def calcular(con, reps: int = REPS_BOOT, placebo_reps: int = REPS_BOOT) -> dict:
+def calcular(con, reps: int = REPS_BOOT, placebo_reps: int = REPS_BOOT, cuenca: Cuenca = COLORADO) -> dict:
     """Todas las tablas (nombre -> (columnas, filas)) a partir de un warehouse con las tablas de P5a."""
     preparar(con)
     D = placebo.cargar(con)
@@ -235,7 +236,7 @@ def calcular(con, reps: int = REPS_BOOT, placebo_reps: int = REPS_BOOT) -> dict:
     principal = fila_robustez("principal", D, bloque, reps)
     por_dia = fila_robustez("por_dia_producido", dict(D, tasa=tasa_por_dia_producido(con, D)), bloque, reps)
     out = {
-        "mart_replicacion_colorado": (COLS_VEREDICTO, [fila_v]),
+        cuenca.tabla_veredicto: (COLS_VEREDICTO, [fila_v]),
         "mart_replicacion_serie": (COLS_SERIE, serie(D, bloque, reps)),
         "mart_replicacion_placebo": (COLS_PLACEBO, placebo.tabla_fechas(D, DESPLAZAMIENTOS_PLACEBO, placebo_reps)),
         "mart_replicacion_recuentos": (COLS_RECUENTOS, recuentos(D, bloque)),
@@ -271,9 +272,13 @@ def _ic(lo: float, hi: float) -> str:
     return f"{placebo._pts(lo)} a {placebo._pts(hi)}"
 
 
-def pagina_replicacion(con) -> str:
+def rotulos_recuentos(cuenca: Cuenca) -> dict:
+    return {**ROTULOS_RECUENTOS, **({"hijos": cuenca.rotulo_hijos} if cuenca.rotulo_hijos else {})}
+
+
+def pagina_replicacion(con, cuenca: Cuenca = COLORADO) -> str:
     g, pts = placebo._g, placebo._pts
-    v = dict(zip([c[0] for c in COLS_VEREDICTO], con.execute("select * from mart_replicacion_colorado where k = 1").fetchone()))
+    v = dict(zip([c[0] for c in COLS_VEREDICTO], con.execute(f"select * from {cuenca.tabla_veredicto} where k = 1").fetchone()))
     ser = con.execute("select * from mart_replicacion_serie order by base desc, k").fetchall()
     pla = con.execute("select * from mart_replicacion_placebo where desplazamiento_meses <> 0 order by desplazamiento_meses").fetchall()
     rob = {r[0]: r for r in con.execute("select * from mart_replicacion_robustez").fetchall()}
@@ -288,16 +293,17 @@ def pagina_replicacion(con) -> str:
     pct_menos = round(100 * (1 - abs(dia[3]) / abs(prin[3])))
     k2 = next(r for r in ser if r[0] == "limpia" and r[1] == -2)
     k6 = next(r for r in ser if r[0] == "original" and r[1] == 6)
-    L = ["# Replicación en Colorado (cuenca DJ)", "",
-         "Página generada por `pipeline/replicacion.py` sobre el warehouse del Colorado (`data/colorado/warehouse.duckdb`). Corre, sin "
+    fx = cuenca.fecha_hijo
+    L = [f"# {cuenca.titulo}", "",
+         f"Página generada por `pipeline/replicacion.py` sobre el warehouse {cuenca.de_el} (`data/{cuenca.id}/warehouse.duckdb`). Corre, sin "
          "cambiarlos, los estimadores del estudio de eventos de Vaca Muerta (`pipeline/placebo.py` y la clave de bloque de "
-         "`pipeline/bloques.py`) sobre las tablas que armó `pipeline/colorado` ([datos y conteos](colorado_datos.md)). La regla se fijó "
-         "antes de correr, en el primer commit de este tramo, y está en el libro de hallazgos como `replicacion_colorado`. Complementa "
+         f"`pipeline/bloques.py`) sobre las tablas que armó `{cuenca.modulo}` ([datos y conteos]({cuenca.pagina_datos})). La regla se fijó "
+         f"antes de correr, {cuenca.regla_fijada}, y está en el libro de hallazgos como `{cuenca.hipotesis}`. Complementa "
          "[Interferencia entre fracturas](interferencia.md) y [Bloques espaciales](bloques.md).", "",
          "## Resumen", "",
          f"Veredicto contra la regla fijada antes de correr: **{'se replica' if se else 'no se replica'}**. El límite superior del IC por "
          f"bloques de 5 km de la brecha del mes 1 {'queda por debajo de cero' if sale_ic else 'no queda por debajo de cero'} y la brecha "
-         f"previa a la fractura con base limpia {'es menor' if previa_menor else 'no es menor'}, en valor absoluto, que la del mes 1. "
+         f"previa a la {fx} con base limpia {'es menor' if previa_menor else 'no es menor'}, en valor absoluto, que la del mes 1. "
          "La segunda condición es una barrera baja: pide una brecha previa menor que la del mes 1, no una brecha previa igual a cero. "
          + (f"Con base limpia la brecha del mes -1 ({pts(v['brecha_previa_limpia'])}, IC 95% por bloques de 5 km: "
             f"{_ic(v['ic_bajo_previa_bloque'], v['ic_alto_previa_bloque'])}) y la del mes -2 ({pts(k2[6])}, IC: {_ic(k2[9], k2[10])}) "
@@ -312,7 +318,7 @@ def pagina_replicacion(con) -> str:
          f"- Brecha del mes 1 (padres horizontales a menos de 1 km frente a controles de 2 a 5 km, base de los meses -3 a -1): "
          f"{pts(v['brecha'])} puntos. IC 95% por pads hijo: {_ic(v['ic_bajo_pad'], v['ic_alto_pad'])}; por bloques de 5 km: "
          f"{_ic(v['ic_bajo_bloque'], v['ic_alto_bloque'])} ({g(bloques_v)} bloques).",
-         f"- Brecha previa a la fractura con base limpia (mes -1, base de los meses -6 a -4): {pts(v['brecha_previa_limpia'])} puntos "
+         f"- Brecha previa a la {fx} con base limpia (mes -1, base de los meses -6 a -4): {pts(v['brecha_previa_limpia'])} puntos "
          f"(IC 95% por bloques de 5 km: {_ic(v['ic_bajo_previa_bloque'], v['ic_alto_previa_bloque'])}).",
          f"- Valor de la hipótesis: {g(v['valor'], 3)}, el mayor entre el límite superior del IC por bloques, {g(v['ic_alto_bloque'], 3)}, y "
          f"la diferencia de valores absolutos (previa menos mes 1), {g(dif, 3)}; se replica si es menor que cero.",
@@ -322,27 +328,25 @@ def pagina_replicacion(con) -> str:
          "veredictos.", "",
          "## Regla fijada antes de correr", "",
          "Se replica si la brecha del mes 1 (mediana del índice de los padres cercanos menos la de los controles, base de los meses -3 a "
-         "-1, padres a menos de 1 km y controles de 2 a 5 km, con los filtros de P5a) es negativa con un IC 95% que excluye cero, y si la "
+         f"-1, padres a menos de 1 km y controles de 2 a 5 km, con los filtros {cuenca.filtros}) es negativa con un IC 95% que excluye cero, y si la "
          "brecha previa con base limpia (mes -1, base de los meses -6 a -4) es menor, en valor absoluto, que la del mes 1. Si no, no se "
-         "replica. La lectura usa el IC por bloques espaciales de 5 km; el IC por pads hijo se publica al lado. Después del primer "
-         "commit se agregó `limit 1` a la consulta SQL del libro (`replicacion_colorado` en `pipeline/hallazgos.py`) solo para que la "
-         "consulta de la hipótesis devuelva una única fila: el texto, el operador y el umbral son los mismos y el valor no cambió, pero "
-         "cambió la `firma` registrada en el libro. Los umbrales no se tocaron después de ver resultados.", "",
+         "replica. La lectura usa el IC por bloques espaciales de 5 km; el IC por pads hijo se publica al lado."
+         + cuenca.nota_regla, "",
          "## Brecha por mes, con los dos intervalos", "",
          "Índice = caudal de petróleo del mes sobre la media de la base; brecha = mediana de los cercanos menos mediana de los controles, "
-         "en puntos de índice. k = 0 es el mes de la fractura del hijo.", "",
+         f"en puntos de índice. k = 0 es el mes de la {fx} del hijo.", "",
          "| Base | k | Eventos cercanos | Eventos de control | Brecha (puntos) | IC 95% por pads | IC 95% por bloques de 5 km | Bloques |",
          "| --- | ---: | ---: | ---: | ---: | --- | --- | ---: |"]
     for base, k, nn, nc, _a, _b, gap, lop, hip, lob, hib, _p, nb in ser:
         rot = "Meses -6 a -4" if base == "limpia" else "Meses -3 a -1"
         L.append(f"| {rot} | {k} | {g(nn)} | {g(nc)} | {pts(gap)} | {_ic(lop, hip)} | {_ic(lob, hib)} | {g(nb)} |")
-    L += ["", "Con la base de los meses -6 a -4 los meses -3 a -1 son la pretendencia (la brecha previa a la fractura); con la base de los meses "
+    L += ["", "Con la base de los meses -6 a -4 los meses -3 a -1 son la pretendencia (la brecha previa a la " + fx + "); con la base de los meses "
           "-3 a -1 el mes 1 es el resultado del veredicto y el mes 6 mide cuánto queda de la brecha. "
           f"Al mes 6 la brecha es de {pts(k6[6])} puntos; su IC por bloques {'excluye' if k6[10] < 0 else 'incluye'} cero.", "",
-          "## Placebo con la fecha de fractura corrida", "",
-          "Se corre la fecha de fractura de todos los hijos 12 meses (hacia atrás y hacia adelante), se conservan los pares padre e hijo y "
+          f"## Placebo con la fecha de {fx} corrida", "",
+          f"Se corre la fecha de {fx} de todos los hijos 12 meses (hacia atrás y hacia adelante), se conservan los pares padre e hijo y "
           "se exige que el padre cumpla las mismas reglas en la fecha falsa (la misma máquina de `pipeline/placebo.py`, IC por pads). "
-          "Con -12 meses la fecha falsa cae antes de la fractura real y es el placebo limpio; con +12 el mes falso puede caer sobre meses "
+          f"Con -12 meses la fecha falsa cae antes de la {fx} real y es el placebo limpio; con +12 el mes falso puede caer sobre meses "
           "ya afectados, así que no refuta nada por sí solo.", "",
           "| Desplazamiento (meses) | Eventos cercanos | Brecha del mes 1 (puntos) | IC 95% por pads | Brecha real en los mismos eventos (puntos) |",
           "| ---: | ---: | ---: | --- | ---: |"]
@@ -366,45 +370,38 @@ def pagina_replicacion(con) -> str:
              "(`descomposicion.md`)." if menor else
              "La brecha no depende entonces de meses o días sin producir."), "",
           "## Recuentos", "", "| Concepto | Cantidad |", "| --- | ---: |"]
-    for clave, rot in ROTULOS_RECUENTOS.items():
+    for clave, rot in rotulos_recuentos(cuenca).items():
         L.append(f"| {rot} | {g(rec[clave])} |")
-    L += ["", "## Qué Colorado no puede mostrar", "",
-          "- No hay etapas ni arena: el largo de rama es un proxy (profundidad medida menos vertical) y no se corre ningún resultado que "
-          "dependa de ellas.",
-          "- La rama lateral es un proxy y la ubicación es la de superficie, igual que en Vaca Muerta; no hay trayectorias.",
-          "- La fecha de fractura sale del formulario de divulgación de FracFocus (inicio del trabajo), no de un mes calendario de reporte; "
-          "un error de unos días mueve el mes 0 de un hijo.",
-          "- La convención de reporte difiere: una fila por formación, sidetracks sumados al pozo y días efectivos como el máximo entre filas.",
-          "- Los cierres aparecen como meses con cero días producidos, no como una marca de parada; no se separa un cierre del operador de "
-          "un daño.",
-          "- La población de padres es distinta (muchos pozos verticales); por eso el corte principal usa solo padres horizontales.",
-          "- El bloque de 5 km de un pad usa el centroide de todos sus pozos con ubicación (también verticales y sin producción), no solo "
-          "el de los pozos filtrados; solo importa para pads cerca del borde de una celda.",
-          "- Es una huella medida contra un control, sin ajuste por comparaciones múltiples; no se afirma causalidad.", "",
+    L += ["", f"## Qué {cuenca.nombre} no puede mostrar", "", *[f"- {t}" for t in cuenca.no_puede], "",
           "## Qué significa para el resultado de Vaca Muerta", "",
-          ("La brecha del mes 1 y la regla fijada de antemano se sostienen también en una segunda cuenca con los mismos estimadores: es una "
+          (f"La brecha del mes 1 y la regla fijada de antemano se sostienen también en {cuenca.ordinal} con los mismos estimadores: es una "
            "validación externa de eso, no una estimación conjunta ni una cifra que se pueda trasladar de una cuenca a otra. "
-           f"Al mes 6 la brecha de Colorado es de {pts(k6[6])} puntos y su IC por bloques {'excluye' if k6[10] < 0 else 'incluye'} cero: "
+           f"Al mes 6 la brecha de {cuenca.nombre} es de {pts(k6[6])} puntos y su IC por bloques {'excluye' if k6[10] < 0 else 'incluye'} cero: "
            "la caída no se cierra del todo al mes 6, a diferencia de la lectura de recuperación de Vaca Muerta. La forma más allá del "
            "mes 1 no formó parte de la regla."
            if se else
-           "La huella no se confirma en otra cuenca con los mismos estimadores y la regla fijada de antemano: el resultado de Vaca Muerta "
-           "queda sin validación externa por este camino, y se publica así. No es una estimación conjunta ni cambia las cifras de Vaca "
-           "Muerta."), ""]
+           f"La huella no se confirma en {cuenca.nombre} con los mismos estimadores y la regla fijada de antemano, y se publica así. "
+           "Esta cuenca sola no confirma ni desmiente el resultado de Vaca Muerta: se lee junto con las otras cuencas, no sola. No es "
+           "una estimación conjunta ni cambia las cifras de Vaca Muerta."), ""]
     return "\n".join(L)
 
 
-def main(path: Path = DB, pagina: Path | None = PAGINA) -> int:
+_DE_LA_CUENCA = object()        # "pagina" sin dar: la pagina de la cuenca (None sigue queriendo decir "no escribir pagina")
+
+
+def main(path: Path | None = None, pagina=_DE_LA_CUENCA, cuenca: Cuenca = COLORADO) -> int:
+    path = cuenca.db if path is None else path
+    pagina = cuenca.pagina if pagina is _DE_LA_CUENCA else pagina
     if not Path(path).exists():
-        print(f"falta {path}: corre `uv run python -m pipeline.colorado.build` (o `run_all --with-colorado`).", file=sys.stderr)
+        print(f"falta {path}: corre `uv run python -m {cuenca.modulo.replace('/', '.')}.build`.", file=sys.stderr)
         return 2
     con = duckdb.connect(str(path))
     try:
-        tablas = calcular(con)
+        tablas = calcular(con, cuenca=cuenca)
         escribir(con, tablas)
         if pagina is not None:
             pagina.parent.mkdir(parents=True, exist_ok=True)
-            pagina.write_text(pagina_replicacion(con), encoding="utf-8")
+            pagina.write_text(pagina_replicacion(con, cuenca), encoding="utf-8")
             print(f"pagina: {pagina}")
         for nombre, (_, filas) in tablas.items():
             for f in filas:
@@ -415,4 +412,9 @@ def main(path: Path = DB, pagina: Path | None = PAGINA) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import argparse
+    ap = argparse.ArgumentParser(prog="pipeline.replicacion")
+    ap.add_argument("--cuenca", default=COLORADO.id, help="id de la cuenca (pipeline/cuencas.py); sin argumento, Colorado")
+    a = ap.parse_args()
+    c = _cuenca(a.cuenca)
+    sys.exit(main(cuenca=c, pagina=c.pagina))

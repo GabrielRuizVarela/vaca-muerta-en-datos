@@ -40,7 +40,11 @@ from int_pozo_base b join int_pozo_pad p using (pozo_id);
 
 -- First frac month of each child well (refracs are not new children).
 create or replace table int_frac_hijo as
-select f.pozo_id as hijo, date_trunc('month', min(f.fecha_inicio)) as mes_frac
+select f.pozo_id as hijo, date_trunc('month', min(f.fecha_inicio)) as mes_frac,
+       -- mes de carga del trabajo de fractura que fija mes_frac. Las filas con esa misma fecha de inicio cuentan como el
+       -- mismo trabajo cargado mas de una vez: vale la primera carga conocida. Si ninguna de esas filas trae mes de carga
+       -- queda nulo (arg_min saltearia el nulo y tomaria el de un trabajo posterior).
+       array_agg(f.mes_carga order by f.fecha_inicio, f.mes_carga)[1] as mes_carga
 from stg_fractura f
 join int_pozo_ubicacion u using (pozo_id)
 where f.fecha_inicio is not null

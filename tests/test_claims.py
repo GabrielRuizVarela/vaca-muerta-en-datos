@@ -79,3 +79,33 @@ def test_readme_y_docs_coinciden_con_el_warehouse():
     assert not fallos, "\n".join(fallos)
     if not claims.WAREHOUSE.exists():
         pytest.skip("sin data/warehouse.duckdb: solo se verificaron las cifras que salen de archivos versionados")
+
+
+def test_numeros_sin_fijar_devuelve_solo_el_suelto(tmp_path):
+    """Un numero fijado por un claim, uno definicional y uno entre comillas invertidas no salen; el suelto si."""
+    _doc(tmp_path, "La brecha es de -22,9 puntos con bloques de 5 km y `uv run 14` da 77 casos.")
+    cs = [Claim("brecha", "doc.md", r"es de (-?\d+,\d+) puntos", lambda con: -22.9, 0.05, requiere_wh=False),
+          Claim("otro_fichero", "otro.md", r"da (\d+) casos", lambda con: 77.0, requiere_wh=False)]
+    assert claims.numeros_sin_fijar("doc.md", (r"bloques de 5 km",), raiz=tmp_path, claims=cs) == ["77"]
+    cs.append(Claim("casos", "doc.md", r"da (\d+) casos", lambda con: 77.0, requiere_wh=False))
+    assert claims.numeros_sin_fijar("doc.md", (r"bloques de 5 km",), raiz=tmp_path, claims=cs) == []
+
+
+def test_pagina_de_limites_sin_numeros_sueltos():
+    """Cada cifra de wiki/hallazgos/limites.md esta fijada por un claim o es parte de una definicion de LIMITES_DEFINICIONALES."""
+    assert claims.numeros_sin_fijar(claims.W_LIM, claims.LIMITES_DEFINICIONALES) == []
+
+
+def test_resumen_del_operador_sin_numeros_sueltos():
+    """Cada cifra de docs/resumen-operador.md esta fijada por un claim o es parte de una definicion de RESUMEN_DEFINICIONALES."""
+    assert claims.numeros_sin_fijar(claims.W_RESUMEN, claims.RESUMEN_DEFINICIONALES) == []
+
+
+def test_caso_de_interferencia_sin_numeros_sueltos():
+    """Cada cifra de docs/caso-interferencia.md esta fijada por un claim o es parte de una definicion de CASO_DEFINICIONALES."""
+    assert claims.numeros_sin_fijar(claims.CASO, claims.CASO_DEFINICIONALES) == []
+
+
+def test_readme_sin_numeros_sueltos():
+    """Cada cifra de README.md esta fijada por un claim o es parte de una definicion de README_DEFINICIONALES."""
+    assert claims.numeros_sin_fijar(claims.R, claims.README_DEFINICIONALES) == []

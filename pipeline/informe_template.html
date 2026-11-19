@@ -1,5 +1,4 @@
 <title>Interferencia padre-hijo en Vaca Muerta</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Qué le pasa a un pozo padre cuando se fractura un hijo cerca, medido con el dato público mensual de la Secretaría de Energía.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -98,6 +97,8 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--focus); out
 .resultado .r .v { font: 750 clamp(30px, 4.6vw, 42px)/1 var(--f-display); font-stretch: 80%; font-variant-numeric: tabular-nums; }
 .resultado .r.principal .v { color: var(--padre); }
 .resultado .r .d { font-size: 13.5px; color: var(--ink-2); }
+a { color: var(--control); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
 .formula { font: 12px/1.6 var(--f-mono); color: var(--ink-3); border-top: 1px dashed var(--rule); padding-top: 12px; overflow-wrap: anywhere; }
 
 .limites { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
@@ -124,7 +125,7 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
   <div class="cifra clave" role="listitem">
     <div class="ojo">Mes 1</div>
     <div class="v num">{{gap1}}<small>puntos</small></div>
-    <div class="d">del caudal propio del padre, contra el control. Entre {{edad_menos}} y {{edad_mas}} según la edad del padre.</div>
+    <div class="d">del caudal propio del padre, contra el control (IC 95% por bloques de 5 km: {{gap1_ic_bajo}} a {{gap1_ic_alto}}). Entre {{edad_menos}} y {{edad_mas}} según la edad del padre.</div>
     <div class="f">{{eventos}} eventos · {{pads_hijo}} pads hijo</div>
   </div>
   <div class="cifra" role="listitem">
@@ -211,6 +212,7 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
   <div class="texto">
     <h2>Cuánto vale con tu precio y tu tasa</h2>
     <p>El diferido es volumen que llega tarde, si llega. Su costo es el valor tiempo de cobrarlo más tarde. La cota, en cambio, es lo más que podría no volver según el dato: valuarla sin descontar da un techo. El precio, la tasa y el rezago los ponés vos; los de arranque son un ejemplo.</p>
+    <p>Para hacer la misma cuenta con los padres reales alrededor de un punto del mapa, plantá un pozo hijo en <a href="mundo.html#libre&amp;hoja=plantar">Vaca Muerta en 4D</a>.</p>
   </div>
   <div class="calc">
     <form id="calc" autocomplete="off">
@@ -281,7 +283,7 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
 </section>
 
 <footer>
-  <div>Fuente: producción de pozos no convencionales y datos de fractura (Adjunto IV) de la Secretaría de Energía de la Nación, datos abiertos, hasta {{mes_dato}}. Cada cifra de esta página se lee de los marts del warehouse y se verifica con <code>uv run python -m pipeline.claims</code>.</div>
+  <div>Fuente: producción de pozos no convencionales y datos de fractura (Adjunto IV) de la Secretaría de Energía de la Nación, datos abiertos, hasta {{mes_dato}}{{frase_verificado}}. La página se regenera con <code>uv run python -m pipeline.run_all</code>; cada cifra se lee de los marts del warehouse y se verifica con <code>uv run python -m pipeline.claims</code>.</div>
   <div>Describe asociaciones en pozos de varios operadores. No es una recomendación de operación.</div>
 </footer>
 

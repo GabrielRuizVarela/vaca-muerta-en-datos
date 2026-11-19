@@ -17,6 +17,7 @@ import duckdb
 import numpy as np
 from pydantic import BaseModel, Field
 
+from pipeline import carga
 from pipeline.hallazgos import HIPOTESIS, RENOMBRADAS, leer_ledger
 from pipeline.ingest import DATA, ROOT, load_manifest
 
@@ -254,7 +255,26 @@ def interferencia_anual(con, a: ArgsAnual) -> dict:
     r = rs[0]
     return {"valor": r["brecha_mes_1"], "filas": rs,
             "texto": f"Fracturas de {a.anio}: {num(r['eventos_cercanos'])} eventos con un pozo padre a menos de 1 km; un mes "
-                     f"después el padre rinde {num(-100 * r['brecha_mes_1'])} puntos menos que el control."}
+                     f"después el padre rinde {num(-100 * r['brecha_mes_1'])} puntos menos que el control."
+                     + aviso_carga_incompleta(con, a.anio)}
+
+
+def aviso_carga_incompleta(con, anio: int) -> str:
+    """Aviso de "año con carga incompleta" para la respuesta de un año, o cadena vacía.
+
+    Las fracturas aparecen en el dato público con rezago de carga (pipeline.carga). Si la completitud estimada del último mes
+    del año es menor que carga.UMBRAL, todavía faltan hijos de ese año y su cifra puede cambiar. Lo fija la regla de
+    pipeline.carga_anual. Un warehouse armado antes de que existiera el mes de carga no tiene con qué estimar: la respuesta lo
+    dice en vez de fallar o de callar el aviso."""
+    try:
+        c = carga.completitud_anio(con, anio)
+    except (duckdb.BinderException, duckdb.CatalogException):
+        return (" Sin estimación de carga: este warehouse no tiene el mes de carga de las fracturas, así que no se puede decir "
+                "si al año le faltan pozos hijos por cargar. Reconstruilo con `python -m pipeline.run_all`.")
+    if c is None or c >= carga.UMBRAL:
+        return ""
+    return (f" Año con carga incompleta: de las fracturas iniciadas en su último mes se estima cargado como mucho el "
+            f"{num(100 * c, 1)}% (umbral {num(100 * carga.UMBRAL)}%), así que faltan pozos hijos por cargar y la cifra puede cambiar.")
 
 
 def petroleo_diferido(con, a: ArgsDiferido) -> dict:
@@ -271,10 +291,10 @@ def petroleo_diferido(con, a: ArgsDiferido) -> dict:
 
 
 def pozo(con, a: ArgsPozo) -> dict:
-    rs = filas(con, """select p.pozo_id, p.sigla, p.operador, p.area, p.tipo_pozo, p.formacion, p.subtipo_recurso,
+    rs = filas(con, f"""select p.pozo_id, p.sigla, p.operador, p.area, p.tipo_pozo, p.formacion, p.subtipo_recurso,
                               strftime(p.primer_mes_petroleo, '%Y-%m') as primer_mes_petroleo,
                               f.rama_horizontal_m, f.etapas, f.arena_tn,
-                              (select sum(petroleo_m3) * 6.2898 from fct_produccion x where x.pozo_id = p.pozo_id) as petroleo_acum_bbl
+                              (select sum(petroleo_m3) * {BBL} from fct_produccion x where x.pozo_id = p.pozo_id) as petroleo_acum_bbl
                        from dim_pozo p left join dim_fractura_pozo f using (pozo_id)
                        where lower(p.sigla) = lower(?)""", [a.sigla.strip()])
     if not rs:
@@ -580,7 +600,7 @@ REGISTRO: dict[str, Operacion] = {o.nombre: o for o in [
     Operacion("interferencia_brecha", "Cuánto cae un pozo padre cuando fracturan un pozo nuevo a menos de 1 km, "
               "contra pozos de control de igual edad.", ArgsBrecha, interferencia_brecha, ("int_interferencia_mes",)),
     Operacion("interferencia_anual", "Huella de interferencia (brecha al mes 1) según el año de la fractura del pozo hijo.",
-              ArgsAnual, interferencia_anual, ("mart_interferencia_anual",)),
+              ArgsAnual, interferencia_anual, ("mart_interferencia_anual", "int_frac_hijo", "stg_fractura")),
     Operacion("petroleo_diferido", "Barriles de petróleo diferidos en pozos padre por fracturas cercanas, por operadora, área o año.",
               ArgsDiferido, petroleo_diferido, ("mart_interferencia_diferida",)),
     Operacion("costo_interferencia", "Barriles de petróleo que se esperaría diferir en los padres a menos de 1 km de un pad o "
@@ -606,10 +626,6 @@ REGISTRO: dict[str, Operacion] = {o.nombre: o for o in [
     Operacion("pagina_wiki", "Lee una página de la wiki generada (operadoras, áreas, pads, hallazgos).",
               ArgsWiki, pagina_wiki, ("wiki/",)),
 ]}
-
-
-def catalogo() -> list[dict]:
-    return [{"nombre": o.nombre, "descripcion": o.descripcion, "argumentos": o.args.model_json_schema()} for o in REGISTRO.values()]
 
 
 def fuente(con) -> dict:

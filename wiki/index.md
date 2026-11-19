@@ -18,7 +18,10 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Lado del hijo dentro de celdas de 2 km (hijos del mismo lugar fracturados antes y después de que sus vecinos produjeran): [hijo_celdas.md](hallazgos/hijo_celdas.md).
 - El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).
 - Comparación con la literatura (las cifras de este trabajo al lado de las publicadas): [literatura.md](hallazgos/literatura.md).
+- Límites y robustez en detalle (lo que el dato público no deja afirmar, con cada cifra verificada): [limites.md](hallazgos/limites.md).
 - Prueba prospectiva (predicciones congeladas con los datos hasta un mes y puntuadas cuando se publican los meses siguientes): [prospectiva.md](hallazgos/prospectiva.md).
+- Rezago de carga de las fracturas (cuándo aparece cada fractura en el dato público, por operador y por año de inicio; descriptivo): [carga_fracturas.md](hallazgos/carga_fracturas.md).
+- La subida de 2026 con la misma antigüedad de carga (prueba con regla fijada antes de correr sobre el perfil por año): [carga_anual.md](hallazgos/carga_anual.md).
 - Validación por inyección (efectos plantados contra efectos recuperados por los estimadores): [inyeccion.md](hallazgos/inyeccion.md).
 - Dosis y respuesta (la caída del padre contra el trabajo del hijo y la depleción): [dosis.md](hallazgos/dosis.md).
 - Dosis mes a mes (la caída del caudal por día contra el trabajo del hijo, k = 1 a 4): [dosis_meses.md](hallazgos/dosis_meses.md).
@@ -29,7 +32,11 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Robustez por operador y área (la brecha del mes 1 y el cierre del mes 6 sacando de a un operador y de a un área): [robustez_operador.md](hallazgos/robustez_operador.md).
 - Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).
 - Replicación en Colorado (el estudio de eventos sobre la cuenca DJ, con la regla fijada de antemano): [replicacion.md](hallazgos/replicacion.md).
+- Wyoming, datos y conteos de la replicación en otra cuenca: [wyoming_datos.md](hallazgos/wyoming_datos.md).
+- Replicación en Wyoming (el mismo estudio de eventos con la misma regla, fijada antes de bajar la producción): [replicacion_wyoming.md](hallazgos/replicacion_wyoming.md).
+- Replicación por cuenca (la lectura de la familia: en cuántas cuencas se replica la huella, sin estimación conjunta): [replicacion_cuencas.md](hallazgos/replicacion_cuencas.md).
 - Regla de parada del eje de merma (potencia, ventana previa, bloques y exposición): [eje_parada.md](hallazgos/eje_parada.md), con [potencia.md](hallazgos/potencia.md), [eje_controles.md](hallazgos/eje_controles.md) y [eje_exposicion.md](hallazgos/eje_exposicion.md).
+- Mapa base del mundo 4D (fuente, licencia y huella del relieve, el agua, los límites, las localidades y las concesiones): [mapa_base.md](hallazgos/mapa_base.md).
 - Grafo: [grafo.json](grafo.json) con 2014 nodos y 4069 aristas vigentes.
 
 ## Operadores

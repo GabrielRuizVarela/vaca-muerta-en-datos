@@ -225,7 +225,7 @@ def _ic_real(con) -> dict | None:
     try:
         fila = con.execute("select eje_grados, ic_bajo, ic_alto, ancho_ic from mart_anisotropia_area "
                            "where area = 'Cuenca'").fetchone()
-    except Exception:
+    except duckdb.CatalogException:  # pipeline.costo todavia no corrio: no hay intervalo real que comparar
         return None
     if fila is None:
         return None

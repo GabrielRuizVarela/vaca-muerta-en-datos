@@ -1,11 +1,9 @@
 name: ci
 
-# GitHub-hosted minutes are blocked by billing on this account (2026-11-17), so both jobs run on the
-# self-hosted runner of the owner's machine (label `vaca-muerta`, service vaca-muerta-actions-runner, with a
-# job-started guard that only lets this repository's ci workflow run: pull requests into main from this
-# repository, pushes to main and manual runs). CI runs lint and the tests only. The data refresh runs from a machine in Argentina:
-# ./refresh.sh (manual or cron). The claims test (README numbers against the warehouse) checks
-# the numbers that come from committed files and skips the rest: there is no warehouse here.
+# Lint and tests on a self-hosted runner (label `vaca-muerta`). CI has no warehouse: the claims test checks the
+# numbers that come from committed files and skips the rest. The full verification against the warehouse
+# (`python -m pipeline.claims`) runs with the data refresh, ./refresh.sh, from a network that reaches
+# datos.energia.gob.ar.
 on:
   push:
     branches: [main]

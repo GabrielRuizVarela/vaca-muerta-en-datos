@@ -1,4 +1,7 @@
-"""Informe para un operador (site/informe.html): una página autocontenida con gráficos, armada desde los marts.
+"""Informe para un operador (site/informe.html): una página con gráficos, armada desde los marts.
+
+Los datos, los gráficos y el código van dentro del archivo. Lo único que pide a la red son sus tres tipografías (Google
+Fonts); sin red se ve con las del sistema.
 
   uv run python -m pipeline.informe                       # data/warehouse.duckdb -> site/informe.html
   uv run python -m pipeline.informe --fragmento OUT.html  # misma página sin doctype/head (para publicarla aparte)
@@ -19,7 +22,7 @@ import duckdb
 
 from pipeline.decision import valor_indicativo
 from pipeline.diferido import BBL_M3
-from pipeline.ingest import DATA, ROOT
+from pipeline.ingest import DATA, ROOT, SOURCES, load_manifest
 from pipeline.wiki import num
 
 TEMPLATE = Path(__file__).parent / "informe_template.html"
@@ -45,7 +48,17 @@ def _r(x: float | None, d: int = 6) -> float | None:
     return None if x is None else round(float(x), d)
 
 
-def datos(con) -> dict:
+def fecha_verificada(manifest: dict | None) -> str | None:
+    """Día (UTC) hasta el que la copia local de las fuentes está verificada contra el servidor.
+
+    Cada fuente guarda cuándo se bajó (loaded_at) y cuándo se comprobó por última vez que seguía igual (checked_at).
+    Vale la más vieja de las fuentes, porque la página usa todas. None si falta alguna: ahí la página no dice fecha."""
+    dias = [((manifest or {}).get(f) or {}).get("checked_at") or ((manifest or {}).get(f) or {}).get("loaded_at")
+            for f in SOURCES]
+    return min(str(x)[:10] for x in dias) if all(dias) else None
+
+
+def datos(con, manifest: dict | None = None) -> dict:
     """Todo lo que la página dibuja, leído de los marts. Brechas en fracción (x100 = puntos)."""
     curva: dict[str, dict[int, float]] = {}
     for f in _filas(con, "select banda, k, indice_mediana from mart_interferencia_curva order by banda, k"):
@@ -60,12 +73,19 @@ def datos(con) -> dict:
     distintos = con.execute("select count(distinct padre) from mart_interferencia_diferida").fetchone()[0]
     padres = con.execute("select median(n) from (select count(*) n from mart_interferencia_diferida "
                          "group by hijo_cercano, mes_frac)").fetchone()[0]
+    # intervalo de la brecha del mes 1 con bloques espaciales de 5 km (pipeline.bloques): el más ancho de los publicados
+    ic1 = _filas(con, "select estimacion, ic_bajo_5km, ic_alto_5km from mart_bloques "
+                      "where metrica = 'brecha_mes1_base_original' and k = 1")[0]
     todos = edad["todos"]
+    if abs(ic1["estimacion"] - todos["brecha_mes1"]) > 1e-9:
+        raise ValueError("mart_bloques y mart_decision_edad no dan la misma brecha del mes 1: el intervalo sería de otra cifra")
     return {
         "mes_dato": f"{mes.year:04d}-{mes.month:02d}",
+        "verificado": fecha_verificada(manifest),
         "curva": {b: [[k, v] for k, v in sorted(curva[b].items())] for b in ("cercano", "intermedio", "control")},
         "todos": {"eventos": int(todos["eventos"]), "pads_hijo": int(todos["pads_hijo"]),
                   "brecha1": _r(todos["brecha_mes1"]), "brecha6": _r(todos["brecha_mes6"]),
+                  "ic1_bajo": _r(ic1["ic_bajo_5km"]), "ic1_alto": _r(ic1["ic_alto_5km"]),
                   "dif_m3": _r(todos["diferido_medio_m3"], 1), "dif_bajo_m3": _r(todos["diferido_ic_bajo_m3"], 1),
                   "dif_alto_m3": _r(todos["diferido_ic_alto_m3"], 1)},
         "edad": [{"grupo": g, "etiqueta": e, "eventos": int(edad[g]["eventos"]),
@@ -124,6 +144,7 @@ def textos(d: dict) -> dict[str, str]:
         frase_viejos = "En el mes 6 todos los grupos de edad quedan dentro de los 5 puntos del control."
     return {
         "mes_dato": d["mes_dato"],
+        "frase_verificado": f" (copia verificada contra la fuente el {d['verificado']})" if d.get("verificado") else "",
         "dist_cerca_min": _pts(max(cerca)),
         "dist_cerca_max": _pts(min(cerca)),
         "dist_12": _pts(lejos["1 a 2"]),
@@ -132,6 +153,8 @@ def textos(d: dict) -> dict[str, str]:
         "padres_mediana": num(d["padres_mediana"]),
         "padres_distintos": num(d["padres_distintos"]),
         "gap1": _pts(t["brecha1"]),
+        "gap1_ic_bajo": _pts(t["ic1_bajo"]),
+        "gap1_ic_alto": _pts(t["ic1_alto"]),
         "gap6": _pts(t["brecha6"]),
         "eventos": num(t["eventos"]),
         "pads_hijo": num(t["pads_hijo"]),
@@ -184,7 +207,7 @@ def render(d: dict, documento: bool = True) -> str:
 
 def main(path=DATA / "warehouse.duckdb", out: Path = SALIDA, fragmento: Path | None = None) -> None:
     con = duckdb.connect(str(path), read_only=True)
-    d = datos(con)
+    d = datos(con, load_manifest())
     con.close()
     Path(out).write_text(render(d), encoding="utf-8")
     print(f"[informe] {out}")

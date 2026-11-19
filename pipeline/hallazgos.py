@@ -33,7 +33,7 @@ class Hipotesis:
     unidad: str
     firmeza: bool = False  # si cumple el umbral pero el eje no es firme (ver razones_eje_no_firme), el estado es "no firme"
     sql_estado: str = ""  # si esta, el estado sale del veredicto de la regla propia de la hipotesis (ver ESTADO_DE_VEREDICTO)
-    almacen: str = "vm"  # "colorado": se evalua sobre data/colorado/warehouse.duckdb; sin la tabla de su consulta queda "preregistrada"
+    almacen: str = "vm"  # id de una cuenca ("colorado"): se evalua sobre data/<id>/warehouse.duckdb; sin la tabla de su consulta queda "preregistrada"
 
 
 _BRECHA_K = """
@@ -196,6 +196,21 @@ HIPOTESIS = [
               "mes 1), y se sostiene si es menor que cero (regla fijada antes de correr, pipeline/replicacion.py).",
               "select greatest(ic_alto_bloque, abs(brecha_previa_limpia) - abs(brecha)) from mart_replicacion_colorado where k = 1 limit 1",
               "<", 0.0, "índice", almacen="colorado"),
+    Hipotesis("anio_2026_carga",
+              "La brecha del mes 1 de 2026 es mayor que la de 2021 a 2024 cuando todos los años se miran con la misma antigüedad de "
+              "carga de fracturas (hijos cargados con hasta 3 meses de rezago). El valor es el límite superior del IC 95% por bloques "
+              "de 5 km de la diferencia D (2026 menos 2021 a 2024) y se sostiene si es menor que cero y la diferencia con solo los "
+              "hijos de YPF también es negativa (regla fijada antes de correr, pipeline/carga_anual.py).",
+              "select ic_alto from mart_carga_anual_prueba where estadistico = '2026'", "<", 0.0, "índice",
+              sql_estado="select veredicto from mart_carga_anual_prueba where estadistico = '2026'"),
+    Hipotesis("replicacion_wyoming",
+              "Réplica en Wyoming (WOGCC): se sostiene si el IC 95% por bloques espaciales de 5 km de la brecha del mes 1 queda por "
+              "debajo de cero y la brecha previa a la terminación con base limpia es menor, en valor absoluto, que la del mes 1; si no, no "
+              "se replica. El valor es el mayor entre el límite superior de ese IC y la diferencia de valores absolutos (previa menos "
+              "mes 1), y se sostiene si es menor que cero (misma regla que la de Colorado, fijada antes de bajar la producción de "
+              "Wyoming, pipeline/wyoming/__init__.py).",
+              "select greatest(ic_alto_bloque, abs(brecha_previa_limpia) - abs(brecha)) from mart_replicacion_wyoming where k = 1 limit 1",
+              "<", 0.0, "índice", almacen="wyoming"),
 ]
 
 
@@ -279,25 +294,25 @@ def firma(h) -> str:
     return hashlib.sha256(base.encode()).hexdigest()[:8]
 
 
-def _valor_colorado(con_colorado, h: Hipotesis):
-    """Valor de una hipotesis del Colorado, o None si todavia no hay warehouse o tabla (queda preregistrada)."""
-    if con_colorado is None:
+def _valor_cuenca(con_cuenca, h: Hipotesis):
+    """Valor de una hipotesis de una cuenca, o None si todavia no hay warehouse o tabla (queda preregistrada)."""
+    if con_cuenca is None:
         return None
     try:
-        r = con_colorado.execute(h.sql).fetchall()
+        r = con_cuenca.execute(h.sql).fetchall()
     except duckdb.CatalogException:
         return None
     return None if not r or r[0][0] is None else float(r[0][0])
 
 
-def evaluar(con, manifest, hoy: str | None = None, con_colorado=None) -> list[dict]:
+def evaluar(con, manifest, hoy: str | None = None, con_colorado=None, con_cuencas: dict | None = None) -> list[dict]:
     sha = sha_produccion(manifest)
     mes = _mes_datos(con)
     hoy = hoy or date.today().isoformat()
     filas = []
     for h in HIPOTESIS:
-        if h.almacen == "colorado":
-            valor = _valor_colorado(con_colorado, h)
+        if h.almacen != "vm":
+            valor = _valor_cuenca((con_cuencas or {}).get(h.almacen, con_colorado if h.almacen == "colorado" else None), h)
             estado = "preregistrada" if valor is None else clasificar(h.op, valor, h.umbral)
             filas.append({"id": h.id, "enunciado": h.enunciado, "valor": valor, "op": h.op,
                           "umbral": h.umbral, "estado": estado,

@@ -2,13 +2,16 @@
 import base64
 import json
 import re
+import shutil
+import subprocess
 import sys
 from array import array
 
 import duckdb
+import numpy as np
 import pytest
 
-from pipeline import replay
+from pipeline import base_mapa, mundo, replay
 from pipeline.ingest import DATA, ROOT
 
 WAREHOUSE = DATA / "warehouse.duckdb"
@@ -18,6 +21,11 @@ CLASES = {"golpe", "cierre_preventivo", "ambos", "sin_efecto"}
 ALLOWED_REMOTE: set[str] = set()
 
 needs_wh = pytest.mark.skipif(not WAREHOUSE.exists(), reason="warehouse not built")
+NODE = shutil.which("node")
+needs_node = pytest.mark.skipif(NODE is None, reason="node is not installed")
+needs_base = pytest.mark.skipif(not base_mapa.DESTINO.exists(), reason="data/base_mapa.json not built")
+# The type scale of the family: nothing on the page is set below 13 px or between two steps.
+ESCALA = {13, 15, 18, 24, 36, 56}
 
 
 @pytest.fixture(scope="module")
@@ -84,7 +92,7 @@ def test_render_enforces_size_budget(tmp_path, monkeypatch):
 
 @needs_wh
 def test_top_level_keys_and_types(data):
-    assert set(data) == {"meta", "pozos", "caudal", "agua", "estado", "eventos", "cuenca", "curva"}
+    assert set(data) == {"meta", "pozos", "caudal", "agua", "estado", "eventos", "cuenca", "curva", "corte", "base"}
     assert isinstance(data["pozos"], list) and isinstance(data["eventos"], list)
     for k in ("caudal", "agua", "estado"):
         assert isinstance(data[k], str)
@@ -219,6 +227,26 @@ def test_curva_rows(data):
 
 
 @needs_wh
+def test_corte_is_the_median_water_cut_of_the_same_parents(data):
+    """corte against the warehouse, with the median taken here: the same parents and months as the rate index."""
+    con = duckdb.connect(str(WAREHOUSE), read_only=True)
+    filas = con.execute("""
+        select i.banda, i.k, f.agua_m3, f.petroleo_m3
+        from int_interferencia_mes i join fct_produccion f on f.pozo_id = i.padre and f.mes = i.mes_frac + to_months(i.k)
+        where i.banda in ('cercano', 'control')""").fetchall()
+    con.close()
+    grupos: dict = {}
+    for banda, k, agua, pet in filas:
+        if pet and pet > 0 and agua is not None:
+            grupos.setdefault((banda, k), []).append(agua / (agua + pet))
+    esperado = {g: float(np.median(v)) for g, v in grupos.items()}
+    # unrounded in the payload: the page rounds once, when it prints
+    assert {(r["banda"], r["k"]): r["corte"] for r in data["corte"]} == pytest.approx(esperado, abs=1e-12)
+    assert {(r["banda"], r["k"]) for r in data["corte"]} == {(r["banda"], r["k"]) for r in data["curva"]}
+    assert all(0 <= r["corte"] <= 1 for r in data["corte"])
+
+
+@needs_wh
 def test_caudal_matches_warehouse_for_a_sample_month(data):
     n, meses = data["meta"]["n_pozos"], data["meta"]["meses"]
     nm = len(meses)
@@ -254,6 +282,244 @@ def test_two_runs_are_identical_apart_from_generado(payloads):
     a["meta"].pop("generado")
     b["meta"].pop("generado")
     assert a == b
+
+
+# ---- one family with the 3D world: base map, palette, type and links ----
+
+def _tpl():
+    return replay.TEMPLATE.read_text(encoding="utf-8")
+
+
+def _tpl_mundo():
+    return mundo.TEMPLATE.read_text(encoding="utf-8")
+
+
+def _raiz(tpl):
+    """The custom properties of a template's :root block, by name."""
+    bloque = re.search(r":root \{(.*?)\n\}", tpl, re.S).group(1)
+    return {k: " ".join(v.split()) for k, v in re.findall(r"(--[\w-]+|color-scheme):\s*([^;]+);", bloque)}
+
+
+def _vec3(texto, patron):
+    """The three numbers of the first vec3(...) or [...] that follows a marker."""
+    m = re.search(patron + r"\s*(?:vec3\(|\[)([^)\]]+)[)\]]", texto)
+    assert m, patron
+    return [float(v) for v in m.group(1).split(",")]
+
+
+@needs_wh
+@needs_base
+def test_base_is_the_base_map_product(data):
+    """The page draws the product of pipeline.base_mapa as it is on disk: nothing recut, nothing added."""
+    assert data["base"] == json.loads(base_mapa.DESTINO.read_text(encoding="utf-8"))
+    assert set(data["base"]) >= {"caja", "q", "relieve", "agua", "rios", "limites", "bloques", "localidades", "fuentes"}
+
+
+def test_leer_base_without_the_file(tmp_path):
+    assert replay.leer_base(tmp_path / "no_hay.json") is None
+    (tmp_path / "base.json").write_text('{"caja": [1, 2, 3, 4]}', encoding="utf-8")
+    assert replay.leer_base(tmp_path / "base.json") == {"caja": [1, 2, 3, 4]}
+
+
+def test_render_without_base_keeps_the_plain_grid(tmp_path):
+    """A payload with base None still renders: the script guards every use of the base map."""
+    tpl = _tpl()
+    assert "const BASE = D.base ? " in tpl and "if (BASE) {" in tpl and "if (D.base) {" in tpl
+    replay.render({"meta": {"mes_max": "2025-01", "generado": "x"}, "base": None}, tmp_path / "replay.html")
+    assert '"base":null' in (tmp_path / "replay.html").read_text(encoding="utf-8")
+
+
+def test_template_shares_the_tokens_of_the_mundo():
+    """Palette and type families are the 3D world's, token by token."""
+    a, b = _raiz(_tpl()), _raiz(_tpl_mundo())
+    assert a == b
+    assert {"--fondo", "--tinta", "--petroleo", "--mal", "--ui", "--relato", "color-scheme"} <= set(a)
+    # no second theme: the page is the family's dark one on every system setting
+    assert "prefers-color-scheme" not in _tpl()
+
+
+def test_template_operator_pigments_match_the_mundo():
+    for nombre in ("PIGMENTOS", "PIGMENTO_DE"):
+        linea = re.compile(r"const " + nombre + r" = (.+);")
+        assert linea.search(_tpl()).group(1) == linea.search(_tpl_mundo()).group(1)
+
+
+def test_template_terrain_matches_the_mundo_shader():
+    """Ground, light, altitude and water colours are the constants of the 3D terrain shader."""
+    tpl, m = _tpl(), _tpl_mundo()
+    sombra, luz = re.search(r"vec3 c = mix\(vec3\(([^)]+)\), vec3\(([^)]+)\), luz\);", m).groups()
+    assert _vec3(tpl, "SOMBRA =") == [float(v) for v in sombra.split(",")]
+    assert _vec3(tpl, "LUZ =") == [float(v) for v in luz.split(",")]
+    assert _vec3(tpl, "ALTURA =") == _vec3(m, r"c \+=")
+    assert _vec3(tpl, "AGUA =") == _vec3(m, r"c = mix\(c,\s*(?=vec3\([^)]*\), agua\))")
+    # the same light and the same two passes of the hillshade
+    for trozo in ("[-.62, .6, -.5]", "[[1, .7], [5, .3]]", "(.5 + 1.25 * v)"):
+        assert trozo in tpl and trozo in m
+
+
+def test_template_type_stays_on_the_scale():
+    """Every size set in css or on a canvas is a step of the scale; nothing under 13 px."""
+    tpl = _tpl()
+    estilo = re.search(r"<style>(.*?)</style>", tpl, re.S).group(1)
+    css = [int(v) for v in re.findall(r"font(?:-size)?:[^;{}]*?(\d+)px", estilo)]
+    lienzo = [int(v) for v in re.findall(r"\bF\((\d+)", tpl)] + [int(v) for v in re.findall(r'(\d+)px " \+ C\.', tpl)]
+    assert len(css) > 20 and len(lienzo) > 8
+    assert set(css) <= ESCALA, sorted(set(css) - ESCALA)
+    assert set(lienzo) <= ESCALA, sorted(set(lienzo) - ESCALA)
+    # canvas text goes through the helper or the serif of the family: no literal font stack is left
+    assert not re.search(r'font = "[^"]*\d+px (?!" \+ C\.)', tpl)
+
+
+def test_templates_link_both_ways_with_the_month():
+    tpl, m = _tpl(), _tpl_mundo()
+    assert '<a id="a-mundo" href="mundo.html#libre">' in tpl
+    assert '"mundo.html#libre&mes=" + mf' in tpl
+    assert '<a id="ir-replay" href="replay.html">' in m
+    assert '"replay.html#m=" + Math.floor(t / 12) + "-" + String(t % 12 + 1).padStart(2, "0")' in m
+    assert "else if (hmes && libre) ponerMes(Number(hmes[1]));" in m
+
+
+def test_template_keeps_every_panel():
+    """Joining the family removes nothing: the rose, the recovery curve, the share, the feed, the card and estado."""
+    tpl = _tpl()
+    for trozo in ('id="rose"', 'id="curva"', 'id="share"', 'id="feed"', 'id="card"', 'id="tl"', 'id="legend"',
+                  'data-v="estado"', 'id="tab-e"', 'id="fuentes"'):
+        assert trozo in tpl, trozo
+
+
+def test_template_has_no_dashes():
+    assert not re.search("[" + chr(0x2013) + chr(0x2014) + "]", _tpl())
+
+
+def test_template_findings_have_no_typed_figures():
+    """A sentence tagged as measured takes its figures from the payload: none is typed into the template."""
+    tpl = _tpl()
+    medidos = re.findall(r'<p[^>]*>\s*<span class="marca medido">medido</span>(.*?)</p>', tpl, re.S)
+    assert len(medidos) == 2
+    for frase in medidos:
+        texto = re.sub(r"<[^>]+>", "", frase)
+        assert not re.search(r"\d,\d|\d\s?%", texto), texto
+    for marca in ("wc-antes", "wc-mes2", "wc-control", "br-1", "br-6"):
+        assert f'<span id="{marca}"></span>' in tpl
+    # a missing value hides the sentence instead of showing a blank
+    assert tpl.count('<p id="cifra-agua" hidden>') == 1 and tpl.count('<p id="cifra-brecha" hidden>') == 1
+
+
+@needs_wh
+@needs_node
+def test_figures_block_matches_python(data, tmp_path):
+    """The page's own figures block, run under node on the payload, against the same arithmetic on the marts."""
+    bloque = re.search(r'<script id="base">\n(.*?)</script>', _tpl(), re.S).group(1)
+    guion = tmp_path / "cifras.js"
+    guion.write_text(bloque + """
+const fs = require("fs");
+const D = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+console.log(JSON.stringify({ b1: Cifras.brecha(D.curva, 1), b6: Cifras.brecha(D.curva, 6), antes: Cifras.corte(D.corte, "cercano", -1),
+  mes2: Cifras.corte(D.corte, "cercano", 2), control: Cifras.corte(D.corte, "control", 2),
+  falta: [Cifras.brecha(D.curva, 99), Cifras.corte(D.corte, "cercano", 99), Cifras.corte(undefined, "cercano", 2), Cifras.brecha([{ banda: "cercano", k: 1, indice: .5 }], 1)] }));
+""", encoding="utf-8")
+    entrada = tmp_path / "series.json"
+    entrada.write_text(json.dumps({"curva": data["curva"], "corte": data["corte"]}), encoding="utf-8")
+    r = json.loads(subprocess.run([NODE, str(guion), str(entrada)], capture_output=True, text=True, check=True).stdout)
+    con = duckdb.connect(str(WAREHOUSE), read_only=True)
+    idx = {(b, k): v for b, k, v in con.execute("select banda, k, indice_mediana from mart_interferencia_curva").fetchall()}
+    con.close()
+    # the gap is control minus near, on the unrounded index
+    assert r["b1"] == pytest.approx(idx["control", 1] - idx["cercano", 1], abs=1e-12)
+    assert r["b6"] == pytest.approx(idx["control", 6] - idx["cercano", 6], abs=1e-12)
+    assert r["b1"] > r["b6"]
+    corte = {(c["banda"], c["k"]): c["corte"] for c in data["corte"]}
+    assert (r["antes"], r["mes2"], r["control"]) == (corte["cercano", -1], corte["cercano", 2], corte["control", 2])
+    assert r["falta"] == [None, None, None, None]
+
+
+@needs_wh
+@needs_node
+def test_printed_figures_are_the_warehouse_values_rounded_once(data, tmp_path):
+    """The five figures as the page prints them (its own fmt and ponerCifras, under node, on the payload) against
+    the warehouse values rounded here in one step. A payload that rounds first can print another last digit: at
+    four decimals the control water cut of month 2 (0.130497) became 0.1305 and the page printed 13,1%."""
+    tpl = _tpl()
+    bloque = re.search(r'<script id="base">\n(.*?)</script>', tpl, re.S).group(1)
+    fmt = re.search(r"^const fmt = .*$", tpl, re.M).group(0)
+    poner = re.search(r"^function ponerCifras\(\) \{\n.*?\n\}$", tpl, re.S | re.M).group(0)
+    guion = tmp_path / "impreso.js"
+    guion.write_text(bloque + """
+const fs = require("fs");
+const D = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const nodos = {};
+const $ = (s) => nodos[s] || (nodos[s] = { textContent: "", hidden: true });
+""" + fmt + "\n" + poner + """
+ponerCifras();
+console.log(JSON.stringify(Object.fromEntries(Object.entries(nodos).map(([s, n]) => [s, [n.textContent, n.hidden]]))));
+""", encoding="utf-8")
+    entrada = tmp_path / "series.json"
+    entrada.write_text(json.dumps({"curva": data["curva"], "corte": data["corte"]}), encoding="utf-8")
+    impreso = json.loads(subprocess.run([NODE, str(guion), str(entrada)], capture_output=True, text=True, check=True).stdout)
+    con = duckdb.connect(str(WAREHOUSE), read_only=True)
+    idx = {(b, k): v for b, k, v in con.execute("select banda, k, indice_mediana from mart_interferencia_curva").fetchall()}
+    filas = con.execute("""
+        select i.banda, i.k, f.agua_m3 / (f.agua_m3 + f.petroleo_m3)
+        from int_interferencia_mes i join fct_produccion f on f.pozo_id = i.padre and f.mes = i.mes_frac + to_months(i.k)
+        where i.banda in ('cercano', 'control') and f.petroleo_m3 > 0 and i.k in (-1, 2)""").fetchall()
+    con.close()
+    cortes: dict = {}
+    for banda, k, c in filas:
+        cortes.setdefault((banda, k), []).append(c)
+
+    def es(v, d):
+        return f"{v:.{d}f}".replace(".", ",")
+
+    def pc(banda, k):
+        return es(100 * float(np.median(cortes[banda, k])), 1) + "%"
+
+    assert impreso == {
+        "#wc-antes": [pc("cercano", -1), True], "#wc-mes2": [pc("cercano", 2), True], "#wc-control": [pc("control", 2), True],
+        "#cifra-agua": ["", False],
+        "#br-1": [es(idx["control", 1] - idx["cercano", 1], 2), True], "#br-6": [es(idx["control", 6] - idx["cercano", 6], 2), True],
+        "#cifra-brecha": ["", False]}
+
+
+@needs_node
+@needs_base
+def test_base_block_decodes_like_python(tmp_path):
+    """The page's own base map block, run under node, against the decoders of pipeline.base_mapa."""
+    bloque = re.search(r'<script id="base">\n(.*?)</script>', _tpl(), re.S).group(1)
+    base = json.loads(base_mapa.DESTINO.read_text(encoding="utf-8"))
+    rampa = [100 * (c + f) for f in range(9) for c in range(9)]   # rises to the south east, so it faces the north west
+    guion = tmp_path / "base.js"
+    guion.write_text(bloque + """
+const fs = require("fs");
+const B = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const z = Base.relieve(B.relieve);
+let suma = 0, min = Infinity, max = -Infinity;
+for (const v of z) { suma += v; if (v < min) min = v; if (v > max) max = v; }
+const R = Int16Array.from(JSON.parse(process.argv[3]));
+console.log(JSON.stringify({ n: z.length, suma, min, max, filas: [0, 337, 674].map((f) => Array.from(z.subarray(f * B.relieve.cols, f * B.relieve.cols + 40))),
+  rio: Array.from(Base.linea(B.rios[0].l[0])), bloque: Array.from(Base.linea(B.bloques[0].p[0])),
+  plano: Array.from(Base.sombra(new Int16Array(81).fill(700), 9, 9, 500, 500)),
+  sube: Base.sombra(R, 9, 9, 500, 500)[40], baja: Base.sombra(R.map((v) => 1600 - v), 9, 9, 500, 500)[40],
+  suelo: [[0, 300], [.5, 600], [1, 3000], [.25, 1500]].map(([l, h]) => Base.suelo(l, h)), agua: Base.css(Base.AGUA, .5) }));
+""", encoding="utf-8")
+    r = json.loads(subprocess.run([NODE, str(guion), str(base_mapa.DESTINO), json.dumps(rampa)], capture_output=True, text=True, check=True).stdout)
+    z = base_mapa.decodificar_relieve(base["relieve"])
+    assert r["n"] == z.size and r["suma"] == int(z.sum())
+    assert (r["min"], r["max"]) == (base["relieve"]["min"], base["relieve"]["max"]) == (int(z.min()), int(z.max()))
+    assert r["filas"] == [z[f, :40].tolist() for f in (0, 337, 674)]
+    assert r["rio"] == [v for p in base_mapa.decodificar_linea(base["rios"][0]["l"][0]) for v in p]
+    assert r["bloque"] == [v for p in base_mapa.decodificar_linea(base["bloques"][0]["p"][0]) for v in p]
+    # flat ground is the middle grey; a slope that faces the north west light is brighter than one that faces away
+    assert set(r["plano"]) == {128}
+    assert r["sube"] > 128 > r["baja"]
+
+    def suelo(luz, h):
+        """The terrain colour of the 3D shader, in Python: shade to light, plus a lift with altitude."""
+        e = min(1.0, max(0.0, (h - 400) / 2200))
+        s = e * e * (3 - 2 * e)
+        return [int(np.floor(255 * (a + (b - a) * luz + c * s) + .5)) for a, b, c in zip((.030, .092, .122), (.118, .232, .282), (.016, .024, .028))]
+
+    assert r["suelo"] == [suelo(0, 300), suelo(.5, 600), suelo(1, 3000), suelo(.25, 1500)]
+    assert r["agua"] == "rgba(17, 47, 65, 0.5)"
 
 
 # ---- generated file ----
@@ -293,3 +559,5 @@ def test_generated_payload_parses_and_matches_contract():
     assert len(decode(d["agua"], "B")) == n * nm
     assert len(decode(d["estado"], "B")) == n * nm
     assert all(0 <= e["p"] < n for e in d["eventos"])
+    if base_mapa.DESTINO.exists():
+        assert d["base"] == json.loads(base_mapa.DESTINO.read_text(encoding="utf-8"))

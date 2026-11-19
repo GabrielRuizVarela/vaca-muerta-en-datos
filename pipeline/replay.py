@@ -13,6 +13,12 @@ Data contract (read by pipeline/replay_template.html):
            child-parent line; clase is golpe / cierre_preventivo / ambos / sin_efecto; bbl is the deferred oil.
 - cuenca:  {ops: [...], kbbl: [[per month] per operator]} from mart_vm_mensual (the rest goes to "Otros").
 - curva:   median rate index of near parents and controls by month relative to the child frac.
+- corte:   median water cut (water over water plus oil, months with oil) of the same parents, by band and month
+           relative to the child frac. The page writes the figures of its findings from curva and corte, which
+           is why neither is rounded here: a value rounded twice can print a different last digit.
+- base:    the base map of pipeline.base_mapa as written in data/base_mapa.json (its contract is in that module's
+           docstring), the same product that pipeline.mundo embeds; None when the file is absent, and then the
+           page draws its plain grid.
 
 Uses the T1 tables when they exist (fct_produccion.estado/extraccion, fct_evento, int_interferencia_clase) and
 derives the same facts from staging otherwise.
@@ -30,6 +36,7 @@ from pathlib import Path
 
 import duckdb
 
+from pipeline import base_mapa
 from pipeline.ingest import DATA, ROOT
 
 TEMPLATE = Path(__file__).parent / "replay_template.html"
@@ -68,7 +75,12 @@ def axis_bearing(lon1, lat1, lon2, lat2) -> int:
     return int(round(math.degrees(math.atan2(dx, dy)))) % 180
 
 
-def collect(con) -> dict:
+def leer_base(path: Path = base_mapa.DESTINO) -> dict | None:
+    """The base map that pipeline.base_mapa writes (relief, water, borders, towns and blocks); None when absent."""
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def collect(con, base_path: Path = base_mapa.DESTINO) -> dict:
     ultimo = q(con, "select mes from ultimo_mes")[0][0]
     ultimo = ultimo.date() if isinstance(ultimo, datetime) else ultimo
     fcols = columns(con, "fct_produccion")
@@ -210,9 +222,17 @@ def collect(con) -> dict:
             kbbl[op if op in top else "Otros"][k] += v or 0.0
     cuenca = {"ops": top + ["Otros"], "kbbl": [[round(v, 3) for v in kbbl[o]] for o in top + ["Otros"]]}
 
-    curva = [{"banda": b, "k": k, "indice": round(v, 3)} for b, k, v in q(con, """
+    # The two series behind the printed findings travel unrounded: the page rounds once, at the moment it prints.
+    curva = [{"banda": b, "k": k, "indice": float(v)} for b, k, v in q(con, """
         select banda, k, indice_mediana from mart_interferencia_curva
         where banda in ('cercano', 'control') order by banda, k""")]
+    # Water cut of the same parents and months; a month without oil has no cut to speak of and stays out.
+    corte = [{"banda": b, "k": k, "corte": float(v)} for b, k, v in q(con, """
+        select i.banda, i.k, median(f.agua_m3 / (f.agua_m3 + f.petroleo_m3))
+        from int_interferencia_mes i
+        join fct_produccion f on f.pozo_id = i.padre and f.mes = i.mes_frac + to_months(i.k)
+        where i.banda in ('cercano', 'control') and f.petroleo_m3 > 0
+        group by i.banda, i.k order by i.banda, i.k""")]
 
     # The wiki writes a page only for pads with deferred-interference events.
     pads_wiki = {r[0] for r in q(con, "select distinct pad_id from mart_interferencia_diferida")}
@@ -228,7 +248,7 @@ def collect(con) -> dict:
             "mes_datos": month_key(ultimo), "generado": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
             "ops": cuenca["ops"], "usa_t1": has_clase or "estado" in fcols}
     return {"meta": meta, "pozos": pozos, "caudal": b64(caudal), "agua": b64(agua), "estado": b64(estado),
-            "eventos": eventos, "cuenca": cuenca, "curva": curva}
+            "eventos": eventos, "cuenca": cuenca, "curva": curva, "corte": corte, "base": leer_base(base_path)}
 
 
 def render(data: dict, out: Path) -> int:

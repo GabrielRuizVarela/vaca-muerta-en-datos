@@ -189,3 +189,45 @@ def test_la_pagina_dice_que_no_se_replica_cuando_la_regla_lo_dice():
 def test_main_sin_warehouse_avisa_y_devuelve_2(tmp_path, capsys):
     assert replicacion.main(tmp_path / "no_existe.duckdb", None) == 2
     assert "falta" in capsys.readouterr().err
+
+
+def test_otra_cuenca_usa_su_tabla_su_titulo_y_sus_limites():
+    """La cuenca es un parametro: la tabla del veredicto lleva su id y la pagina su nombre, sin rastro de Colorado."""
+    import dataclasses
+
+    from pipeline import cuencas
+
+    otra = dataclasses.replace(
+        cuencas.COLORADO, id="otra", nombre="Otra", titulo="Replicación en Otra", de_el="de Otra", modulo="pipeline/otra",
+        pagina_datos="otra_datos.md", ordinal="otra cuenca", regla_fijada="en el commit de la regla", nota_regla="",
+        no_puede=("Un limite propio.",), rotulo_hijos="Hijos (regla fijada)", filtros="de la regla de la familia")
+    con = _warehouse()
+    tablas = replicacion.calcular(con, reps=30, placebo_reps=30, cuenca=otra)
+    assert "mart_replicacion_otra" in tablas and "mart_replicacion_colorado" not in tablas
+    replicacion.escribir(con, tablas)
+    pagina = replicacion.pagina_replicacion(con, otra)
+    assert pagina.startswith("# Replicación en Otra") and "## Qué Otra no puede mostrar" in pagina and "- Un limite propio." in pagina
+    assert "`replicacion_otra`" in pagina and "[datos y conteos](otra_datos.md)" in pagina and "Hijos (regla fijada)" in pagina
+    assert "Colorado" not in pagina and "FracFocus" not in pagina and "P5a" not in pagina
+
+
+def test_el_registro_de_cuencas_nombra_las_rutas():
+    from pipeline import cuencas
+
+    c = cuencas.cuenca("colorado")
+    assert c.db.parts[-3:] == ("data", "colorado", "warehouse.duckdb") and c.tabla_veredicto == "mart_replicacion_colorado"
+    with pytest.raises(SystemExit):
+        cuencas.cuenca("no_existe")
+
+
+def test_main_de_otra_cuenca_escribe_su_pagina_y_no_la_de_colorado(tmp_path, monkeypatch):
+    import dataclasses
+    from pipeline.cuencas import COLORADO
+    otra = dataclasses.replace(COLORADO, id="otra", pagina=tmp_path / "otra.md")
+    archivo = tmp_path / "otra.duckdb"
+    archivo.write_bytes(b"")                                       # solo para que exista; la conexion se reemplaza abajo
+    con = _warehouse()
+    monkeypatch.setattr(replicacion.duckdb, "connect", lambda *_a, **_k: con)
+    antes = replicacion.PAGINA.read_bytes()
+    assert replicacion.main(archivo, cuenca=otra) == 0
+    assert (tmp_path / "otra.md").exists() and replicacion.PAGINA.read_bytes() == antes

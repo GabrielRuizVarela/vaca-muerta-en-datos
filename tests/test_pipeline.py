@@ -1,11 +1,13 @@
 import csv
+import json
+from datetime import date
 from pathlib import Path
 
 import duckdb
 import pytest
 
 from pipeline import checks
-from pipeline.build import build
+from pipeline.build import SQL_DIR, build, fecha_extraccion, main
 from pipeline.ingest import ROOT, store
 
 PROD_COLS = ["idempresa", "anio", "mes", "idpozo", "prod_pet", "prod_gas", "prod_agua", "tef", "tipopozo",
@@ -14,7 +16,7 @@ PROD_COLS = ["idempresa", "anio", "mes", "idpozo", "prod_pet", "prod_gas", "prod
 FRAC_COLS = ["id_base_fractura_adjiv", "idpozo", "formacion_productiva", "subtipo_reservorio",
              "longitud_rama_horizontal_m", "cantidad_fracturas", "tipo_terminacion",
              "arena_bombeada_nacional_tn", "arena_bombeada_importada_tn", "agua_inyectada_m3",
-             "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante", "presion_maxima_psi"]
+             "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante", "presion_maxima_psi", "anio_carga", "mes_carga"]
 
 
 def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69", lat="-38", agua=0,
@@ -26,13 +28,15 @@ def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69",
             "coordenadax": lon, "coordenaday": lat, "sub_tipo_recurso": "SHALE", "tipoextraccion": extraccion}
 
 
-def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A."):
+def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A.", carga=None):
+    # carga: (anio, mes) del mes de carga; por defecto el anio y el mes de `inicio`
+    anio_c, mes_c = carga or (int(inicio[:4]), int(inicio[5:7]))
     return {"id_base_fractura_adjiv": fid, "idpozo": pozo, "formacion_productiva": "vaca muerta",
             "subtipo_reservorio": "SHALE", "longitud_rama_horizontal_m": rama, "cantidad_fracturas": 40,
             "tipo_terminacion": "Plug & Perf", "arena_bombeada_nacional_tn": 8000,
             "arena_bombeada_importada_tn": 0, "agua_inyectada_m3": 50000,
             "fecha_inicio_fractura": inicio, "fecha_fin_fractura": inicio, "empresa_informante": empresa,
-            "presion_maxima_psi": 9000}
+            "presion_maxima_psi": 9000, "anio_carga": anio_c, "mes_carga": mes_c}
 
 
 def write_csv(path: Path, cols, rows):
@@ -45,13 +49,13 @@ def write_csv(path: Path, cols, rows):
 
 @pytest.fixture
 def warehouse(tmp_path):
-    def _build(prod_rows, frac_rows):
+    def _build(prod_rows, frac_rows, extraccion=None):
         con = duckdb.connect()
         build(con, {
             "produccion_no_convencional": write_csv(tmp_path / "p.csv", PROD_COLS, prod_rows),
             "fractura_adjunto_iv": write_csv(tmp_path / "f.csv", FRAC_COLS, frac_rows),
             "seed_operadores": ROOT / "seeds" / "operadores.csv",
-        })
+        }, extraccion)
         return con
     return _build
 
@@ -102,6 +106,91 @@ def test_future_frac_jobs_are_excluded_and_reported(warehouse):
     report = {c["nombre"]: c for c in checks.run(con)["checks"]}
     assert report["Fracturas con fecha futura"]["filas"] == 1
     assert report["Fracturas sin longitud de rama horizontal"]["filas"] == 1
+
+
+def test_future_is_measured_against_the_extraction_date_not_the_day_of_the_run(warehouse):
+    # A job dated after the extraction date is out, even when that date is long past on the day the build runs.
+    prod = [prod_row(1, 2024, 1, 100), prod_row(2, 2024, 1, 100)]
+    frac = [frac_row(10, 1, "2024-05-20"), frac_row(11, 2, "2024-07-01")]
+    con = warehouse(prod, frac, extraccion=date(2024, 6, 1))
+    assert con.execute("select pozo_id from dim_fractura_pozo").fetchall() == [(1,)]
+    report = {c["nombre"]: c for c in checks.run(con)["checks"]}
+    assert report["Fracturas con fecha futura"]["filas"] == 1
+    assert report["Conciliación: pozos fracturados de dim_fractura_pozo contra stg_fractura"]["ok"]
+    con = warehouse(prod, frac, extraccion=date(2024, 8, 1))
+    assert one(con, "select count(*) from dim_fractura_pozo") == 2
+    assert {c["nombre"]: c for c in checks.run(con)["checks"]}["Fracturas con fecha futura"]["filas"] == 0
+
+
+def test_main_takes_the_extraction_date_from_the_manifest_for_the_model_and_for_the_report(tmp_path):
+    write_csv(tmp_path / "p.csv", PROD_COLS, [prod_row(1, 2024, 1, 100), prod_row(2, 2024, 1, 100)])
+    write_csv(tmp_path / "f.csv", FRAC_COLS, [frac_row(10, 1, "2024-05-20"), frac_row(11, 2, "2024-07-01")])
+    (tmp_path / "manifest.json").write_text(json.dumps({
+        "produccion_no_convencional": {"path": "p.csv"},
+        "fractura_adjunto_iv": {"path": "f.csv", "checked_at": "2024-06-01T03:00:00+00:00"}}), encoding="utf-8")
+    db = tmp_path / "w.duckdb"
+    assert main(["--raw-dir", str(tmp_path), "--db", str(db)]) == 0
+    con = duckdb.connect(str(db), read_only=True)
+    assert con.execute("select fecha from extraccion_fractura").fetchall() == [(date(2024, 6, 1),)]
+    assert con.execute("select pozo_id from dim_fractura_pozo").fetchall() == [(1,)]
+    con.close()
+    informe = {c["nombre"]: c for c in json.loads((tmp_path / "w_dq_report.json").read_text(encoding="utf-8"))["checks"]}
+    assert informe["Fracturas con fecha futura"]["filas"] == 1
+    assert informe["Frescura: meses de atraso del último mes publicado"]["muestra"] == [
+        {"ultimo_mes": "2024-01", "hoy": "2024-06-01", "meses_de_atraso": 5}]
+
+
+def test_extraction_date_comes_from_the_manifest():
+    f = "fractura_adjunto_iv"
+    assert fecha_extraccion({f: {"checked_at": "2026-11-15T03:54:28+00:00", "loaded_at": "2026-11-01T00:00:00+00:00"}}) == date(2026, 11, 15)
+    assert fecha_extraccion({f: {"loaded_at": "2026-11-01T00:00:00+00:00"}}) == date(2026, 11, 1)
+    assert fecha_extraccion({f: {"sha256": "x"}}) is None  # the sample's manifest: no date, the build uses the day of the run
+    assert fecha_extraccion({}) is None
+
+
+def test_no_sql_and_no_check_reads_the_clock():
+    # The date reaches the warehouse only as the build parameter. SQL that reads the clock would make two builds of the
+    # same files differ from one day to the next.
+    textos = {p.name: (p.read_text(), ("current_date", "current_timestamp", "now()", "today()")) for p in sorted(SQL_DIR.glob("*.sql"))}
+    textos["checks.py"] = (Path(checks.__file__).read_text(), ("current_date", "current_timestamp", "now()"))
+    assert len(textos) > 3
+    for nombre, (texto, relojes) in textos.items():
+        for reloj in relojes:
+            assert reloj not in texto.lower(), f"{nombre} lee el reloj con {reloj}"
+
+
+def test_type_curve_drops_points_with_fewer_than_ten_wells_and_cohorts_outside_the_window(warehouse):
+    rows = []
+    for p in range(1, 11):          # ten YPF wells, first oil in January 2024; well 10 has no second month
+        rows.append(prod_row(p, 2024, 1, 310))
+        if p < 10:
+            rows.append(prod_row(p, 2024, 2, 145))
+    for p in range(11, 20):         # nine wells of another operator: one short of the threshold
+        rows.append(prod_row(p, 2024, 1, 310, "VISTA ENERGY ARGENTINA SAU"))
+    for p in range(20, 30):         # ten YPF wells of cohort 2016: before the window
+        rows.append(prod_row(p, 2016, 1, 310))
+    con = warehouse(rows, [])
+    assert one(con, "select count(distinct pozo_id) from int_pozo_mop") == 29
+    curva = con.execute("select cohorte, grupo, mop, pozos, petroleo_bbl_d from mart_curva_tipo").fetchall()
+    assert curva == [(2024, "YPF", 1, 10, pytest.approx(310 * 6.2898 / 31))]  # January has 31 days
+
+
+def test_design_table_uses_only_wells_with_twelve_published_months(warehouse):
+    rows, frac = [], []
+    for p in range(1, 11):          # ten YPF wells with January to December 2023
+        rows += [prod_row(p, 2023, m, 100) for m in range(1, 13)]
+        frac.append(frac_row(p, p, "2022-12-01", rama=0 if p == 10 else 2000))
+    for p in range(11, 16):         # five YPF wells that start in June: seven months, not in the table
+        rows += [prod_row(p, 2023, m, 900) for m in range(6, 13)]
+        frac.append(frac_row(p, p, "2023-05-01", rama=1000))
+    for p in range(16, 25):         # nine complete wells of another operator: one short of the threshold
+        rows += [prod_row(p, 2023, m, 100, "VISTA ENERGY ARGENTINA SAU") for m in range(1, 13)]
+    con = warehouse(rows, frac)
+    assert one(con, "select count(*) from mart_pozo_12m") == 19
+    fila = con.execute("select cohorte, grupo, pozos, pozos_con_fractura, rama_m_mediana, etapas_mediana, arena_tn_por_m_mediana, "
+                       "petroleo_12m_bbl_mediana, bbl_12m_por_m_mediana from mart_diseno_productividad").fetchall()
+    assert fila == [(2023, "YPF", 10, 9, 2000, 40, pytest.approx(8000 / 2000), pytest.approx(1200 * 6.2898),
+                     pytest.approx(1200 * 6.2898 / 2000))]
 
 
 def test_build_is_idempotent(warehouse):

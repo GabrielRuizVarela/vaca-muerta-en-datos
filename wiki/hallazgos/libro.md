@@ -29,6 +29,8 @@ El ledger solo agrega filas: cuando cambia la regla de una hipótesis se registr
 | `inyeccion_r4a` | debilitado | 0,100 | < 0,100 | 2026-09 (1f07aee9b988) |
 | `inyeccion_r4b` | confirmado | 0,504 | < 2,000 | 2026-09 (1f07aee9b988) |
 | `replicacion_colorado` | confirmado | -0,130 | < 0,000 | 2026-09 (1f07aee9b988) |
+| `anio_2026_carga` | no firme | 0,127 | < 0,000 | 2026-09 (1f07aee9b988) |
+| `replicacion_wyoming` | refutado | 0,095 | < 0,000 | 2026-09 (1f07aee9b988) |
 
 ## brecha_mes1
 
@@ -193,5 +195,25 @@ Expectativa: valor < 0,000 (índice).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | -0,130 | confirmado |
+
+## anio_2026_carga
+
+La brecha del mes 1 de 2026 es mayor que la de 2021 a 2024 cuando todos los años se miran con la misma antigüedad de carga de fracturas (hijos cargados con hasta 3 meses de rezago). El valor es el límite superior del IC 95% por bloques de 5 km de la diferencia D (2026 menos 2021 a 2024) y se sostiene si es menor que cero y la diferencia con solo los hijos de YPF también es negativa (regla fijada antes de correr, pipeline/carga_anual.py).
+
+Expectativa: valor < 0,000 (índice).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | 0,127 | no firme |
+
+## replicacion_wyoming
+
+Réplica en Wyoming (WOGCC): se sostiene si el IC 95% por bloques espaciales de 5 km de la brecha del mes 1 queda por debajo de cero y la brecha previa a la terminación con base limpia es menor, en valor absoluto, que la del mes 1; si no, no se replica. El valor es el mayor entre el límite superior de ese IC y la diferencia de valores absolutos (previa menos mes 1), y se sostiene si es menor que cero (misma regla que la de Colorado, fijada antes de bajar la producción de Wyoming, pipeline/wyoming/__init__.py).
+
+Expectativa: valor < 0,000 (índice).
+
+| Datos a | Hash de datos | Valor | Estado |
+|---|---|---|---|
+| 2026-09 | 1f07aee9b988 | 0,095 | refutado |
 
 Ver también [Interferencia entre fracturas](interferencia.md).

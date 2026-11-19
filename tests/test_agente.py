@@ -253,3 +253,32 @@ def test_robustez_eval_items_run_and_one_combines_two_operations(real):
 def test_robustez_eje_blank_subset_means_all(con):
     _mart_robustez(con)
     assert ejecutar(con, "robustez_eje", {"subconjunto": "  "})["valor"] == ejecutar(con, "robustez_eje", {})["valor"]
+
+
+def test_interferencia_anual_avisa_cuando_el_anio_tiene_carga_incompleta(monkeypatch):
+    import duckdb
+
+    from agente import ops
+    c = duckdb.connect()
+    c.execute("create table mart_interferencia_anual as select * from (values (2023, 213, -0.20), (2024, 279, -0.23), "
+              "(2026, 243, -0.44)) t(anio, eventos_cercanos, brecha_mes_1)")
+    monkeypatch.setattr(ops.carga, "completitud_anio", lambda _con, anio: {2024: 0.894, 2026: 0.001}.get(anio))
+    incompleto = ops.interferencia_anual(c, ops.ArgsAnual(anio=2026))["texto"]
+    assert "44 puntos menos" in incompleto and "Año con carga incompleta" in incompleto and "el 0,1% (umbral 80%)" in incompleto
+    assert "carga incompleta" not in ops.interferencia_anual(c, ops.ArgsAnual(anio=2024))["texto"]   # sobre el umbral
+    assert "carga incompleta" not in ops.interferencia_anual(c, ops.ArgsAnual(anio=2023))["texto"]   # sin estimacion
+    monkeypatch.setattr(ops.carga, "completitud_anio", lambda _con, _anio: ops.carga.UMBRAL)
+    assert ops.aviso_carga_incompleta(c, 2024) == ""                                                 # el umbral no avisa
+
+
+def test_interferencia_anual_en_un_warehouse_sin_mes_de_carga_lo_dice_y_no_falla():
+    import duckdb
+
+    from agente import ops
+    c = duckdb.connect()
+    c.execute("create table mart_interferencia_anual as select 2026 as anio, 243 as eventos_cercanos, -0.44 as brecha_mes_1")
+    c.execute("create table stg_fractura as select 'a' as id_pozo, date '2026-03-01' as fecha_inicio")    # sin mes_carga
+    texto = ops.interferencia_anual(c, ops.ArgsAnual(anio=2026))["texto"]
+    assert "44 puntos menos" in texto and "Sin estimación de carga" in texto and "carga incompleta" not in texto
+    c.execute("drop table stg_fractura")                                                               # ni la tabla
+    assert "Sin estimación de carga" in ops.aviso_carga_incompleta(c, 2026)

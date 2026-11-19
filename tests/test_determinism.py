@@ -8,7 +8,7 @@ import duckdb
 import pytest
 
 from pipeline import costo, descomposicion, diferido, placebo, replay, report, robustez
-from pipeline.build import build
+from pipeline.build import build, fecha_extraccion, raw_inputs
 from pipeline.ingest import DATA, ROOT, load_manifest
 from pipeline.wiki import build_wiki
 from tests.test_pipeline import FRAC_COLS, PROD_COLS, frac_row, prod_row, write_csv
@@ -61,6 +61,33 @@ def test_build_dos_veces_da_las_mismas_tablas(tmp_path):
     build(con_a, entradas)  # idempotente sobre el mismo archivo
     for t in nombres:
         assert filas_ordenadas(con_a, t) == filas_ordenadas(con_b, t), f"build no idempotente: {t}"
+
+
+def test_build_devuelve_los_hilos_que_tenia_la_conexion(tmp_path):
+    con = duckdb.connect()
+    con.execute("set threads = 3")
+    build(con, sintetico(tmp_path))
+    assert con.execute("select current_setting('threads')").fetchall()[0][0] == 3
+
+
+@pytest.mark.slow
+def test_build_del_dato_completo_dos_veces_da_las_mismas_tablas_bit_a_bit():
+    """Sobre los CSV completos una suma de flotantes en varios hilos cambia en el ultimo bit de una corrida a la otra; el
+    fixture chico no lo muestra. El build corre en un hilo y con la fecha de extraccion del manifiesto."""
+    manifest = load_manifest()
+    try:
+        entradas = raw_inputs(manifest) | {"seed_operadores": ROOT / "seeds" / "operadores.csv"}
+    except SystemExit:
+        pytest.skip("sin manifiesto de los CSV completos")
+    if not all(p.exists() for p in entradas.values()):
+        pytest.skip("sin los CSV completos en data/raw")
+    con_a, con_b = duckdb.connect(), duckdb.connect()
+    build(con_a, entradas, fecha_extraccion(manifest))
+    build(con_b, entradas, fecha_extraccion(manifest))
+    nombres = tablas(con_a)
+    assert len(nombres) > 20 and nombres == tablas(con_b)
+    for t in nombres:
+        assert filas_ordenadas(con_a, t) == filas_ordenadas(con_b, t), f"tabla no determinista: {t}"
 
 
 @pytest.mark.slow

@@ -36,6 +36,10 @@ select u.pozo_id, u.sigla, u.operador, u.formacion, u.subtipo_recurso, u.tipo_po
 from ultimo u join inicio i using (pozo_id)
 where u.rn = 1;
 
+-- Extraction date of the fracture file: the day its local copy was last verified against the source. pipeline.build
+-- reads it from the manifest and passes it here, so a rebuild of the same raw files gives the same tables on any day.
+create or replace table extraccion_fractura as select date '{fecha_extraccion}' as fecha;
+
 -- One row per fractured well. Some wells report several stimulation jobs; they are summed.
 -- Jobs dated after the extraction date are excluded here and reported by the checks.
 create or replace table dim_fractura_pozo as
@@ -49,5 +53,5 @@ select
     sum(arena_tn)                as arena_tn,
     sum(agua_m3)                 as agua_m3
 from stg_fractura
-where pozo_id is not null and (fecha_inicio is null or fecha_inicio <= current_date)
+where pozo_id is not null and (fecha_inicio is null or fecha_inicio <= (select fecha from extraccion_fractura))
 group by pozo_id;

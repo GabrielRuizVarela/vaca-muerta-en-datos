@@ -52,9 +52,9 @@ def test_all_new_checks_pass_on_a_clean_warehouse(datos):
     assert informe["bloqueantes_fallidos"] == 0
 
 
-def test_registry_has_28_checks_and_unique_names():
+def test_registry_has_29_checks_and_unique_names():
     nombres = [c.nombre for c in checks.CHECKS]
-    assert len(nombres) == 28 and len(set(nombres)) == 28
+    assert len(nombres) == 29 and len(set(nombres)) == 29
 
 
 def test_raw_checks_are_marked_skipped_without_inputs(datos):
@@ -225,6 +225,21 @@ def test_lineage_parser_on_a_small_sql():
         ("stg_a", "operadores"), ("stg_a", "raw:ds_uno")]
 
 
+def test_a_value_the_build_takes_from_the_manifest_is_an_origin_of_its_table():
+    sql = """
+    create or replace table corte as select date '{fecha_extraccion}' as fecha;
+
+    create or replace table stg_a as
+    select * from read_csv('{ds_uno}') where f <= (select fecha from corte);
+    """
+    assert linaje.linaje_archivo(sql) == [
+        ("corte", "manifiesto:fecha_extraccion"), ("stg_a", "corte"), ("stg_a", "raw:ds_uno")]
+    assert linaje.tipo("manifiesto:fecha_extraccion") == "manifiesto"
+    pares = set(linaje.linaje(SQL_DIR))
+    assert ("extraccion_fractura", "manifiesto:fecha_extraccion") in pares
+    assert ("dim_fractura_pozo", "extraccion_fractura") in pares
+
+
 def test_every_table_created_in_the_sql_has_a_lineage_row_and_exists_in_the_warehouse(datos):
     con, _ = datos
     creadas = {t for t in linaje.escritos_por(SQL_DIR)}
@@ -254,12 +269,81 @@ def test_module_marts_are_derived_from_the_module_source():
     assert not any(d == o for d, o, _ in ternas)
 
 
+def _marts_literales() -> dict[str, str]:
+    """mart -> módulo, por cada `_escribir(con, "mart_...")` de pipeline/*.py salvo los EXCLUIDOS."""
+    salida: dict[str, str] = {}
+    for p in sorted(linaje.PIPELINE_DIR.glob("*.py")):
+        if p.stem in linaje.EXCLUIDOS:
+            continue
+        for d in linaje._ESCRIBIR.findall(p.read_text(encoding="utf-8")):
+            salida[d] = p.stem
+    return salida
+
+
+def test_every_mart_a_python_module_writes_has_a_lineage_origin():
+    marts = _marts_literales()
+    assert len(marts) > 50
+    con_origen = {d for d, _, _ in linaje.linaje_modulos()}
+    assert not set(marts) - con_origen, f"marts sin origen en la página de linaje: {sorted(set(marts) - con_origen)}"
+    en_disco = {p.stem for p in linaje.PIPELINE_DIR.glob("*.py")
+                if p.stem not in linaje.EXCLUIDOS and '_escribir(con, "mart_' in p.read_text(encoding="utf-8")}
+    assert set(linaje.descubrir_modulos()) == en_disco == set(marts.values())
+
+
+def test_modules_that_read_no_table_in_their_own_text_get_origins_from_the_functions_they_call():
+    ternas = linaje.linaje_modulos()
+    for mod in ("anillo", "hijo_celdas"):
+        texto = (linaje.PIPELINE_DIR / f"{mod}.py").read_text(encoding="utf-8")
+        propios = set(linaje._ESCRIBIR.findall(texto))
+        assert not set(linaje._LEE.findall(texto)) - propios  # fuera de sus marts, no lee ninguna tabla
+        assert any(m == f"pipeline.{mod}" for _, _, m in ternas)
+    assert ("mart_hijo_celdas_coef", "mart_pozo_12m", "pipeline.hijo_celdas") in ternas
+
+
+def test_the_lineage_covers_every_table_of_the_warehouse():
+    wh = ROOT / "data" / "warehouse.duckdb"
+    if not wh.exists():
+        pytest.skip("sin data/warehouse.duckdb")
+    con = duckdb.connect(str(wh), read_only=True)
+    try:
+        tablas = {r[0] for r in con.execute("select table_name from information_schema.tables").fetchall()}
+    finally:
+        con.close()
+    destinos = {d for d, _, _, _ in linaje.filas_linaje()}
+    assert destinos == tablas, (sorted(tablas - destinos), sorted(destinos - tablas))
+
+
+def test_following_imports_takes_the_used_functions_and_sql_constants_and_not_the_whole_module(tmp_path):
+    (tmp_path / "base.py").write_text(
+        'def _escribir(con, nombre, cols, filas):\n    pass\n\n'
+        'SQL_K = "select * from int_k"\n\n'
+        'def cargar(con):\n    con.execute(SQL_K)\n    return con.execute("select * from fct_a join dim_b using (k)")\n\n'
+        'def via(con):\n    return cargar(con)\n\n'
+        'REGISTRO = [("a", "select * from stg_registro")]\n\n'
+        'def ajena(con):\n    return con.execute("select * from stg_ajena")\n', encoding="utf-8")
+    (tmp_path / "uno.py").write_text(
+        'from pipeline.base import _escribir, via\n\n'
+        'def correr(con):\n    via(con)\n    _escribir(con, "mart_uno", [], [])\n', encoding="utf-8")
+    (tmp_path / "dos.py").write_text(
+        'from pipeline import base\n\n'
+        'def correr(con):\n    n = len(base.REGISTRO)\n    base.cargar(con)\n    con.execute("select * from mart_uno")\n'
+        '    base._escribir(con, "mart_dos", [], [])\n', encoding="utf-8")
+    assert linaje.descubrir_modulos(tmp_path) == ("dos", "uno")  # base define _escribir pero no escribe marts
+    assert linaje.linaje_modulos(tmp_path) == [
+        ("mart_dos", "dim_b", "pipeline.dos"), ("mart_dos", "fct_a", "pipeline.dos"),
+        ("mart_dos", "int_k", "pipeline.dos"), ("mart_dos", "mart_uno", "pipeline.dos"),
+        ("mart_uno", "dim_b", "pipeline.uno"), ("mart_uno", "fct_a", "pipeline.uno"),
+        ("mart_uno", "int_k", "pipeline.uno")]
+
+
 def test_lineage_page_is_deterministic_and_has_no_long_dashes():
     pagina = linaje.pagina_linaje()
     assert pagina == linaje.pagina_linaje()
     assert "\u2014" not in pagina and "\u2013" not in pagina
     assert "| stg_produccion | staging | raw:produccion_no_convencional | pipeline/sql/01_staging.sql |" in pagina
     assert "| mart_costo_coef | mart | int_interferencia_evento | pipeline.costo |" in pagina
+    assert "| mart_hijo_celdas_coef | mart | mart_pozo_12m | pipeline.hijo_celdas |" in pagina
+    assert "El grano es el módulo" in pagina and "pipeline.replicacion" in pagina
     arbol = pagina.split("```")[1].splitlines()
     assert "raw:produccion_no_convencional" in arbol and "seed:operadores" in arbol
     assert any(l.startswith("  ") and "stg_produccion" in l for l in arbol)

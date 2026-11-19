@@ -15,7 +15,7 @@ PROD_COLS = ["idempresa", "anio", "mes", "idpozo", "prod_pet", "prod_gas", "prod
 FRAC_COLS = ["id_base_fractura_adjiv", "idpozo", "formacion_productiva", "subtipo_reservorio",
              "longitud_rama_horizontal_m", "cantidad_fracturas", "tipo_terminacion",
              "arena_bombeada_nacional_tn", "arena_bombeada_importada_tn", "agua_inyectada_m3",
-             "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante", "presion_maxima_psi"]
+             "fecha_inicio_fractura", "fecha_fin_fractura", "empresa_informante", "presion_maxima_psi", "anio_carga", "mes_carga"]
 
 
 def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69", lat="-38", agua=0,
@@ -27,13 +27,15 @@ def prod_row(pozo, anio, mes, pet, empresa="YPF S.A.", tef=30, gas=0, lon="-69",
             "coordenadax": lon, "coordenaday": lat, "sub_tipo_recurso": "SHALE", "tipoextraccion": extraccion}
 
 
-def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A."):
+def frac_row(fid, pozo, inicio, rama=2500, empresa="YPF S.A.", carga=None):
+    # carga: (anio, mes) del mes de carga; por defecto el anio y el mes de `inicio`
+    anio_c, mes_c = carga or (int(inicio[:4]), int(inicio[5:7]))
     return {"id_base_fractura_adjiv": fid, "idpozo": pozo, "formacion_productiva": "vaca muerta",
             "subtipo_reservorio": "SHALE", "longitud_rama_horizontal_m": rama, "cantidad_fracturas": 40,
             "tipo_terminacion": "Plug & Perf", "arena_bombeada_nacional_tn": 8000,
             "arena_bombeada_importada_tn": 0, "agua_inyectada_m3": 50000,
             "fecha_inicio_fractura": inicio, "fecha_fin_fractura": inicio, "empresa_informante": empresa,
-            "presion_maxima_psi": 9000}
+            "presion_maxima_psi": 9000, "anio_carga": anio_c, "mes_carga": mes_c}
 
 
 def write_csv(path: Path, cols, rows):

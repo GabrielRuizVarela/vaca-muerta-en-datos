@@ -75,7 +75,7 @@ da "dosis y respuesta" y B tiene menos de dos variables que cumplan, la frase se
 lo muestra por separado"; si B tiene dos o mas, con "y la parte de caudal por dia lo confirma". Un golpe de fractura baja el
 caudal por dia producido; si la dosis solo mueve los dias (cierres), la regla lo deja dicho.
 
-CORRECCION DE REDACCION (2026-11-17, despues de ver los resultados, revision de Opus; no cambia ningun codigo ni la regla): el semiancho
+CORRECCION DE REDACCION (2026-11-17, despues de ver los resultados, revision posterior; no cambia ningun codigo ni la regla): el semiancho
 del IC mide la precision, no cuanto efecto queda descartado; lo descartado es lo que supera la cota superior del IC (limite alto en
 desvios de la caida), y el texto del veredicto la publica. "Falsar el mecanismo" se lee como "no se detecto dosis y respuesta".
 

@@ -45,6 +45,12 @@ select
       + coalesce(try_cast(f.arena_bombeada_importada_tn as double), 0) as arena_tn,
     try_cast(f.agua_inyectada_m3 as double)                    as agua_m3,
     f.tipo_terminacion                                         as terminacion,
-    try_cast(f.presion_maxima_psi as double)                   as presion_maxima_psi
+    try_cast(f.presion_maxima_psi as double)                   as presion_maxima_psi,
+    -- mes de carga: nulo si el mes o el anio no son validos (un anio fuera de rango haria fallar make_date o daria una
+    -- fecha anterior a la era comun, y moveria el primer mes de carga que usa pipeline.carga).
+    case when try_cast(f.mes_carga as integer) between 1 and 12
+          and try_cast(f.anio_carga as integer) between 2000 and 2100
+         then make_date(try_cast(f.anio_carga as integer), try_cast(f.mes_carga as integer), 1)
+    end                                                        as mes_carga
 from read_csv('{fractura_adjunto_iv}', header = true, all_varchar = true) f
 left join operadores o on o.empresa_raw = trim(f.empresa_informante);

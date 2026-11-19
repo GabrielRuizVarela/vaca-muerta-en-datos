@@ -155,9 +155,9 @@ def cargar(con) -> dict:
         order by m.pozo_id""").fetchall()
     P = {"pozo_id": np.array([r[0] for r in pz], dtype=int), "lat": np.array([r[1] for r in pz], dtype=float),
          "lon": np.array([r[2] for r in pz], dtype=float), "mes_pp": np.array([r[3] for r in pz], dtype=int)}
-    pr = con.execute("""
+    pr = con.execute(f"""
         select m.pozo_id, year(u.primer_mes_petroleo) * 12 + month(u.primer_mes_petroleo) - 1 + m.mop - 1,
-               coalesce(m.petroleo_m3, 0) * 6.2898
+               coalesce(m.petroleo_m3, 0) * {BBL_POR_M3}
         from int_pozo_mop m join int_pozo_ubicacion u using (pozo_id)
         where u.primer_mes_petroleo is not null
         order by m.pozo_id, m.mop""").fetchall()

@@ -266,6 +266,30 @@
       ]
     },
     {
+      "nombre": "Meses de inicio de fractura con carga estimada incompleta",
+      "severidad": "aviso",
+      "detalle": "Meses de inicio de fractura cuya carga estimada en el dato público es menor que 0,8 (cota superior; ver pipeline.carga). Descriptivo, no excluye filas.",
+      "filas": 13,
+      "ok": false,
+      "muestra": [
+        {
+          "mes_frac": "2025-11",
+          "hijos_cargados": 32,
+          "completitud_estimada": 0.788623595505618
+        },
+        {
+          "mes_frac": "2025-12",
+          "hijos_cargados": 40,
+          "completitud_estimada": 0.7787921348314607
+        },
+        {
+          "mes_frac": "2026-01",
+          "hijos_cargados": 42,
+          "completitud_estimada": 0.7752808988764045
+        }
+      ]
+    },
+    {
       "nombre": "Eventos de pozos ausentes en dim_pozo",
       "severidad": "aviso",
       "detalle": "Eventos cuyo pozo_id no figura en dim_pozo.",

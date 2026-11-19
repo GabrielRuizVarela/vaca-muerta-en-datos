@@ -9,8 +9,8 @@
   },
   "fractura_adjunto_iv": {
     "url": "http://datos.energia.gob.ar/dataset/71fa2e84-0316-4a1b-af68-7f35e41f58d7/resource/2280ad92-6ed3-403e-a095-50139863ab0d/download/datos-de-fractura-de-pozos-de-hidrocarburos-adjunto-iv-actualizacin-diaria.csv",
-    "bytes": 44112,
-    "sha256": "71309a9751b10fdc2e0ddf6eb7cae1d85a0e44732942e516cc3dc938183db452",
+    "bytes": 44551,
+    "sha256": "f1a3afc2e2949b7103ea611ff2c84886d06860534c19c765b0701026c7293531",
     "path": "fractura_adjunto_iv.csv.gz",
     "sha256_fuente": "ff95734bf485b1a27ecb75e3a44dda3035e5496805cf3970a28d19802bf03026",
     "bytes_fuente": 1271920

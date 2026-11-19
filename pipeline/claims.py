@@ -14,6 +14,7 @@ needs the warehouse and data/warehouse.duckdb is absent).
 from __future__ import annotations
 
 import json
+import math
 import re
 import subprocess
 import sys
@@ -23,6 +24,8 @@ from typing import Callable
 
 import duckdb
 
+from pipeline.cuencas import COLORADO, WYOMING
+
 ROOT = Path(__file__).resolve().parent.parent
 WAREHOUSE = ROOT / "data" / "warehouse.duckdb"
 WAREHOUSE_CO = ROOT / "data" / "colorado" / "warehouse.duckdb"
@@ -30,7 +33,7 @@ EPS = 1e-9
 
 _PALABRAS = {"un": 1, "uno": 1, "una": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
              "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13, "catorce": 14,
-             "quince": 15, "veinte": 20}
+             "quince": 15, "dieciséis": 16, "dieciseis": 16, "veinte": 20}
 
 
 @dataclass(frozen=True)
@@ -43,7 +46,8 @@ class Claim:
     formato: str = "{:,.0f}"          # how the computed value is shown in the report
     requiere_wh: bool = True          # SKIP when the warehouse file is absent
     lento: bool = False               # runs a subprocess; skipped with --rapido
-    almacen: str = "vm"               # "vm" (data/warehouse.duckdb) or "colorado" (data/colorado/warehouse.duckdb)
+    almacen: str = "vm"               # "vm" (data/warehouse.duckdb), the id of a basin (data/<id>/warehouse.duckdb, pipeline/cuencas.py) or "familia" (all of them)
+    opcional: bool = False            # SKIP instead of FAIL when the sentence is not in the text (it appears only in one reading of the data)
 
 
 @dataclass
@@ -75,14 +79,20 @@ def fmt(c: Claim, v: float) -> str:
     return c.formato.format(v).replace(",", "_").replace(".", ",").replace("_", ".")
 
 
-def evaluar(c: Claim, texto: str, con, lentos: bool = True, con_co=None) -> Resultado:
+def evaluar(c: Claim, texto: str, con, lentos: bool = True, con_co=None, con_alm: dict | None = None) -> Resultado:
     if c.lento and not lentos:
         return Resultado(c, "SKIP", detalle="lento (--rapido)")
-    if c.almacen == "colorado":
-        con = con_co
+    if c.almacen == "familia":
+        from pipeline.familia import FAMILIA
+        cons = {i: (con_co if i == "colorado" else (con_alm or {}).get(i)) for i, _ in FAMILIA}
+        con = cons if all(v is not None for v in cons.values()) else None
+    elif c.almacen != "vm":
+        con = (con_alm or {}).get(c.almacen, con_co if c.almacen == "colorado" else None)
     if c.requiere_wh and con is None:
-        return Resultado(c, "SKIP", detalle="sin data/colorado/warehouse.duckdb" if c.almacen == "colorado" else "sin data/warehouse.duckdb")
+        return Resultado(c, "SKIP", detalle=f"sin data/{c.almacen}/warehouse.duckdb" if c.almacen != "vm" else "sin data/warehouse.duckdb")
     doc = extraer(texto, c.patron)
+    if doc is None and c.opcional:
+        return Resultado(c, "SKIP", detalle="la frase no esta en este texto (depende de la lectura de los datos)")
     if doc is None:
         return Resultado(c, "FAIL", detalle="la frase ya no coincide con el patron (cambio el texto o el numero dejo de estar)")
     calc = float(c.valor_fn(con))
@@ -91,13 +101,22 @@ def evaluar(c: Claim, texto: str, con, lentos: bool = True, con_co=None) -> Resu
 
 
 def verificar(claims: list[Claim] | None = None, raiz: Path | None = None, wh: Path | None = None, lentos: bool = True,
-              wh_co: Path | None = None) -> list[Resultado]:
+              wh_co: Path | None = None, wh_alm: dict[str, Path] | None = None) -> list[Resultado]:
     claims = CLAIMS if claims is None else claims
     raiz = ROOT if raiz is None else raiz
     wh = (raiz / "data" / "warehouse.duckdb") if wh is None else wh
     wh_co = (raiz / "data" / "colorado" / "warehouse.duckdb") if wh_co is None else wh_co
     con = duckdb.connect(str(wh), read_only=True) if wh.exists() else None
     con_co = duckdb.connect(str(wh_co), read_only=True) if wh_co.exists() else None
+    con_alm: dict = {}
+    pedidos = {c.almacen for c in claims}
+    if "familia" in pedidos:
+        from pipeline.familia import FAMILIA
+        pedidos |= {i for i, _ in FAMILIA}
+    for a in sorted(pedidos - {"vm", "colorado", "familia"}):
+        p = (wh_alm or {}).get(a) or (raiz / "data" / a / "warehouse.duckdb")
+        if p.exists():
+            con_alm[a] = duckdb.connect(str(p), read_only=True)
     try:
         textos: dict[str, str | None] = {}
         out = []
@@ -108,9 +127,11 @@ def verificar(claims: list[Claim] | None = None, raiz: Path | None = None, wh: P
             if textos[c.fichero] is None:
                 out.append(Resultado(c, "FAIL", detalle=f"no existe {c.fichero}"))
                 continue
-            out.append(evaluar(c, textos[c.fichero], con, lentos, con_co))
+            out.append(evaluar(c, textos[c.fichero], con, lentos, con_co, con_alm))
         return out
     finally:
+        for k in con_alm.values():
+            k.close()
         if con is not None:
             con.close()
         if con_co is not None:
@@ -167,6 +188,67 @@ def _brecha_mes1(con) -> float:
 
 def _brecha_anio(anio: int) -> Callable:
     return lambda con: -100 * con.execute("select brecha_mes_1 from mart_interferencia_anual where anio = ?", [anio]).fetchone()[0]
+
+
+def _carga_anual(col: str, factor: float = 100.0, veredicto: str | None = None, estadistico: str = "2026") -> Callable:
+    """A column of the pre-registered 2026 test (mart_carga_anual_prueba). With `veredicto`, nan unless the stored verdict is
+    that one, so the claim fails when the document prints a verdict the rule no longer gives. `estadistico` picks the row:
+    "2026" is the test, "2025_2026" the pooled figure the rule publishes as descriptive, without a verdict."""
+    def f(con):
+        v, ver = con.execute(f"select {col}, veredicto from mart_carga_anual_prueba where estadistico = ?", [estadistico]).fetchone()
+        return float("nan") if veredicto and ver != veredicto else factor * v
+    return f
+
+
+W_ANUAL = "wiki/hallazgos/carga_anual.md"
+
+
+def _carga_anual_perfil(muestra: str, anio: int, col: str, factor: float = 1.0) -> Callable:
+    """A cell of the yearly profile of the 2026 test page (mart_carga_anual)."""
+    return lambda con: factor * con.execute(f"select {col} from mart_carga_anual where muestra = ? and anio = ?",
+                                            [muestra, anio]).fetchone()[0]
+
+
+def _claims_carga_anual() -> list[Claim]:
+    """Every number of the 2026 test page (wiki/hallazgos/carga_anual.md): the test, its operator guard, the bootstrap
+    resamples that entered the interval, the pooled descriptive figure and the yearly profile of both samples."""
+    s, d1 = r"-?\d+,\d+", "{:.1f}"
+    J = "2025_2026"   # the pooled row; the default row of _carga_anual is the test itself
+    cab = r"antig.edad constante\): "
+    jun = r"D con 2025 y 2026 juntos: "
+    cl = [
+        _c("carga_anual_d@wiki", W_ANUAL, cab + SIG + r" puntos, IC 95 %", _carga_anual("d"), 0.05, d1),
+        _c("carga_anual_ic_bajo@wiki", W_ANUAL, cab + s + r" puntos, IC 95 % \[" + SIG + ", " + s + r"\]",
+           _carga_anual("ic_bajo"), 0.05, d1),
+        _c("carga_anual_ic_alto@wiki", W_ANUAL, cab + s + r" puntos, IC 95 % \[" + s + ", " + SIG + r"\]",
+           _carga_anual("ic_alto"), 0.05, d1),
+        _c("carga_anual_n@wiki", W_ANUAL, r"Eventos cercanos de 2026 con el mes 1 medido: (\d+)\.", _carga_anual("n_cercanos", 1), 0),
+        _c("carga_anual_bloques@wiki", W_ANUAL, r"Bloques de 5 km en total: (\d+)\.", _carga_anual("n_bloques", 1), 0),
+        _c("carga_anual_reps@wiki", W_ANUAL, r"Remuestras del bootstrap con D definido: (\d+) de \d+\.",
+           _carga_anual("reps_validas", 1), 0),
+        _c("carga_anual_d_ypf@wiki", W_ANUAL, r"D_YPF = " + SIG + r" puntos", _carga_anual("d_ypf"), 0.05, d1),
+        _c("carga_anual_n_ypf@wiki", W_ANUAL, r"puntos con (\d+) eventos cercanos de YPF en 2026", _carga_anual("n_ypf", 1), 0),
+        _c("carga_anual_juntos_d@wiki", W_ANUAL, jun + SIG + r" puntos", _carga_anual("d", estadistico=J), 0.05, d1),
+        _c("carga_anual_juntos_ic_bajo@wiki", W_ANUAL, jun + s + r" puntos, IC 95 % \[" + SIG + ", " + s + r"\]",
+           _carga_anual("ic_bajo", estadistico=J), 0.05, d1),
+        _c("carga_anual_juntos_ic_alto@wiki", W_ANUAL, jun + s + r" puntos, IC 95 % \[" + s + ", " + SIG + r"\]",
+           _carga_anual("ic_alto", estadistico=J), 0.05, d1),
+        _c("carga_anual_juntos_n@wiki", W_ANUAL, r"\] \((\d+) cercanos, \d+ bloques", _carga_anual("n_cercanos", 1, estadistico=J), 0),
+        _c("carga_anual_juntos_bloques@wiki", W_ANUAL, r"\] \(\d+ cercanos, (\d+) bloques", _carga_anual("n_bloques", 1, estadistico=J), 0),
+        _c("carga_anual_juntos_reps@wiki", W_ANUAL, r"bloques, (\d+) de \d+ remuestras con D definido",
+           _carga_anual("reps_validas", 1, estadistico=J), 0),
+    ]
+    cols = [("hijos", "hijos", 1, 0, "{:.0f}"), ("cercanos", "eventos_cercanos", 1, 0, "{:.0f}"),
+            ("controles", "eventos_control", 1, 0, "{:.0f}"), ("bloques", "bloques_5km", 1, 0, "{:.0f}"),
+            ("brecha", "brecha", 100, 0.05, d1), ("ic_bajo", "ic_bajo", 100, 0.05, d1), ("ic_alto", "ic_alto", 100, 0.05, d1)]
+    for muestra in ("constante", "completa"):
+        for anio in range(2019, 2027):
+            pre = rf"\| {anio} \| {muestra} \| "
+            for nom, col, factor, tol, fm in cols:
+                celdas = [("(" + (r"\d+" if c[2] == 1 else s) + ")") if c[0] == nom else (r"\d+" if c[2] == 1 else s) for c in cols]
+                cl.append(_c(f"carga_anual_perfil_{muestra}_{anio}_{nom}@wiki", W_ANUAL, pre + r" \| ".join(celdas) + r" \|",
+                             _carga_anual_perfil(muestra, anio, col, factor), tol, fm))
+    return cl
 
 
 def _diferido(operador: str | None = None) -> Callable:
@@ -416,15 +498,17 @@ W_DIF = "wiki/hallazgos/diferido.md"
 W_SINC = "wiki/hallazgos/sincronia.md"
 W_DEC = "wiki/hallazgos/decision_operador.md"
 W_POT = "wiki/hallazgos/potencia_dosis.md"
+W_LIM = "wiki/hallazgos/limites.md"
 CASO = "docs/caso-interferencia.md"
 DQ = "data/dq_report.json"
 N = r"([\d.]+)"          # integer with thousands dots
 DEC = r"(\d+,\d+)"       # decimal with comma
 NEG = r"(-\d+,\d+)"      # negative decimal with comma
+SIG = r"(-?\d+,\d+)"     # decimal with comma, either sign
 
 
-def _c(id, fichero, patron, fn, tol=0.5, formato="{:,.0f}", wh=True, lento=False, almacen="vm") -> Claim:
-    return Claim(id, fichero, patron, fn, tol, formato, wh, lento, almacen)
+def _c(id, fichero, patron, fn, tol=0.5, formato="{:,.0f}", wh=True, lento=False, almacen="vm", opcional=False) -> Claim:
+    return Claim(id, fichero, patron, fn, tol, formato, wh, lento, almacen, opcional)
 
 
 W_CO = "wiki/hallazgos/colorado_datos.md"
@@ -453,6 +537,113 @@ def _claims_colorado() -> list[Claim]:
     return out
 
 
+W_WY = "wiki/hallazgos/wyoming_datos.md"
+PTS_W = r"(-?\d+,\d+)"
+
+
+def _claims_wyoming() -> list[Claim]:
+    """Cifras de la pagina de datos de Wyoming contra su warehouse; se saltan (SKIP) sin data/wyoming/warehouse.duckdb."""
+    from pipeline.wyoming.build import FILAS_ETAPAS, FILAS_HIJOS, FILAS_POZOS
+    filas = [(re.escape(e), k) for e, k in FILAS_ETAPAS + FILAS_POZOS + FILAS_HIJOS]
+    out = []
+    for etiqueta, clave in filas:
+        out.append(_c(f"wy_{clave}@wyoming", W_WY, r"\| " + etiqueta + r" \| " + N + r" \|", _co(clave), almacen="wyoming"))
+    for etiqueta, base in [("Regla fijada, solo padres horizontales \\(corte principal\\)", "regla_horizontales"),
+                           ("Regla fijada, todos los padres", "regla_todos")]:
+        out.append(_c(f"wy_{base}_cercanos@wyoming", W_WY, r"\| " + etiqueta + r" \| [\d.]+ \| " + N + r" \|", _co(f"ev_{base}_cercanos"),
+                      almacen="wyoming"))
+        out.append(_c(f"wy_{base}_controles@wyoming", W_WY, r"\| " + etiqueta + r" \| [\d.]+ \| [\d.]+ \| " + N + r" \|",
+                      _co(f"ev_{base}_controles"), almacen="wyoming"))
+    # hijos de las dos tablas de eventos, intermedios, hijos con padre cercano, tabla por anio y conteos de fecha
+    out.append(_c("wy_regla_hijos@wyoming", W_WY, r"\| Regla fijada, solo padres horizontales \(corte principal\) \| " + N + r" \|", _co("hijos"), almacen="wyoming"))
+    out.append(_c("wy_todos_hijos@wyoming", W_WY, r"\| Regla fijada, todos los padres \| " + N + r" \|", _co("hijos"), almacen="wyoming"))
+    for id_, patron, clave in [
+            ("interm_h", r"fuera de la brecha\), regla fijada: " + N + r" con padres horizontales", "ev_regla_horizontales_intermedios"),
+            ("interm_t", r"con padres horizontales y " + N + r" con todos", "ev_regla_todos_intermedios"),
+            ("hijos_padre_h", r"Hijos con al menos un padre cercano con base válida: " + N + r" \(padres horizontales\)", "hijos_con_padre_cercano_regla_horizontales"),
+            ("hijos_padre_t", r"\(padres horizontales\) y " + N + r" \(todos\)", "hijos_con_padre_cercano_regla_todos"),
+            ("sin_dias_texto", r"se toman como desconocidos: " + N + r" pozo-mes", "prod_pozo_mes_sin_dias_validos"),
+            ("fuera_texto", r"- " + N + r" pozos con producción no están en los encabezados: no tienen", "pozos_prod_fuera_del_archivo"),
+            ("tiempo_hijos", r"Entre los " + N + r" hijos, el mes de FIRSTCOMP", "hijos"),
+            ("tiempo_mismo", r"es el del primer petróleo en " + N + r", el primer petróleo es posterior", "hijos_terminacion_mes_primer_petroleo"),
+            ("tiempo_posterior", r"el primer petróleo es posterior en " + N + r" y anterior", "hijos_primer_petroleo_posterior"),
+            ("tiempo_anterior", r"y anterior en " + N + r"\.", "hijos_primer_petroleo_anterior"),
+            ("720921_dias", r"producción empieza en [\d-]+, " + N + r" días antes", "dias_720921")]:
+        out.append(_c(f"wy_{id_}@wyoming", W_WY, patron, _co(clave) if clave != "dias_720921" else
+                      (lambda con: float(con.execute("select dias_desde_primer_petroleo from co_hijo where pozo_id = 720921").fetchone()[0])),
+                      almacen="wyoming"))
+    anios = [r[0] for r in [(2018,), (2019,), (2020,), (2021,), (2022,), (2023,), (2024,)]]
+    for a_ in anios:
+        for j_, (corte, col) in enumerate([("horizontales", "cercanos"), ("horizontales", "controles"), ("todos", "cercanos"), ("todos", "controles")]):
+            previas = [r"[\d.]+"] * j_
+            patron = r"\| " + str(a_) + r" \| " + r" \| ".join(previas + [N]) + r" \|"
+            out.append(_c(f"wy_anio{a_}_{corte}_{col}@wyoming", W_WY, patron,
+                          (lambda con, a_=a_, corte=corte, col=col: float(con.execute(
+                              f"select coalesce(sum({col}), 0) from mart_co_eventos_anio where anio = {a_} and corte = '{corte}'").fetchone()[0])),
+                          almacen="wyoming"))
+    # la correccion de lectura de FIRSTCOMP: cifras de antes de la correccion, fijas, en la pagina de replicacion
+    W_RW = str(WYOMING.pagina.relative_to(ROOT))
+    for id_, patron, valor, fm, tol in [
+            ("antes_hijos", r"Antes de la corrección: " + N + r" hijos", 1177, "{:,.0f}", 0),
+            ("antes_cercanos", r"hijos, " + N + r" eventos cercanos", 356, "{:,.0f}", 0),
+            ("antes_controles", r"eventos cercanos y " + N + r" controles, brecha", 2291, "{:,.0f}", 0),
+            ("antes_brecha", r"brecha del mes 1 de " + PTS_W + r" puntos \(IC por bloques de 5 km: -?\d+,\d+ a", -2.5, "{:.1f}", 0.05),
+            ("antes_ic_bajo", r"\(IC por bloques de 5 km: " + PTS_W + r" a -?\d+,\d+\), brecha previa", -5.3, "{:.1f}", 0.05),
+            ("antes_ic_alto", r"\(IC por bloques de 5 km: -?\d+,\d+ a " + PTS_W + r"\), brecha previa", 3.0, "{:.1f}", 0.05),
+            ("antes_previa", r"brecha previa de " + PTS_W + r" y valor", -12.1, "{:.1f}", 0.05),
+            ("antes_valor", r"y valor " + PTS_W + r"; tampoco", 0.096, "{:.3f}", 0.0005)]:
+        out.append(_c(f"wy_{id_}@wyoming", W_RW, patron, (lambda _con, v=valor: float(v)), tol, fm, wh=False, almacen="wyoming"))
+    return out
+
+
+W_FM = "wiki/hallazgos/fuentes_mundo.md"
+
+
+def _fm(clave: str) -> Callable:
+    """Recuento de la auditoria de fuentes, leido de data/fuentes_mundo.json (no necesita ningun warehouse)."""
+    def f(_con):
+        from pipeline.fuentes_mundo import cargar, recuentos
+        return float(recuentos(cargar())[clave])
+    return f
+
+
+W_MB = "wiki/hallazgos/mapa_base.md"
+
+
+def _mb(clave: str) -> Callable:
+    """Recuento del mapa base del mundo 4D, leido de data/base_mapa.json (no necesita ningun warehouse)."""
+    def f(_con):
+        from pipeline.base_mapa import DESTINO, recuentos
+        return float(recuentos(json.loads(DESTINO.read_text(encoding="utf-8")))[clave])
+    return f
+
+
+def _claims_mapa_base() -> list[Claim]:
+    pats = [("cols", r"una grilla de " + N + r" por \d+ celdas"), ("filas", r"una grilla de \d+ por " + N + r" celdas"),
+            ("cota_min", r"con cotas de " + N + r" a "), ("cota_max", r"con cotas de [\d.]+ a " + N + r" m sobre el nivel"),
+            ("rios", r"- " + N + r" ríos y arroyos con nombre"),
+            ("agua_con_nombre", r"- " + N + r" cuerpos de agua con nombre"), ("embalses", r"\(" + N + r" embalses"),
+            ("lagos", r"embalses, " + N + r" lagos"), ("cauces", r"lagos y " + N + r" cauces anchos"),
+            ("agua_sin_nombre", r"cauces anchos\) y " + N + r" contornos sin nombre"),
+            ("limites", r"- " + N + r" límites entre provincias"),
+            ("localidades", r"- " + N + r" localidades, de una lista fija"),
+            ("bloques", r"- " + N + r" concesiones de explotación de"),
+            ("operadoras", r"concesiones de explotación de " + N + r" empresas operadoras")]
+    return [_c(f"mb_{k}@mapa_base", W_MB, pat, _mb(k), 0, wh=False) for k, pat in pats]
+
+
+def _claims_fuentes_mundo() -> list[Claim]:
+    pats = [("total", r"Se auditaron " + N + r" jurisdicciones"), ("entran", r"jurisdicciones\. " + N + r" entran al estudio"),
+            ("por_pozo_con_fractura", r"Por nivel: " + N + r" publican produccion por pozo con fecha de fractura o terminacion"),
+            ("por_pozo_sin_fractura", r"o terminacion, " + N + r" por pozo sin esa fecha"),
+            ("por_lease_o_campo", r"sin esa fecha, " + N + r" por lease, campo o instalacion"),
+            ("solo_totales", r"instalacion, " + N + r" solo totales"),
+            ("nada_publico", r"solo totales, " + N + r" nada publico o de pago"),
+            ("registro_de_fractura", r"de pago, " + N + r" es un registro de fracturas"),
+            ("no_verificado", r"sin petroleo y " + N + r" no se pudieron verificar")]
+    return [_c(f"fm_{k}@fuentes_mundo", W_FM, pat, _fm(k), wh=False) for k, pat in pats]
+
+
 W_REP = "wiki/hallazgos/replicacion.md"
 
 
@@ -475,15 +666,27 @@ def _celdas_rep(tipos: list[str], objetivo: int, parte: str = "") -> str:
     return r" \| ".join(out) + r" \|"
 
 
-def _claims_replicacion() -> list[Claim]:
-    """Cada cifra de la pagina de replicacion (Colorado) y de las frases que la citan; se saltan (SKIP) sin el warehouse del Colorado."""
-    from pipeline.replicacion import ROTULOS_RECUENTOS, ROTULOS_ROBUSTEZ
+# Frases de la pagina de replicacion que solo existen en una de las dos lecturas de los datos (por dia producido menor o no, la
+# regla se sostiene o no). En Colorado estan fijas y se exigen; en otra cuenca, si la frase no esta, el claim se salta.
+_REP_DEPENDEN_DE_LA_LECTURA = {
+    "rep_res_dia_brecha", "rep_res_dia_bajo", "rep_res_dia_alto", "rep_res_dia_pct", "rep_res_dia_prin", "rep_res_dia_ev_dia",
+    "rep_res_dia_ev_prin", "rep_rob_dia_brecha_texto", "rep_rob_dia_pct", "rep_rob_dia_ev_dia", "rep_rob_dia_ev_prin", "rep_cierre_mes6"}
+
+
+def _claims_replicacion(cuenca=None) -> list[Claim]:
+    """Cada cifra de la pagina de replicacion de una cuenca (Colorado por defecto) y, solo en Colorado, de las frases que la citan;
+    se saltan (SKIP) sin el warehouse de la cuenca."""
+    from pipeline.replicacion import ROTULOS_ROBUSTEZ, rotulos_recuentos
+    cuenca = cuenca or COLORADO
+    es_co = cuenca.id == COLORADO.id
+    W_REP = str(cuenca.pagina.relative_to(ROOT))
     out = []
     PTS_ = r"(-?\d+,\d+)"
-    V = "from mart_replicacion_colorado where k = 1"
+    V = f"from {cuenca.tabla_veredicto} where k = 1"
 
     def add(id_, fichero, patron, fn, tol=0.05, fmt_="{:.1f}"):
-        out.append(_c(id_ + "@colorado", fichero, patron, fn, tol, fmt_, almacen="colorado"))
+        out.append(_c(id_ + "@" + cuenca.id, fichero, patron, fn, tol, fmt_, almacen=cuenca.id,
+                      opcional=not es_co and id_ in _REP_DEPENDEN_DE_LA_LECTURA))
 
     # resumen
     add("rep_res_brecha", W_REP, r"base de los meses -3 a -1\): " + PTS_ + r" puntos\. IC", _rep_sql(f"select 100 * brecha {V}"))
@@ -542,34 +745,13 @@ def _claims_replicacion() -> list[Claim]:
                 _rep_sql(f"select {col} from mart_replicacion_robustez where corte = '{corte}'"),
                 0 if n_cell else 0.05, "{:,.0f}" if n_cell else "{:.1f}")
     # recuentos
-    for clave, rotulo in ROTULOS_RECUENTOS.items():
+    for clave, rotulo in rotulos_recuentos(cuenca).items():
         add(f"rep_rec_{clave}", W_REP, r"\| " + re.escape(rotulo) + r" \| " + N + r" \|", _rep_sql(ev + f"'{clave}'"), 0, "{:,.0f}")
-    # frases que citan el resultado fuera de la pagina
-    add("rep_readme_brecha", R, r"Replicación en Colorado \(cuenca DJ\) \| " + PTS_ + r" puntos al mes 1", _rep_sql(f"select 100 * brecha {V}"))
-    add("rep_readme_previa", R, r"previa de " + PTS_ + r" en el mes -1", _rep_sql(f"select 100 * brecha_previa_limpia {V}"))
-    add("rep_readme_ic_bajo", R, r"por bloques de 5 km: " + PTS_ + r" a -?\d+,\d+ \| se replica", _rep_sql(f"select 100 * ic_bajo_bloque {V}"))
-    add("rep_readme_ic_alto", R, r"por bloques de 5 km: -?\d+,\d+ a " + PTS_ + r" \| se replica", _rep_sql(f"select 100 * ic_alto_bloque {V}"))
     rob_ = "from mart_replicacion_robustez where corte = "
     ser_ = "from mart_replicacion_serie where base = "
     PCT_SQL = ("select 100 * (1 - abs(d.brecha_mes1) / abs(p.brecha_mes1)) from mart_replicacion_robustez d, mart_replicacion_robustez p "
                "where d.corte = 'por_dia_producido' and p.corte = 'principal'")
     DIA = rob_ + "'por_dia_producido'"
-    # caso: tabla de Colorado (las celdas de la fila de la regla, la previa del mes -1 y el corte por dia producido)
-    add("rep_caso_brecha", CASO, r"\(la medida de la regla\): se replica \| " + PTS_ + r" \|", _rep_sql(f"select 100 * brecha {V}"))
-    add("rep_caso_ic_bajo", CASO, r"se replica \| -?\d+,\d+ \| " + PTS_ + r" a -?\d+,\d+ \|", _rep_sql(f"select 100 * ic_bajo_bloque {V}"))
-    add("rep_caso_ic_alto", CASO, r"se replica \| -?\d+,\d+ \| -?\d+,\d+ a " + PTS_ + r" \|", _rep_sql(f"select 100 * ic_alto_bloque {V}"))
-    add("rep_caso_previa", CASO, r"Mes -1 previo, base limpia \| " + PTS_ + r" \|", _rep_sql(f"select 100 * brecha_previa_limpia {V}"))
-    add("rep_caso_previa_bajo", CASO, r"Mes -1 previo, base limpia \| -?\d+,\d+ \| " + PTS_ + r" a",
-        _rep_sql(f"select 100 * ic_bajo_previa_bloque {V}"))
-    add("rep_caso_previa_alto", CASO, r"Mes -1 previo, base limpia \| -?\d+,\d+ \| -?\d+,\d+ a " + PTS_ + r" \|",
-        _rep_sql(f"select 100 * ic_alto_previa_bloque {V}"))
-    add("rep_caso_dia_pct", CASO, r"por día producido: cerca de (\d+)% menos", _rep_sql(PCT_SQL), 0.5, "{:.0f}")
-    add("rep_caso_dia_brecha", CASO, r"con menos eventos \| " + PTS_ + r" \|", _rep_sql(f"select 100 * brecha_mes1 {DIA}"))
-    add("rep_caso_dia_bajo", CASO, r"con menos eventos \| -?\d+,\d+ \| " + PTS_ + r" a", _rep_sql(f"select 100 * ic_bajo_bloque {DIA}"))
-    add("rep_caso_dia_alto", CASO, r"con menos eventos \| -?\d+,\d+ \| -?\d+,\d+ a " + PTS_ + r" \|", _rep_sql(f"select 100 * ic_alto_bloque {DIA}"))
-    # README: la fila de Colorado, corte por dia producido
-    add("rep_readme_dia_brecha", R, r"por día producido la brecha es " + PTS_ + r", cerca de", _rep_sql(f"select 100 * brecha_mes1 {DIA}"))
-    add("rep_readme_dia_pct", R, r"cerca de (\d+)% menor", _rep_sql(PCT_SQL), 0.5, "{:.0f}")
     # pagina: resumen (barrera baja, dia producido), robustez y cierre
     add("rep_res_k1_prev", W_REP, r"la brecha del mes -1 \(" + PTS_ + r", IC 95%", _rep_sql(f"select 100 * brecha_previa_limpia {V}"))
     k2 = lambda col: _rep_sql(f"select 100 * {col} {ser_}'limpia' and k = -2")   # noqa: E731
@@ -589,7 +771,86 @@ def _claims_replicacion() -> list[Claim]:
     add("rep_rob_dia_pct", W_REP, r"puntos, cerca de (\d+)% menor que la principal", _rep_sql(PCT_SQL), 0.5, "{:.0f}")
     add("rep_rob_dia_ev_dia", W_REP, r"con " + N + r" eventos cercanos frente a", _rep_sql(f"select n_cercanos {DIA}"), 0, "{:,.0f}")
     add("rep_rob_dia_ev_prin", W_REP, r"eventos cercanos frente a " + N + r";", _rep_sql(f"select n_cercanos {rob_}'principal'"), 0, "{:,.0f}")
-    add("rep_cierre_mes6", W_REP, r"Al mes 6 la brecha de Colorado es de " + PTS_ + r" puntos", _rep_sql(f"select 100 * brecha {ser_}'original' and k = 6"))
+    # pagina: cierre
+    add("rep_cierre_mes6", W_REP, r"Al mes 6 la brecha de " + re.escape(cuenca.nombre) + r" es de " + PTS_ + r" puntos",
+        _rep_sql(f"select 100 * brecha {ser_}'original' and k = 6"))
+    # frases que citan el resultado fuera de la pagina (solo Colorado)
+    if es_co:
+        add("rep_readme_brecha", R, r"Replicación en Colorado \(cuenca DJ\) \| " + PTS_ + r" puntos al mes 1", _rep_sql(f"select 100 * brecha {V}"))
+        add("rep_readme_previa", R, r"previa de " + PTS_ + r" en el mes -1", _rep_sql(f"select 100 * brecha_previa_limpia {V}"))
+        add("rep_readme_ic_bajo", R, r"por bloques de 5 km: " + PTS_ + r" a -?\d+,\d+ \| se replica", _rep_sql(f"select 100 * ic_bajo_bloque {V}"))
+        add("rep_readme_ic_alto", R, r"por bloques de 5 km: -?\d+,\d+ a " + PTS_ + r" \| se replica", _rep_sql(f"select 100 * ic_alto_bloque {V}"))
+        # caso: tabla de Colorado (las celdas de la fila de la regla, la previa del mes -1 y el corte por dia producido)
+        add("rep_caso_brecha", CASO, r"\(la medida de la regla\): se replica \| " + PTS_ + r" \|", _rep_sql(f"select 100 * brecha {V}"))
+        add("rep_caso_ic_bajo", CASO, r"se replica \| -?\d+,\d+ \| " + PTS_ + r" a -?\d+,\d+ \|", _rep_sql(f"select 100 * ic_bajo_bloque {V}"))
+        add("rep_caso_ic_alto", CASO, r"se replica \| -?\d+,\d+ \| -?\d+,\d+ a " + PTS_ + r" \|", _rep_sql(f"select 100 * ic_alto_bloque {V}"))
+        add("rep_caso_previa", CASO, r"Mes -1 previo, base limpia \| " + PTS_ + r" \|", _rep_sql(f"select 100 * brecha_previa_limpia {V}"))
+        add("rep_caso_previa_bajo", CASO, r"Mes -1 previo, base limpia \| -?\d+,\d+ \| " + PTS_ + r" a",
+            _rep_sql(f"select 100 * ic_bajo_previa_bloque {V}"))
+        add("rep_caso_previa_alto", CASO, r"Mes -1 previo, base limpia \| -?\d+,\d+ \| -?\d+,\d+ a " + PTS_ + r" \|",
+            _rep_sql(f"select 100 * ic_alto_previa_bloque {V}"))
+        add("rep_caso_dia_pct", CASO, r"por día producido: cerca de (\d+)% menos", _rep_sql(PCT_SQL), 0.5, "{:.0f}")
+        add("rep_caso_dia_brecha", CASO, r"con menos eventos \| " + PTS_ + r" \|", _rep_sql(f"select 100 * brecha_mes1 {DIA}"))
+        add("rep_caso_dia_bajo", CASO, r"con menos eventos \| -?\d+,\d+ \| " + PTS_ + r" a", _rep_sql(f"select 100 * ic_bajo_bloque {DIA}"))
+        add("rep_caso_dia_alto", CASO, r"con menos eventos \| -?\d+,\d+ \| -?\d+,\d+ a " + PTS_ + r" \|", _rep_sql(f"select 100 * ic_alto_bloque {DIA}"))
+        # README: la fila de Colorado, corte por dia producido
+        add("rep_readme_dia_brecha", R, r"por día producido la brecha es " + PTS_ + r", cerca de", _rep_sql(f"select 100 * brecha_mes1 {DIA}"))
+        add("rep_readme_dia_pct", R, r"cerca de (\d+)% menor", _rep_sql(PCT_SQL), 0.5, "{:.0f}")
+    return out
+
+
+W_FAM = "wiki/hallazgos/replicacion_cuencas.md"
+
+
+def _claims_familia() -> list[Claim]:
+    """Cada cifra de la pagina de la familia de cuencas (la tabla por cuenca y la lectura k de n) y las frases del README que la citan."""
+    from pipeline.cuencas import CUENCAS
+    from pipeline.familia import FAMILIA, resultados_desde
+    PTS_ = r"(-?\d+,\d+)"
+    out: list[Claim] = []
+    # las celdas numericas de una fila de la tabla, en orden; cada claim captura una y deja las demas sin capturar
+    celdas = [("hijos", r"[\d.]+", "{:,.0f}", 0), ("cercanos", r"[\d.]+", "{:,.0f}", 0), ("controles", r"[\d.]+", "{:,.0f}", 0),
+              ("brecha", r"-?\d+,\d+", "{:.1f}", 0.05), ("ic", r"-?\d+,\d+ a -?\d+,\d+", "{:.1f}", 0.05),
+              ("previa", r"-?\d+,\d+", "{:.1f}", 0.05), ("valor", r"-?\d+,\d+", "{:.3f}", 0.0005)]
+    for i, nombre in FAMILIA:
+        V = f"from {CUENCAS[i].tabla_veredicto} where k = 1"
+        pre = r"\| " + nombre + r" \| "
+        sqls = {"hijos": "select valor from mart_replicacion_recuentos where clave = 'hijos'", "cercanos": f"select n_cercanos {V}",
+                "controles": f"select n_controles {V}", "brecha": f"select 100 * brecha {V}",
+                "ic_bajo": f"select 100 * ic_bajo_bloque {V}", "ic_alto": f"select 100 * ic_alto_bloque {V}",
+                "previa": f"select 100 * brecha_previa_limpia {V}", "valor": f"select valor {V}"}
+        for j, (nom, rx, fm, tol) in enumerate(celdas):
+            antes = [c[1] for c in celdas[:j]]
+            objetivos = [("ic_bajo", r"(-?\d+,\d+) a -?\d+,\d+"), ("ic_alto", r"-?\d+,\d+ a (-?\d+,\d+)")] if nom == "ic" else [(nom, "(" + rx + ")")]
+            for clave, captura in objetivos:
+                patron = pre + r" \| ".join(antes + [captura])
+                out.append(_c(f"fam_{clave}@{i}", W_FAM, patron, _rep_sql(sqls[clave]), tol, fm, almacen=i))
+
+    def k_de(cons):
+        return float(sum(1 for v, _ in resultados_desde(cons).values() if v))
+
+    def n_de(cons):
+        return float(len(resultados_desde(cons)))
+    out += [_c("fam_k@familia", W_FAM, r"Se replica en " + N + r" de \d+ cuencas", k_de, 0, almacen="familia"),
+            _c("fam_n@familia", W_FAM, r"Se replica en \d+ de " + N + r" cuencas", n_de, 0, almacen="familia"),
+            _c("fam_n_nota@familia", W_FAM, r"Son " + N + r" cuencas:", n_de, 0, almacen="familia")]
+    # README: las frases del resumen (en espanol y en ingles) y la fila de Wyoming
+    R = "README.md"
+    out += [_c("fam_readme_k_es@familia", R, r"se replica en " + N + r" de \d+ cuencas", k_de, 0, almacen="familia"),
+            _c("fam_readme_n_es@familia", R, r"se replica en \d+ de " + N + r" cuencas", n_de, 0, almacen="familia"),
+            _c("fam_readme_k_en@familia", R, r"replicates in " + N + r" of \d+ basins", k_de, 0, almacen="familia"),
+            _c("fam_readme_n_en@familia", R, r"replicates in \d+ of " + N + r" basins", n_de, 0, almacen="familia"),
+            _c("fam_readme_fila_k@familia", R, r"Replicación por cuenca \([^)]*\) \| se replica en " + N + r" de \d+ cuencas", k_de, 0, almacen="familia"),
+            _c("fam_readme_fila_n@familia", R, r"Replicación por cuenca \([^)]*\) \| se replica en \d+ de " + N + r" cuencas", n_de, 0, almacen="familia")]
+    V = f"from {WYOMING.tabla_veredicto} where k = 1"
+    fila = r"Replicación en Wyoming \(WOGCC\) \| "
+    out += [_c("wy_readme_brecha@wyoming", R, fila + PTS_ + r" puntos al mes 1", _rep_sql(f"select 100 * brecha {V}"), 0.05, "{:.1f}", almacen="wyoming"),
+            _c("wy_readme_previa@wyoming", R, fila + r"-?\d+,\d+ puntos al mes 1; previa de " + PTS_ + r" en el mes -1",
+               _rep_sql(f"select 100 * brecha_previa_limpia {V}"), 0.05, "{:.1f}", almacen="wyoming"),
+            _c("wy_readme_ic_bajo@wyoming", R, r"por bloques de 5 km: " + PTS_ + r" a -?\d+,\d+ \| no se replica", _rep_sql(f"select 100 * ic_bajo_bloque {V}"),
+               0.05, "{:.1f}", almacen="wyoming"),
+            _c("wy_readme_ic_alto@wyoming", R, r"por bloques de 5 km: -?\d+,\d+ a " + PTS_ + r" \| no se replica", _rep_sql(f"select 100 * ic_alto_bloque {V}"),
+               0.05, "{:.1f}", almacen="wyoming")]
     return out
 
 
@@ -760,14 +1021,14 @@ def _claims_robustez_operador() -> list[Claim]:
                0.05, "{:.1f}"),
         ]
     cl += [
-        _c("rob_op_readme_cierre@readme", R, r"el cierre del mes 6 queda dentro de " + N + r" puntos", lambda con: 5, 0),
-        _c("rob_op_readme_area_min@readme", R, r"queda entre " + SD + r" y -?\d+,\d+ puntos con el IC 95% siempre por debajo de cero", _agr("area", 1, "min"), 0.05, "{:.1f}"),
-        _c("rob_op_readme_area_max@readme", R, r"queda entre -?\d+,\d+ y " + SD + r" puntos con el IC 95% siempre por debajo de cero", _agr("area", 1, "max"), 0.05, "{:.1f}"),
-        _c("rob_op_readme_ypf@readme", R, r"\(sin YPF: " + SD + r"\)",
+        _c("rob_op_readme_cierre@wiki", W_LIM, r"el cierre del mes 6 queda dentro de " + N + r" puntos", lambda con: 5, 0),
+        _c("rob_op_readme_area_min@wiki", W_LIM, r"queda entre " + SD + r" y -?\d+,\d+ puntos con el IC 95% siempre por debajo de cero", _agr("area", 1, "min"), 0.05, "{:.1f}"),
+        _c("rob_op_readme_area_max@wiki", W_LIM, r"queda entre -?\d+,\d+ y " + SD + r" puntos con el IC 95% siempre por debajo de cero", _agr("area", 1, "max"), 0.05, "{:.1f}"),
+        _c("rob_op_readme_ypf@wiki", W_LIM, r"\(sin YPF: " + SD + r"\)",
            lambda con: 100 * con.execute("select brecha from mart_robustez_operador where eje = 'operador' and k = 1 and salida = 'YPF'").fetchone()[0],
            0.05, "{:.1f}"),
-        _c("rob_op_readme_n_op@readme", R, r"de a un operador \(" + N + r"\)", _n("operador"), 0),
-        _c("rob_op_readme_n_area@readme", R, r"o de a un área \(" + N + r"\)", _n("area"), 0),
+        _c("rob_op_readme_n_op@wiki", W_LIM, r"de a un operador \(" + N + r"\)", _n("operador"), 0),
+        _c("rob_op_readme_n_area@wiki", W_LIM, r"o de a un área \(" + N + r"\)", _n("area"), 0),
     ]
     return cl
 
@@ -779,6 +1040,9 @@ def _claims_resumen_operador() -> list[Claim]:
     """Cada cifra de la hoja resumen para un operador, leida de los marts de decision, de robustez y de potencia de dosis."""
     def _q(sql: str, factor: float = 1.0) -> Callable:
         return lambda con: factor * con.execute(sql).fetchone()[0]
+
+    def _cota_mes6(con) -> float:
+        return math.ceil(100 * con.execute("select max(-brecha_mes6) from mart_decision_cierre").fetchone()[0])
 
     ed = "select {c} from mart_decision_edad where grupo_edad = '{g}'"
     rb = "select {a}(brecha) from mart_robustez_operador where eje = '{e}' and k = 1 and salida <> '(muestra completa)'"
@@ -795,6 +1059,7 @@ def _claims_resumen_operador() -> list[Claim]:
         _c("resumen_area_max@doc", W_RESUMEN, r"un área, entre \d+,\d+ y " + DEC + r" puntos menos", _q(rb.format(a="min", e="area"), -100), 0.05, "{:.1f}"),
         _c("resumen_mes6@doc", W_RESUMEN, r"queda en " + DEC + r" puntos menos con el control principal", _q(ed.format(c="-brecha_mes6", g="todos"), 100), 0.05, "{:.1f}"),
         _c("resumen_mes6_max@doc", W_RESUMEN, r"llega a " + DEC + r" puntos menos con la variante de control de mayor brecha", _q("select max(-brecha_mes6) from mart_decision_cierre", 100), 0.05, "{:.1f}"),
+        _c("resumen_mes6_cota@doc", W_RESUMEN, r"dentro de (\d+) puntos", _cota_mes6, 0, "{:.0f}"),
         _c("resumen_diferido@doc", W_RESUMEN, r"es de " + N + r" m3 de petróleo por padre", _q(ed.format(c="diferido_medio_m3", g="todos")), 0.5),
         _c("resumen_dif_ic_bajo@doc", W_RESUMEN, r"intervalo del 95%: " + N + r" a", _q(ed.format(c="diferido_ic_bajo_m3", g="todos")), 0.5),
         _c("resumen_dif_ic_alto@doc", W_RESUMEN, r"intervalo del 95%: [\d.]+ a " + N + r"\)", _q(ed.format(c="diferido_ic_alto_m3", g="todos")), 0.5),
@@ -803,6 +1068,93 @@ def _claims_resumen_operador() -> list[Claim]:
         _c("resumen_mde@doc", W_RESUMEN, r"con 80% de potencia, de " + DEC + r" desvíos",
            _q("select max(mde80_holm_desvios) from mart_potencia_dosis where resultado = 'A' and modelo = 'conjunto'"), 0.006, "{:.2f}"),
     ]
+
+
+W_MUNDO = "site/mundo.html"
+
+
+def _claims_mundo() -> list[Claim]:
+    """Cifras del texto fijo de site/mundo.html (pipeline.mundo.textos), leidas de los marts que las publican."""
+    def _q(sql: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(sql).fetchone()[0]
+
+    bl = "select {c} from mart_bloques where metrica = '{m}' and k = 1"
+    orig, desc = "brecha_mes1_base_original", "brecha_mes1_descontada"
+    ed = "select {c} from mart_decision_edad where grupo_edad = 'todos'"
+    ev = "select count(*) from int_interferencia_evento where banda = '{b}'"
+    return [
+        _c("mundo_pozos@site", W_MUNDO, r"<b>" + N + r" pozos shale con ubicación de superficie</b>",
+           _q("select count(*) from int_pozo_ubicacion"), 0),
+        _c("mundo_rango_bajo@site", W_MUNDO, r"rinden <b>entre " + N + r" y", _q(bl.format(c="estimacion", m=desc), -100)),
+        _c("mundo_rango_alto@site", W_MUNDO, r"rinden <b>entre \d+ y " + N + r" puntos menos</b>",
+           _q(bl.format(c="estimacion", m=orig), -100)),
+        _c("mundo_cercanos@site", W_MUNDO, r"\(" + N + r" eventos cercanos y", _q(ev.format(b="cercano")), 0),
+        _c("mundo_controles@site", W_MUNDO, r"eventos cercanos y " + N + r" de control\)", _q(ev.format(b="control")), 0),
+        _c("mundo_brecha1@site", W_MUNDO, r"de la brecha de " + N + r" puntos:", _q(bl.format(c="estimacion", m=orig), -100)),
+        _c("mundo_ic5_bajo@site", W_MUNDO, r"de la brecha de \d+ puntos: " + N + r" a",
+           _q(bl.format(c="ic_alto_5km", m=orig), -100)),
+        _c("mundo_ic5_alto@site", W_MUNDO, r"de la brecha de \d+ puntos: \d+ a " + N + r" \(",
+           _q(bl.format(c="ic_bajo_5km", m=orig), -100)),
+        _c("mundo_bloques@site", W_MUNDO, r"\(" + N + r" bloques\)", _q(bl.format(c="bloques_5km", m=orig)), 0),
+        _c("mundo_cierre_min@site", W_MUNDO, r"la brecha queda <b>entre " + DEC + r" y",
+           _q("select -max(brecha_mes6) from mart_decision_cierre", 100), 0.05, "{:.1f}"),
+        _c("mundo_cierre_max@site", W_MUNDO, r"la brecha queda <b>entre \d+,\d+ y " + DEC + r" puntos</b>",
+           _q("select -min(brecha_mes6) from mart_decision_cierre", 100), 0.05, "{:.1f}"),
+        _c("mundo_diferido@site", W_MUNDO, r"meses 0 a 6: <b>" + N + r" bbl</b>", _q(ed.format(c="diferido_medio_bbl"))),
+        _c("mundo_dif_ic_bajo@site", W_MUNDO, r"bbl</b> \(IC 95%: " + N + r" a", _q(ed.format(c="diferido_ic_bajo_bbl"))),
+        _c("mundo_dif_ic_alto@site", W_MUNDO, r"bbl</b> \(IC 95%: [\d.]+ a " + N + r"\)", _q(ed.format(c="diferido_ic_alto_bbl"))),
+        _c("mundo_cota@site", W_MUNDO, r"podría no volver: " + N + r" bbl por evento",
+           _q("select cota_bbl from mart_decision_perdida")),
+    ]
+
+
+W_GLOBO = "site/globo.html"
+
+
+def _claims_globo() -> list[Claim]:
+    """Cifras del texto fijo de site/globo.html (pipeline.globo.textos): la auditoria de fuentes y los veredictos de las tres cuencas,
+    leidos de los mismos marts que publican las paginas de Vaca Muerta, Colorado y Wyoming."""
+    from pipeline.familia import CUENCAS
+
+    def _q(sql: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(sql).fetchone()[0]
+
+    bl = "select {c} from mart_bloques where metrica = '{m}' and k = 1"
+    orig, desc = "brecha_mes1_base_original", "brecha_mes1_descontada"
+    out = [
+        _c("globo_auditadas@globo", W_GLOBO, r"De " + N + r" jurisdicciones auditadas", _fm("total"), 0, wh=False),
+        _c("globo_con_fractura@globo", W_GLOBO, r"auditadas, " + N + r" publican petróleo por pozo", _fm("por_pozo_con_fractura"), 0, wh=False),
+        _c("globo_entran@globo", W_GLOBO, r"y " + N + r" entran al estudio", _fm("entran"), 0, wh=False),
+        _c("globo_vm_bajo@globo", W_GLOBO, r"rinden <b>entre " + N + r" y", _q(bl.format(c="estimacion", m=desc), -100)),
+        _c("globo_vm_alto@globo", W_GLOBO, r"rinden <b>entre \d+ y " + N + r" puntos menos</b>", _q(bl.format(c="estimacion", m=orig), -100)),
+    ]
+    for cid, nom, pre in (("colorado", "Colorado", "co"), ("wyoming", "Wyoming", "wy")):
+        v = f"from {CUENCAS[cid].tabla_veredicto} where k = 1"
+        cabeza = r"<b>" + nom + r", [^<]*</b> Brecha al mes 1 de <b>"
+        ic = r"-?\d+,\d+ puntos</b> \(IC 95% por bloques de 5 km: "
+        out += [
+            _c(f"globo_{pre}_brecha@globo", W_GLOBO, cabeza + SD + r" puntos</b>", _q(f"select 100 * brecha {v}"), 0.05, "{:.1f}", almacen=cid),
+            _c(f"globo_{pre}_ic_bajo@globo", W_GLOBO, cabeza + ic + SD + r" a", _q(f"select 100 * ic_bajo_bloque {v}"), 0.05, "{:.1f}", almacen=cid),
+            _c(f"globo_{pre}_ic_alto@globo", W_GLOBO, cabeza + ic + r"-?\d+,\d+ a " + SD + r"\)", _q(f"select 100 * ic_alto_bloque {v}"), 0.05, "{:.1f}", almacen=cid),
+        ]
+
+        # La lectura en palabras ("se replica" / "no se replica", "incluye el cero") sale de un atributo numerico del texto fijo.
+        out.append(_c(f"globo_{pre}_se_replica@globo", W_GLOBO, r'<li data-cuenca="' + cid + r'" data-se-replica="(\d)"',
+                      _q(f"select cast(se_replica as integer) {v}"), 0, "{:.0f}", almacen=cid))
+    out.append(_c("globo_wy_incluye_cero@globo", W_GLOBO, r'<li data-cuenca="wyoming"[^>]* data-incluye-cero="(\d)"',
+                  _q(f"select cast(ic_bajo_bloque < 0 and ic_alto_bloque > 0 as integer) from {CUENCAS['wyoming'].tabla_veredicto} where k = 1"),
+                  0, "{:.0f}", almacen="wyoming"))
+
+    def k_de(cons):
+        from pipeline.familia import resultados_desde
+        return float(sum(1 for r, _ in resultados_desde(cons).values() if r))
+
+    def n_de(cons):
+        from pipeline.familia import resultados_desde
+        return float(len(resultados_desde(cons)))
+    out += [_c("globo_replican@globo", W_GLOBO, r"Se replica en " + N + r" de \d+ cuencas", k_de, 0, almacen="familia"),
+            _c("globo_de@globo", W_GLOBO, r"Se replica en \d+ de " + N + r" cuencas", n_de, 0, almacen="familia")]
+    return out
 
 
 W_INFORME = "site/informe.html"
@@ -816,8 +1168,11 @@ def _claims_informe() -> list[Claim]:
     ed = "select {c} from mart_decision_edad where grupo_edad = '{g}'"
     rb = "select {a}(brecha) from mart_robustez_operador where eje = '{e}' and k = 1 and salida <> '(muestra completa)'"
     ficha = r'{t}</div>\s*<div class="v num">'
+    blq = "select {c} from mart_bloques where metrica = 'brecha_mes1_base_original' and k = 1"
     return [
         _c("informe_gap1@site", W_INFORME, ficha.format(t="Mes 1") + SD, _q(ed.format(c="brecha_mes1", g="todos"), 100), 0.05, "{:.1f}"),
+        _c("informe_gap1_ic_bajo@site", W_INFORME, r"IC 95% por bloques de 5 km: " + SD + r" a", _q(blq.format(c="ic_bajo_5km"), 100), 0.05, "{:.1f}"),
+        _c("informe_gap1_ic_alto@site", W_INFORME, r"IC 95% por bloques de 5 km: -?\d+,\d+ a " + SD + r"\)", _q(blq.format(c="ic_alto_5km"), 100), 0.05, "{:.1f}"),
         _c("informe_gap6@site", W_INFORME, ficha.format(t="Mes 6") + SD, _q(ed.format(c="brecha_mes6", g="todos"), 100), 0.05, "{:.1f}"),
         _c("informe_eventos@site", W_INFORME, r"Un estudio de " + N + r" eventos en los que", _q(ed.format(c="eventos", g="todos")), 0),
         _c("informe_padres@site", W_INFORME, r"a menos de 1 km \(" + N + r" padres distintos\)",
@@ -894,6 +1249,10 @@ def _claims_decision() -> list[Claim]:
            _edad("todos", "diferido_alto_m3"), 0.5),
         _c("dec_readme_cota@readme", R, r"\((\d+) m3 por evento\), por edad del padre",
            lambda con: con.execute("select cota_m3 from mart_decision_perdida").fetchone()[0], 0.5),
+        _c("dec_readme_quedan_min@readme", R, r"quedan (\d+) a \d+ puntos",
+           lambda con: round(100 * con.execute("select min(-brecha_mes6) from mart_decision_cierre").fetchone()[0]), 0.5),
+        _c("dec_readme_quedan_max@readme", R, r"quedan \d+ a (\d+) puntos",
+           lambda con: round(100 * con.execute("select max(-brecha_mes6) from mart_decision_cierre").fetchone()[0]), 0.5),
         _c("dec_cota_bbl@wiki", W_DEC, r"La cota superior de pérdida es de " + N + r" bbl",
            lambda con: con.execute("select cota_bbl from mart_decision_perdida").fetchone()[0], 0.5),
         _c("dec_48_b6@wiki", W_DEC, r"La fila de 48 meses o más queda en " + SD + r" puntos en el mes 6",
@@ -975,11 +1334,11 @@ def _claims_hijo_celdas() -> list[Claim]:
                       "); con celdas de 1 km, ", " (IC 95%: ", " a ", ")."],
           [hc(*K5, "coef_bbl_m"), hc(*K5, "ic_bajo"), hc(*K5, "ic_alto"), hc(*K1, "coef_bbl_m"), hc(*K1, "ic_bajo"), hc(*K1, "ic_alto")],
           [0.05] * 6, [d1] * 6)
-    cl.append(_c("hcel_readme_punto@readme", R, r"dentro de cuadrados de 2 km el hijo muy depletado da " + SD + r"% del virgen",
+    cl.append(_c("hcel_readme_punto@wiki", W_LIM, r"dentro de cuadrados de 2 km el hijo muy depletado da " + SD + r"% del virgen",
                  hc(*P, "pct_del_virgen"), 0.05, d1))
-    cl.append(_c("hcel_readme_bajo@readme", R, r"dentro de cuadrados de 2 km el hijo muy depletado da -?\d+,\d+% del virgen \(IC 95%: " + SD + r"%",
+    cl.append(_c("hcel_readme_bajo@wiki", W_LIM, r"dentro de cuadrados de 2 km el hijo muy depletado da -?\d+,\d+% del virgen \(IC 95%: " + SD + r"%",
                  hc(*P, "pct_ic_bajo"), 0.05, d1))
-    cl.append(_c("hcel_readme_alto@readme", R, r"dentro de cuadrados de 2 km el hijo muy depletado da -?\d+,\d+% del virgen \(IC 95%: -?\d+,\d+% a " + SD + r"%",
+    cl.append(_c("hcel_readme_alto@wiki", W_LIM, r"dentro de cuadrados de 2 km el hijo muy depletado da -?\d+,\d+% del virgen \(IC 95%: -?\d+,\d+% a " + SD + r"%",
                  hc(*P, "pct_ic_alto"), 0.05, d1))
     return cl
 
@@ -1065,10 +1424,17 @@ def _claims_prospectiva() -> list[Claim]:
     frase("p2n", ["desde 2026-04; al congelar se conocían ", " cercanos y ", " controles."],
           [_cong("p2", "conocidos_cercanos"), _cong("p2", "conocidos_controles")], [0, 0], [n0] * 2)
     pre = r"Prueba prospectiva \(`wiki/hallazgos/prospectiva.md`\) \| congelada el 2026-11-18 con los datos hasta 2026-09: brecha del mes 1 de "
+    # Los _bis no llevan el texto entre comillas inversas: numeros_sin_fijar lo borra, y sin ellos las cifras de la fila quedarian sueltas.
     cl += [_c("pros_readme_pred@readme", R, pre + SD, _cong("p1", "prediccion", 100), 0.05, d1, wh=False),
+           _c("pros_readme_pred_bis@readme", R, r"brecha del mes 1 de " + SD + r" puntos \(intervalo predicho",
+              _cong("p1", "prediccion", 100), 0.05, d1, wh=False),
            _c("pros_readme_bajo@readme", R, pre + r"-?\d+,\d+ puntos \(intervalo predicho " + SD, _cong("p1", "intervalo_bajo", 100), 0.05, d1,
               wh=False),
+           _c("pros_readme_bajo_bis@readme", R, r"intervalo predicho " + SD + r" a", _cong("p1", "intervalo_bajo", 100), 0.05, d1,
+              wh=False),
            _c("pros_readme_alto@readme", R, pre + r"-?\d+,\d+ puntos \(intervalo predicho -?\d+,\d+ a " + SD, _cong("p1", "intervalo_alto", 100),
+              0.05, d1, wh=False),
+           _c("pros_readme_alto_bis@readme", R, r"intervalo predicho -?\d+,\d+ a " + SD, _cong("p1", "intervalo_alto", 100),
               0.05, d1, wh=False)]
     return cl
 
@@ -1351,8 +1717,8 @@ def _claims_bloques() -> list[Claim]:
             cl.append(_c(f"blq_pruebas_{nom}@{tag}", fichero, _plantilla(plantilla, nom), _n_pruebas(nom), 0, "{:.0f}"))
     # README and case study text that depends on the block intervals
     cl += [
-        _c("blq_readme_bloques@readme", R, r"con bloques espaciales de 5 km \((\d+) bloques\)", _blq(B_HEAD, 1, "bloques_5km"), 0),
-        _c("blq_readme_ancho@readme", R, r"es (\d+,\d+) veces más ancho y ningún veredicto cambia", _blq(B_HEAD, 1, "ratio_5km"), 0.005,
+        _c("blq_readme_bloques@wiki", W_LIM, r"con bloques espaciales de 5 km \((\d+) bloques\)", _blq(B_HEAD, 1, "bloques_5km"), 0),
+        _c("blq_readme_ancho@wiki", W_LIM, r"es (\d+,\d+) veces más ancho y ningún veredicto cambia", _blq(B_HEAD, 1, "ratio_5km"), 0.005,
            "{:.2f}"),
     ]
     caso = ("El IC 95% por bloques espaciales de 5 km (<b5:i> bloques) de la brecha de <est:n> va de <l5:n> a <h5:n> puntos "
@@ -1523,9 +1889,96 @@ def _claims_inyeccion() -> list[Claim]:
     return cl
 
 
+def _claims_limites() -> list[Claim]:
+    """Cifras de la pagina de limites (escrita a mano) que ningun otro grupo de claims fija: la brecha del mes 1 y el cierre
+    a los 6 meses con los cuatro controles, la respuesta tardia de la dosis, las cotas del pad y la potencia del nulo. Las
+    del README que no tenian claim (el resumen en ingles y los controles) van aca tambien. Todo se lee de los marts."""
+    def anillo(agg: str, k: int) -> Callable:
+        return lambda con: 100 * con.execute(f"select {agg}(brecha) from mart_anillo where k = {k}").fetchone()[0]
+
+    def n_controles(con) -> float:
+        return float(con.execute("select count(distinct variante) from mart_anillo where k = 1").fetchone()[0])
+
+    def cierre_dentro(con) -> float:
+        """5 cuando los cuatro controles quedan a menos de 5 puntos al mes 6; si no, el mayor desvio (y el claim falla)."""
+        peor = 100 * con.execute("select max(abs(brecha)) from mart_anillo where k = 6").fetchone()[0]
+        return 5.0 if peor < 5 else peor
+
+    def ic_excluye_cero(con) -> float:
+        return float(con.execute("select count(*) from mart_anillo where k = 6 and (ic_alto < 0 or ic_bajo > 0)").fetchone()[0])
+
+    def potencia(col: str) -> Callable:
+        return lambda con: con.execute(
+            f"select max({col}) from mart_potencia_dosis where resultado = 'A' and modelo = 'conjunto'").fetchone()[0]
+
+    def meses_n(con) -> float:
+        return float(con.execute("select count(*) from mart_dosis_meses").fetchone()[0])
+
+    def meses_min_p(col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_dosis_meses order by p limit 1").fetchone()[0]
+
+    def cota_pad(resultado: list[str], pos: int) -> Callable:
+        """Cota superior mayor de los IC del pad, tal como la escribe mart_dosis_pad_veredicto (pos 1: muestra completa, 2: cercania)."""
+        def f(con):
+            vals = []
+            for (texto,) in con.execute("select texto from mart_dosis_pad_veredicto where resultado in ("
+                                        + ", ".join(f"'{r}'" for r in resultado) + ")").fetchall():
+                m = re.search(r"es de (\d+,\d+) desvíos de la caída en la muestra completa y (\d+,\d+) en la cercanía", texto)
+                vals.append(parse_numero(m.group(pos)))
+            return max(vals)
+        return f
+
+    def pruebas_pad(con) -> float:
+        return float(con.execute("select count(*) from (select distinct modelo, variable from mart_dosis_pad "
+                                 "where resultado = 'A' and modelo in ('completo', 'cercania'))").fetchone()[0])
+
+    def fiv_max(con) -> float:
+        return con.execute("select max(coef_sd) from mart_dosis_pad where modelo = 'vif'").fetchone()[0]
+
+    brecha1 = r"la brecha del mes 1 \(de "
+    cl = [
+        _c("lim_brecha_mes1_max@wiki", W_LIM, brecha1 + SD + r" a", anillo("max", 1), 0.05, "{:.1f}"),
+        _c("lim_brecha_mes1_min@wiki", W_LIM, brecha1 + r"-?\d+,\d+ a " + SD + r" puntos\)", anillo("min", 1), 0.05, "{:.1f}"),
+        _c("lim_controles_n@wiki", W_LIM, r"de (cuatro) controles se use", n_controles, 0),
+        _c("lim_mes6_dentro@wiki", W_LIM, r"la brecha queda dentro de " + N + r" puntos con los cuatro", cierre_dentro, 0),
+        _c("lim_mes6_max@wiki", W_LIM, r"\(entre " + SD + r" y -?\d+,\d+\), pero con", anillo("max", 6), 0.05, "{:.1f}"),
+        _c("lim_mes6_min@wiki", W_LIM, r"\(entre -?\d+,\d+ y " + SD + r"\), pero con", anillo("min", 6), 0.05, "{:.1f}"),
+        _c("lim_mes6_ic_excluye@wiki", W_LIM, r"pero con " + N + r" de ellos su IC excluye cero", ic_excluye_cero, 0),
+        _c("lim_mes6_menos_de@wiki", W_LIM, r"quiere decir menos de " + N + r" puntos y no cero", cierre_dentro, 0),
+        _c("lim_meses_pruebas@wiki", W_LIM, r"\(" + N + r" pruebas con Holm", meses_n, 0),
+        _c("lim_meses_k@wiki", W_LIM, r"la depleción al mes " + N + r", con p de", meses_min_p("k"), 0),
+        _c("lim_meses_p@wiki", W_LIM, r"con p de " + DEC + r" sin ajustar", meses_min_p("p"), 0.0005, "{:.3f}"),
+        _c("lim_meses_p_holm@wiki", W_LIM, r"y de " + DEC + r" ajustado", meses_min_p("p_holm"), 0.005, "{:.2f}"),
+        _c("lim_pad_pruebas@wiki", W_LIM, r"ninguna de las (nueve) pruebas", pruebas_pad, 0),
+        _c("lim_pad_cota_completa@wiki", W_LIM, r"llega a " + DEC + r" desvíos de la caída en la muestra completa",
+           cota_pad(["A", "B"], 1), 0.005, "{:.2f}"),
+        _c("lim_pad_cota_indice@wiki", W_LIM, r"y a " + DEC + r" \(índice\)", cota_pad(["A"], 2), 0.005, "{:.2f}"),
+        _c("lim_pad_cota_caudal@wiki", W_LIM, r"o " + DEC + r" \(caudal por día\)", cota_pad(["B"], 2), 0.005, "{:.2f}"),
+        _c("lim_pad_fiv@wiki", W_LIM, r"el FIV máximo es " + DEC, fiv_max, 0.05, "{:.1f}"),
+        _c("lim_pot_eventos@wiki", W_LIM, r"con " + N + r" eventos en \d+ pads hijo", potencia("n"), 0),
+        _c("lim_pot_pads@wiki", W_LIM, r"con [\d.]+ eventos en " + N + r" pads hijo", potencia("pads"), 0),
+        _c("lim_pot_menor@wiki", W_LIM, r"va de " + DEC + r" a \d+,\d+ desvíos de la caída por desvío de la dosis",
+           lambda con: con.execute("select min(mde80_holm_desvios) from mart_potencia_dosis where resultado = 'A' "
+                                   "and modelo = 'conjunto'").fetchone()[0], 0.006, "{:.2f}"),
+        _c("lim_pot_mayor@wiki", W_LIM, r"va de \d+,\d+ a " + DEC + r" desvíos de la caída por desvío de la dosis",
+           potencia("mde80_holm_desvios"), 0.006, "{:.2f}"),
+        # README: the English summary and the numbers of the short limits that had no claim
+        # the English text writes 2,077 with a thousands comma, which parse_numero reads as a decimal: the value is divided by 1000
+        _c("readme_en_brecha_bajo@readme", R, r"produce " + N + r" to \d+ percentage points less", _pretrend_descontada("mart_placebo_pretrend")),
+        _c("readme_en_brecha_alto@readme", R, r"produce \d+ to " + N + r" percentage points less", _brecha_mes1),
+        _c("readme_en_eventos@readme", R, r"\(([\d,]+) events\)", lambda con: _eventos_cercanos(con) / 1000, 0.0005, "{:.3f}"),
+        _c("readme_controles_excluyen@readme", R, r"con " + N + r" de los 4 controles probados", ic_excluye_cero, 0),
+        _c("readme_controles_n@readme", R, r"con \d+ de los " + N + r" controles probados", n_controles, 0),
+        _c("readme_eventos_propios@readme", R, r"reproduce la brecha del mes 1 y sus " + N + r" eventos", _eventos_cercanos, 0),
+    ]
+    return cl
+
+
 CLAIMS: list[Claim] = [
     # data quality report (committed JSON, no warehouse needed)
     _c("filas_origen_aprox@readme", R, r"son " + N + r" filas", lambda _: _dq()["filas_origen_produccion"], 1500, wh=False),
+    _c("descarga_mb@readme", R, r"descarga unos (\d+) MB",
+       lambda _: sum(v["bytes"] for v in json.loads((ROOT / "data" / "manifest.json").read_text(encoding="utf-8")).values()) / 1e6, 5, wh=False),
     _c("controles@readme", R, r"(\d+) controles de calidad", _n_controles, wh=False),
     _c("filas_origen@docs", D, r"\(" + N + r" filas de producci", lambda _: _dq()["filas_origen_produccion"], 0.5, wh=False),
     _c("filas_origen_aprox@docs", D, r"\b" + N + r" filas se reconstruyen", lambda _: _dq()["filas_origen_produccion"], 1500, wh=False),
@@ -1550,8 +2003,11 @@ CLAIMS: list[Claim] = [
     _c("eventos_cercanos@readme", R, r"\(" + N + r" eventos\)", _eventos_cercanos),
     _c("eventos_cercanos@docs", D, N + r" fracturas de un pozo nuevo", _eventos_cercanos),
     _c("brecha_mes1@readme", R, r"entre \d+ y (\d+) puntos menos", _brecha_mes1),
+    _c("brecha_mes1_bis@readme", R, r"Interferencia al mes 1[^|]*\| \d+ a (\d+) puntos menos", _brecha_mes1),
     _c("brecha_mes1_cota@readme", R, r"por eso (\d+) es una cota superior", _brecha_mes1),
+    _c("brecha_mes1_cota_bis@readme", R, r"de la brecha de (\d+): \d+ a \d+ \|", _brecha_mes1),
     _c("brecha_descontada@readme", R, r"entre (\d+) y \d+ puntos menos", _pretrend_descontada("mart_placebo_pretrend")),
+    _c("brecha_descontada_bis@readme", R, r"Interferencia al mes 1[^|]*\| (\d+) a \d+ puntos menos", _pretrend_descontada("mart_placebo_pretrend")),
     _c("brecha_descontada_valor@readme", R, r"(\d+) a \d+ el valor descontado", _pretrend_descontada("mart_placebo_pretrend")),
     _c("brecha_descontada_sin_previos@readme", R, r"\d+ a (\d+) el valor descontado",
        _pretrend_descontada("mart_placebo_pretrend_sin_previos")),
@@ -1614,16 +2070,26 @@ CLAIMS: list[Claim] = [
     *_claims_robustez_operador(),
     *_claims_resumen_operador(),
     *_claims_informe(),
+    *_claims_mundo(),
+    *_claims_globo(),
     *_claims_bloques(),
+    # the page of the pre-registered 2026 test: its own numbers against the marts it writes
+    *_claims_carga_anual(),
     # child side (finding page, README row and case study paragraph)
     *_claims_hijo(),
     *_claims_hijo_celdas(),
     *_claims_gas(),
     *_claims_literatura(),
+    *_claims_limites(),
     *_claims_prospectiva(),
     *_claims_inyeccion(),
     *_claims_colorado(),
+    *_claims_fuentes_mundo(),
+    *_claims_mapa_base(),
     *_claims_replicacion(),
+    *_claims_wyoming(),
+    *_claims_replicacion(WYOMING),
+    *_claims_familia(),
     _c("sinc_pendiente@readme", R, r"la brecha del mes 0 cambia " + SD + r" puntos por cada 0,1", _sinc_pend(0, "pendiente", 10), 0.05, "{:.1f}"),
     _c("sinc_ic_bajo@readme", R, r"IC 95%: " + SD + r" a -?\d+,\d+; el mes previo", _sinc_pend(0, "ic_bajo", 10), 0.05, "{:.1f}"),
     _c("sinc_ic_alto@readme", R, r"IC 95%: -?\d+,\d+ a " + SD + r"; el mes previo", _sinc_pend(0, "ic_alto", 10), 0.05, "{:.1f}"),
@@ -1663,7 +2129,20 @@ CLAIMS: list[Claim] = [
     _c("bblm_2017@readme", R, r"baj. de (\d+) a \d+ bbl/m", _diseno(2017, "bbl_12m_por_m_mediana")),
     _c("bblm_2025@readme", R, r"baj. de \d+ a (\d+) bbl/m", _diseno(2025, "bbl_12m_por_m_mediana")),
     # one number per fact: the README and the committed dashboard (site/index.html) must print the same value
-    _c("brecha_2026@readme", R, r"llega a (\d+) puntos en 2026", _brecha_anio(2026)),
+    # the 2026 rise: the README prints the pre-registered test (pipeline.carga_anual), not the raw yearly figure
+    _c("carga_anual_d@readme", R, r"antig.edad de carga de fracturas en todos los a.os: " + SIG + r" puntos", _carga_anual("d"), 0.05,
+       "{:.1f}"),
+    _c("carga_anual_ic_bajo@readme", R, r"puntos \| IC 95% por bloques de 5 km: " + SIG + r" a -?\d+,\d+; \d+ eventos cercanos de 2026",
+       _carga_anual("ic_bajo"), 0.05, "{:.1f}"),
+    _c("carga_anual_ic_alto@readme", R, r"puntos \| IC 95% por bloques de 5 km: -?\d+,\d+ a " + SIG + r"; \d+ eventos cercanos de 2026",
+       _carga_anual("ic_alto"), 0.05, "{:.1f}"),
+    _c("carga_anual_n@readme", R, r"; " + N + r" eventos cercanos de 2026 \| no firme", _carga_anual("n_cercanos", 1, "no firme"), 0),
+    _c("carga_anual_juntos_d@readme", R, r"con 2025 y 2026 juntos da " + SIG + r" puntos", _carga_anual("d", estadistico="2025_2026"), 0.05,
+       "{:.1f}"),
+    _c("carga_anual_juntos_ic_bajo@readme", R, r"juntos da -?\d+,\d+ puntos \(IC 95%: " + SIG + r" a -?\d+,\d+\)",
+       _carga_anual("ic_bajo", estadistico="2025_2026"), 0.05, "{:.1f}"),
+    _c("carga_anual_juntos_ic_alto@readme", R, r"juntos da -?\d+,\d+ puntos \(IC 95%: -?\d+,\d+ a " + SIG + r"\)",
+       _carga_anual("ic_alto", estadistico="2025_2026"), 0.05, "{:.1f}"),
     _c("diferido_total@readme", R, r"va de \d+,\d+ a " + DEC + r" millones de barriles", _diferido(), 0.05, "{:.1f}"),
     _c("diferido_cota_inferior@readme", R, r"va de " + DEC + r" a \d+,\d+ millones de barriles", _rango_mbbl("neto_previa"), 0.05, "{:.1f}"),
     _c("shmax@sitio", S, r"SHmax (\d+,\d+)</text>", _shmax, 0.05, "{:.1f}", wh=False),
@@ -1677,8 +2156,12 @@ CLAIMS: list[Claim] = [
        _sitio(r'id="hallazgo"><p class="frase">.*?rinden entre (\d+) y \d+ puntos menos'), 0, wh=False),
     _c("brecha_mes1_bruta@hallazgo=readme", R, r"entre \d+ y (\d+) puntos menos",
        _sitio(r'id="hallazgo"><p class="frase">.*?rinden entre \d+ y (\d+) puntos menos'), 0, wh=False),
-    _c("brecha_2026@sitio=readme", R, r"llega a (\d+) puntos en 2026",
-       _sitio(r"(\d+) puntos en 2026 \(a.o en curso\)"), 0, wh=False),
+    _c("carga_anual_d@sitio=readme", R, r"antig.edad de carga de fracturas en todos los a.os: " + SIG + r" puntos",
+       _sitio(r"entre 2026 y 2021 a 2024 es de " + SIG + r" puntos \(IC 95% por bloques de 5 km"), 0, "{:.1f}", wh=False),
+    _c("carga_anual_ic_bajo@sitio=readme", R, r"puntos \| IC 95% por bloques de 5 km: " + SIG + r" a -?\d+,\d+; \d+ eventos cercanos de 2026",
+       _sitio(r"es de -?\d+,\d+ puntos \(IC 95% por bloques de 5 km: " + SIG + r" a -?\d+,\d+\): no firme"), 0, "{:.1f}", wh=False),
+    _c("carga_anual_ic_alto@sitio=readme", R, r"puntos \| IC 95% por bloques de 5 km: -?\d+,\d+ a " + SIG + r"; \d+ eventos cercanos de 2026",
+       _sitio(r"es de -?\d+,\d+ puntos \(IC 95% por bloques de 5 km: -?\d+,\d+ a " + SIG + r"\): no firme"), 0, "{:.1f}", wh=False),
     _c("diferido_total@sitio=readme", R, r"va de \d+,\d+ a " + DEC + r" millones de barriles",
        _sitio(r'<span class="v">de \d+,\d+ a (\d+,\d+) M</span><span class="l">bbl diferidos'), 0, "{:.1f}", wh=False),
     _c("diferido_cota_inferior@sitio=readme", R, r"va de " + DEC + r" a \d+,\d+ millones de barriles",
@@ -1691,7 +2174,9 @@ CLAIMS: list[Claim] = [
     # English separators, so those are compared as thousandths / tenths
     _c("abstract_eventos@caso", CASO, r"event study of (\d,\d+) events", lambda con: _eventos_cercanos(con) / 1000, 0.0005, "{:.3f}"),
     _c("abstract_brecha_descontada@caso", CASO, r"yield (\d+) to \d+ percentage points less", _pretrend_descontada("mart_placebo_pretrend")),
+    _c("abstract_brecha_descontada_neta@caso", CASO, r"(\d+) is net of the pre-trend", _pretrend_descontada("mart_placebo_pretrend")),
     _c("abstract_brecha_bruta@caso", CASO, r"yield \d+ to (\d+) percentage points less", _brecha_mes1),
+    _c("abstract_brecha_bruta_parentesis@caso", CASO, r"\((\d+) is a raw upper bound", _brecha_mes1),
     _c("abstract_diferido_inferior@caso", CASO, r"ranges from (\d+\.\d+) to \d+\.\d+ million barrels",
        lambda con: 10 * _rango_bbl("neto_previa", "original")(con) / 1e6, 0.5, "{:.1f}"),
     _c("abstract_diferido_superior@caso", CASO, r"ranges from \d+\.\d+ to (\d+\.\d+) million barrels",
@@ -1707,7 +2192,12 @@ CLAIMS: list[Claim] = [
     _c("metodo_intervalos@caso", CASO, r"agrega " + N + r" intervalos", _n_intervalos),
     # result
     _c("brecha_descontada@caso", CASO, r"entre (\d+) y \d+ puntos menos que los controles", _pretrend_descontada("mart_placebo_pretrend")),
+    _c("brecha_descontada_el19@caso", CASO, r"el (\d+) descuenta la brecha previa", _pretrend_descontada("mart_placebo_pretrend")),
+    _c("brecha_descontada_rango@caso", CASO, r"rango de (\d+) a \d+ se mantiene", _pretrend_descontada("mart_placebo_pretrend")),
     _c("brecha_bruta@caso", CASO, r"entre \d+ y (\d+) puntos menos que los controles", _brecha_mes1),
+    _c("brecha_bruta_el23@caso", CASO, r"El (\d+) es el valor en bruto", _brecha_mes1),
+    _c("brecha_bruta_rango@caso", CASO, r"rango de \d+ a (\d+) se mantiene", _brecha_mes1),
+    _c("brecha_bruta_cota@caso", CASO, r"por eso (\d+) es una cota superior", _brecha_mes1),
     _c("brecha_principal@caso", CASO, r"\(" + NEG + r" puntos con la base de los meses -3 a -1", _desc_ref_k1, 0.05, "{:.1f}"),
     _c("brecha_sin_previos@caso", CASO, r"\(el (\d+) es el mismo descuento",
        _pretrend_descontada("mart_placebo_pretrend_sin_previos")),
@@ -1733,8 +2223,14 @@ CLAIMS: list[Claim] = [
     _c("distancia_anillo_rinde@caso", CASO, r"rinden " + DEC + r" puntos m.s que los de 2 a 5 km", _desc_anillo_abs, 0.05, "{:.1f}"),
     _c("distancia_cabecera_anillo@caso", CASO, r"contra el anillo la brecha del mes 1 es " + NEG + r" puntos", _desc_cabecera, 0.05, "{:.1f}"),
     _c("distancia_cabecera_2a5@caso", CASO, r"m.s negativa que los " + NEG + r" contra 2 a 5 km", _desc_ref_k1, 0.05, "{:.1f}"),
-    _c("anio_2025@caso", CASO, r"pasa de " + N + r" puntos menos en 2025", _brecha_anio(2025)),
-    _c("anio_2026@caso", CASO, r"a " + N + r" puntos menos en 2026", _brecha_anio(2026)),
+    # the yearly bar of 2026 is shown as data; what is said about a rise is the pre-registered test (pipeline.carga_anual)
+    _c("anio_2026@caso", CASO, r"La barra de 2026 \(" + N + r" puntos menos, a.o en curso\)", _brecha_anio(2026)),
+    _c("carga_anual_d@caso", CASO, r"2026 menos 2021 a 2024 da " + SIG + r" puntos \(IC 95% por bloques de 5 km", _carga_anual("d"), 0.05,
+       "{:.1f}"),
+    _c("carga_anual_ic_bajo@caso", CASO, r"puntos \(IC 95% por bloques de 5 km: " + SIG + r" a -?\d+,\d+\): no firme",
+       _carga_anual("ic_bajo", veredicto="no firme"), 0.05, "{:.1f}"),
+    _c("carga_anual_ic_alto@caso", CASO, r"puntos \(IC 95% por bloques de 5 km: -?\d+,\d+ a " + SIG + r"\): no firme",
+       _carga_anual("ic_alto", veredicto="no firme"), 0.05, "{:.1f}"),
     # falsification tests
     _c("fechas_falsas_min@caso", CASO, r"va de " + NEG + r" a \d+,\d+ puntos y todos", _fechas_falsas("min"), 0.05, "{:.1f}"),
     _c("fechas_falsas_max@caso", CASO, r"va de -\d+,\d+ a " + DEC + r" puntos y todos", _fechas_falsas("max"), 0.05, "{:.1f}"),
@@ -1755,6 +2251,147 @@ CLAIMS: list[Claim] = [
     # test count (runs pytest --collect-only)
     _c("tests@readme", R, r"hay (\d+) tests", _n_tests, 0, wh=False, lento=True),
 ]
+
+
+# Numeros de README.md que son parte de una definicion y no un resultado: cada uno es una frase, no un numero suelto.
+README_DEFINICIONALES: tuple[str, ...] = (
+    r"datos a septiembre de 2026",
+    r"cohorte 2017",
+    r"cohorte 2025",
+    r"de 12 meses",
+    r"al mes 12",
+    r"a menos de 1 km",
+    r"within 1 km",
+    r"a 2 a 5 km",
+    r"2 to 5 km away",
+    r"[Aa] los 6 meses",
+    r"By month 6",
+    r"meses 0 a 6",
+    r"cierre a 6 meses",
+    r"cierre al mes 6",
+    r"\bmes 1\b",
+    r"\bmes 0\b",
+    r"\bmes -1\b",
+    r"bloques de 5 km",
+    r"IC 95%",
+    r"R2",
+    r"por cada 0,1 de fracción",
+    r"congelada el 2026-11-18 con los datos hasta 2026-09",
+    r"Suba de la brecha en 2026",
+    r"2026 menos 2021 a 2024",
+    r"con 2025 y 2026 juntos",
+    r"eventos cercanos de 2026",
+    r"bajo el 90% de su trayectoria",
+    r"hacen falta 100 eventos cercanos",
+    r"quiere decir menos de 5 puntos",
+    r"con 80% de potencia",
+    r"m3 de petróleo",
+    r"m3 por evento",
+    r"Python 3\.13",
+    r"Vaca Muerta en 4D",
+    r"la cuenca en 3D",
+)
+
+# Numeros de la pagina de limites que son parte de una definicion y no un resultado: cada uno es una frase, no un numero suelto.
+LIMITES_DEFINICIONALES: tuple[str, ...] = (
+    r"bloques espaciales de 5 km",
+    r"IC 95%",
+    r"\bmes 1\b",
+    r"\bmes 6\b",
+    r"a los 6 meses",
+    r"meses 2 a 4",
+    r"\b2 a 5 km\b",
+    r"\b5 a 10 km\b",
+    r"\b2 a 10 km\b",
+    r"menos de 2 km",
+    r"menos de 0,5 km",
+    r"cuadrados de 2 km",
+    r"80% de potencia",
+    r"efecto de 0,2",
+    r"al menos 50 eventos cercanos",
+)
+
+RESUMEN_DEFINICIONALES: tuple[str, ...] = (
+    r"padre en el mes 1",
+    r"a menos de 1 km",
+    r"controles a 2 a 5 km",
+    r"padres de 6 a 11 meses",
+    r"padres de 48 meses",
+    r"intervalo del 95%",
+    r"A los 6 meses",
+    r"en los meses 0 a 6",
+    r"con 80% de potencia",
+    r"Un efecto de 0,2",
+    r"m3 de petróleo",
+)
+
+CASO_DEFINICIONALES: tuple[str, ...] = (
+    r"deferral of months 0 to 6",
+    r"## 1\. La pregunta",
+    r"## 2\. Los datos",
+    r"## 3\. El método",
+    r"## 4\. El resultado",
+    r"## 5\. Lo que dijeron",
+    r"## 6\. Lo que no funcionó",
+    r"## 7\. Qué cambiaría",
+    r"## 8\. Cómo verificarlo",
+    r"1\. Un evento",
+    r"2\. Cada pozo",
+    r"3\. La brecha",
+    r"4\. Los intervalos",
+    r"5\. Se mira",
+    r"6\. Pruebas corridas",
+    r"k = 0",
+    r"intervalos de 95%",
+    r"intervalo de 95%",
+    r"IC 95% por bloques",
+    r"IC 95%:",
+    r"[Bb]recha del mes 1",
+    r"Al mes 1",
+    r"en el mes 6",
+    r"A los 6 meses",
+    r"meses 0 a 6",
+    r"meses -3 a -1",
+    r"meses -3, -2 y -1",
+    r"meses -6 a -4",
+    r"a 12 meses",
+    r"a 24 meses",
+    r"menos de 1 km",
+    r"de 1 a 2 km",
+    r"2 a 5 km",
+    r"anillo de 5 a 10 km",
+    r"bloques( espaciales)? de 5 km",
+    r"sección 4",
+    r"sección 5",
+    r"La barra de 2026",
+    r"2026 menos 2021 a 2024",
+    r"no cruza -10",
+    r"su R2 es",
+    r"\| Mes 1,",
+    r"\| Mes -1 previo",
+)
+
+
+def numeros_sin_fijar(fichero: str, definicionales: tuple[str, ...], raiz: Path | None = None,
+                      claims: list[Claim] | None = None) -> list[str]:
+    """Numeros de un documento que ninguna verificacion fija: ni dentro del grupo capturado por la primera coincidencia de un
+    claim sobre ese fichero, ni dentro de una coincidencia (todas) de una regex de `definicionales`. Un numero es una cifra con
+    puntos de miles, coma decimal, signo y % opcionales; el texto entre comillas invertidas se salta. Devuelve los numeros tal
+    como estan escritos, en orden de aparicion."""
+    raiz = ROOT if raiz is None else raiz
+    claims = CLAIMS if claims is None else claims
+    texto = (raiz / fichero).read_text(encoding="utf-8")
+    texto = re.sub(r"`[^`]*`", lambda m: " " * len(m.group(0)), texto)
+    fijos: list[tuple[int, int]] = []
+    for c in claims:
+        if c.fichero == fichero:
+            m = re.search(c.patron, texto, re.S)
+            if m:
+                fijos.append(m.span(1))
+    for patron in definicionales:
+        fijos += [m.span() for m in re.finditer(patron, texto, re.S)]
+    return [m.group(0) for m in re.finditer(r"-?\d+(?:\.\d{3})*(?:,\d+)?%?", texto)
+            if not any(a < m.end() and m.start() < b for a, b in fijos)]
 
 
 def imprimir(res: list[Resultado]) -> None:

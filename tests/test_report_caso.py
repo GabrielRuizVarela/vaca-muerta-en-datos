@@ -59,3 +59,29 @@ def test_hallazgo_y_leyenda_anual_salen_de_los_datos():
     datos["interferencia"]["resumen"]["brecha_mes_1_neta"] = None
     sin_neta = report.hallazgo(datos)
     assert "23 puntos menos" in sin_neta and "entre" not in sin_neta
+
+
+def test_la_frase_del_perfil_por_anio_sigue_el_veredicto_de_la_prueba():
+    datos = {"interferencia": {}}
+    sin = report.lectura_anual(datos)
+    assert "no se lee como tendencia" in sin and "IC" not in sin
+    datos["interferencia"]["prueba_anual"] = {"d": -0.1469, "ic_bajo": -0.4618, "ic_alto": 0.1272, "veredicto": "no firme"}
+    no_firme = report.lectura_anual(datos)
+    assert "no se lee como tendencia" in no_firme and no_firme.endswith("-14,7 puntos (IC 95% por bloques de 5 km: -46,2 a 12,7): no firme.")
+    assert "mayor que" not in no_firme and "creció" not in no_firme
+    datos["interferencia"]["prueba_anual"] = {"d": -0.20, "ic_bajo": -0.31, "ic_alto": -0.08, "veredicto": "sostiene"}
+    sostiene = report.lectura_anual(datos)
+    assert "es mayor que la de 2021 a 2024" in sostiene and "-20,0 puntos" in sostiene and "tendencia" not in sostiene
+
+
+def test_prueba_anual_lee_el_mart_y_falta_sin_cifra():
+    con = duckdb.connect()
+    assert report.prueba_anual(con) is None                                       # sin mart
+    con.execute("create table mart_carga_anual_prueba(estadistico varchar, d double, ic_bajo double, ic_alto double, "
+                "veredicto varchar)")
+    con.execute("insert into mart_carga_anual_prueba values ('2026', 'nan', 'nan', 'nan', 'sin muestra'), "
+                "('2025_2026', -0.2, -0.4, -0.1, null)")
+    assert report.prueba_anual(con) is None                                       # sin muestra: no hay cifra que mostrar
+    con.execute("update mart_carga_anual_prueba set d = -0.15, ic_bajo = -0.46, ic_alto = 0.13, veredicto = 'no firme' "
+                "where estadistico = '2026'")
+    assert report.prueba_anual(con) == {"d": -0.15, "ic_bajo": -0.46, "ic_alto": 0.13, "veredicto": "no firme"}

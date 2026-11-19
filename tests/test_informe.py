@@ -22,9 +22,9 @@ def _rob(eje: str, salida: str, k: int, b: float) -> dict:
 @pytest.fixture
 def d() -> dict:
     return {
-        "mes_dato": "2026-09",
+        "mes_dato": "2026-09", "verificado": "2026-11-15",
         "curva": {b: [[k, 1.0 - 0.01 * max(k, 0)] for k in range(-3, 7)] for b in ("cercano", "intermedio", "control")},
-        "todos": {"eventos": 2077, "pads_hijo": 380, "brecha1": -0.229, "brecha6": -0.021,
+        "todos": {"eventos": 2077, "pads_hijo": 380, "brecha1": -0.229, "brecha6": -0.021, "ic1_bajo": -0.287, "ic1_alto": -0.168,
                   "dif_m3": 820.9, "dif_bajo_m3": 504.6, "dif_alto_m3": 1105.3},
         "edad": [{"grupo": g, "etiqueta": e, "eventos": 400, "brecha1": b1, "brecha6": b6}
                  for (g, e), b1, b6 in zip(informe.EDADES, (-0.146, -0.209, -0.220, -0.242), (0.006, -0.008, 0.026, -0.059))],
@@ -46,6 +46,7 @@ def d() -> dict:
 def test_textos_formatea_en_espanol_y_toma_extremos(d):
     t = informe.textos(d)
     assert t["gap1"] == "-22,9" and t["gap6"] == "-2,1" and t["eventos"] == "2.077"
+    assert (t["gap1_ic_bajo"], t["gap1_ic_alto"]) == ("-28,7", "-16,8")
     assert t["edad_menos"] == "-14,6" and t["edad_mas"] == "-24,2"
     assert (t["op_min"], t["op_max"]) == ("-22,1", "-24,0")
     assert (t["ar_min"], t["ar_max"]) == ("-20,0", "-29,3")
@@ -79,6 +80,32 @@ def test_render_reemplaza_todo_y_embebe_los_datos(d):
     assert datos["todos"]["eventos"] == 2077
     frag = informe.render(d, documento=False)
     assert "<!doctype" not in frag and "<body>" not in frag and frag.startswith("<title>")
+
+
+def test_la_ficha_del_mes_1_lleva_su_intervalo_y_el_pie_dice_de_cuando_es_el_dato(d):
+    html = informe.render(d)
+    assert "contra el control (IC 95% por bloques de 5 km: -28,7 a -16,8)." in html
+    assert "hasta 2026-09 (copia verificada contra la fuente el 2026-11-15). La página se regenera con" in html
+    d["verificado"] = None                                             # sin manifiesto la página no inventa una fecha
+    assert "hasta 2026-09. La página se regenera con" in informe.render(d)
+
+
+def test_fecha_verificada_es_la_mas_vieja_de_las_fuentes_y_falta_si_falta_una():
+    a, b = informe.SOURCES
+    m = {a: {"loaded_at": "2026-11-10T03:00:00+00:00", "checked_at": "2026-11-15T03:54:28+00:00"},
+         b: {"loaded_at": "2026-11-14T03:00:00+00:00"}}                # sin checked_at vale el día en que se bajó
+    assert informe.fecha_verificada(m) == "2026-11-14"
+    m[b]["checked_at"] = "2026-11-16T01:00:00+00:00"
+    assert informe.fecha_verificada(m) == "2026-11-15"
+    assert informe.fecha_verificada({a: m[a]}) is None and informe.fecha_verificada(None) is None
+
+
+def test_la_pagina_solo_pide_a_la_red_sus_tipografias(d):
+    recurso = re.compile(r'<(?:link|script|img|iframe|source|video|audio)\b[^>]*?(?:src|href)="(?:https?:)?//([^/"]+)')
+    for html in (informe.render(d), (ROOT / "site" / "informe.html").read_text(encoding="utf-8")):
+        assert set(recurso.findall(html)) == {"fonts.googleapis.com", "fonts.gstatic.com"}
+        assert "url(http" not in html and "@import" not in html and "fetch(" not in html
+    assert "<script src=" not in informe.TEMPLATE.read_text(encoding="utf-8")
 
 
 def test_render_falla_si_queda_un_marcador(d, monkeypatch, tmp_path):

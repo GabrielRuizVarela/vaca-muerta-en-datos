@@ -45,6 +45,8 @@ Huella medida de la interferencia: cuánto petróleo dejan de producir los pozos
 | 2025 | 372 | -0,324 |
 | 2026 | 243 | -0,445 |
 
+Las fracturas se cargan con rezago, así que a los últimos años les faltan pozos hijos y la tabla no se lee como tendencia. La comparación con la misma antigüedad de carga en todos los años está en [carga_anual.md](carga_anual.md).
+
 ## Petróleo diferido
 
 Petróleo diferido total (meses 0 a 6 desde la fractura, eventos cercanos): 10.723.754 bbl.

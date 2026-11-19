@@ -238,7 +238,8 @@ def anio_svg(anios: list[tuple[int, int, float]]) -> str:
     ultimo = max(a for a, _, _ in anios)
     v_ult = next(v for a, _, v in anios if a == ultimo)
     desc = ("Brecha del petróleo al mes 1 entre padres a menos de 1 km y controles de la misma edad, por año de la fractura del hijo, "
-            f"con el número de eventos de cada año. Llega a {_c(abs(v_ult), 0)} puntos menos en {ultimo}, año en curso. Medida, no causa.")
+            f"con el número de eventos de cada año. En {ultimo}, año en curso, marca {_c(abs(v_ult), 0)} puntos menos, con fracturas "
+            "todavía sin cargar. Medida, no causa.")
     out = _abrir(alto, "Brecha del mes 1 por año de la fractura", desc,
                  "Padres a menos de 1 km menos controles de la misma edad, en puntos del índice de caudal")
     for t in _ticks(lo, hi, paso):
@@ -259,7 +260,7 @@ def anio_svg(anios: list[tuple[int, int, float]]) -> str:
     out.append(f'<text x="{_n(x0 - 44)}" y="{_n(y0 + h / 2)}" text-anchor="middle" '
                f'transform="rotate(-90 {_n(x0 - 44)} {_n(y0 + h / 2)})">Brecha al mes 1 (puntos)</text>')
     out.append(f'<text x="{_n(x0 + w / 2)}" y="{_n(y0 + h + 54)}" text-anchor="middle">Año de la fractura del pozo hijo</text>')
-    out.append(f'<text class="pie" x="20" y="{alto - 8}">Claro: menos de 30 eventos en el año. {ultimo} es el año en curso. Huella medida, no causa.</text>')
+    out.append(f'<text class="pie" x="20" y="{alto - 8}">Claro: menos de 30 eventos en el año. {ultimo} es el año en curso y le faltan fracturas por cargar. Huella medida, no causa.</text>')
     return _cerrar(out)
 
 

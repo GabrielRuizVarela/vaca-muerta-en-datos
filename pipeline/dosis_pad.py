@@ -61,7 +61,7 @@ Sensibilidad (se informa, NO entra en el veredicto): el modelo de muestra comple
 Cualquier otro diagnostico agregado despues de ver los resultados se rotula "agregado despues de ver los resultados" y no cambia el
 veredicto.
 
-CORRECCION DE REDACCION (2026-11-17, despues de ver los resultados, revision de Opus; no cambia ningun codigo ni la regla): el semiancho
+CORRECCION DE REDACCION (2026-11-17, despues de ver los resultados, revision posterior; no cambia ningun codigo ni la regla): el semiancho
 mide la precision, no el efecto descartado; el texto del veredicto publica la cota superior del IC (limite alto, en desvios de la caida).
 
 Que NO prueba:
@@ -295,7 +295,7 @@ def _modelo_cercania(y, d2, cc, res, semilla):
 
 
 def _diagnostico_sola(res, y, d2, cc):
-    """Agregado despues de ver los resultados (revision de Opus, 2026-11-17): cada variable del pad sola con los controles y el FIV.
+    """Agregado despues de ver los resultados (revision posterior, 2026-11-17): cada variable del pad sola con los controles y el FIV.
 
     No entra en el veredicto. Filas del mart con modelo 'sola' (coeficientes) y 'vif' (coef_sd lleva el FIV, el resto nan).
     """
