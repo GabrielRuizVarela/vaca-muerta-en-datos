@@ -6,11 +6,11 @@ Operador shale con ubicación en Vaca Muerta. Página `pampa-energia`.
 
 | Indicador | Valor |
 |---|---|
-| Petróleo Vaca Muerta (kbbl/d, 2026-09) | 26,19 |
-| Pozos shale con ubicación | 104 |
+| Petróleo Vaca Muerta (kbbl/d, 2026-10) | 21,75 |
+| Pozos shale con ubicación | 114 |
 | Áreas operadas | 4 |
 | Eventos cercanos de interferencia | 14 |
-| Petróleo diferido (bbl) | 260.561 |
+| Petróleo diferido (bbl) | 261.899 |
 
 ## Areas operadas
 
@@ -23,13 +23,13 @@ Operador shale con ubicación en Vaca Muerta. Página `pampa-energia`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p166501](../pad/pad-p166501.md) | RINCON DE ARANDA | 8 | 139.993 |
-| [p165089](../pad/pad-p165089.md) | RINCON DE ARANDA | 3 | 65.905 |
-| [p161522](../pad/pad-p161522.md) | RINCON DE ARANDA | 3 | 54.663 |
+| [p166501](../pad/pad-p166501.md) | RINCON DE ARANDA | 8 | 140.930 |
+| [p165089](../pad/pad-p165089.md) | RINCON DE ARANDA | 3 | 66.108 |
+| [p161522](../pad/pad-p161522.md) | RINCON DE ARANDA | 3 | 54.860 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_vm_mensual`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

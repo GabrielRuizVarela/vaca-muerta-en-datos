@@ -1,4 +1,4 @@
-"""Export the 4D world (site/mundo.html): one self-contained page with the play, its history and the event study.
+"""Export the 3D world (site/mundo.html): one self-contained page with the play, its history and the event study.
 
   uv run python -m pipeline.mundo        # data/warehouse.duckdb -> site/mundo.html
 
@@ -54,9 +54,17 @@ Data contract (read by pipeline/mundo_template.html; every typed array is base64
 - base:    the base map of pipeline.base_mapa as written in data/base_mapa.json (its contract is in that module's
            docstring): relief, rivers, water bodies, province borders, towns, concession blocks and the source and
            licence of each layer. null when the file is absent: the page then draws its plain grid.
+- foto:    the ground imagery of pipeline.base_foto (data/base_foto.json and its two WebP files): {capas: [{nombre,
+           caja, ancho, alto, sha256, webp}] the whole base-map box first and the finer core tile second, each one
+           base64 of the pinned file; desde and hasta, the acquisition dates of the scenes; escenas, how many;
+           atribucion, url_licencia and fecha_descarga for the credit line}. null when the manifest or the base map
+           is absent: the page then keeps its drawn relief and has no ground reading. The image is context: no
+           number on the page is read from it. autotest.foto pins the bytes, the byte sum and the pixel size of
+           each embedded image and the clock month of its dates.
 """
 from __future__ import annotations
 
+import base64
 import calendar
 import hashlib
 import json
@@ -72,7 +80,7 @@ from statistics import median
 
 import duckdb
 
-from pipeline import base_mapa
+from pipeline import base_foto, base_mapa
 from pipeline.decision import valor_indicativo
 from pipeline.ingest import DATA, ROOT, load_manifest
 from pipeline.replay import BBL_PER_M3, MIN_ACTIVE, N_OPS, b64, month_key, q
@@ -82,6 +90,7 @@ TEMPLATE = Path(__file__).parent / "mundo_template.html"
 OUT = ROOT / "site" / "mundo.html"
 MAX_BYTES = 8 * 1024 * 1024
 BASE_MAPA = DATA / "base_mapa.json"
+BASE_FOTO = DATA / "base_foto.json"
 ESCALA_CAUDAL = 10          # caudal is stored in 0,1 bbl/d
 SIN_FILA = 65535            # month without a row
 ESCALA_INDICE = 10000       # index is stored in 1 / 10000
@@ -677,7 +686,9 @@ def autotest_base(base: dict, pozos: dict) -> dict:
     caja = tuple(base["caja"])
     lon0, lat0, lon1, lat1 = caja
     n = len(pozos["id"])
-    cotas = [base_mapa.cota(z, caja, pozos["lon"][p], pozos["lat"][p]) for p in range(n)]
+    # With the finer relief of the core, the elevation the page draws is the blend of the two grids.
+    fino = base_mapa.abrir_fino(base["relieve_fino"]) if "relieve_fino" in base else None
+    cotas = [base_mapa.cota_mixta(z, caja, fino, pozos["lon"][p], pozos["lat"][p]) for p in range(n)]
     dentro = [c for c in cotas if c is not None]
     paso = max(1, n // AT_BOCAS)
     puntos = [(lon0, lat1), (lon1, lat0), ((lon0 + lon1) / 2, (lat0 + lat1) / 2), (lon0 - 0.01, lat0), (lon1, lat1 + 0.01)]
@@ -686,22 +697,89 @@ def autotest_base(base: dict, pozos: dict) -> dict:
         partes = [base_mapa.decodificar_linea(s) for e in base[capa] for s in e[clave]]
         capas[capa] = {"n": len(base[capa]), "partes": len(partes), "puntos": sum(len(q) for q in partes),
                        "suma": sum(x + y for q in partes for x, y in q)}
-    return {"celdas": int(z.size), "suma": int(z.sum()), "min": int(z.min()), "max": int(z.max()),
-            "bocas": [{"p": p, "m": cotas[p]} for p in (min(n - 1, i * paso) for i in range(AT_BOCAS))],
-            "fuera": n - len(dentro), "mediana_m": median(dentro) if dentro else None,
-            "tope_m": max(dentro) if dentro else None,
-            "puntos": [{"lon": lon, "lat": lat, "m": base_mapa.cota(z, caja, lon, lat)} for lon, lat in puntos],
-            "capas": capas, "localidades": len(base["localidades"])}
+    ref = {"celdas": int(z.size), "suma": int(z.sum()), "min": int(z.min()), "max": int(z.max()),
+           "bocas": [{"p": p, "m": cotas[p]} for p in (min(n - 1, i * paso) for i in range(AT_BOCAS))],
+           "fuera": n - len(dentro), "mediana_m": median(dentro) if dentro else None,
+           "tope_m": max(dentro) if dentro else None,
+           "puntos": [{"lon": lon, "lat": lat, "m": base_mapa.cota_mixta(z, caja, fino, lon, lat)} for lon, lat in puntos],
+           "capas": capas, "localidades": len(base["localidades"])}
+    if fino is not None:
+        # Fixed points of the finer relief: its centre, its edge, just outside, and inside the blend margin on
+        # each side and in a corner, each with the weight the finer grid gets there.
+        f0, g0, f1, g1 = fino["caja"]
+        dx, dy = f1 - f0, g1 - g0
+        m = fino["margen"]
+        pts = [(f0 + dx / 2, g0 + dy / 2), (f0, g0 + dy / 2), (f0 - dx / 100, g0 + dy / 2),
+               (f0 + dx * m / 2, g0 + dy / 2), (f1 - dx * m / 3, g0 + dy / 3), (f0 + dx / 3, g1 - dy * m / 4),
+               (f0 + dx * .7, g0 + dy * m * .8), (f0 + dx * m / 2, g1 - dy * m / 2)]
+        zf = fino["z"]
+        ref["fino"] = {"celdas": int(zf.size), "suma": int(zf.sum()), "min": int(zf.min()), "max": int(zf.max()),
+                       "puntos": [{"lon": lon, "lat": lat, "w": base_mapa.peso_fino(fino["caja"], m, lon, lat),
+                                   "m": base_mapa.cota_mixta(z, caja, fino, lon, lat)} for lon, lat in pts]}
+    return ref
 
 
 def leer_base_mapa(path: Path = BASE_MAPA) -> dict | None:
-    """The base map that pipeline.base_mapa writes (relief, water, borders, towns and blocks); None when absent."""
-    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    """The base map that pipeline.base_mapa writes (relief, water, borders, towns and blocks); None when absent.
+
+    The finer relief of the core is the file next to it: when it is there the map carries it as relieve_fino,
+    and when it is not the page draws the sheet grid everywhere.
+    """
+    if not path.exists():
+        return None
+    mapa = json.loads(path.read_text(encoding="utf-8"))
+    fino = path.parent / base_mapa.FINO.name
+    if fino.exists():
+        mapa["relieve_fino"] = json.loads(fino.read_text(encoding="utf-8"))
+    return mapa
+
+
+def leer_base_foto(path: Path = BASE_FOTO) -> dict | None:
+    """The ground imagery that pipeline.base_foto pins, as the page embeds it; None when its manifest is absent.
+
+    Two WebP layers travel inside the page as base64: the whole base-map box and a finer tile over the core. Each
+    file is checked against its manifest entry (bytes and sha256), so the page never carries an image other than
+    the pinned one; a manifest without one of its files stops the build, it never drops the image silently. The
+    acquisition dates, the scene count and the credit line come from the same manifest.
+    """
+    if not path.exists():
+        return None
+    m = json.loads(path.read_text(encoding="utf-8"))
+    capas = []
+    for nombre in ("caja", "nucleo"):
+        e = m["imagenes"][nombre]
+        archivo = path.parent / e["archivo"]
+        if not archivo.exists():
+            raise SystemExit(f"falta {e['archivo']}, que {path.name} fija: recuperalo del repo o corré "
+                             "python -m pipeline.base_foto")
+        datos = archivo.read_bytes()
+        if len(datos) != e["bytes"] or hashlib.sha256(datos).hexdigest() != e["sha256"]:
+            raise SystemExit(f"{e['archivo']} no coincide con {path.name}: corré python -m pipeline.base_foto --fijar")
+        capas.append({"nombre": nombre, "caja": list(m[nombre]), "ancho": e["ancho"], "alto": e["alto"],
+                      "sha256": e["sha256"], "webp": base64.b64encode(datos).decode("ascii")})
+    return {"capas": capas, "desde": m["desde"], "hasta": m["hasta"], "escenas": len(m["escenas"]),
+            "atribucion": m["atribucion"], "url_licencia": m["url_licencia"], "fecha_descarga": m["fecha_descarga"]}
+
+
+def mes_de_fecha(inicio: tuple[int, int], fecha: str) -> int:
+    """Clock month (index from the first data month; may fall before or after the data) of a 'yyyy-mm-dd' date."""
+    return (int(fecha[:4]) - inicio[0]) * 12 + int(fecha[5:7]) - inicio[1]
+
+
+def autotest_foto(foto: dict, inicio: tuple[int, int]) -> dict:
+    """Reference answers for the ground imagery: what the page must read back from the bytes it embeds."""
+    capas = []
+    for c in foto["capas"]:
+        datos = base64.b64decode(c["webp"])
+        ancho, alto = base_foto.tam_webp(datos)
+        capas.append({"bytes": len(datos), "suma": sum(datos), "ancho": ancho, "alto": alto})
+    return {"capas": capas, "mes_desde": mes_de_fecha(inicio, foto["desde"]),
+            "mes_hasta": mes_de_fecha(inicio, foto["hasta"]), "escenas": foto["escenas"]}
 
 
 # ---- assembly ----
 
-def collect(con, raw_dir: Path = DATA / "raw", base_path: Path = BASE_MAPA) -> dict:
+def collect(con, raw_dir: Path = DATA / "raw", base_path: Path = BASE_MAPA, foto_path: Path = BASE_FOTO) -> dict:
     meses = linea_de_tiempo(con)
     mi = {d: i for i, d in enumerate(meses)}
     nm = len(meses)
@@ -743,12 +821,18 @@ def collect(con, raw_dir: Path = DATA / "raw", base_path: Path = BASE_MAPA) -> d
                            frac_dia)
     if mapa is not None:
         referencias["base"] = autotest_base(mapa, pozos)
+    # The imagery drapes over the base map's relief with no reprojection: no base map, or another box, no imagery.
+    foto = leer_base_foto(foto_path) if mapa is not None else None
+    if foto is not None:
+        if foto["capas"][0]["caja"] != list(mapa["caja"]):
+            raise SystemExit("la imagen del suelo no cubre la caja del mapa base: corré python -m pipeline.base_foto")
+        referencias["foto"] = autotest_foto(foto, inicio)
     return {
         "meta": meta, "pozos": pozos, "caudal": b64(caudal),
         "fracs": {"pozo": b64(frac_pozo), "dia": b64(frac_dia)},
         "eventos": {k: b64(v) for k, v in ev.items()},
         "curva": curva, "brecha": brecha, "pub": leer_publicado(con), "cuenca": cuenca, "acto2": acto2,
-        "autotest": referencias, "base": mapa,
+        "autotest": referencias, "base": mapa, "foto": foto,
     }
 
 

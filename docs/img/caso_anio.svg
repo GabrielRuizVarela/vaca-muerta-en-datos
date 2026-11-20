@@ -85,10 +85,10 @@
 <text x="619.0" y="268.7" text-anchor="middle" style="font-size:10px">-32</text>
 <text x="619.0" y="348.0" text-anchor="middle">2025</text>
 <text class="pie" x="619.0" y="362.0" text-anchor="middle">372</text>
-<rect x="645.0" y="121.7" width="29.3" height="185.4" fill="#0072B2" fill-opacity="0.9"/>
-<text x="659.7" y="319.1" text-anchor="middle" style="font-size:10px">-44</text>
+<rect x="645.0" y="121.7" width="29.3" height="184.9" fill="#0072B2" fill-opacity="0.9"/>
+<text x="659.7" y="318.6" text-anchor="middle" style="font-size:10px">-44</text>
 <text x="659.7" y="348.0" text-anchor="middle">2026</text>
-<text class="pie" x="659.7" y="362.0" text-anchor="middle">243</text>
+<text class="pie" x="659.7" y="362.0" text-anchor="middle">260</text>
 <text class="pie" x="64.0" y="362.0" text-anchor="end">eventos</text>
 <text x="26.0" y="205.0" text-anchor="middle" transform="rotate(-90 26.0 205.0)">Brecha al mes 1 (puntos)</text>
 <text x="375.0" y="384.0" text-anchor="middle">Año de la fractura del pozo hijo</text>

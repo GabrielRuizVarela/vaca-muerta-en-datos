@@ -6,7 +6,7 @@
 <title>Vaca Muerta, mes a mes</title>
 <meta name="description" content="Repetición temporal de Vaca Muerta: cada pozo shale desde 2011, sus fracturas, los golpes de agua en pozos vecinos y el avance de las operadoras.">
 <style>
-/* Los colores y las letras son los de "Vaca Muerta en 4D" (pipeline/mundo_template.html). Una prueba compara este
+/* Los colores y las letras son los de "Vaca Muerta en 3D" (pipeline/mundo_template.html). Una prueba compara este
    bloque con el de esa página: si cambia uno, cambia el otro. */
 :root {
   color-scheme: dark;
@@ -155,7 +155,7 @@ select { background: var(--fondo); border: 1px solid var(--linea); border-radius
   <header class="top">
     <h1>Vaca Muerta, mes a mes</h1>
     <nav class="salidas" aria-label="Otras vistas de la cuenca">
-      <a id="a-mundo" href="mundo.html#libre">Ver este mes en 4D</a>
+      <a id="a-mundo" href="mundo.html#libre">Ver este mes en 3D</a>
       <a class="back" href="index.html">Volver al tablero</a>
     </nav>
     <div class="filters">
@@ -239,7 +239,7 @@ select { background: var(--fondo); border: 1px solid var(--linea); border-radius
 <noscript>Esta página necesita JavaScript para mostrar el mapa.</noscript>
 
 <script id="base">
-/* Mapa base, sin DOM: abre el producto de pipeline.base_mapa, el mismo que usa "Vaca Muerta en 4D". Las pruebas
+/* Mapa base, sin DOM: abre el producto de pipeline.base_mapa, el mismo que usa "Vaca Muerta en 3D". Las pruebas
    corren este bloque con node y lo comparan con el decodificador de Python. */
 const Base = (() => {
   "use strict";

@@ -2,7 +2,7 @@
 
 Wiki generado desde el warehouse de producción no convencional y fracturas (Secretaría de Energía). Páginas deterministas, sin marcas de tiempo.
 
-- Datos a 2026-09.
+- Datos a 2026-10.
 - Hallazgos: [Interferencia entre fracturas](hallazgos/interferencia.md).
 - Libro de hallazgos: [libro.md](hallazgos/libro.md).
 - Anisotropía de la interferencia y su costo: [anisotropia.md](hallazgos/anisotropia.md).
@@ -16,6 +16,7 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Bloques espaciales (los intervalos principales remuestreando bloques de 2 y 5 km en vez de pads): [bloques.md](hallazgos/bloques.md).
 - Lado del hijo (rendimiento de 12 meses según el petróleo ya producido a menos de 1 km): [hijo.md](hallazgos/hijo.md).
 - Lado del hijo dentro de celdas de 2 km (hijos del mismo lugar fracturados antes y después de que sus vecinos produjeran): [hijo_celdas.md](hallazgos/hijo_celdas.md).
+- Mecanismo por la geometría de las ramas (padres al costado de la rama del hijo contra padres en su punta, con placebo previo a la fractura): [mecanismo.md](hallazgos/mecanismo.md).
 - El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).
 - Comparación con la literatura (las cifras de este trabajo al lado de las publicadas): [literatura.md](hallazgos/literatura.md).
 - Límites y robustez en detalle (lo que el dato público no deja afirmar, con cada cifra verificada): [limites.md](hallazgos/limites.md).
@@ -30,14 +31,23 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Capa de decisión para un operador (brecha, diferido y valor por edad del padre y banda de distancia): [decision_operador.md](hallazgos/decision_operador.md).
 - Potencia del nulo de dosis y respuesta (qué efecto mínimo habría podido verse): [potencia_dosis.md](hallazgos/potencia_dosis.md).
 - Robustez por operador y área (la brecha del mes 1 y el cierre del mes 6 sacando de a un operador y de a un área): [robustez_operador.md](hallazgos/robustez_operador.md).
+- Días que pierde un padre cuando fracturan a un hijo, por operador (si la diferencia entre operadores se mantiene y si más días compran mejor caudal después, con la prueba confirmatoria en Colorado): [dias_perdidos.md](hallazgos/dias_perdidos.md).
+- Golpes en el mismo mes: si a un padre le cuesta menos recibir varios hijos en un mes que los mismos hijos en meses separados (costo fijo del mes contra costo por hijo, la primera pieza del optimizador de calendario, con la prueba confirmatoria en Colorado): [golpes_mismo_mes.md](hallazgos/golpes_mismo_mes.md).
+- Golpes en el mismo mes con el padre como su propio control: la misma pregunta, comparando cada padre consigo mismo entre sus meses de golpe de distinta cantidad de hijos (segunda pieza del optimizador de calendario): [golpes_mismo_padre.md](hallazgos/golpes_mismo_padre.md).
+- Calendario de golpes: matrices de costo de los dos casos (aditivo y costo fijo más hijo), el calendario de fractura que menos pérdida tendría y un backtest ajustado en 2023 que predice 2024 a 2026, con la regla fijada antes de correr (tercera pieza del optimizador de calendario, solo el lado del padre): [calendario_golpes.md](hallazgos/calendario_golpes.md).
+- Trayectorias de pozo publicadas por la Secretaría de Energía: cuántos hijos y pares cubren y cuánto cambia la distancia al medirla entre ramas en lugar de entre bocas (descriptivo): [trayectorias.md](hallazgos/trayectorias.md).
+- Alcance y dilución de la huella del padre medidos entre ramas (distancia lateral a lateral) en lugar de entre bocas, con la regla fijada de antemano: [alcance_rama.md](hallazgos/alcance_rama.md).
+- Riesgo de golpe fuerte: cuán probable es que un padre cercano pierda más de 30 puntos de índice al mes 1 de la fractura de un hijo, con un modelo logístico probado hacia adelante (2023 y 2024) y la regla fijada antes de correr: [riesgo.md](hallazgos/riesgo.md).
+- Dosis y respuesta con la geometría de las ramas, detrás de una puerta de potencia (el efecto mínimo detectable de los padres cercanos entre ramas), con la regla fijada de antemano: [dosis_geometria.md](hallazgos/dosis_geometria.md).
+- Lado del hijo dentro del pad: hijos del mismo pad fracturados con más o menos petróleo ya producido por pozos cuya rama pasa a menos de 600 m, con la regla fijada antes de correr: [hijo_pad.md](hallazgos/hijo_pad.md).
 - Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).
 - Replicación en Colorado (el estudio de eventos sobre la cuenca DJ, con la regla fijada de antemano): [replicacion.md](hallazgos/replicacion.md).
 - Wyoming, datos y conteos de la replicación en otra cuenca: [wyoming_datos.md](hallazgos/wyoming_datos.md).
 - Replicación en Wyoming (el mismo estudio de eventos con la misma regla, fijada antes de bajar la producción): [replicacion_wyoming.md](hallazgos/replicacion_wyoming.md).
 - Replicación por cuenca (la lectura de la familia: en cuántas cuencas se replica la huella, sin estimación conjunta): [replicacion_cuencas.md](hallazgos/replicacion_cuencas.md).
 - Regla de parada del eje de merma (potencia, ventana previa, bloques y exposición): [eje_parada.md](hallazgos/eje_parada.md), con [potencia.md](hallazgos/potencia.md), [eje_controles.md](hallazgos/eje_controles.md) y [eje_exposicion.md](hallazgos/eje_exposicion.md).
-- Mapa base del mundo 4D (fuente, licencia y huella del relieve, el agua, los límites, las localidades y las concesiones): [mapa_base.md](hallazgos/mapa_base.md).
-- Grafo: [grafo.json](grafo.json) con 2014 nodos y 4069 aristas vigentes.
+- Mapa base de Vaca Muerta en 3D (fuente, licencia y huella del relieve, el agua, los límites, las localidades y las concesiones): [mapa_base.md](hallazgos/mapa_base.md).
+- Grafo: [grafo.json](grafo.json) con 2024 nodos y 4096 aristas vigentes.
 
 ## Operadores
 
@@ -61,7 +71,7 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - [TANGO ENERGY ARGENTINA S.A.](operador/tango-energy-argentina-s-a.md)
 - [Tecpetrol](operador/tecpetrol.md)
 - [TotalEnergies](operador/totalenergies.md)
-- [VACA MUERTA INVERSIONES SAU](operador/vaca-muerta-inversiones-sau.md)
+- [VACA MUERTA INVERSIONES S.A.](operador/vaca-muerta-inversiones-s-a.md)
 - [Vista](operador/vista.md)
 - [YPF](operador/ypf.md)
 
@@ -98,6 +108,7 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - [CHIHUIDO DE LA SIERRA NEGRA](area/chihuido-de-la-sierra-negra.md)
 - [CINCO SALTOS](area/cinco-saltos.md)
 - [CN VII A](area/cn-vii-a.md)
+- [COIRON AMARGO NORTE](area/coiron-amargo-norte.md)
 - [COIRON AMARGO SUR ESTE](area/coiron-amargo-sur-este.md)
 - [COIRON AMARGO SUR OESTE](area/coiron-amargo-sur-oeste.md)
 - [CONFLUENCIA NORTE](area/confluencia-norte.md)
@@ -547,6 +558,7 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - [p165665](pad/pad-p165665.md)
 - [p165673](pad/pad-p165673.md)
 - [p165790](pad/pad-p165790.md)
+- [p165824](pad/pad-p165824.md)
 - [p166129](pad/pad-p166129.md)
 - [p166156](pad/pad-p166156.md)
 - [p166217](pad/pad-p166217.md)
@@ -566,11 +578,12 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - [p166808](pad/pad-p166808.md)
 - [p166811](pad/pad-p166811.md)
 - [p166892](pad/pad-p166892.md)
+- [p166915](pad/pad-p166915.md)
 - [p166924](pad/pad-p166924.md)
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_vm_mensual`, `mart_interferencia_diferida`, `mart_interferencia_brecha`, `mart_interferencia_anual`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

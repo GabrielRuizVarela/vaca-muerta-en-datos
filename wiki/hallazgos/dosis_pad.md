@@ -7,68 +7,68 @@ más favorable a la física para que un nulo pese más.
 
 ## Veredicto
 
-Resultado A: **sigue sin dosis y respuesta**: ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta; la cota superior mayor de los IC sin ajustar es de 0,29 desvíos de la caída en la muestra completa y 0,43 en la cercanía: el efecto positivo compatible con los datos llega, como mucho, a eso.
-Resultado B: **sigue sin dosis y respuesta**: ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta; la cota superior mayor de los IC sin ajustar es de 0,25 desvíos de la caída en la muestra completa y 0,54 en la cercanía: el efecto positivo compatible con los datos llega, como mucho, a eso.
+Resultado A: **sigue sin dosis y respuesta**: ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta; la cota superior mayor de los IC sin ajustar es de 0,29 desvíos de la caída en la muestra completa y 0,41 en la cercanía: el efecto positivo compatible con los datos llega, como mucho, a eso.
+Resultado B: **sigue sin dosis y respuesta**: ninguna de las cuatro del pad cumple en la muestra completa y ninguna de las cinco cumple en la cercanía: tampoco con la dosis del pad ni en la cercanía aparece respuesta; la cota superior mayor de los IC sin ajustar es de 0,24 desvíos de la caída en la muestra completa y 0,52 en la cercanía: el efecto positivo compatible con los datos llega, como mucho, a eso.
 
-### Resultado A, caída del índice, muestra completa (n = 1.552, pads = 264)
-
-| Variable | Coef por desvío | IC 95% | p Holm | Cumple |
-| --- | ---: | --- | ---: | --- |
-| arena total del pad | 0,047 | -0,042 a 0,146 | 0,636 | no |
-| arena por metro de rama del pad | -0,064 | -0,166 a 0,012 | 0,412 | no |
-| presión máxima del pad | 0,032 | -0,021 a 0,095 | 0,636 | no |
-| depleción del padre | 0,037 | -0,065 a 0,120 | 0,636 | no |
-
-### Resultado A, caída del índice, cercanía km menor que 0,5 (n = 658, pads = 150)
+### Resultado A, caída del índice, muestra completa (n = 1.559, pads = 265)
 
 | Variable | Coef por desvío | IC 95% | p Holm | Cumple |
 | --- | ---: | --- | ---: | --- |
-| arena total del pad | -0,026 | -0,162 a 0,061 | 1,000 | no |
-| arena por metro de rama del pad | 0,011 | -0,123 a 0,118 | 1,000 | no |
-| presión máxima del pad | 0,022 | -0,054 a 0,191 | 1,000 | no |
-| depleción del padre | 0,059 | -0,112 a 0,216 | 1,000 | no |
-| interacción depleción por cercanía | -0,029 | -0,093 a 0,057 | 1,000 | no |
+| arena total del pad | 0,047 | -0,038 a 0,148 | 0,663 | no |
+| arena por metro de rama del pad | -0,067 | -0,165 a 0,006 | 0,320 | no |
+| presión máxima del pad | 0,032 | -0,023 a 0,095 | 0,663 | no |
+| depleción del padre | 0,039 | -0,054 a 0,125 | 0,663 | no |
 
-### Resultado B, caída del caudal por día, muestra completa (n = 1.400, pads = 248)
-
-| Variable | Coef por desvío | IC 95% | p Holm | Cumple |
-| --- | ---: | --- | ---: | --- |
-| arena total del pad | 0,071 | -0,163 a 0,328 | 1,000 | no |
-| arena por metro de rama del pad | -0,064 | -0,353 a 0,096 | 1,000 | no |
-| presión máxima del pad | -0,033 | -0,210 a 0,095 | 1,000 | no |
-| depleción del padre | 0,097 | -0,098 a 0,290 | 1,000 | no |
-
-### Resultado B, caída del caudal por día, cercanía km menor que 0,5 (n = 583, pads = 139)
+### Resultado A, caída del índice, cercanía km menor que 0,5 (n = 662, pads = 151)
 
 | Variable | Coef por desvío | IC 95% | p Holm | Cumple |
 | --- | ---: | --- | ---: | --- |
-| arena total del pad | -0,031 | -0,291 a 0,237 | 1,000 | no |
-| arena por metro de rama del pad | 0,052 | -0,161 a 0,289 | 1,000 | no |
-| presión máxima del pad | -0,037 | -0,243 a 0,199 | 1,000 | no |
-| depleción del padre | 0,155 | -0,114 a 0,599 | 0,905 | no |
-| interacción depleción por cercanía | 0,061 | -0,127 a 0,206 | 1,000 | no |
+| arena total del pad | -0,024 | -0,154 a 0,067 | 1,000 | no |
+| arena por metro de rama del pad | 0,005 | -0,127 a 0,122 | 1,000 | no |
+| presión máxima del pad | 0,021 | -0,051 a 0,190 | 1,000 | no |
+| depleción del padre | 0,048 | -0,117 a 0,207 | 1,000 | no |
+| interacción depleción por cercanía | -0,026 | -0,091 a 0,063 | 1,000 | no |
+
+### Resultado B, caída del caudal por día, muestra completa (n = 1.407, pads = 249)
+
+| Variable | Coef por desvío | IC 95% | p Holm | Cumple |
+| --- | ---: | --- | ---: | --- |
+| arena total del pad | 0,068 | -0,159 a 0,323 | 1,000 | no |
+| arena por metro de rama del pad | -0,058 | -0,338 a 0,115 | 1,000 | no |
+| presión máxima del pad | -0,032 | -0,206 a 0,103 | 1,000 | no |
+| depleción del padre | 0,096 | -0,105 a 0,291 | 1,000 | no |
+
+### Resultado B, caída del caudal por día, cercanía km menor que 0,5 (n = 587, pads = 140)
+
+| Variable | Coef por desvío | IC 95% | p Holm | Cumple |
+| --- | ---: | --- | ---: | --- |
+| arena total del pad | -0,030 | -0,296 a 0,232 | 1,000 | no |
+| arena por metro de rama del pad | 0,049 | -0,173 a 0,277 | 1,000 | no |
+| presión máxima del pad | -0,037 | -0,246 a 0,194 | 1,000 | no |
+| depleción del padre | 0,137 | -0,130 a 0,580 | 1,000 | no |
+| interacción depleción por cercanía | 0,070 | -0,137 a 0,222 | 1,000 | no |
 
 ## Sensibilidad (mismo mes)
 
 Modelo de muestra completa con la ventana de mismo mes (se informa, no entra en el veredicto).
 
-### Resultado A (n = 1.552, pads = 264)
+### Resultado A (n = 1.559, pads = 265)
 
 | Variable | Coef por desvío | IC 95% | p Holm | Cumple |
 | --- | ---: | --- | ---: | --- |
-| arena total del pad | 0,037 | -0,087 a 0,132 | 1,000 | no |
-| arena por metro de rama del pad | -0,038 | -0,129 a 0,043 | 1,000 | no |
-| presión máxima del pad | 0,033 | -0,023 a 0,092 | 0,871 | no |
-| depleción del padre | 0,035 | -0,067 a 0,123 | 1,000 | no |
+| arena total del pad | 0,035 | -0,086 a 0,126 | 1,000 | no |
+| arena por metro de rama del pad | -0,040 | -0,125 a 0,041 | 1,000 | no |
+| presión máxima del pad | 0,034 | -0,022 a 0,095 | 0,943 | no |
+| depleción del padre | 0,037 | -0,063 a 0,118 | 1,000 | no |
 
-### Resultado B (n = 1.400, pads = 248)
+### Resultado B (n = 1.407, pads = 249)
 
 | Variable | Coef por desvío | IC 95% | p Holm | Cumple |
 | --- | ---: | --- | ---: | --- |
-| arena total del pad | -0,116 | -0,546 a 0,141 | 1,000 | no |
-| arena por metro de rama del pad | 0,003 | -0,209 a 0,197 | 1,000 | no |
-| presión máxima del pad | -0,044 | -0,204 a 0,056 | 1,000 | no |
-| depleción del padre | 0,092 | -0,098 a 0,304 | 1,000 | no |
+| arena total del pad | -0,117 | -0,544 a 0,135 | 1,000 | no |
+| arena por metro de rama del pad | 0,007 | -0,190 a 0,195 | 1,000 | no |
+| presión máxima del pad | -0,045 | -0,210 a 0,074 | 1,000 | no |
+| depleción del padre | 0,090 | -0,095 a 0,295 | 1,000 | no |
 
 ## Cada variable sola (agregado después de ver los resultados)
 
@@ -76,14 +76,14 @@ Diagnóstico agregado después de ver los resultados, a pedido de una revisión:
 
 | Resultado | Variable | Coef por desvío (IC 95%) | FIV conjunto |
 | --- | --- | --- | ---: |
-| A | arena total del pad | 0,035 (-0,043 a 0,120) | 1,5 |
-| A | arena por metro de rama del pad | -0,048 (-0,142 a 0,027) | 1,2 |
-| A | presión máxima del pad | 0,037 (-0,012 a 0,101) | 1,1 |
-| A | depleción del padre | 0,024 (-0,074 a 0,117) | 2,2 |
-| B | arena total del pad | 0,046 (-0,209 a 0,267) | 1,5 |
-| B | arena por metro de rama del pad | -0,042 (-0,299 a 0,126) | 1,2 |
-| B | presión máxima del pad | -0,029 (-0,193 a 0,104) | 1,1 |
-| B | depleción del padre | 0,096 (-0,109 a 0,290) | 2,6 |
+| A | arena total del pad | 0,035 (-0,038 a 0,123) | 1,5 |
+| A | arena por metro de rama del pad | -0,050 (-0,147 a 0,021) | 1,2 |
+| A | presión máxima del pad | 0,037 (-0,012 a 0,102) | 1,1 |
+| A | depleción del padre | 0,026 (-0,071 a 0,123) | 2,2 |
+| B | arena total del pad | 0,045 (-0,193 a 0,281) | 1,5 |
+| B | arena por metro de rama del pad | -0,036 (-0,321 a 0,125) | 1,2 |
+| B | presión máxima del pad | -0,028 (-0,194 a 0,105) | 1,1 |
+| B | depleción del padre | 0,096 (-0,106 a 0,286) | 2,6 |
 
 ## Qué no prueba
 

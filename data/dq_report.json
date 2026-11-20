@@ -1,5 +1,5 @@
 {
-  "filas_origen_produccion": 431322,
+  "filas_origen_produccion": 436308,
   "bloqueantes_fallidos": 0,
   "checks": [
     {
@@ -146,7 +146,7 @@
       "nombre": "Nombres de empresa sin normalizar",
       "severidad": "aviso",
       "detalle": "Razones sociales con producción en Vaca Muerta que no están en seeds/operadores.csv.",
-      "filas": 21,
+      "filas": 22,
       "ok": false,
       "muestra": [
         {
@@ -230,7 +230,7 @@
       "nombre": "Pozos fracturados ausentes en producción no convencional",
       "severidad": "aviso",
       "detalle": "El pozo figura en Adjunto IV pero no en el dataset de producción no convencional.",
-      "filas": 803,
+      "filas": 796,
       "ok": false,
       "muestra": [
         {
@@ -309,7 +309,7 @@
       "nombre": "Eventos fuera del rango de datos",
       "severidad": "aviso",
       "detalle": "Eventos posteriores al último mes publicado (incluye fracturas cargadas antes que su producción) o anteriores a 2006.",
-      "filas": 3,
+      "filas": 2,
       "ok": false,
       "muestra": [
         {
@@ -321,11 +321,6 @@
           "pozo_id": 167249,
           "tipo": "fractura",
           "fecha": "2026-12-05"
-        },
-        {
-          "pozo_id": 167250,
-          "tipo": "fractura",
-          "fecha": "2026-10-05"
         }
       ]
     },
@@ -350,8 +345,8 @@
     {
       "nombre": "Pozos que cambian de pad al agrupar por cercanía en vez de redondear coordenadas",
       "severidad": "aviso",
-      "detalle": "Pads por agrupación de ubicaciones a 50 m (enlace simple) frente al redondeo de coordenadas a 3 decimales (el criterio anterior), sobre 3448 pozos shale con ubicación: 1479 pads antes y 1223 ahora; 46 pads viejos se dividen en varios y 295 pads nuevos reúnen varios viejos; 1210 pozos cambian de pad. Pozos en pads de 3 o más pozos: 63.4% antes y 73.7% ahora. Dato informativo, no un error.",
-      "filas": 1210,
+      "detalle": "Pads por agrupación de ubicaciones a 50 m (enlace simple) frente al redondeo de coordenadas a 3 decimales (el criterio anterior), sobre 3498 pozos shale con ubicación: 1497 pads antes y 1235 ahora; 46 pads viejos se dividen en varios y 301 pads nuevos reúnen varios viejos; 1236 pozos cambian de pad. Pozos en pads de 3 o más pozos: 63.7% antes y 74.1% ahora. Dato informativo, no un error.",
+      "filas": 1236,
       "ok": false,
       "muestra": [
         {
@@ -374,7 +369,7 @@
     {
       "nombre": "Conciliación: filas del CSV de producción contra stg_produccion",
       "severidad": "bloqueante",
-      "detalle": "El CSV de produccion_no_convencional tiene 431.322 filas y stg_produccion 431.322. El staging conserva una fila por fila de origen: la diferencia explicada es cero.",
+      "detalle": "El CSV de produccion_no_convencional tiene 436.308 filas y stg_produccion 436.308. El staging conserva una fila por fila de origen: la diferencia explicada es cero.",
       "filas": 0,
       "ok": true,
       "muestra": []
@@ -390,7 +385,7 @@
     {
       "nombre": "Conciliación: filas de stg_produccion contra fct_produccion",
       "severidad": "bloqueante",
-      "detalle": "stg_produccion tiene 431.322 filas; 0 se descartan por pozo o mes inválido y fct_produccion debe tener 431.322 (tiene 431.322).",
+      "detalle": "stg_produccion tiene 436.308 filas; 0 se descartan por pozo o mes inválido y fct_produccion debe tener 436.308 (tiene 436.308).",
       "filas": 0,
       "ok": true,
       "muestra": []
@@ -398,7 +393,7 @@
     {
       "nombre": "Conciliación: volúmenes de stg_produccion contra fct_produccion por año",
       "severidad": "bloqueante",
-      "detalle": "Petróleo: stg_produccion suma 147.188.386 m3; las filas sin pozo o mes válido aportan 0 m3 y los negativos llevados a cero 0 m3; fct_produccion suma 147.188.386 m3. Se concilia por año el petróleo, el gas y el agua, con tolerancia de 0,001 por el orden de la suma.",
+      "detalle": "Petróleo: stg_produccion suma 150.703.371 m3; las filas sin pozo o mes válido aportan 0 m3 y los negativos llevados a cero 0 m3; fct_produccion suma 150.703.371 m3. Se concilia por año el petróleo, el gas y el agua, con tolerancia de 0,001 por el orden de la suma.",
       "filas": 0,
       "ok": true,
       "muestra": []
@@ -406,7 +401,7 @@
     {
       "nombre": "Conciliación: pozos de dim_pozo contra fct_produccion",
       "severidad": "bloqueante",
-      "detalle": "dim_pozo tiene 5.164 pozos y fct_produccion 5.164 pozos distintos (stg_produccion: 5.164 con id); deben coincidir.",
+      "detalle": "dim_pozo tiene 5.214 pozos y fct_produccion 5.214 pozos distintos (stg_produccion: 5.214 con id); deben coincidir.",
       "filas": 0,
       "ok": true,
       "muestra": []
@@ -438,7 +433,7 @@
     {
       "nombre": "Frescura: meses de atraso del último mes publicado",
       "severidad": "aviso",
-      "detalle": "Último mes con datos: 2026-09; al 2026-11-15 van 2 meses de atraso. Se avisa si pasan de 3 (la Secretaría publica con rezago).",
+      "detalle": "Último mes con datos: 2026-10; al 2026-11-20 van 1 meses de atraso. Se avisa si pasan de 3 (la Secretaría publica con rezago).",
       "filas": 0,
       "ok": true,
       "muestra": []
@@ -447,17 +442,24 @@
   "fuentes": {
     "produccion_no_convencional": {
       "url": "http://datos.energia.gob.ar/dataset/c846e79c-026c-4040-897f-1ad3543b407c/resource/b5b58cdc-9e07-41f9-b392-fb9ec68b0725/download/produccin-de-pozos-de-gas-y-petrleo-no-convencional.csv",
-      "sha256": "61cecc31c8dd81fd474c4094f2605b2b01b5a5d157e2089db7f3c548c410deae",
-      "bytes": 148923474,
-      "last_modified": "Thu, 22 Oct 2026 21:00:56 GMT",
-      "loaded_at": "2026-11-15T03:50:45+00:00"
+      "sha256": "b10e752147193083908b3ec655816545e69a240e41be819c79e80c7ad6477f3c",
+      "bytes": 150669961,
+      "last_modified": "Fri, 20 Nov 2026 15:00:58 GMT",
+      "loaded_at": "2026-11-20T16:50:17+00:00"
     },
     "fractura_adjunto_iv": {
       "url": "http://datos.energia.gob.ar/dataset/71fa2e84-0316-4a1b-af68-7f35e41f58d7/resource/2280ad92-6ed3-403e-a095-50139863ab0d/download/datos-de-fractura-de-pozos-de-hidrocarburos-adjunto-iv-actualizacin-diaria.csv",
       "sha256": "ff95734bf485b1a27ecb75e3a44dda3035e5496805cf3970a28d19802bf03026",
       "bytes": 1271920,
-      "last_modified": "Sat, 14 Nov 2026 04:00:06 GMT",
-      "loaded_at": "2026-11-15T03:51:02+00:00"
+      "last_modified": "Fri, 20 Nov 2026 04:01:47 GMT",
+      "loaded_at": "2026-11-20T16:50:39+00:00"
+    },
+    "trayectorias_pozo": {
+      "url": "http://datos.energia.gob.ar/dataset/f5c0b5a5-b402-44d7-8fe0-f9e4fcb78b8d/resource/94741ac7-4f46-4efe-b112-d3f82a4ef7c5/download/trayectorias-de-pozo-vaca-muerta.csv",
+      "sha256": "83093dc4b7bad3b7ab54449bbfb074264f3b6cb17d675c9494a2336403db3034",
+      "bytes": 40497312,
+      "last_modified": "Sun, 15 Nov 2026 05:00:16 GMT",
+      "loaded_at": "2026-11-20T16:50:40+00:00"
     }
   }
 }

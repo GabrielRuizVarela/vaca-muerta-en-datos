@@ -2,7 +2,7 @@
 
 ## Resumen
 
-El eje de mayor merma de la cuenca es 92,9 grados (IC 95% de 69,9 a 122,5), con 1.734 eventos en 324 pads hijo, y el SHmax publicado es 67,5 grados. Para separar un valor del otro con 80% de potencia harian falta 2,17 veces la muestra actual (escenario principal). Veredicto: no separable.
+El eje de mayor merma de la cuenca es 93,2 grados (IC 95% de 69,6 a 122,8), con 1.751 eventos en 325 pads hijo, y el SHmax publicado es 67,5 grados. Para separar un valor del otro con 80% de potencia harian falta 2,43 veces la muestra actual (escenario principal). Veredicto: no separable.
 
 ## Potencia por multiplo
 
@@ -10,18 +10,18 @@ Fraccion de corridas que separan, en %, promediada sobre los dos mundos (eje ver
 
 | Veces la muestra (M) | Escenario principal | Amplitud media |
 | ---: | ---: | ---: |
-| 1,0 | 53,5 | 30,0 |
-| 1,5 | 71,2 | 32,8 |
-| 2,0 | 77,8 | 36,8 |
-| 2,5 | 84,2 | 40,8 |
-| 3,0 | 89,0 | 42,0 |
-| 4,0 | 95,5 | 52,0 |
+| 1,0 | 51,7 | 28,2 |
+| 1,5 | 65,3 | 29,5 |
+| 2,0 | 72,8 | 32,0 |
+| 2,5 | 81,2 | 36,2 |
+| 3,0 | 89,2 | 43,8 |
+| 4,0 | 93,8 | 50,2 |
 
 ## Cuenta analitica y calendario
 
-La cuenta analitica de referencia pide 3.763 eventos (M = 2,17).
-El ritmo actual es de 315 eventos por ano: media de 297 eventos en 2025 (12 meses) y 194 en 2026 (7 meses, llevado a ano completo: 333).
-A ese ritmo, juntar M80 veces la muestra llevaria 6,5 anos.
+La cuenta analitica de referencia pide 3.888 eventos (M = 2,22).
+El ritmo actual es de 329 eventos por ano: media de 297 eventos en 2025 (12 meses) y 211 en 2026 (7 meses, llevado a ano completo: 362).
+A ese ritmo, juntar M80 veces la muestra llevaria 7,6 anos.
 
 ## Regla fijada antes de correr
 

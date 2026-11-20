@@ -10,21 +10,21 @@
 | Pozos shale con ubicación | 18 |
 | Pads | 9 |
 | Eventos cercanos de interferencia | 2 |
-| Petróleo diferido (bbl) | -1.029 |
+| Petróleo diferido (bbl) | -996 |
 
 ## Operadores
 
-- [VACA MUERTA INVERSIONES SAU](../operador/vaca-muerta-inversiones-sau.md)
+- [VACA MUERTA INVERSIONES S.A.](../operador/vaca-muerta-inversiones-s-a.md)
 
 ## Top 5 pads por petroleo diferido
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p156715](../pad/pad-p156715.md) | VACA MUERTA INVERSIONES SAU | 2 | -1.029 |
+| [p156715](../pad/pad-p156715.md) | VACA MUERTA INVERSIONES S.A. | 2 | -996 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

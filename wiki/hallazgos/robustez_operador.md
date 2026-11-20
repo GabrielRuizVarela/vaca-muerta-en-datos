@@ -4,36 +4,37 @@ Se saca de a un grupo (el operador o el área del pozo padre) y se vuelve a medi
 
 ## Sacando de a un operador
 
-La brecha del mes 1 se sostiene al sacar de a un operador: en las 7 salidas el IC 95% excluye el cero y la brecha puntual queda entre -24,0 y -22,1 puntos; el peor caso es sin Chevron (-22,1 puntos, IC 95% -26,2 a -17,1, cota superior -17,1). El cierre del mes 6 se sostiene: la brecha puntual del mes 6 queda entre -3,6 y -1,0 puntos, sin pasar de -5,0; el peor caso es sin Tecpetrol (-3,6 puntos).
+La brecha del mes 1 se sostiene al sacar de a un operador: en las 7 salidas el IC 95% excluye el cero y la brecha puntual queda entre -24,1 y -22,2 puntos; el peor caso es sin Chevron (-22,2 puntos, IC 95% -26,1 a -17,6, cota superior -17,6). El cierre del mes 6 se sostiene: la brecha puntual del mes 6 queda entre -3,6 y -1,0 puntos, sin pasar de -5,0; el peor caso es sin Tecpetrol (-3,6 puntos).
 
 | Sin | Eventos cercanos (mes 1) | Eventos control (mes 1) | Brecha mes 1 (puntos) | IC 95% | Brecha mes 6 (puntos) | IC 95% |
 | --- | ---: | ---: | ---: | --- | ---: | --- |
-| (muestra completa) | 2.077 | 18.262 | -22,9 | -26,7 a -19,1 | -2,1 | -5,8 a 1,1 |
-| Chevron | 2.018 | 18.176 | -22,1 | -26,2 a -17,1 | -2,0 | -5,7 a 1,2 |
-| Pan American Energy | 1.956 | 17.860 | -23,0 | -27,6 a -18,2 | -1,0 | -5,7 a 2,1 |
-| Pluspetrol | 1.965 | 17.666 | -22,9 | -28,0 a -18,0 | -1,7 | -5,8 a 1,3 |
-| Shell | 2.006 | 17.417 | -22,8 | -28,2 a -17,8 | -2,0 | -5,8 a 1,0 |
-| Tecpetrol | 1.923 | 17.241 | -22,8 | -27,3 a -17,8 | -3,6 | -7,4 a 0,3 |
-| Vista | 1.897 | 17.045 | -24,0 | -28,9 a -19,3 | -2,9 | -7,4 a 1,2 |
-| YPF | 739 | 4.438 | -22,6 | -28,7 a -14,8 | -2,7 | -7,3 a 1,7 |
+| (muestra completa) | 2.094 | 18.291 | -23,0 | -27,1 a -18,6 | -2,1 | -5,9 a 0,9 |
+| Chevron | 2.035 | 18.205 | -22,2 | -26,1 a -17,6 | -2,0 | -6,0 a 1,1 |
+| Pan American Energy | 1.973 | 17.889 | -23,2 | -27,5 a -19,2 | -1,0 | -4,8 a 2,0 |
+| Pluspetrol | 1.968 | 17.687 | -23,0 | -27,8 a -17,8 | -1,6 | -5,6 a 1,7 |
+| Shell | 2.023 | 17.446 | -23,1 | -27,5 a -17,3 | -2,1 | -5,8 a 1,2 |
+| Tecpetrol | 1.940 | 17.270 | -23,0 | -26,8 a -18,2 | -3,6 | -7,1 a -0,2 |
+| Vista | 1.914 | 17.072 | -24,1 | -29,1 a -19,5 | -2,8 | -6,7 a 0,9 |
+| YPF | 756 | 4.450 | -23,0 | -29,8 a -15,5 | -2,7 | -7,9 a 1,8 |
 
-Agregado después de ver los resultados (no cambia el veredicto): la cota superior más alta del IC 95% de la brecha del mes 1 entre las salidas es -14,8 puntos, sin YPF.
+Agregado después de ver los resultados (no cambia el veredicto): la cota superior más alta del IC 95% de la brecha del mes 1 entre las salidas es -15,5 puntos, sin YPF.
 
 ## Sacando de a un área
 
-La brecha del mes 1 se sostiene al sacar de a un área: en las 8 salidas el IC 95% excluye el cero y la brecha puntual queda entre -29,3 y -20,0 puntos; el peor caso es sin LA AMARGA CHICA (-20,0 puntos, IC 95% -24,2 a -15,3, cota superior -15,3). El cierre del mes 6 se sostiene: la brecha puntual del mes 6 queda entre -3,6 y -1,0 puntos, sin pasar de -5,0; el peor caso es sin FORTIN DE PIEDRA (-3,6 puntos).
+La brecha del mes 1 se sostiene al sacar de a un área: en las 9 salidas el IC 95% excluye el cero y la brecha puntual queda entre -29,3 y -20,2 puntos; el peor caso es sin LA AMARGA CHICA (-20,2 puntos, IC 95% -24,2 a -15,3, cota superior -15,3). El cierre del mes 6 se sostiene: la brecha puntual del mes 6 queda entre -3,6 y -1,0 puntos, sin pasar de -5,0; el peor caso es sin FORTIN DE PIEDRA (-3,6 puntos).
 
 | Sin | Eventos cercanos (mes 1) | Eventos control (mes 1) | Brecha mes 1 (puntos) | IC 95% | Brecha mes 6 (puntos) | IC 95% |
 | --- | ---: | ---: | ---: | --- | ---: | --- |
-| (muestra completa) | 2.077 | 18.262 | -22,9 | -26,7 a -19,1 | -2,1 | -5,8 a 1,1 |
-| BAJADA DEL PALO OESTE | 1.911 | 17.200 | -23,8 | -28,5 a -20,0 | -2,9 | -7,3 a 1,1 |
-| BANDURRIA SUR | 1.919 | 16.699 | -22,3 | -27,3 a -17,2 | -1,6 | -5,8 a 1,6 |
-| EL TRAPIAL ESTE | 2.018 | 18.176 | -22,1 | -26,2 a -17,1 | -2,0 | -5,7 a 1,2 |
-| FORTIN DE PIEDRA | 1.923 | 17.251 | -22,8 | -26,1 a -17,9 | -3,6 | -7,2 a 0,2 |
-| LA AMARGA CHICA | 1.761 | 15.326 | -20,0 | -24,2 a -15,3 | -1,5 | -5,3 a 1,7 |
-| LA CALERA | 2.009 | 17.754 | -22,5 | -27,6 a -17,6 | -1,5 | -5,5 a 1,3 |
-| LINDERO ATRAVESADO | 1.980 | 18.001 | -23,3 | -28,5 a -18,9 | -1,0 | -5,3 a 1,9 |
-| LOMA CAMPANA | 1.289 | 9.526 | -29,3 | -35,5 a -23,6 | -3,2 | -7,7 a 0,7 |
+| (muestra completa) | 2.094 | 18.291 | -23,0 | -27,1 a -18,6 | -2,1 | -5,9 a 0,9 |
+| BAJADA DEL PALO OESTE | 1.928 | 17.229 | -24,0 | -29,3 a -19,3 | -2,9 | -6,6 a 0,8 |
+| BAJO DEL CHOIQUE - LA INVERNADA | 2.036 | 18.195 | -23,3 | -27,5 a -18,1 | -2,4 | -6,3 a 0,7 |
+| BANDURRIA SUR | 1.936 | 16.728 | -22,7 | -27,1 a -17,3 | -1,5 | -5,7 a 1,2 |
+| EL TRAPIAL ESTE | 2.035 | 18.205 | -22,2 | -26,1 a -17,6 | -2,0 | -6,0 a 1,1 |
+| FORTIN DE PIEDRA | 1.940 | 17.280 | -23,0 | -26,9 a -18,6 | -3,6 | -7,0 a 0,1 |
+| LA AMARGA CHICA | 1.778 | 15.355 | -20,2 | -24,2 a -15,3 | -1,7 | -6,2 a 1,5 |
+| LA CALERA | 2.026 | 17.783 | -22,8 | -27,1 a -17,8 | -1,4 | -5,3 a 1,4 |
+| LINDERO ATRAVESADO | 1.997 | 18.030 | -23,5 | -28,2 a -19,1 | -1,0 | -5,2 a 2,8 |
+| LOMA CAMPANA | 1.306 | 9.555 | -29,3 | -35,1 a -23,2 | -3,2 | -7,3 a 0,9 |
 
 Agregado después de ver los resultados (no cambia el veredicto): la cota superior más alta del IC 95% de la brecha del mes 1 entre las salidas es -15,3 puntos, sin LA AMARGA CHICA.
 

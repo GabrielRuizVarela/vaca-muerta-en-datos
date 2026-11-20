@@ -1,9 +1,12 @@
 """Data contract, pure functions and self-test of pipeline/mundo.py and the generated site/mundo.html."""
 import base64
+import hashlib
+import itertools
 import json
 import math
 import re
 import shutil
+import struct
 import subprocess
 import sys
 from array import array
@@ -13,7 +16,7 @@ import duckdb
 import numpy as np
 import pytest
 
-from pipeline import base_mapa, informe, mundo, replay
+from pipeline import base_foto, base_mapa, informe, mundo, replay
 from pipeline.decision import valor_indicativo
 from pipeline.ingest import DATA, ROOT
 
@@ -489,6 +492,49 @@ def test_collect_without_a_base_map_leaves_the_page_without_one(tmp_path):
     assert mundo.leer_base_mapa()["v"] == 1
 
 
+def test_the_finer_relief_travels_with_the_base_map_when_its_file_is_next_to_it(tmp_path):
+    """The sheet alone gives a page that draws the sheet grid everywhere; with the file next to it, both travel."""
+    solo = tmp_path / "base_mapa.json"
+    solo.write_bytes(mundo.BASE_MAPA.read_bytes())
+    assert "relieve_fino" not in mundo.leer_base_mapa(solo)
+    (tmp_path / base_mapa.FINO.name).write_bytes(base_mapa.FINO.read_bytes())
+    assert mundo.leer_base_mapa(solo)["relieve_fino"] == base_mapa.leer_fino() == mundo.leer_base_mapa()["relieve_fino"]
+
+
+def _hoja_mini_con_fino():
+    """The hand-made sheet with a finer grid of 100 m over its middle, blended over a quarter of each side."""
+    z = np.full((2, 4), 100, dtype=np.int64)
+    return dict(_hoja_mini(), relieve_fino={
+        "v": 1, "caja": [1.0, 1.0, 3.0, 2.0], "paso_seg": 4, "margen": 0.25, "cols": 4, "filas": 2, "min": 100,
+        "max": 100, "d": base64.b64encode(base_mapa.codificar_relieve(z)).decode("ascii")})
+
+
+def test_autotest_base_follows_the_finer_relief_where_it_rules():
+    """Inside the finer box the wellhead takes its height; on its edge and outside, the sheet's, as without it."""
+    sin, t = mundo.autotest_base(_hoja_mini(), POZOS_HOJA), mundo.autotest_base(_hoja_mini_con_fino(), POZOS_HOJA)
+    assert "fino" not in sin and [b["m"] for b in t["bocas"][:4]] == [100.0, 8.5, None, 8.0]
+    assert (t["celdas"], t["suma"], t["capas"]) == (sin["celdas"], sin["suma"], sin["capas"])
+    f = t["fino"]
+    assert (f["celdas"], f["suma"], f["min"], f["max"]) == (8, 800, 100, 100)
+    assert [q["w"] for q in f["puntos"]] == pytest.approx([1, 0, 0, .5, 7 / 27, .15625, .896, .5])
+    hoja = _hoja_mini()
+    z, caja = base_mapa.decodificar_relieve(hoja["relieve"]), tuple(hoja["caja"])
+    for q in f["puntos"]:
+        h = base_mapa.cota(z, caja, q["lon"], q["lat"])
+        assert q["m"] == pytest.approx(h + (100 - h) * q["w"])
+
+
+def test_the_finer_relief_is_blended_the_same_way_in_the_core_and_in_the_shader():
+    """One weight, three places: pipeline.base_mapa.peso_fino, the core of the page and the terrain shader."""
+    tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
+    nucleo, motor = _script(tpl, "nucleo"), _script(tpl, "motor")
+    assert "function pesoFino(F, lon, lat) {" in nucleo and "return t * t * (3 - 2 * t);" in nucleo
+    assert "smoothstep(0., u_margen, min(min(q.x, 1. - q.x), min(q.y, 1. - q.y)))" in motor
+    assert "return f.z > 0. ? mix(h, textureLod(u_rel2, f.xy, 0.).r, f.z) : h;" in motor
+    for nombre in ('ver("relieve fino", ', 'ver("cota fina de un punto " + i, ', 'ver("sin relieve fino", !B.fino)'):
+        assert nombre in nucleo, nombre
+
+
 def _mini():
     pub = {"brecha_mes1": -0.229, "brecha_mes1_descontada": -0.192, "ic5_bajo": -0.287, "ic5_alto": -0.168,
            "bloques_5km": 144, "n_cercanos": 2, "cierre": [{"brecha6": -0.021}, {"brecha6": -0.047}],
@@ -572,8 +618,8 @@ def test_honesty_contract_is_on_the_page():
                   "Sobre 2 queda fuera del cuadro", "hasta dónde puede llegar la rama"):
         assert frase in tpl, frase
     leyenda = re.search(r'<details class="leyenda".*?</details>', tpl, re.S).group(0)
-    items = re.findall(r'<li(?: id="[\w-]+")?>(.*?)</li>', leyenda, re.S)
-    assert len(items) == leyenda.count("<li") >= 7 and all(re.match(r'<span class="marca (dato|medido|supuesto)">\1</span>', i) for i in items)
+    items = re.findall(r'<li(?: (?:id|class)="[\w-]+"| hidden)*>(.*?)</li>', leyenda, re.S)
+    assert len(items) == leyenda.count("<li") >= 12 and all(re.match(r'<span class="marca (dato|medido|supuesto)">\1</span>', i) for i in items)
     app = _script(tpl, "app")
     marcas = re.findall(r'marca: "(\w+)"', app)
     assert len(marcas) == len(re.findall(r"\btitulo: \"", app)) >= 3 and set(marcas) <= {"dato", "medido", "supuesto"}
@@ -603,17 +649,26 @@ def test_every_control_is_a_native_element_with_a_name():
     assert cuerpo.count('aria-hidden="true"') >= 3  # canvases and projected labels stay out of the reading order
 
 
-def test_the_vertical_axis_says_what_it_is_in_both_readings():
-    """Part D: time as height is one switch away, and the page always names the reading that is on."""
+def test_the_vertical_axis_says_what_it_is_in_every_reading():
+    """Part D: time as height is one switch away, and the page always names the reading that is on. Part E: the
+    ground reading is a third button, offered only when the page carries its image."""
     tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
-    assert re.search(r'<button type="button" id="lect-0" aria-pressed="true">Profundidad<span class="marca supuesto">', tpl)
-    assert re.search(r'<button type="button" id="lect-1" aria-pressed="false">Tiempo<span class="marca dato">', tpl)
+    # Part F: each reading carries an icon; it is hidden from assistive tech, so the name is still the word and its tag.
+    ico = '<svg class="ico" aria-hidden="true"><use href="#i-%s"/></svg>'
+    assert '<button type="button" id="lect-2" aria-pressed="false" hidden>' + ico % "suelo" + 'Suelo<span class="marca dato">' in tpl
+    assert '<button type="button" id="lect-0" aria-pressed="true">' + ico % "prof" + 'Profundidad<span class="marca supuesto">' in tpl
+    assert '<button type="button" id="lect-1" aria-pressed="false">' + ico % "tiempo" + 'Tiempo<span class="marca dato">' in tpl
     app = _script(tpl, "app")
-    for frase in ('"la altura es el tiempo: "', "relieve sin exagerar", '"profundidad de esquema, exageración vertical "'):
+    for frase in ('"la altura es el tiempo: "', "relieve sin exagerar", '"profundidad de esquema, exageración vertical "',
+                  '"suelo: imagen satelital Sentinel-2 de "', 'relieve exagerado ×" + fmt(motor.VE_SUELO, 0)'):
         assert frase in app, frase
-    # the tour opens and closes in the time reading; the acts about the estimator stay in the depth schematic
+    # the tour opens and closes on the ground when the page carries its image and in the time reading when it does
+    # not; the acts about the estimator stay in the depth schematic
     actos = re.findall(r'titulo: "([^"]+)", seg: \d+,([^\n]*)', app)
-    assert [bool(re.search(r"\blect: 1\b", resto)) for _, resto in actos] == [True, False, False, False, False, True]
+    assert ["get lect() { return conFoto ? 2 : 1; }" in resto for _, resto in actos] == [True, False, False, False, False, True]
+    assert not re.search(r"\blect: [12]\b", "".join(resto for _, resto in actos))
+    assert 'if (conFoto) {\n    document.body.classList.add("con-foto"); $("lect-2").hidden = false;' in app
+    assert "v = v === 2 && conFoto ? 2 : v ? 1 : 0;" in app   # no image, no ground reading, whoever asks for it
 
 
 def test_the_axis_labels_do_not_need_the_base_map_and_the_reading_follows_the_camera():
@@ -627,7 +682,7 @@ def test_the_axis_labels_do_not_need_the_base_map_and_the_reading_follows_the_ca
     for rotulo in ('rotulo("eje-t"', 'rotulo("ahora"', 'rotulo("fondo-prof"'):
         assert rotulo in sin_base and rotulo not in con_base, rotulo
     assert '(M.base ? "; relieve sin exagerar" : "")' in app  # no relief, no claim about it
-    assert "if (/libre/.test(ancla)) { ACTOS[0].fin(); girarLectura(1, 0); irLibre(); }" in app
+    assert "if (/libre/.test(ancla)) { ACTOS[0].fin(); girarLectura(ACTOS[0].lect, 0); irLibre(); }" in app
     assert '$("lect-0").onclick = () => { if (est.morph <= .5) ponerLectura(0); };' in app
 
 
@@ -635,7 +690,7 @@ def test_the_place_under_the_wells_comes_from_the_base_map_and_names_its_sources
     """Part D: relief, north, scale and a line per source with its licence; the motor asks the core for elevations."""
     tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
     for pieza in ('<details class="fuentes" id="fuentes"><summary><span class="s-largo">Mapa base: fuentes y licencias</span>',
-                  '<span class="s-corto">Fuentes</span></summary>',
+                  '<span class="s-corto">Fuentes</span><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg></summary>',
                   '<svg id="norte"', 'aria-label="Norte"', '<div class="regla-km"', 'id="regla-txt"'):
         assert pieza in tpl, pieza
     app, motor = _script(tpl, "app"), _script(tpl, "motor")
@@ -694,7 +749,8 @@ def test_the_timeline_is_the_chart_and_reads_from_the_core():
     lectura = app.split("function mirar(j, fija) {")[1].split("function abrirTabla() {")
     assert "innerHTML" not in lectura[0] and "innerHTML" not in lectura[1].split('$("ver-tabla").onclick')[0]
     # the table view: a named modal dialog with the same series, opened by a button
-    assert '<button type="button" id="ver-tabla" aria-haspopup="dialog">Ver la tabla</button>' in tpl
+    assert ('<button type="button" id="ver-tabla" aria-haspopup="dialog"><svg class="ico" aria-hidden="true">'
+            '<use href="#i-tabla"/></svg>Ver la tabla</button>') in tpl
     assert re.search(r'<dialog class="planilla" id="planilla" aria-labelledby="planilla-t">\s*<div class="planilla-cab"><h2 id="planilla-t">', tpl)
     assert "d.showModal()" in app and 'if ($("planilla").open) return;' in app
     # dragging on the chart moves time, hovering only reads
@@ -904,8 +960,8 @@ def test_index_informe_and_readme_point_to_the_page():
 @needs_wh
 def test_top_level_keys(data):
     assert set(data) == {"meta", "pozos", "caudal", "fracs", "eventos", "curva", "brecha", "pub", "cuenca", "acto2",
-                         "autotest", "base"}
-    assert list(data)[-1] == "base"   # the map sheet is the heaviest part and goes last in the file
+                         "autotest", "base", "foto"}
+    assert list(data)[-2:] == ["base", "foto"]   # the map sheet and the imagery are the heaviest parts and go last
     assert set(data["eventos"]) == {"padre", "hijo", "mes", "km", "base", "flags", "indice"}
     assert set(data["pozos"]) == {"id", "sigla", "op", "area", "pad", "lon", "lat", "mes0", "frac", "md", "rama",
                                   "etapas", "arena", "agua", "np"}
@@ -1236,7 +1292,8 @@ def test_self_test_agrees_when_no_well_falls_inside_the_sheet(data, tmp_path):
     hoja = _hoja_mini()
     ref = mundo.autotest_base(hoja, data["pozos"])
     assert (ref["fuera"], ref["mediana_m"], ref["tope_m"]) == (len(data["pozos"]["id"]), None, None)
-    otra = dict(data, base=hoja, autotest=dict(data["autotest"], base=ref))
+    referencias = {k: v for k, v in data["autotest"].items() if k != "foto"}   # the imagery covers the real box only
+    otra = dict(data, base=hoja, foto=None, autotest=dict(referencias, base=ref))
     out = tmp_path / "mundo.html"
     mundo.render(otra, out)
     r = node_autotest(out)["autotest"]
@@ -1247,7 +1304,10 @@ def test_self_test_agrees_when_no_well_falls_inside_the_sheet(data, tmp_path):
 def test_autotest_base_is_recomputed_from_the_embedded_sheet(data):
     """The references of the base map follow the product in the repo, and the wells outside the sheet are counted."""
     hoja, t = data["base"], data["autotest"]["base"]
-    assert hoja == json.loads(mundo.BASE_MAPA.read_text(encoding="utf-8"))
+    assert {k: v for k, v in hoja.items() if k != "relieve_fino"} == json.loads(mundo.BASE_MAPA.read_text(encoding="utf-8"))
+    fino = base_mapa.abrir_fino(hoja["relieve_fino"])
+    assert hoja["relieve_fino"] == base_mapa.leer_fino() and t["fino"]["celdas"] == fino["z"].size
+    assert [q["w"] for q in t["fino"]["puntos"]][:3] == [1, 0, 0] and all(0 < q["w"] < 1 for q in t["fino"]["puntos"][3:])
     z = base_mapa.decodificar_relieve(hoja["relieve"])
     assert (t["celdas"], t["suma"], t["min"], t["max"]) == (z.size, int(z.sum()), hoja["relieve"]["min"], hoja["relieve"]["max"])
     lon0, lat0, lon1, lat1 = hoja["caja"]
@@ -1258,6 +1318,285 @@ def test_autotest_base_is_recomputed_from_the_embedded_sheet(data):
     assert hoja["relieve"]["min"] <= t["mediana_m"] <= t["tope_m"] <= hoja["relieve"]["max"]
     assert [q["m"] is None for q in t["puntos"]] == [False, False, False, True, True]
     assert t["capas"]["bloques"]["n"] == len(hoja["bloques"]) and t["localidades"] == len(hoja["localidades"])
+
+
+# ---- ground imagery ----
+
+def _webp_mini(ancho, alto, relleno=b""):
+    """The header of a lossy WebP of the given size and some filler: enough for the size readers, not a picture."""
+    cuerpo = b"\x00\x00\x00\x9d\x01\x2a" + struct.pack("<HH", ancho, alto) + relleno
+    return b"RIFF" + struct.pack("<I", 12 + len(cuerpo)) + b"WEBPVP8 " + struct.pack("<I", len(cuerpo)) + cuerpo
+
+
+def _foto_mini(carpeta, caja=base_mapa.CAJA):
+    """A manifest in the contract of pipeline.base_foto with two header-only images, written under carpeta."""
+    imagenes = {}
+    for nombre, (ancho, alto) in (("caja", (64, 64)), ("nucleo", (64, 48))):
+        datos = _webp_mini(ancho, alto, nombre.encode())
+        (carpeta / f"base_foto_{nombre}.webp").write_bytes(datos)
+        imagenes[nombre] = {"archivo": f"base_foto_{nombre}.webp", "ancho": ancho, "alto": alto, "bytes": len(datos),
+                            "sha256": hashlib.sha256(datos).hexdigest()}
+    m = {"v": 1, "caja": list(caja), "nucleo": list(base_foto.NUCLEO), "imagenes": imagenes,
+         "escenas": [{"id": "a", "fecha": "2025-12-29"}, {"id": "b", "fecha": "2025-12-30"}, {"id": "c", "fecha": "2025-12-30"}],
+         "desde": "2025-12-29", "hasta": "2025-12-30", "atribucion": base_foto.ATRIBUCION,
+         "url_licencia": base_foto.URL_LICENCIA, "fecha_descarga": "2026-11-19"}
+    ruta = carpeta / "base_foto.json"
+    ruta.write_text(json.dumps(m), encoding="utf-8")
+    return ruta
+
+
+def test_clock_month_of_a_date():
+    """Month index from the first data month; a date before the data is negative, one after it runs past the end."""
+    assert mundo.mes_de_fecha((2011, 4), "2011-04-30") == 0
+    assert mundo.mes_de_fecha((2011, 4), "2025-12-29") == 176
+    assert mundo.mes_de_fecha((2011, 4), "2011-03-31") == -1
+    assert mundo.mes_de_fecha((2011, 4), "2027-01-01") == 189
+
+
+def test_ground_imagery_is_read_from_its_manifest_and_checked_against_it(tmp_path):
+    """No manifest, no imagery; with one, the page embeds the pinned bytes and refuses a file that changed or
+    is gone: a manifest that pins an image never builds a page without it."""
+    assert mundo.leer_base_foto(tmp_path / "base_foto.json") is None
+    ruta = _foto_mini(tmp_path)
+    foto = mundo.leer_base_foto(ruta)
+    assert [c["nombre"] for c in foto["capas"]] == ["caja", "nucleo"]
+    assert [c["caja"] for c in foto["capas"]] == [list(base_mapa.CAJA), list(base_foto.NUCLEO)]
+    for c in foto["capas"]:
+        datos = (tmp_path / f"base_foto_{c['nombre']}.webp").read_bytes()
+        assert base64.b64decode(c["webp"]) == datos and c["sha256"] == hashlib.sha256(datos).hexdigest()
+    assert (foto["desde"], foto["hasta"], foto["escenas"]) == ("2025-12-29", "2025-12-30", 3)
+    assert (foto["atribucion"], foto["fecha_descarga"]) == (base_foto.ATRIBUCION, "2026-11-19")
+    otro = tmp_path / "base_foto_nucleo.webp"
+    otro.write_bytes(otro.read_bytes()[:-1] + b"X")   # same length, another content
+    with pytest.raises(SystemExit, match="base_foto_nucleo.webp no coincide"):
+        mundo.leer_base_foto(ruta)
+    otro.write_bytes(otro.read_bytes() + b"X")        # another length
+    with pytest.raises(SystemExit, match="base_foto_nucleo.webp no coincide"):
+        mundo.leer_base_foto(ruta)
+    otro.unlink()
+    with pytest.raises(SystemExit, match="falta base_foto_nucleo.webp, que base_foto.json fija"):
+        mundo.leer_base_foto(ruta)
+
+
+def test_autotest_foto_pins_what_the_page_embeds(tmp_path):
+    foto = mundo.leer_base_foto(_foto_mini(tmp_path))
+    t = mundo.autotest_foto(foto, (2011, 4))
+    caja, nucleo = _webp_mini(64, 64, b"caja"), _webp_mini(64, 48, b"nucleo")
+    assert t["capas"] == [{"bytes": len(caja), "suma": sum(caja), "ancho": 64, "alto": 64},
+                          {"bytes": len(nucleo), "suma": sum(nucleo), "ancho": 64, "alto": 48}]
+    assert (t["mes_desde"], t["mes_hasta"], t["escenas"]) == (176, 176, 3)
+
+
+@needs_wh
+def test_payload_carries_the_imagery_only_over_a_base_map_of_the_same_box(tmp_path):
+    """The image drapes over the base map's relief with no reprojection: another box is an error, and a page with
+    no base map or no manifest has no imagery and no reference for it."""
+    ruta = _foto_mini(tmp_path)
+    (tmp_path / "otra").mkdir()
+    corrida = _foto_mini(tmp_path / "otra", caja=[v + 0.5 for v in base_mapa.CAJA])
+    con = duckdb.connect(str(WAREHOUSE), read_only=True)
+    try:
+        con_foto = mundo.collect(con, foto_path=ruta)
+        sin_manifiesto = mundo.collect(con, foto_path=tmp_path / "no_hay.json")
+        sin_mapa = mundo.collect(con, base_path=tmp_path / "no_hay.json", foto_path=ruta)
+        with pytest.raises(SystemExit, match="no cubre la caja del mapa base"):
+            mundo.collect(con, foto_path=corrida)
+    finally:
+        con.close()
+    assert con_foto["foto"] == mundo.leer_base_foto(ruta)
+    assert con_foto["autotest"]["foto"] == mundo.autotest_foto(con_foto["foto"], (2011, 4))
+    assert sin_manifiesto["foto"] is None and "foto" not in sin_manifiesto["autotest"] and sin_manifiesto["base"] is not None
+    assert sin_mapa["foto"] is None and sin_mapa["base"] is None and "foto" not in sin_mapa["autotest"]
+
+
+@needs_wh
+@needs_node
+def test_self_test_reads_the_embedded_imagery_back(data, tmp_path):
+    """The page measures the bytes it carries: it agrees with Python on the pinned images and fails on any other."""
+    con = duckdb.connect(str(WAREHOUSE), read_only=True)
+    try:
+        sin = mundo.collect(con, foto_path=tmp_path / "no_hay.json")
+        con_foto = mundo.collect(con, foto_path=_foto_mini(tmp_path))
+    finally:
+        con.close()
+    out = tmp_path / "mundo.html"
+    mundo.render(sin, out)
+    base = node_autotest(out)["autotest"]
+    mundo.render(con_foto, out)
+    r = node_autotest(out)["autotest"]
+    assert base["fallas"] == [] and r["fallas"] == [] and r["total"] == r["ok"] == base["total"] + 4
+    # another image under the same reference, a core tile that leaves the box, and a reference without its image
+    cambiada = json.loads(json.dumps(con_foto))
+    cambiada["foto"]["capas"][0]["webp"] = base64.b64encode(_webp_mini(64, 64, b"cajb")).decode("ascii")
+    mundo.render(cambiada, out)
+    assert node_autotest(out)["autotest"]["fallas"] == ["imagen del suelo 0"]
+    corrida = json.loads(json.dumps(con_foto))
+    corrida["foto"]["capas"][1]["caja"][2] = base_mapa.CAJA[2] + 1
+    mundo.render(corrida, out)
+    assert node_autotest(out)["autotest"]["fallas"] == ["caja de la imagen"]
+    huerfana = dict(con_foto, foto=None)
+    mundo.render(huerfana, out)
+    assert node_autotest(out)["autotest"]["fallas"] == ["imagen del suelo"]
+
+
+def test_the_ground_reading_says_what_the_image_is_and_when_it_was_taken():
+    """Part E: the image is context with a date. The page states the date in the caption and the legend, warns
+    when the clock is on another month, credits the programme and reads every date through the verified core."""
+    tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
+    app, motor, nucleo = _script(tpl, "app"), _script(tpl, "motor"), _script(tpl, "nucleo")
+    leyenda = re.search(r'<details class="leyenda".*?</details>', tpl, re.S).group(0)
+    for frase in ("La imagen del suelo es contexto: muestra el lugar, no mide nada.", "no cambia con el reloj",
+                  "Cada punto es la boca de un pozo, en su ubicación de superficie.",
+                  "Punto lleno: produjo petróleo este mes.", "Punto apagado: sin petróleo informado este mes.",
+                  "Su tamaño es fijo: no es un frente."):
+        assert frase in leyenda, frase
+    assert '<p class="foto-nota" id="foto-nota" aria-live="polite" hidden></p>' in tpl
+    for frase in ('"La imagen es de " + f + " y no cambia con el reloj: las locaciones que ves en el suelo pueden ser '
+                  'posteriores al mes que estás mirando."',
+                  '" y no cambia con el reloj: un pozo posterior puede no tener todavía su locación en ella."',
+                  '"El suelo es una imagen satelital de " + f + ", atenuada."',
+                  '"Programa Copernicus de la Unión Europea, Sentinel-2: mosaico de " + fmt(FOTO.escenas, 0)',
+                  'con esta atribución: " + FOTO.atribucion', '$("ley-foto-mes").textContent = fotoTxt(true)'):
+        assert frase in app, frase
+    # the month of the image comes from its dates through the core, never from a literal
+    assert "Nucleo.mesDeFecha(M.inicio, FOTO.desde), Nucleo.mesDeFecha(M.inicio, FOTO.hasta)" in app
+    assert not re.search(r"diciembre de|2025", tpl) and "Copernicus Sentinel data" not in tpl
+    assert "foto: D.base && D.foto ? D.foto : null" in nucleo and "medirWebp" in nucleo
+    assert "if (terreno && M.foto) {" in motor   # no image in the payload, no texture and no ground reading
+
+
+def test_the_ground_reading_keeps_the_camera_and_the_rings_on_the_terrain():
+    """Part E: the ground reading draws no depth, so nothing goes there. A flight to a well, a planted well, a
+    highlighted group or a pair of wells ends looking at the terrain, the reach ring of a selected well lies on
+    the ground around its mouth, and the camera stops once it has reached the terrain."""
+    app = _script(mundo.TEMPLATE.read_text(encoding="utf-8"), "app")
+    assert "function ySuelo(x, z, y) { return lectura === 2 ? motor.altSuelo(x, z) : y; }" in app
+    for vuelo in ("volar(lectura === 2 ? { t: [x, motor.altSuelo(x, z), z], dist: 14, az: cam.az, el: Math.max(cam.el, .6) }",
+                  "t: [cx, ySuelo(cx, cz, 0), cz]", "t: [PL.x, ySuelo(PL.x, PL.z, 0), PL.z]",
+                  "t: [(x + vx) / 2, ySuelo((x + vx) / 2, (z + vz) / 2, 0), (z + vz) / 2]"):
+        assert vuelo in app, vuelo
+    # the depth of the reach ring fades with the ground reading, like the plane of the physics tab
+    assert "const y = () => -motor.prof(p) * est.ve * est.ver[2] * (1 - est.suelo);" in app
+    assert "const planoFisica = () => -motor.prof(FI.p) * est.ve * est.ver[2] * (1 - est.lect) * (1 - est.suelo);" in app
+    # the follow settles: below a tenth of a metre it lands on the terrain instead of approaching it forever
+    assert "cam.t[1] += Math.abs(d) < 1e-4 ? d : d * Math.min(1, dt * 4);" in app
+
+
+def test_marks_take_their_colour_from_the_legend_table():
+    """Part E: one table of operator pigments. The timeline, the legend and the ground marks read the same names;
+    the marks use the lighter step of each pigment, declared next to it."""
+    tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
+    css, app = tpl.split("</style>")[0], _script(tpl, "app")
+    pigmentos = re.findall(r"--(\w+)-claro: (#[0-9a-f]{6});", css)
+    assert [n for n, _ in pigmentos] == ["azul", "rosa", "oliva", "ladrillo", "celeste", "ciruela", "gris"]
+    for nombre, _ in pigmentos:
+        assert re.search(rf"--{nombre}: #[0-9a-f]{{6}};", css), nombre
+    assert "const colorOps = pigmentoOps.map(tinta);" in app
+    assert 'pigmentoOps.map(c => { const v = parseInt(tinta(c + "-claro").slice(1), 16);' in app
+    assert "motor.ponerTintas(rgb);" in app and not re.search(r"\[\d{2,3}, \d{2,3}, \d{2,3}\]", app)   # no second table
+
+
+def _oklab(hexa):
+    """OKLab coordinates of an sRGB hex colour (Ottosson, 2020)."""
+    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in (int(hexa[i:i + 2], 16) / 255 for i in (1, 3, 5))]
+    l, m, s = ((0.4122214708 * lin[0] + 0.5363325363 * lin[1] + 0.0514459929 * lin[2]) ** (1 / 3),
+               (0.2119034982 * lin[0] + 0.6806995451 * lin[1] + 0.1073969566 * lin[2]) ** (1 / 3),
+               (0.0883024619 * lin[0] + 0.2817188376 * lin[1] + 0.6299787005 * lin[2]) ** (1 / 3))
+    return (0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+            0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s)
+
+
+def test_mark_colours_can_be_told_apart():
+    """Part E: the marks carry the operator by colour alone, so no two of them may sit close. The floor is an
+    OKLab distance of 0.13 between any pair; the first table, with every pigment at one lightness, had pairs at 0.08."""
+    css = mundo.TEMPLATE.read_text(encoding="utf-8").split("</style>")[0]
+    marcas = dict(re.findall(r"--(\w+)-claro: (#[0-9a-f]{6});", css))
+    assert len(marcas) == 7
+    assert _oklab("#ffffff")[0] == pytest.approx(1, abs=1e-6) and _oklab("#000000") == (0, 0, 0)
+    for (a, ca), (b, cb) in itertools.combinations(marcas.items(), 2):
+        assert math.dist(_oklab(ca), _oklab(cb)) >= .13, (a, b)
+    # the grey of "Otros" carries almost no hue, so it is never read as one of the blues
+    assert math.hypot(*_oklab(marcas["gris"])[1:]) < .02
+
+
+def test_every_icon_comes_from_the_one_sprite():
+    """Part F: one icon family. Every icon is a <use> of a symbol in the inline sprite, the symbols share one 20 px
+    grid, none is dead weight, and each icon is hidden from assistive tech: a control is named by its text or its
+    aria-label, never by its drawing."""
+    tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
+    simbolos = re.findall(r'<symbol id="(i-[a-z]+)" viewBox="([^"]+)">', tpl)
+    nombres = {n for n, _ in simbolos}
+    assert len(simbolos) == len(nombres) >= 20 and tpl.count("<symbol ") == len(simbolos)
+    assert {v for _, v in simbolos} == {"0 0 20 20"}
+    usados = set(re.findall(r'<use (?:id="[a-z-]+" )?href="#(i-[a-z]+)"/>', tpl)) | set(re.findall(r'"#(i-[a-z]+)"', _script(tpl, "app")))
+    assert usados == nombres, usados ^ nombres
+    cuerpo = tpl.split("</style>")[1]
+    assert cuerpo.count("<use ") == cuerpo.count('<svg class="ico" aria-hidden="true"><use ') >= 25
+    # the page stays self-contained: the sprite is inline and nothing points outside the document
+    assert not re.search(r'<use [^>]*href="(?!#)', tpl)
+
+
+def test_the_sky_and_the_haze_are_ambience_and_say_so():
+    """Part F: the ground reading draws a sky and a haze toward the horizon. They are drawn only over the satellite
+    image in the ground reading, the background and the terrain share one haze colour and one pair of distances (each
+    with its own ramp), and the legend says they measure nothing. The shading of the relief is computed from the real relief, and the legend says that too."""
+    tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
+    motor = _script(tpl, "motor")
+    assert "const FS_CIELO = CAB + `" in motor and "pCielo = programa(VS_PANT, FS_CIELO)" in motor
+    assert "const k = foto.k * enSuelo() * est.mapa * (1 - est.morph), th = Math.tan(FOV / 2);\n      if (k <= 0) return;" in motor
+    assert "if (terreno) { dibujarFondo(); dibujarMapa(); }" in motor
+    assert motor.count("vec3(.76, .80, .81)") == 2
+    assert 'gl.uniform2fv(pCielo.u("u_niebla"), niebla());' in motor and 'gl.uniform2fv(pTerreno.u("u_niebla"), niebla());' in motor
+    assert ('<li class="ley-suelo"><span class="marca dato">dato</span>El relieve es el de la misión SRTM. Su sombreado se calcula acá, '
+            'con luz del noroeste. La bruma del horizonte y el cielo son ambiente: no miden nada.</li>') in tpl
+    assert "/* Sombreado: luz del noroeste sobre la pendiente" in motor and "const L = norm([-.62, .6, -.5]);" in motor
+
+
+def test_the_image_caution_sits_in_the_margin_or_in_the_cartouche():
+    """Part F: on a wide screen the caution about the image date sits in the map margin, with the sources and the
+    scale; on a phone it sits in the cartouche. It is one element, so its text and its live region are the same in
+    both places, and the well card leaves room for the margin at its measured height."""
+    tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
+    css, app = tpl.split("</style>")[0], _script(tpl, "app")
+    assert tpl.count('id="foto-nota"') == 1
+    assert '<div class="margen" id="margen" hidden>\n    <p class="foto-nota" id="foto-nota" aria-live="polite" hidden></p>\n' in tpl
+    assert 'const fn = $("foto-nota"), casa = an ? $("margen") : document.querySelector(".titulo");' in app
+    assert "if (fn.parentNode !== casa) { if (an) casa.prepend(fn); else casa.append(fn); }" in app
+    assert "if (fn.textContent !== nota) { fn.textContent = nota; fn.hidden = !nota; }" in app
+    assert css.count("var(--alto-margen, 64px)") == 2 and 'style.setProperty("--alto-margen", Math.round(margen.getBoundingClientRect().height) + "px")' in app
+    # one left column: the cartouche, the tour card and the tool panel share a width, and the lens shift knows it
+    assert "min-width: min(470px, calc(100vw - 40px));" in css and css.count("width: min(470px, calc(100vw - 40px));") == 3
+    assert "const bordeRelato = () => 20 + Math.min(470, window.innerWidth - 40);" in app
+    assert "const bordeTaller = () => 20 + Math.min(470, window.innerWidth - 40);" in app
+
+
+def test_the_help_names_only_keys_the_page_listens_to():
+    """Part F: the folded help gives one row per move. Every key it names is read by the keyboard handler, and the
+    drag with Shift is the one the pointer handler pans with."""
+    tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
+    app = _script(tpl, "app")
+    ayuda = re.search(r'<details class="leyenda ayuda" id="ayuda">\n(.*?)</details>', tpl, re.S).group(1)
+    assert re.findall(r"<dt>(.*?)</dt>", ayuda) == ["Girar", "Moverte", "Acercarte", "Inclinar"]
+    teclas = re.findall(r"<kbd>(.*?)</kbd>", ayuda)
+    assert teclas == ["Q", "E", "Mayús", "W", "A", "S", "D", "+", "−", "R", "F"]
+    assert "else if (e.shiftKey || e.buttons === 2) desplazar(dx, dy);" in app
+    for t in teclas:
+        if t != "Mayús":
+            assert 'on("%s")' % {"−": "-"}.get(t, t.lower()) in app, t
+    assert '<p class="toque">Tocá un pozo para ver su ficha.</p>' in tpl
+    assert ".taller .ayuda { display: none; }" in tpl.split("</style>")[0]   # a phone has no keys to list
+
+
+def test_marks_never_grow_and_plates_that_scroll_say_there_is_more():
+    """Part F: on a narrow canvas the marks shrink, by 28 % at most, and never grow, so the size still reads as the
+    month's oil. A panel or a card with content left below its edge fades there, and stops fading at the end."""
+    tpl = mundo.TEMPLATE.read_text(encoding="utf-8")
+    css, motor, app = tpl.split("</style>")[0], _script(tpl, "motor"), _script(tpl, "app")
+    assert 'gl.uniform1f(pMarca.u("u_talla"), Math.max(.72, Math.min(1, ancho / est.dpr / 900)));' in motor
+    assert "tope, min(1., e.x)), activo) * (sel ? 1.6 : 1.) * u_talla;" in motor
+    assert 'const CORREN = [...document.querySelectorAll(".taller .hoja"), $("ficha")];' in app
+    assert 'h.classList.toggle("sigue", !h.hidden && h.scrollHeight - h.scrollTop - h.clientHeight > 8);' in app
+    assert ".taller .hoja.sigue::after, .ficha.sigue::after {" in css and "pointer-events: none; }\n.ficha.sigue::after" in css
 
 
 # ---- generated file ----
@@ -1292,6 +1631,9 @@ def test_generated_payload_matches_the_contract():
     assert len(decode(d["fracs"]["pozo"], "H")) == len(decode(d["fracs"]["dia"], "H")) > 0
     assert all(len(col) == n for col in d["pozos"].values())
     # part D: the map sheet in the page is the product in the repo, and every source names its licence
+    # part E: the finer relief of the core travels inside it, and it is the product in the repo as well
+    fino = d["base"].pop("relieve_fino")
+    assert fino == json.loads(base_mapa.FINO.read_text(encoding="utf-8"))
     assert d["base"] == json.loads(mundo.BASE_MAPA.read_text(encoding="utf-8")) and d["base"]["v"] == 1
     assert d["base"]["fuentes"] and all(f["licencia"] and f["organismo"] and f["sha256"] for f in d["base"]["fuentes"])
     assert set(d["autotest"]["base"]["capas"]) == {"rios", "agua", "limites", "bloques"}

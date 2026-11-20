@@ -18,7 +18,7 @@ import math
 import re
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
 
@@ -48,6 +48,7 @@ class Claim:
     lento: bool = False               # runs a subprocess; skipped with --rapido
     almacen: str = "vm"               # "vm" (data/warehouse.duckdb), the id of a basin (data/<id>/warehouse.duckdb, pipeline/cuencas.py) or "familia" (all of them)
     opcional: bool = False            # SKIP instead of FAIL when the sentence is not in the text (it appears only in one reading of the data)
+    tabla: str = ""                   # SKIP when this table is not in the warehouse (written by a step that runs only with a flag)
 
 
 @dataclass
@@ -90,6 +91,8 @@ def evaluar(c: Claim, texto: str, con, lentos: bool = True, con_co=None, con_alm
         con = (con_alm or {}).get(c.almacen, con_co if c.almacen == "colorado" else None)
     if c.requiere_wh and con is None:
         return Resultado(c, "SKIP", detalle=f"sin data/{c.almacen}/warehouse.duckdb" if c.almacen != "vm" else "sin data/warehouse.duckdb")
+    if c.tabla and not con.execute("select count(*) from information_schema.tables where table_name = ?", [c.tabla]).fetchone()[0]:
+        return Resultado(c, "SKIP", detalle=f"sin la tabla {c.tabla} en el warehouse")
     doc = extraer(texto, c.patron)
     if doc is None and c.opcional:
         return Resultado(c, "SKIP", detalle="la frase no esta en este texto (depende de la lectura de los datos)")
@@ -507,8 +510,8 @@ NEG = r"(-\d+,\d+)"      # negative decimal with comma
 SIG = r"(-?\d+,\d+)"     # decimal with comma, either sign
 
 
-def _c(id, fichero, patron, fn, tol=0.5, formato="{:,.0f}", wh=True, lento=False, almacen="vm", opcional=False) -> Claim:
-    return Claim(id, fichero, patron, fn, tol, formato, wh, lento, almacen, opcional)
+def _c(id, fichero, patron, fn, tol=0.5, formato="{:,.0f}", wh=True, lento=False, almacen="vm", opcional=False, tabla="") -> Claim:
+    return Claim(id, fichero, patron, fn, tol, formato, wh, lento, almacen, opcional, tabla)
 
 
 W_CO = "wiki/hallazgos/colorado_datos.md"
@@ -611,7 +614,7 @@ W_MB = "wiki/hallazgos/mapa_base.md"
 
 
 def _mb(clave: str) -> Callable:
-    """Recuento del mapa base del mundo 4D, leido de data/base_mapa.json (no necesita ningun warehouse)."""
+    """Recuento del mapa base de la pagina 3D, leido de data/base_mapa.json (no necesita ningun warehouse)."""
     def f(_con):
         from pipeline.base_mapa import DESTINO, recuentos
         return float(recuentos(json.loads(DESTINO.read_text(encoding="utf-8")))[clave])
@@ -630,6 +633,129 @@ def _claims_mapa_base() -> list[Claim]:
             ("bloques", r"- " + N + r" concesiones de explotación de"),
             ("operadoras", r"concesiones de explotación de " + N + r" empresas operadoras")]
     return [_c(f"mb_{k}@mapa_base", W_MB, pat, _mb(k), 0, wh=False) for k, pat in pats]
+
+
+def _claims_relieve_fino() -> list[Claim]:
+    """Finer relief of the core on the base map page, read from data/base_relieve_nucleo.json (no warehouse needed)."""
+    def f(clave):
+        def g(_con):
+            from pipeline.base_mapa import leer_fino, recuentos_fino
+            return float(recuentos_fino(leer_fino())[clave])
+        return g
+    fina, cerca = r"segunda grilla fina de ", r"segundos de arco \(cerca de "
+    pats = [("cols", fina + N + r" por [\d.]+ celdas"), ("filas", fina + r"[\d.]+ por " + N + r" celdas"),
+            ("paso_seg", fina + r"[\d.]+ por [\d.]+ celdas de " + N + r" segundos de arco"),
+            ("m_este", fina + r"[^\n]*?" + cerca + N + r" m hacia el este"),
+            ("m_sur", fina + r"[^\n]*?" + cerca + r"\d+ m hacia el este y " + N + r" m hacia el sur"),
+            ("cota_min", fina + r"[^\n]*?hacia el sur\), con cotas de " + N + r" a "),
+            ("cota_max", fina + r"[^\n]*?hacia el sur\), con cotas de [\d.]+ a " + N + r" m\. "),
+            ("margen_pct", r"junto a cada borde, el " + N + r" % del lado del recorte")]
+    return [_c(f"rf_{k}@mapa_base", W_MB, pat, f(k), 0, wh=False) for k, pat in pats]
+
+
+def _ex(*ruta, por: float = 1) -> Callable:
+    """Absolute value of one accuracy measurement of the Mundo page, read from data/exactitud.json."""
+    def f(_con):
+        from pipeline.base_mapa import leer_exactitud
+        v = leer_exactitud()
+        for k in ruta:
+            v = v[k]
+        return abs(float(v)) * por
+    return f
+
+
+def _claims_exactitud() -> list[Claim]:
+    """Every number of the accuracy section of the base map page against data/exactitud.json (no warehouse needed)."""
+    def lugares(grupo, filas):
+        out = []
+        for i, f in enumerate(filas):
+            n = re.escape(f["nombre"])
+            out.append((f"{grupo}{i}_fuente", n + r": " + N + r" m en la fuente", ("relieve", grupo, i, "fuente_m"), {}))
+            out.append((f"{grupo}{i}_pagina", n + r": [\d.]+ m en la fuente y " + N + r" m en la página",
+                        ("relieve", grupo, i, "pagina_m"), {}))
+        return out
+
+    from pipeline.base_mapa import leer_exactitud
+    e = leer_exactitud()
+    if e is None:
+        return []
+    uno, dos = {"tol": 0.05, "formato": "{:.1f}"}, {"tol": 0.005, "formato": "{:.2f}"}
+    lado = r" % (?:largas|cortas) "
+    pats = [
+        ("pagina_pozos", r"sobre la página publicada \(datos a [\d-]+, " + N + r" pozos\)", ("pagina", "pozos"), {}),
+        ("pozos_n", r"en las bocas de los " + N + r" pozos que caen dentro", ("relieve", "pozos", "n"), {}),
+        ("pozos_mediana", r"segundo de arco en " + DEC + r" m de mediana", ("relieve", "pozos", "mediana"), uno),
+        ("pozos_p99", r"de mediana; el 99 % queda a " + DEC + r" m o menos", ("relieve", "pozos", "p99"), uno),
+        ("pozos_max", r"y el peor caso es de " + DEC + r" m\. Con la grilla", ("relieve", "pozos", "max"), uno),
+        ("hoja_mediana", r"en esos mismos pozos, la mediana era de " + DEC + r" m", ("relieve", "solo_hoja", "mediana"), uno),
+        ("hoja_p99", r"el 99 % quedaba a " + DEC + r" m o menos", ("relieve", "solo_hoja", "p99"), uno),
+        ("nucleo_n", r"En los " + N + r" pozos donde rige entero", ("relieve", "pozos_nucleo", "n"), {}),
+        ("nucleo_mediana", r"relieve fino, la mediana es de " + DEC + r" m", ("relieve", "pozos_nucleo", "mediana"), uno),
+        ("nucleo_p99", r"la mediana es de \d+,\d+ m, el 99 % queda a " + DEC + r" m o menos",
+         ("relieve", "pozos_nucleo", "p99"), uno),
+        ("nucleo_max", r"y el peor caso es de " + DEC + r" m; en esos", ("relieve", "pozos_nucleo", "max"), uno),
+        ("hoja_nucleo_mediana", r"hoja sola eran " + DEC + r" m y ", ("relieve", "solo_hoja_nucleo", "mediana"), uno),
+        ("hoja_nucleo_p99", r"hoja sola eran \d+,\d+ m y " + DEC + r" m\.", ("relieve", "solo_hoja_nucleo", "p99"), uno),
+        *lugares("cumbres", e["relieve"]["cumbres"]), *lugares("niveles", e["relieve"]["niveles"]),
+        ("ind_n", r"muestra fija de " + N + r" bocas", ("relieve", "independiente", "n"), {}),
+        ("ind_fuente_mediana", r"la fuente da " + DEC + r" m (?:más|menos) que el modelo",
+         ("relieve", "independiente", "fuente_mediana"), uno),
+        ("ind_fuente_max", r"diferencia máxima de " + DEC + r" m; la página",
+         ("relieve", "independiente", "fuente_max"), uno),
+        ("ind_pagina_mediana", r"; la página da " + DEC + r" m (?:más|menos), con",
+         ("relieve", "independiente", "pagina_mediana"), uno),
+        ("ind_pagina_max", r"con una máxima de " + DEC + r" m\.", ("relieve", "independiente", "pagina_max"), uno),
+        ("pads", r"centrados en " + N + r" locaciones", ("imagen", "pads"), {}),
+        ("meses_antes", r"al menos " + N + r" meses antes de la imagen", ("imagen", "meses_antes"), {}),
+        ("pico_sd", r", de " + DEC + r" desvíos sobre el entorno", ("imagen", "pico_sd"), uno),
+        ("este_m", r"su centro queda a " + N + r" m al (?:este|oeste)", ("imagen", "este_m"), {}),
+        ("norte_m", r"m al (?:este|oeste) y " + N + r" m al (?:norte|sur) de la posición", ("imagen", "norte_m"), {}),
+        ("pixel_este", r"un píxel mide " + N + r" por \d+ m", ("imagen", "pixel_m", 0), {}),
+        ("pixel_sur", r"un píxel mide \d+ por " + N + r" m\. El", ("imagen", "pixel_m", 1), {}),
+        ("claros_pct", r"m\. El " + N + r" % de las locaciones", ("imagen", "claros_pct"), {}),
+        ("control_km", r"La misma pila corrida " + N + r" km al este", ("imagen", "control_km"), {}),
+        ("control_sd", r"llega a " + DEC + r" desvíos", ("imagen", "control_sd"), uno),
+        ("agua_iou", r"imagen en el " + DEC + r" % \(intersección", ("imagen", "agua_iou"), dict(uno, por=100)),
+        ("busca_px", r"corrimiento de hasta " + N + r" píxeles", ("imagen", "busca_px"), {}),
+        ("km_grado_lat", r"cada grado de latitud como " + DEC + r" km", ("dibujo", "km_grado"), dos),
+        ("km_grado_lon", r"cada grado de longitud como " + DEC + r" km", ("dibujo", "km_grado"), dos),
+        ("ns_pct", r"las distancias norte-sur un " + DEC + r" %", ("dibujo", "ns_pct"), dos),
+        ("eo_nucleo_norte", r"quedan un " + DEC + lado + r"en el borde norte del núcleo", ("dibujo", "eo_nucleo_pct", 0), uno),
+        ("eo_nucleo_sur", r"del núcleo y un " + DEC + lado + r"en el borde sur", ("dibujo", "eo_nucleo_pct", 1), uno),
+        ("eo_hoja_norte", r"bordes de la hoja, un " + DEC + lado + r"al norte", ("dibujo", "eo_hoja_pct", 0), uno),
+        ("eo_hoja_sur", r"al norte y un " + DEC + lado + r"al sur", ("dibujo", "eo_hoja_pct", 1), uno),
+        ("medio_seg_este", r"que promedian, cerca de " + N + r" m al este", ("dibujo", "medio_segundo_m", 0), {}),
+        ("medio_seg_sur", r"que promedian, cerca de \d+ m al este y " + N + r" m al sur", ("dibujo", "medio_segundo_m", 1), {}),
+    ]
+    out = []
+    for k, pat, ruta, extra in pats:
+        extra = dict(extra)
+        out.append(_c(f"ex_{k}@mapa_base", W_MB, pat, _ex(*ruta, por=extra.pop("por", 1)), extra.pop("tol", 0),
+                      extra.pop("formato", "{:,.0f}"), wh=False))
+    return out
+
+
+def _bf(clave: str) -> Callable:
+    """Recuento de la imagen del suelo de la pagina 3D, leido de data/base_foto.json (no necesita ningun warehouse)."""
+    def f(_con):
+        from pipeline.base_foto import DESTINO, recuentos
+        return float(recuentos(json.loads(DESTINO.read_text(encoding="utf-8")))[clave])
+    return f
+
+
+def _claims_base_foto() -> list[Claim]:
+    hoja, recorte = r"La hoja entera mide ", r"cubre el núcleo, .{0,120}? Mide "
+    pats = [("escenas", r"Es un mosaico de " + N + r" escenas"), ("principal", r": " + N + r" de la órbita principal"),
+            ("relleno", r"órbita principal y " + N + r" de la órbita vecina"),
+            ("caja_ancho", hoja + N + r" por [\d.]+ píxeles"), ("caja_alto", hoja + r"[\d.]+ por " + N + r" píxeles"),
+            ("caja_m_este", hoja + r"[^\n]*?cerca de " + N + r" m hacia el este"),
+            ("caja_m_sur", hoja + r"[^\n]*?hacia el este y " + N + r" m hacia el sur"),
+            ("nucleo_ancho", recorte + N + r" por [\d.]+ píxeles"), ("nucleo_alto", recorte + r"[\d.]+ por " + N + r" píxeles"),
+            ("nucleo_m_este", recorte + r"[^\n]*?cerca de " + N + r" m hacia el este"),
+            ("nucleo_m_sur", recorte + r"[^\n]*?hacia el este y " + N + r" m hacia el sur"),
+            ("caja_bytes", r"base_foto_caja\.webp`: " + N + r" bytes"),
+            ("nucleo_bytes", r"base_foto_nucleo\.webp`: " + N + r" bytes")]
+    return [_c(f"bf_{k}@mapa_base", W_MB, pat, _bf(k), 0, wh=False) for k, pat in pats]
 
 
 def _claims_fuentes_mundo() -> list[Claim]:
@@ -966,6 +1092,957 @@ def _claims_potencia_dosis() -> list[Claim]:
            _mayor("A"), 0.006, "{:.2f}"),
     ]
     return cl
+
+
+W_DIAS = "wiki/hallazgos/dias_perdidos.md"
+
+
+def _claims_dias_perdidos() -> list[Claim]:
+    """Numeros de la pagina de dias perdidos contra sus marts: brecha, pruebas B y C, volumen, valor, ensayo y meses cerrados.
+    La seccion de Colorado se ancla en "En Colorado ..." y lee los marts _colorado, que se guardan en el warehouse de Vaca Muerta."""
+    def _p(prueba: str, est: str, col: str = "valor", por: float = 1.0, cuenca: str = "") -> Callable:
+        t = "mart_dias_perdidos" + (f"_{cuenca}" if cuenca else "") + "_prueba"
+        return lambda con: por * con.execute(
+            f"select {col} from {t} where prueba = '{prueba}' and estadistico = '{est}'").fetchone()[0]
+
+    def _banda(col: str, cuenca: str = "") -> Callable:
+        t = "mart_dias_perdidos" + (f"_{cuenca}" if cuenca else "")
+        return lambda con: con.execute(f"select {col} from {t} where banda = 'cercano'").fetchone()[0]
+
+    def _co(prueba: str, est: str, col: str = "valor", por: float = 1.0) -> Callable:
+        return _p(prueba, est, col, por, "colorado")
+
+    def _cc(*a, tabla: str = "mart_dias_perdidos_colorado_prueba", **k) -> Claim:  # las de Colorado: SKIP sin el mart que leen,
+        return _c(*a, tabla=tabla, **k)                                               # que escribe solo run_all --with-colorado
+
+    def _op(operador: str) -> Callable:
+        return lambda con: con.execute("select brecha from mart_dias_perdidos_operador where operador = ?", [operador]).fetchone()[0]
+
+    def _valor(con) -> float:
+        from pipeline.decision import valor_indicativo
+        return valor_indicativo(_banda("brecha_vol_m3")(con) * _p("A", "eventos_cercanos_12m")(con), 60, 0.10, 12)["costo_de_diferir"] / 1e6
+
+    out = [
+        _c("dias_brecha@wiki", W_DIAS, r"pierde " + DEC + r" días más que un control", _p("A", "brecha_dias"), 0.05, "{:.1f}"),
+        _c("dias_brecha_ic_bajo@wiki", W_DIAS, r"días más que un control \(IC 95% " + SD + r" a", _p("A", "brecha_dias", "ic_bajo"), 0.05, "{:.1f}"),
+        _c("dias_brecha_ic_alto@wiki", W_DIAS, r"días más que un control \(IC 95% -?\d+,\d+ a " + SD + r";", _p("A", "brecha_dias", "ic_alto"), 0.05, "{:.1f}"),
+        _c("dias_n_cercanos@wiki", W_DIAS, N + r" eventos cercanos\)", _p("A", "brecha_dias", "n"), 0),
+        _c("dias_b_diferencia@wiki", W_DIAS, r"en la segunda mitad: " + SD + r" días", _p("B", "diferencia_dias"), 0.05, "{:.1f}"),
+        _c("dias_b_ic_bajo@wiki", W_DIAS, r"en la segunda mitad: -?\d+,\d+ días \(IC 95% " + SD + r" a", _p("B", "diferencia_dias", "ic_bajo"), 0.05, "{:.1f}"),
+        _c("dias_b_ic_alto@wiki", W_DIAS, r"en la segunda mitad: -?\d+,\d+ días \(IC 95% -?\d+,\d+ a " + SD + r";",
+           _p("B", "diferencia_dias", "ic_alto"), 0.05, "{:.1f}"),
+        _c("dias_b_operadores@wiki", W_DIAS, r"; " + N + r" operadores; veredicto", _p("B", "diferencia_dias", "n"), 0),
+        _c("dias_c_pendiente@wiki", W_DIAS, r"Pendiente: " + SD + r" puntos logarítmicos", _p("C", "pendiente", por=100), 0.05, "{:.1f}"),
+        _c("dias_c_cota@wiki", W_DIAS, r"mayor beneficio compatible con el dato es " + SD + r" puntos", _p("C", "pendiente", "ic_alto", 100), 0.05, "{:.1f}"),
+        _c("dias_c_mde@wiki", W_DIAS, r"efecto mínimo detectable: " + DEC + r" puntos", _p("C", "mde", por=100), 0.05, "{:.1f}"),
+        _c("dias_volumen@wiki", W_DIAS, r"equivalen a " + N + r" m3 de petróleo por evento cercano", _banda("brecha_vol_m3")),
+        _c("dias_eventos_12m@wiki", W_DIAS, r"por los " + N + r" eventos cercanos de los últimos 12 meses", _p("A", "eventos_cercanos_12m"), 0),
+        _c("dias_valor_60_10_12@wiki", W_DIAS, r"\| 60 \| 10% \| \d+,\d+ \| " + DEC + r" \|", _valor, 0.05, "{:.1f}"),
+        _c("dias_ensayo_10@wiki", W_DIAS, r"hacen falta [\d.]+, " + N + r" y [\d.]+ eventos por rama", _p("E", "n_por_rama_10"), 0),
+        _c("dias_cerrado_cercano@wiki", W_DIAS, r"El " + DEC + r"% de los eventos cercanos tiene al menos un mes",
+           _p("F", "parte_con_mes_cerrado_cercano", por=100), 0.05, "{:.1f}"),
+        _c("dias_ypf@wiki", W_DIAS, r"\| YPF \| [\d.]+ \| [\d.]+ \| " + SD + r" \|", _op("YPF"), 0.05, "{:.1f}"),
+        _c("dias_vista@wiki", W_DIAS, r"\| Vista \| [\d.]+ \| [\d.]+ \| " + SD + r" \|", _op("Vista"), 0.05, "{:.1f}"),
+        _cc("dias_co_lectura@wiki", W_DIAS, r"misma regla: brecha de días, [^(]+\(" + SD + r" días, IC 95%", _co("A", "brecha_dias"), 0.05, "{:.1f}"),
+    ]
+    a, b, c = r"En Colorado la brecha es de ", r"En Colorado la diferencia entre el grupo alto y el bajo en la segunda mitad es de ", \
+        r"En Colorado la pendiente es de "
+    ic = r"-?\d+,\d+ días \(IC 95% "
+    for k, cabeza, prueba, est, por, uni in (("a", a, "A", "brecha_dias", 1, " días"), ("b", b, "B", "diferencia_dias", 1, " días"),
+                                            ("c", c, "C", "pendiente", 100, " puntos")):
+        icc = ic.replace("días", "puntos logarítmicos por cada 10 días") if k == "c" else ic
+        out += [
+            _cc(f"dias_co_{k}@wiki", W_DIAS, cabeza + SD + uni, _co(prueba, est, por=por), 0.05, "{:.1f}"),
+            _cc(f"dias_co_{k}_ic_bajo@wiki", W_DIAS, cabeza + icc + SD + r" a", _co(prueba, est, "ic_bajo", por), 0.05, "{:.1f}"),
+            _cc(f"dias_co_{k}_ic_alto@wiki", W_DIAS, cabeza + icc + r"-?\d+,\d+ a " + SD + r";", _co(prueba, est, "ic_alto", por), 0.05, "{:.1f}"),
+            _cc(f"dias_co_{k}_n@wiki", W_DIAS, cabeza + icc + r"-?\d+,\d+ a -?\d+,\d+; " + N + " ", _co(prueba, est, "n"), 0),
+        ]
+    return out + [
+        _cc("dias_co_c_cota@wiki", W_DIAS, c + r"[^\n]*?El mayor beneficio compatible con el dato es " + SD + r" puntos",
+           _co("C", "pendiente", "ic_alto", 100), 0.05, "{:.1f}"),
+        _cc("dias_co_volumen@wiki", W_DIAS, r"En Colorado los días de más equivalen a " + N + r" m3", _banda("brecha_vol_m3", "colorado"),
+            tabla="mart_dias_perdidos_colorado"),
+        _cc("dias_co_sigma@wiki", W_DIAS, r"con el desvío de sus residuos de C \(" + DEC + r"\)", _co("C", "sigma"), 0.005, "{:.2f}"),
+        _cc("dias_co_ensayo_10@wiki", W_DIAS, r"se necesitan [\d.]+, " + N + r" y [\d.]+ eventos por rama", _co("E", "n_por_rama_10"), 0),
+        _cc("dias_co_crestone@wiki", W_DIAS, r"\| CRESTONE PEAK RESOURCES OPERATING LLC \| [\d.]+ \| [\d.]+ \| " + SD + r" \|",
+           lambda con: con.execute("select brecha from mart_dias_perdidos_colorado_operador where operador = ?",
+                                   ["CRESTONE PEAK RESOURCES OPERATING LLC"]).fetchone()[0], 0.05, "{:.1f}",
+            tabla="mart_dias_perdidos_colorado_operador"),
+    ]
+
+
+W_GOLPES = "wiki/hallazgos/golpes_mismo_mes.md"
+
+
+def _claims_golpes_mismo_mes() -> list[Claim]:
+    """Numeros de la pagina de golpes en el mismo mes contra sus marts: la tabla del modelo (las dos cuencas), la muestra, la
+    tabla por k, la lectura y el diagnostico. Las de Colorado SKIP sin los marts _colorado (solo run_all --with-colorado)."""
+    def _p(prueba: str, est: str, col: str = "valor", cuenca: str = "") -> Callable:
+        t = "mart_golpes_mismo_mes" + (f"_{cuenca}" if cuenca else "") + "_prueba"
+        return lambda con: con.execute(f"select {col} from {t} where prueba = ? and estadistico = ?", [prueba, est]).fetchone()[0]
+
+    def _k(grupo: str, col: str, cuenca: str = "") -> Callable:
+        t = "mart_golpes_mismo_mes" + (f"_{cuenca}" if cuenca else "")
+        return lambda con: con.execute(f"select {col} from {t} where grupo = ?", [grupo]).fetchone()[0]
+
+    TCO = "mart_golpes_mismo_mes_colorado_prueba"
+    ENT = r"(-?[\d.]+)"    # entero con signo y puntos de miles
+    num = r"-?[\d.]+(?:,\d+)?"
+    out: list[Claim] = []
+    filas = (("principal", "Principal", "a", r"a: costo fijo del mes \(días de base\)", 1),
+             ("principal", "Principal", "b", r"b: costo de cada hijo \(días de base\)", 1),
+             ("principal", "Principal", "a_mas_b", r"a \+ b: un mes con un solo hijo \(días de base\)", 1),
+             ("principal", "Principal", "phi", r"φ = a / \(a \+ b\)", 2),
+             *(("principal", "Principal", f"rho_{k}", f"ρ con {k} hijos \\(juntos sobre separados\\)", 2) for k in (2, 3, 4, 6)),
+             ("S1", "S1, volumen", "a_m3", r"a \(m3\)", 0),
+             ("S1", "S1, volumen", "b_m3", r"b \(m3\)", 0),
+             ("S1", "S1, volumen", "a_mas_b_m3", r"a \+ b \(m3\)", 0),
+             ("S1", "S1, volumen", "phi_m3", r"φ en volumen", 2),
+             ("S2", "S2, sin aislamiento", "a", r"a \(días de base\)", 1),
+             ("S2", "S2, sin aislamiento", "b", r"b \(días de base\)", 1),
+             ("S2", "S2, sin aislamiento", "a_mas_b", r"a \+ b \(días de base\)", 1),
+             ("S2", "S2, sin aislamiento", "phi", r"φ", 2))
+    for prueba, etq, est, desc, dec in filas:
+        cap, tol, fmt_ = (ENT, 0.5, "{:,.0f}") if dec == 0 else (SD, 0.5 * 10 ** -dec, f"{{:.{dec}f}}")
+        cab = r"\| " + etq + r" \| " + desc + r" \| "
+        for sufijo, cuenca, salto in (("", "", ""), ("_co", "colorado", num + r" \| " + num + r" a " + num + r" \| ")):
+            kw = {"tabla": TCO} if cuenca else {}
+            base = f"golpes{sufijo}_{prueba.lower()}_{est}@wiki"
+            out += [_c(base, W_GOLPES, cab + salto + cap + r" \| ", _p(prueba, est, cuenca=cuenca), tol, fmt_, **kw),
+                    _c(base.replace("@", "_ic_bajo@"), W_GOLPES, cab + salto + num + r" \| " + cap + r" a ",
+                       _p(prueba, est, "ic_bajo", cuenca), tol, fmt_, **kw),
+                    _c(base.replace("@", "_ic_alto@"), W_GOLPES, cab + salto + num + r" \| " + num + r" a " + cap + r" \|",
+                       _p(prueba, est, "ic_alto", cuenca), tol, fmt_, **kw)]
+    conteos = (("conteo", "cercanos", r"Eventos cercanos \(hijo más cercano a menos de 1 km\)"),
+               ("conteo", "aislados_con_ventana", r"Aislados con la ventana completa \(muestra principal\)"),
+               ("conteo", "un_hijo_aislados", r"De ellos, con un solo hijo en el mes"),
+               ("conteo", "cercanos_con_ventana", r"Con la ventana completa \(muestra de S2\)"),
+               ("conteo", "controles_con_ventana", r"Controles con la ventana completa \(índice de control\)"),
+               ("principal", "pads", r"Pads hijo de la muestra principal"),
+               ("principal", "padres", r"Padres de la muestra principal"),
+               ("principal", "valores_k_con_n_k", r"Valores de k con al menos \d+ eventos"))
+    for prueba, est, desc in conteos:
+        out += [_c(f"golpes_n_{est}@wiki", W_GOLPES, r"\| " + desc + r" \| " + N + r" \|", _p(prueba, est), 0),
+                _c(f"golpes_co_n_{est}@wiki", W_GOLPES, r"\| " + desc + r" \| [\d.]+ \| " + N + r" \|", _p(prueba, est, cuenca="colorado"),
+                   0, tabla=TCO)]
+    co_k = r"## Colorado \(confirmatoria\).*?"  # la tabla por k de Colorado es la segunda; se ancla en su seccion
+    for n, grupo in enumerate(("1", "2", "3", "4", "5 a 6", "7 o más")):
+        fila = r"\| " + grupo + r" \| [\d.]+ \| [\d.]+ \| \d+,\d \| "
+        for sufijo, cuenca, ancla in (("", "", ""), ("_co", "colorado", co_k)):
+            kw = {"tabla": "mart_golpes_mismo_mes_colorado"} if cuenca else {}
+            out += [_c(f"golpes{sufijo}_k{n + 1}_perdida@wiki", W_GOLPES, ancla + fila + SD + r" \|", _k(grupo, "perdida", cuenca), 0.05,
+                       "{:.1f}", **kw),
+                    _c(f"golpes{sufijo}_k{n + 1}_por_hijo@wiki", W_GOLPES, ancla + fila + num + r" \| " + num + r" a " + num + r" \| " + SD + r" \|",
+                       _k(grupo, "por_hijo", cuenca), 0.05, "{:.1f}", **kw),
+                    _c(f"golpes{sufijo}_k{n + 1}_eventos@wiki", W_GOLPES, ancla + r"\| " + grupo + r" \| " + N + r" \|", _k(grupo, "n", cuenca),
+                       0, **kw)]
+    lect = r"Vaca Muerta \(regla informada\): \*\*[^*]+\*\*\. [^\n]*?Un mes con un solo hijo, a \+ b = "
+    out += [
+        _c("golpes_lectura_ab@wiki", W_GOLPES, lect + SD + r" días", _p("principal", "a_mas_b"), 0.05, "{:.1f}"),
+        _c("golpes_lectura_ab_ic_bajo@wiki", W_GOLPES, lect + r"-?\d+,\d+ días de producción de base \(IC 95% " + SD + r" a",
+           _p("principal", "a_mas_b", "ic_bajo"), 0.05, "{:.1f}"),
+        _c("golpes_lectura_eventos@wiki", W_GOLPES, lect + r"[^;]+; " + N + r" meses de golpe aislados", _p("principal", "phi", "n"), 0),
+        _c("golpes_lectura_pads@wiki", W_GOLPES, lect + r"[^;]+; [\d.]+ meses de golpe aislados, de " + N + r" pads hijo",
+           _p("principal", "pads"), 0),
+        _c("golpes_desvio@wiki", W_GOLPES, r"el desvío es de " + DEC + r" días", _p("diagnostico", "desvio_perdida"), 0.05, "{:.1f}",
+           opcional=True),
+        _c("golpes_media@wiki", W_GOLPES, r"días contra una media de " + SD, _p("principal", "perdida_media"), 0.05, "{:.1f}", opcional=True),
+        _c("golpes_mediana@wiki", W_GOLPES, r"y una mediana de " + SD + r"\.", _p("diagnostico", "perdida_mediana"), 0.05, "{:.1f}",
+           opcional=True),
+        _c("golpes_b_puntual@wiki", W_GOLPES, r"con la estimación puntual \(a = -?\d+,\d+ y b = " + SD + r" días de base\)",
+           _p("principal", "b"), 0.05, "{:.1f}", opcional=True),
+        _c("golpes_descartadas@wiki", W_GOLPES, r"a \+ b de cero o menos: " + N + r" en Vaca Muerta", _p("principal", "descartadas"), 0),
+        _c("golpes_co_descartadas@wiki", W_GOLPES, r"a \+ b de cero o menos: [\d.]+ en Vaca Muerta y " + N + r" en Colorado",
+           _p("principal", "descartadas", cuenca="colorado"), 0, tabla=TCO),
+        _c("golpes_error_phi@wiki", W_GOLPES, r"Error de φ \(desvío de las repeticiones\) en Vaca Muerta: " + DEC, _p("principal", "error_phi"),
+           0.005, "{:.2f}"),
+        _c("golpes_reps@wiki", W_GOLPES, r"por pads hijo \(" + N + r" repeticiones\)", _p("principal", "descartadas", "n"), 0),
+        _c("golpes_diag_control@wiki", W_GOLPES, r"esa mediana tiene media " + SD + r" días", _p("diagnostico", "perdida_media_control"),
+           0.05, "{:.1f}"),
+        _c("golpes_diag_ab@wiki", W_GOLPES, r"Contra esa media, a \+ b sería " + SD + r" días",
+           _p("diagnostico", "a_mas_b_contra_media_control"), 0.05, "{:.1f}"),
+        _c("golpes_diag_ab_ic_bajo@wiki", W_GOLPES, r"Contra esa media, a \+ b sería -?\d+,\d+ días \(IC 95% " + SD + r" a",
+           _p("diagnostico", "a_mas_b_contra_media_control", "ic_bajo"), 0.05, "{:.1f}"),
+        _c("golpes_co_lectura_ab@wiki", W_GOLPES, r"Colorado \(confirmatoria, misma regla\): \*\*[^*]+\*\*\. [^\n]*?Un mes con un solo hijo, "
+           r"a \+ b = " + SD + r" días", _p("principal", "a_mas_b", cuenca="colorado"), 0.05, "{:.1f}", tabla=TCO),
+    ]
+    return out
+
+
+W_PADRE = "wiki/hallazgos/golpes_mismo_padre.md"
+
+
+def _claims_golpes_mismo_padre() -> list[Claim]:
+    """Numeros de la pagina de golpes en el mismo mes con el padre como su propio control contra sus marts: la tabla del modelo
+    (las dos cuencas), la muestra, la tabla por k, la lectura y la fila del README. Las de Colorado SKIP sin los marts _colorado
+    (solo run_all --with-colorado); las filas de phi y rho SKIP cuando la celda es n/d (a + b de cero o menos)."""
+    def _p(prueba: str, est: str, col: str = "valor", cuenca: str = "") -> Callable:
+        t = "mart_golpes_mismo_padre" + (f"_{cuenca}" if cuenca else "") + "_prueba"
+        return lambda con: con.execute(f"select {col} from {t} where prueba = ? and estadistico = ?", [prueba, est]).fetchone()[0]
+
+    def _k(grupo: str, col: str, cuenca: str = "") -> Callable:
+        t = "mart_golpes_mismo_padre" + (f"_{cuenca}" if cuenca else "")
+        return lambda con: con.execute(f"select {col} from {t} where grupo = ?", [grupo]).fetchone()[0]
+
+    TCO = "mart_golpes_mismo_padre_colorado_prueba"
+    ENT = r"(-?[\d.]+)"
+    DM = r"(-?[\d.]+,\d+)"           # decimal con signo y puntos de miles
+    num = r"-?[\d.]+(?:,\d+)?"
+    out: list[Claim] = []
+    from pipeline.golpes_mismo_padre import FILAS_MODELO
+    for prueba, etq, est, desc, dec in FILAS_MODELO:
+        cap, tol, fmt_ = (ENT, 0.5, "{:,.0f}") if dec == 0 else (DM, 0.5 * 10 ** -dec, f"{{:.{dec}f}}")
+        cab = r"\| " + re.escape(etq) + r" \| " + re.escape(desc) + r" \| "
+        vm = r"(?:" + num + r" \| " + num + r" a " + num + r"|n/d \| ) \| "   # la celda de Vaca Muerta, con su IC o n/d
+        pend = est.startswith(("phi", "rho"))
+        for sufijo, cuenca, salto in (("", "", ""), ("_co", "colorado", vm)):
+            kw = {"tabla": TCO} if cuenca else {}
+            base = f"golpes_padre{sufijo}_{prueba.lower()}_{est}@wiki"
+            out += [_c(base, W_PADRE, cab + salto + cap + r" \| ", _p(prueba, est, cuenca=cuenca), tol, fmt_, opcional=pend, **kw),
+                    _c(base.replace("@", "_ic_bajo@"), W_PADRE, cab + salto + num + r" \| " + cap + r" a ",
+                       _p(prueba, est, "ic_bajo", cuenca), tol, fmt_, opcional=pend, **kw),
+                    _c(base.replace("@", "_ic_alto@"), W_PADRE, cab + salto + num + r" \| " + num + r" a " + cap + r" \|",
+                       _p(prueba, est, "ic_alto", cuenca), tol, fmt_, opcional=pend, **kw)]
+    conteos = (("conteo", "aislados_con_ventana", r"Meses de golpe aislados con la ventana completa \(muestra de partida\)"),
+               ("conteo", "padres_partida", r"Padres de la muestra de partida"),
+               ("conteo", "padres_2_meses", r"De ellos, con dos o más meses de golpe"),
+               ("conteo", "padres_k_distinto", r"De ellos, con distinta cantidad de hijos entre esos meses"),
+               ("conteo", "meses_restringida", r"Meses de golpe de la muestra restringida"),
+               ("principal", "padres", r"Padres de la muestra restringida"),
+               ("principal", "pads", r"Pads del padre de la muestra restringida"),
+               ("principal", "valores_k", r"Valores distintos de k"),
+               ("principal", "meses_por_padre_media", r"Meses de golpe por padre \(media\)"))
+    for prueba, est, desc in conteos:
+        out += [_c(f"golpes_padre_n_{est}@wiki", W_PADRE, r"\| " + desc + r" \| " + N + r" \|", _p(prueba, est), 0.5),
+                _c(f"golpes_padre_co_n_{est}@wiki", W_PADRE, r"\| " + desc + r" \| [\d.]+ \| " + N + r" \|",
+                   _p(prueba, est, cuenca="colorado"), 0.5, tabla=TCO)]
+    for cuenca, tabla, ancla in (("", {}, r""), ("colorado", {"tabla": TCO}, r"\d{4}-\d\d \| ")):
+        u = r"Último mes de producción \| " + ancla
+        sufijo = "_co" if cuenca else ""
+        out += [_c(f"golpes_padre{sufijo}_ultimo_anio@wiki", W_PADRE, u + r"(\d{4})-\d\d",
+                   lambda con, c=cuenca: 2000 + (_p("conteo", "ultimo_mes_indice", cuenca=c)(con) - 1) // 12, 0, "{:.0f}", **tabla),
+                _c(f"golpes_padre{sufijo}_ultimo_mes@wiki", W_PADRE, u + r"\d{4}-(\d\d)",
+                   lambda con, c=cuenca: (_p("conteo", "ultimo_mes_indice", cuenca=c)(con) - 1) % 12 + 1, 0, "{:.0f}", **tabla)]
+    co_k = r"## Colorado \(confirmatoria\).*?"
+    for n, grupo in enumerate(("1", "2", "3", "4", "5 a 6", "7 o más")):
+        fila = r"\| " + grupo + r" \| [\d.]+ \| [\d.]+ \| (?:\d+,\d|) \| "
+        for sufijo, cuenca, ancla in (("", "", r"\A(?:(?!## Colorado \(confirmatoria\)).)*?"), ("_co", "colorado", co_k)):
+            kw = {"tabla": "mart_golpes_mismo_padre_colorado"} if cuenca else {}
+            out += [_c(f"golpes_padre{sufijo}_k{n + 1}_meses@wiki", W_PADRE, ancla + r"\| " + grupo + r" \| " + N + r" \|",
+                       _k(grupo, "n", cuenca), 0, **kw),
+                    _c(f"golpes_padre{sufijo}_k{n + 1}_perdida@wiki", W_PADRE, ancla + fila + SD + r" \|", _k(grupo, "perdida_media", cuenca),
+                       0.05, "{:.1f}", opcional=True, **kw),
+                    _c(f"golpes_padre{sufijo}_k{n + 1}_intra@wiki", W_PADRE, ancla + fila + r"-?\d+,\d+ \| " + SD + r" \|",
+                       _k(grupo, "desvio_intra_padre", cuenca), 0.05, "{:.1f}", opcional=True, **kw)]
+    vm_l = r"Vaca Muerta \(regla informada\): \*\*[^*]+\*\*\. [^\n]*?"
+    co_l = r"Colorado \(confirmatoria, misma regla\): \*\*[^*]+\*\*\. [^\n]*?"
+    for sufijo, cuenca, l_, kw in (("", "", vm_l, {}), ("_co", "colorado", co_l, {"tabla": TCO})):
+        out += [_c(f"golpes_padre{sufijo}_lectura_partida@wiki", W_PADRE, l_ + r"muestra de partida tiene " + N + r" meses de golpe",
+                   _p("conteo", "aislados_con_ventana", cuenca=cuenca), 0.5, opcional=True, **kw),
+                _c(f"golpes_padre{sufijo}_lectura_padres_partida@wiki", W_PADRE, l_ + r"aislados con la ventana completa, de " + N + r" padres",
+                   _p("conteo", "padres_partida", cuenca=cuenca), 0.5, opcional=True, **kw),
+                _c(f"golpes_padre{sufijo}_lectura_2_meses@wiki", W_PADRE, l_ + r"padres; " + N + r" de esos padres tienen",
+                   _p("conteo", "padres_2_meses", cuenca=cuenca), 0.5, opcional=True, **kw),
+                _c(f"golpes_padre{sufijo}_lectura_k_distinto@wiki", W_PADRE, l_ + r"de esos padres tienen 2 meses de golpe o más y " + N + r" tienen además",
+                   _p("conteo", "padres_k_distinto", cuenca=cuenca), 0.5, opcional=True, **kw),
+                _c(f"golpes_padre{sufijo}_lectura_meses@wiki", W_PADRE, l_ + r"la muestra restringida queda en " + N + r" meses de golpe",
+                   _p("conteo", "meses_restringida", cuenca=cuenca), 0.5, opcional=True, **kw)]
+    b = r"El costo por hijo es b = "
+    out += [_c("golpes_padre_lectura_b@wiki", W_PADRE, b + DM + r" días", _p("principal", "b"), 0.05, "{:.1f}", opcional=True),
+            _c("golpes_padre_lectura_b_ic_bajo@wiki", W_PADRE, b + r"-?[\d.]+,\d+ días de producción de base \(IC 95% " + DM + r" a",
+               _p("principal", "b", "ic_bajo"), 0.05, "{:.1f}", opcional=True),
+            _c("golpes_padre_lectura_b_ic_alto@wiki", W_PADRE, b + r"-?[\d.]+,\d+ días de producción de base \(IC 95% -?[\d.]+,\d+ a " + DM + r"\)",
+               _p("principal", "b", "ic_alto"), 0.05, "{:.1f}", opcional=True),
+            _c("golpes_padre_lectura_b_negativas@wiki", W_PADRE, r"; " + N + r" de [\d.]+ repeticiones del bootstrap dieron b menor que cero",
+               _p("principal", "b_negativas"), 0.5, opcional=True),
+            _c("golpes_padre_lectura_83_b@wiki", W_PADRE, r"sin efecto fijo de padre: b = " + DM + r" días", _p("agrupado83", "b"), 0.05,
+               "{:.1f}", opcional=True),
+            _c("golpes_padre_lectura_83_b_ic_bajo@wiki", W_PADRE, r"sin efecto fijo de padre: b = -?[\d.]+,\d+ días de producción de base "
+               r"\(IC 95% " + DM + r" a", _p("agrupado83", "b", "ic_bajo"), 0.05, "{:.1f}", opcional=True),
+            _c("golpes_padre_descartadas@wiki", W_PADRE, r"a \+ b de cero o menos: " + N + r" en Vaca Muerta", _p("principal", "descartadas"), 0.5),
+            _c("golpes_padre_co_descartadas@wiki", W_PADRE, r"a \+ b de cero o menos: [\d.]+ en Vaca Muerta y " + N + r" en Colorado",
+               _p("principal", "descartadas", cuenca="colorado"), 0.5, tabla=TCO),
+            _c("golpes_padre_error_phi@wiki", W_PADRE, r"Error de φ \(desvío de las repeticiones\) en Vaca Muerta: " + DEC,
+               _p("principal", "error_phi"), 0.005, "{:.2f}"),
+            _c("golpes_padre_reps@wiki", W_PADRE, r"por pads del padre \(" + N + r" repeticiones\)", _p("principal", "descartadas", "n"), 0.5)]
+    # README: la fila de resultados
+    fila = r"con el padre como su propio control [^|]*\| [^|]*?: "
+    out += [_c("golpes_padre_readme_padres@readme", R, fila + N + r" padres y [\d.]+ meses de golpe en Vaca Muerta", _p("principal", "padres"), 0.5),
+            _c("golpes_padre_readme_meses@readme", R, fila + r"[\d.]+ padres y " + N + r" meses de golpe en Vaca Muerta",
+               _p("principal", "meses"), 0.5),
+            _c("golpes_padre_readme_co_padres@readme", R, fila + r"[\d.]+ padres y [\d.]+ meses de golpe en Vaca Muerta y " + N
+               + r" padres y [\d.]+ meses en Colorado", _p("principal", "padres", cuenca="colorado"), 0.5, tabla=TCO),
+            _c("golpes_padre_readme_co_meses@readme", R, fila + r"[\d.]+ padres y [\d.]+ meses de golpe en Vaca Muerta y [\d.]+ padres y "
+               + N + r" meses en Colorado", _p("principal", "meses", cuenca="colorado"), 0.5, tabla=TCO)]
+    return out
+
+
+W_HPAD = "wiki/hallazgos/hijo_pad.md"
+
+
+def _claims_hijo_pad() -> list[Claim]:
+    """Cada cifra de la pagina del lado del hijo dentro del pad contra sus marts: el resumen, la cobertura, la muestra, el cuadro por
+    ano, los coeficientes de todos los modelos, el equilibrio y la fila del README."""
+    from pipeline.hijo_pad import ANIO_MAX, ANIO_MIN, EQUILIBRIO_TXT, MODELOS_TXT, cobertura_rama
+
+    def cf(modelo: str, tipo: str, col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(
+            f"select {col} from mart_hijo_pad_coef where modelo = '{modelo}' and exposicion = '{tipo}'").fetchone()[0]
+
+    def rs(clave: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(f"select valor from mart_hijo_pad_resumen where clave = '{clave}'").fetchone()[0]
+
+    def cob(k: int) -> Callable:
+        return lambda con: cobertura_rama(con)[k]
+
+    cl: list[Claim] = []
+    d1, d0 = "{:.1f}", "{:,.0f}"
+
+    def frase(clave, lits, fns, tols, fmts, opcional=False):
+        for k, (fn, tol, fmt) in enumerate(zip(fns, tols, fmts)):
+            cl.append(_c(f"hpad_{clave}_{k}@wiki", W_HPAD, _fr(k, *lits), fn, tol, fmt, opcional=opcional))
+
+    P = ("principal", "real")
+    C = ("principal", "control")
+    frase("virgen", ["Rendimiento de los hijos sin exposición a 12 meses: mediana de ", " bbl por metro de rama, sobre ", " hijos."],
+          [rs("virgen_mediana_bbl_m"), rs("virgenes_n")], [0.05, 0], [d1, d0])
+    frase("principal", ["Pendiente dentro del pad: ", " bbl por metro de rama por cada 100 bbl por metro de exposición (IC 95%: ", " a ",
+                        "), o sea ", "% del rendimiento virgen (IC 95%: ", "% a ", "%), sobre ", " hijos de ", " pads."],
+          [cf(*P, "coef"), cf(*P, "ic_bajo"), cf(*P, "ic_alto"), cf(*P, "pct_del_virgen"), cf(*P, "pct_ic_bajo"), cf(*P, "pct_ic_alto"),
+           cf(*P, "n"), cf(*P, "pads")], [0.05] * 6 + [0, 0], [d1] * 6 + [d0] * 2)
+    frase("control", ["Control negativo, la misma pendiente con la exposición de pozos posteriores a la ventana del hijo: ",
+                      " bbl por metro de rama (IC 95%: ", " a ", ")."],
+          [cf(*C, "coef"), cf(*C, "ic_bajo"), cf(*C, "ic_alto")], [0.05] * 3, [d1] * 3)
+    frase("cota", ["Cota superior de la pérdida (el extremo bajo del IC, no una estimación): ",
+                   " bbl por metro de rama por cada 100 bbl por metro de exposición, o ",
+                   "% del rendimiento virgen; a la mediana de las exposiciones positivas, ", " bbl por metro, son ", " bbl por metro de rama."],
+          [rs("cota_bbl_m"), rs("cota_pct"), rs("expo_positiva_mediana_bbl_m"), rs("cota_a_mediana_bbl_m")], [0.05, 0.05, 0.5, 0.05],
+          [d1, d1, d0, d1], opcional=True)
+    frase("pads", ["Pads que informan: ", " de ", " tienen una dispersión de la exposición de al menos 50 bbl por metro entre sus hijos "
+                   "(mediana de la dispersión: ", " bbl por metro); ", "% de los hijos no tienen exposición."],
+          [rs("pads_informativos"), rs("pads"), rs("dispersion_mediana_bbl_m"), rs("parte_E_cero", 100.0)], [0, 0, 0.5, 0.5],
+          [d0] * 4)
+    frase("cobertura", ["Las ramas medidas cubren entre ", "% y ", f"% de los hijos horizontales fracturados de {ANIO_MIN} a {ANIO_MAX}, "
+                        "pero solo ", "% de los de 2024 y ", "% de los de 2025"],
+          [cob(0), cob(1), cob(2), cob(3)], [0.5] * 4, [d0] * 4)
+    # la muestra: un conteo por paso y, desde el 6, los pads
+    for paso in range(1, 9):
+        cl.append(_c(f"hpad_paso{paso}_hijos@wiki", W_HPAD, rf"- Paso {paso}, [^:\n]*: {N} hijos",
+                     lambda con, k=paso: con.execute("select hijos from mart_hijo_pad_muestra where paso = ?", [k]).fetchone()[0], 0))
+        if paso >= 6:
+            cl.append(_c(f"hpad_paso{paso}_pads@wiki", W_HPAD, rf"- Paso {paso}, [^:\n]*: [\d.]+ hijos en {N} pads",
+                         lambda con, k=paso: con.execute("select pads from mart_hijo_pad_muestra where paso = ?", [k]).fetchone()[0], 0))
+    for anio in range(ANIO_MIN, ANIO_MAX + 1):
+        for k, col in enumerate(("hijos", "pads", "hijos_en_pads_informativos")):
+            cl.append(_c(f"hpad_anio{anio}_{col}@wiki", W_HPAD, rf"\| {anio} \| " + r"[\d.]+ \| " * k + N + r" \|",
+                         lambda con, a=anio, c=col: con.execute(f"select {c} from mart_hijo_pad_anio where anio = ?", [a]).fetchone()[0], 0))
+    # coeficientes de todos los modelos, cada uno con su control negativo
+    for modelo, etiqueta in MODELOS_TXT.items():
+        for tipo, rot in (("real", "real"), ("control", "control negativo")):
+            cab = r"\| " + re.escape(etiqueta) + r" \| " + rot + r" \| "
+            base = f"hpad_{modelo}_{tipo}"
+            cl += [_c(f"{base}_coef@wiki", W_HPAD, cab + f"({NG})" + r" \|", cf(modelo, tipo, "coef"), 0.005, "{:.2f}"),
+                   _c(f"{base}_ic_bajo@wiki", W_HPAD, cab + NG + r" \| " + f"({NG})" + r" a ", cf(modelo, tipo, "ic_bajo"), 0.005, "{:.2f}"),
+                   _c(f"{base}_ic_alto@wiki", W_HPAD, cab + NG + r" \| " + NG + r" a " + f"({NG})" + r" \|", cf(modelo, tipo, "ic_alto"),
+                      0.005, "{:.2f}"),
+                   _c(f"{base}_pct@wiki", W_HPAD, cab + NG + r" \| " + NG + r" a " + NG + r" \| " + f"({NG})" + r"% \|",
+                      cf(modelo, tipo, "pct_del_virgen"), 0.05, d1)]
+            for j, col in enumerate(("n", "pads", "pads_informativos")):
+                cl.append(_c(f"{base}_{col}@wiki", W_HPAD,
+                             cab + NG + r" \| " + NG + r" a " + NG + r" \| " + NG + r"% \| " + r"[\d.]+ \| " * j + N + r" \|",
+                             cf(modelo, tipo, col), 0, d0))
+    for variable, rot, dec in EQUILIBRIO_TXT:
+        cab = r"\| " + re.escape(rot) + r" \| "
+        tol, fmt = 0.5 * 10 ** -dec, f"{{:.{dec}f}}"
+        for col, patron in (("coef", cab + f"({NG})" + r" \|"), ("ic_bajo", cab + NG + r" \| " + f"({NG})" + r" a "),
+                            ("ic_alto", cab + NG + r" \| " + NG + r" a " + f"({NG})" + r" \|")):
+            cl.append(_c(f"hpad_eq_{variable}_{col}@wiki", W_HPAD, patron,
+                         lambda con, v=variable, c=col: con.execute(
+                             f"select {c} from mart_hijo_pad_equilibrio where variable = '{v}'").fetchone()[0], tol, fmt))
+    # README: la fila de resultados
+    fila = r"Lado del hijo dentro del pad \([^|]*\| pendiente dentro del pad: "
+    cl += [_c("hpad_readme_coef@readme", R, fila + f"({NG})" + r" bbl por metro de rama por cada 100", cf(*P, "coef"), 0.05, d1),
+           _c("hpad_readme_n@readme", R, fila + NG + r" bbl por metro de rama por cada 100 bbl por metro de exposición previa, sobre "
+              + N + r" hijos", cf(*P, "n"), 0, d0),
+           _c("hpad_readme_pads@readme", R, fila + NG + r" bbl por metro de rama por cada 100 bbl por metro de exposición previa, sobre [\d.]+ hijos de "
+              + N + r" pads", cf(*P, "pads"), 0, d0),
+           _c("hpad_readme_ic_bajo@readme", R, fila + r"[^|]*\| IC 95%: (" + NG + r") a ", cf(*P, "ic_bajo"), 0.05, d1),
+           _c("hpad_readme_ic_alto@readme", R, fila + r"[^|]*\| IC 95%: " + NG + r" a (" + NG + r");", cf(*P, "ic_alto"), 0.05, d1),
+           _c("hpad_readme_cota@readme", R, fila + r"[^|]*\| IC 95%: [^|]*?cota superior de la pérdida: (" + NG + r")% del rendimiento",
+              rs("cota_pct"), 0.05, d1),
+           _c("hpad_readme_control@readme", R, fila + r"[^|]*\| [^|]*?el control negativo da (" + NG + r") \(IC 95%", cf(*C, "coef"), 0.05, d1),
+           _c("hpad_readme_control_bajo@readme", R, fila + r"[^|]*\| [^|]*?el control negativo da " + NG + r" \(IC 95%: (" + NG + r") a ",
+              cf(*C, "ic_bajo"), 0.05, d1),
+           _c("hpad_readme_control_alto@readme", R, fila + r"[^|]*\| [^|]*?el control negativo da " + NG + r" \(IC 95%: " + NG + r" a ("
+              + NG + r")\)", cf(*C, "ic_alto"), 0.05, d1)]
+    return cl
+
+
+W_CAL = "wiki/hallazgos/calendario_golpes.md"
+
+
+def _claims_calendario_golpes() -> list[Claim]:
+    """Numeros de la pagina del calendario de golpes contra sus marts: la lectura, el backtest, el arrepentimiento y la fila del README."""
+    def _p(prueba: str, est: str, col: str = "valor") -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_calendario_prueba where prueba = ? and estadistico = ?",
+                                       [prueba, est]).fetchone()[0]
+
+    from pipeline.calendario_golpes import DELTA_MESES
+    DM = r"(-?[\d.]+,\d+)"
+    out: list[Claim] = []
+    lec = r"Backtest: \*\*[^*]+\*\*\. [^\n]*?"
+    out += [_c("calendario_entrena_n@wiki", W_CAL, lec + r"El entrenamiento de 2023 tiene " + N + r" eventos aislados",
+               _p("entrena", "n"), 0.5),
+            _c("calendario_entrena_pads@wiki", W_CAL, lec + r"eventos aislados \(" + N + r" pads del padre", _p("entrena", "pads"), 0.5),
+            _c("calendario_entrena_valores_k@wiki", W_CAL, lec + r"pads del padre y " + N + r" valores de k", _p("entrena", "valores_k"), 0.5),
+            _c("calendario_prueba_n@wiki", W_CAL, lec + r"La prueba de 2024 a 2026 tiene " + N + r" eventos en", _p("backtest", "n_prueba"), 0.5),
+            _c("calendario_prueba_pads@wiki", W_CAL, lec + r"eventos en " + N + r" pads, que alcanzan", _p("backtest", "pads_prueba"), 0.5)]
+    lec2 = r"- (?:Descriptivo\. )?"
+    out += [_c("calendario_completa_a_sin_acotar@wiki", W_CAL, lec2 + r"Con #86[^\n]*?el ajuste es a = " + DM,
+               _p("completa", "a_sin_acotar"), 0.05, "{:.1f}"),
+            _c("calendario_completa_b_sin_acotar@wiki", W_CAL, lec2 + r"Con #86[^\n]*?el ajuste es a = -?[\d.]+,\d+ y b = " + DM,
+               _p("completa", "b_sin_acotar"), 0.05, "{:.1f}"),
+            _c("calendario_completa_a_acotado@wiki", W_CAL, lec2 + r"Con #86[^\n]*?la media de la pérdida, " + DM + r" días",
+               _p("completa", "a"), 0.05, "{:.1f}"),
+            _c("calendario_d@wiki", W_CAL, lec2 + r"Fuera de muestra, con el ajuste de 2023[^\n]*?: D = " + DM,
+               _p("backtest", "d"), 0.0005, "{:.3f}"),
+            _c("calendario_d_ic_bajo@wiki", W_CAL, lec2 + r"Fuera de muestra[^\n]*?: D = -?[\d.]+,\d+ \(IC 95% " + DM + r" a",
+               _p("backtest", "d", "ic_bajo"), 0.005, "{:.2f}"),
+            _c("calendario_d_ic_alto@wiki", W_CAL, lec2 + r"Fuera de muestra[^\n]*?: D = -?[\d.]+,\d+ \(IC 95% -?[\d.]+,\d+ a " + DM + r"\)",
+               _p("backtest", "d", "ic_alto"), 0.005, "{:.2f}"),
+            _c("calendario_sk_fijo@wiki", W_CAL, lec2 + r"Fuera de muestra[^\n]*?con habilidad " + DM + r" contra",
+               _p("backtest", "sk_fijo"), 0.0005, "{:.3f}"),
+            _c("calendario_sk_aditivo@wiki", W_CAL, lec2 + r"Fuera de muestra[^\n]*?contra " + DM + r" del aditivo",
+               _p("backtest", "sk_aditivo"), 0.0005, "{:.3f}"),
+            _c("calendario_arrep_dias_d3@wiki", W_CAL, lec2 + r"El arrepentimiento del calendario observado[^\n]*?toda la muestra: " + N + r" \(",
+               _p("completa_arrepentimiento", f"dias_fijo_mas_hijo_d{DELTA_MESES}"), 0.5),
+            _c("calendario_arrep_ic_alto@wiki", W_CAL, lec2 + r"El arrepentimiento del calendario observado[^\n]*?toda la muestra: [\d.]+ \(\d+ a " + N + r"\)",
+               _p("completa_arrepentimiento", f"dias_fijo_mas_hijo_d{DELTA_MESES}", "ic_alto"), 0.5),
+            _c("calendario_noaislados_test@wiki", W_CAL, r"el " + N + r"% \(2024 a 2026\)",
+               lambda con: 100 * _p("entrena", "programa_test_noaislados")(con), 0.5),
+            _c("calendario_noaislados_completa@wiki", W_CAL, r"y el " + N + r"% \(toda la muestra\)",
+               lambda con: 100 * _p("entrena", "programa_completa_noaislados")(con), 0.5)]
+    # README: la fila de resultados
+    fila = r"Calendario de golpes: matrices de costo[^\n]*?"
+    out += [_c("calendario_readme_n@readme", R, fila + r"predice peor que el aditivo, en la estimación puntual, en " + N + r" eventos aislados", _p("backtest", "n_prueba"), 0.5),
+            _c("calendario_readme_d@readme", R, fila + r"D = " + DM, _p("backtest", "d"), 0.005, "{:.2f}"),
+            _c("calendario_readme_d_ic_bajo@readme", R, fila + r"IC 95% por pads del padre: " + DM + r" a", _p("backtest", "d", "ic_bajo"), 0.005, "{:.2f}"),
+            _c("calendario_readme_d_ic_alto@readme", R, fila + r"IC 95% por pads del padre: -?[\d.]+,\d+ a " + DM + r";",
+               _p("backtest", "d", "ic_alto"), 0.005, "{:.2f}"),
+            _c("calendario_readme_arrep@readme", R, fila + r"cota superior: " + N + r" días de base",
+               _p("completa_arrepentimiento", f"dias_fijo_mas_hijo_d{DELTA_MESES}"), 0.5),
+            _c("calendario_readme_arrep_ic_bajo@readme", R, fila + r"días de base \(IC 95%: (\d+) a",
+               _p("completa_arrepentimiento", f"dias_fijo_mas_hijo_d{DELTA_MESES}", "ic_bajo"), 0.5),
+            _c("calendario_readme_arrep_ic_alto@readme", R, fila + r"días de base \(IC 95%: \d+ a " + N + r"\)",
+               _p("completa_arrepentimiento", f"dias_fijo_mas_hijo_d{DELTA_MESES}", "ic_alto"), 0.5),
+            _c("calendario_readme_entrena@readme", R, fila + r"y hay " + N + r", así que", _p("entrena", "n"), 0.5)]
+    return out
+
+
+W_TRAY = "wiki/hallazgos/trayectorias.md"
+
+
+def _claims_trayectorias() -> list[Claim]:
+    """Numeros de la pagina de trayectorias contra sus marts. Las partes de pares se recalculan desde mart_trayectoria_par
+    y no desde la tabla cruzada que usa la pagina."""
+    def _r(clave: str) -> Callable:
+        return lambda con: con.execute("select valor from mart_trayectoria_resumen where clave = ?", [clave]).fetchone()[0]
+
+    def _cob(col: str, nivel: str = "hijo", desde: int = 0, hasta: int = 9999) -> Callable:
+        return lambda con: con.execute(f"select sum({col}) from mart_trayectoria_cobertura where nivel = ? and anio >= ? "
+                                       "and anio < ?", [nivel, desde, hasta]).fetchone()[0]
+
+    def _pad(col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_trayectoria_banda where banda = 'mismo_pad'").fetchone()[0]
+
+    def _parte(km: str, rama: str) -> Callable:
+        return lambda con: 100 * con.execute(f"select avg(({rama})::int) from mart_trayectoria_par where {km}").fetchone()[0]
+
+    # posición del padre respecto de la rama del hijo: una celda por banda de superficie y posición, más el total de
+    # la banda. El patrón ancla en el encabezado de la tabla, porque la de cruces tiene las mismas etiquetas de fila.
+    BANDA_POS = {"cercano": "b.km < 1", "intermedio": "b.km >= 1 and b.km < 2", "control": "b.km >= 2 and b.km < 5"}
+    ETIQUETA_POS = {"cercano": r"cercano \(menos de 1 km\)", "intermedio": r"intermedio \(1 a 2 km\)",
+                    "control": r"control \(2 a 5 km\)"}
+    CABECERA_POS = r"\| Superficie \| costado \| punta \| mixto \| Pares \|"
+
+    def _pos(banda: str, posicion: str | None) -> Callable:
+        cond = BANDA_POS[banda] + (f" and p.posicion = '{posicion}'" if posicion else "")
+        return lambda con: con.execute(
+            "select count(*) from mart_par_rama p "
+            "join mart_trayectoria_par b "
+            f"on b.hijo = p.hijo and b.padre = p.padre where {cond}").fetchone()[0]
+
+    def _patron_pos(banda: str, columna: int, total: bool = False) -> str:
+        """La celda `columna` de la fila de la banda: salta las celdas anteriores de la misma fila."""
+        return (CABECERA_POS + r"[\s\S]*?\| " + ETIQUETA_POS[banda] + r" \| "
+                + r"[\d.]+ \([^|]*\) \| " * columna + N + (r" \|" if total else r" \("))
+
+    cl = [
+        _c("tray_pozos@wiki", W_TRAY, r"La fuente trae " + N + r" pozos", _r("pozos_fuente"), 0),
+        _c("tray_filas@wiki", W_TRAY, r"pozos en " + N + r" filas", _r("filas"), 0),
+        _c("tray_con_rama@wiki", W_TRAY, r"filas\. " + N + r" de los [\d.]+ pozos shale", _r("con_rama"), 0),
+        _c("tray_hijos_h_medidos@wiki", W_TRAY, r"Tienen la rama medida " + N + r" de los", _cob("horizontales_medidos"), 0),
+        _c("tray_hijos_h@wiki", W_TRAY, r"de los " + N + r" hijos horizontales", _cob("horizontales"), 0),
+        _c("tray_pares_1km_medidos@wiki", W_TRAY, r"\) y " + N + r" de los [\d.]+ pares a menos de 1 km", _cob("medidos", "par_1km"), 0),
+        _c("tray_pares_1km@wiki", W_TRAY, r"de los " + N + r" pares a menos de 1 km en superficie", _cob("total", "par_1km"), 0),
+        _c("tray_antes_en_fuente@wiki", W_TRAY, r"antes de 2024, " + N + r" de", _cob("horizontales_en_fuente", hasta=2024), 0),
+        _c("tray_antes@wiki", W_TRAY, r"antes de 2024, [\d.]+ de " + N + r" están", _cob("horizontales", hasta=2024), 0),
+        _c("tray_desde_en_fuente@wiki", W_TRAY, r"desde 2024, " + N + r" de", _cob("horizontales_en_fuente", desde=2024), 0),
+        _c("tray_desde@wiki", W_TRAY, r"desde 2024, [\d.]+ de " + N + r" \(", _cob("horizontales", desde=2024), 0),
+        _c("tray_pad_m_min@wiki", W_TRAY, r"menor distancia entre ramas es " + N + r" m", _pad("m_min_mediana")),
+        _c("tray_pad_separacion@wiki", W_TRAY, r"rama del hijo es " + N + r" m:", _pad("m_mediana_mediana")),
+        _c("tray_cercano_lejos@wiki", W_TRAY, r"el " + N + r"% tiene las ramas a 1 km o más", _parte("km < 1", "m_min >= 1000")),
+        _c("tray_control_cerca@wiki", W_TRAY, r"de control \(2 a 5 km\), el " + N + r"%", _parte("km >= 2", "m_min < 1000")),
+        _c("tray_intermedio_cerca@wiki", W_TRAY, r"de los intermedios \(1 a 2 km\), el " + N + r"%",
+           _parte("km >= 1 and km < 2", "m_min < 1000")),
+        _c("tray_spearman@wiki", W_TRAY, r"menor distancia entre ramas es " + DEC + r" \(", _r("spearman_km_m_min"), 0.005, "{:.2f}"),
+        _c("tray_pares_medidos@wiki", W_TRAY, r"\(" + N + r" pares con las dos ramas medidas\)",
+           lambda con: con.execute("select count(*) from mart_trayectoria_par").fetchone()[0], 0),
+    ]
+    for banda in ("cercano", "intermedio", "control"):
+        for columna, posicion in enumerate(("costado", "punta", "mixto")):
+            cl.append(_c(f"tray_posicion_{banda}_{posicion}@wiki", W_TRAY, _patron_pos(banda, columna),
+                         _pos(banda, posicion), 0))
+        cl.append(_c(f"tray_posicion_{banda}_total@wiki", W_TRAY, _patron_pos(banda, 3, total=True), _pos(banda, None), 0))
+    return cl
+
+
+W_ALCANCE = "wiki/hallazgos/alcance_rama.md"
+
+
+W_DGEO = "wiki/hallazgos/dosis_geometria.md"
+
+
+def _claims_dosis_geometria() -> list[Claim]:
+    """Numeros de la pagina de dosis con la geometria de las ramas (la puerta de potencia) contra sus marts y el README."""
+    nombres = {"arena_etapa": "arena por etapa", "arena_rama": "arena por metro de rama",
+               "presion": "presión máxima de tratamiento", "deplecion": "depleción del padre"}
+
+    def _num(v) -> float:
+        """Con el veredicto "sin muestra" los marts de la puerta quedan sin cifras: el claim falla con calculado nan, no se cae."""
+        return float("nan") if v is None else v
+
+    def _pot(res: str, var: str, col: str) -> Callable:
+        def fn(con):
+            r = con.execute(f"select {col} from mart_dosis_geometria_potencia where resultado = '{res}' "
+                            f"and variable = '{nombres[var]}'").fetchone()
+            return float("nan") if r is None else _num(r[0])
+        return fn
+
+    def _puerta(col: str) -> Callable:
+        return lambda con: _num(con.execute(f"select {col} from mart_dosis_geometria_puerta").fetchone()[0])
+
+    def _muestra(res: str, col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_dosis_geometria_muestra where resultado = '{res}'").fetchone()[0]
+
+    def _cob(desde: int, hasta: int) -> Callable:
+        return lambda con: 100 * con.execute(
+            "select sum(horizontales_medidos) / sum(horizontales) from mart_trayectoria_cobertura "
+            "where nivel = 'hijo' and anio between ? and ?", [desde, hasta]).fetchone()[0]
+
+    def _cob_anio(f: str) -> Callable:
+        return lambda con: con.execute(
+            f"select {f}(r) from (select 100 * sum(horizontales_medidos) / sum(horizontales) as r from mart_trayectoria_cobertura "
+            "where nivel = 'hijo' and anio between 2016 and 2023 group by anio)").fetchone()[0]
+
+    cl = []
+    for var, nom in nombres.items():
+        fila = r"\| " + re.escape(nom) + r" \| \d+,\d+ \| "
+        cl.append(_c(f"dgeo_mde_{var}@wiki", W_DGEO, fila + DEC + r" \| \d+,\d+ \|", _pot("A", var, "mde80_desvios"), 0.0006, "{:.3f}"))
+        cl.append(_c(f"dgeo_mde_holm_{var}@wiki", W_DGEO, fila + r"\d+,\d+ \| " + DEC + r" \|", _pot("A", var, "mde80_holm_desvios"),
+                     0.0006, "{:.3f}"))
+    cl += [
+        _c("dgeo_menor_holm@wiki", W_DGEO, r"el menor MDE80 de Holm del resultado A es de " + DEC + r" desvíos de la caída por desvío de la dosis: medir",
+           _puerta("mde_menor_holm"), 0.006, "{:.2f}"),
+        _c("dgeo_mayor_holm@wiki", W_DGEO, r"el mayor es de " + DEC + r", contra la referencia", _puerta("mde_mayor_holm"), 0.006, "{:.2f}"),
+        _c("dgeo_n_A@wiki", W_DGEO, r"### Resultado A \(n = " + N + r", pads = \d+\)", _muestra("A", "caso_completo"), 0.5),
+        _c("dgeo_pads_A@wiki", W_DGEO, r"### Resultado A \(n = [\d.]+, pads = " + N + r"\)", _muestra("A", "pads"), 0.5),
+        _c("dgeo_con_par@wiki", W_DGEO, r"Muestra, resultado A: [\d.]+ eventos de dosis, " + N + r" con el par", _muestra("A", "con_par"), 0.5),
+        _c("dgeo_cercano_rama@wiki", W_DGEO, r"Muestra, resultado A: [\d.]+ eventos de dosis, [\d.]+ con el par \(hijo, padre\) medido entre ramas, "
+           + N + r" cercanos", _muestra("A", "cercano_rama"), 0.5),
+        _c("dgeo_readme_menor@readme", R, r"el menor MDE80 con Holm es de " + DEC + r" desvíos de la caída por desvío de la dosis, contra 0,22",
+           _puerta("mde_menor_holm"), 0.006, "{:.2f}"),
+        _c("dgeo_readme_mayor@readme", R, r"el mayor MDE80 con Holm es de " + DEC + r"; la simulación", _puerta("mde_mayor_holm"), 0.006, "{:.2f}"),
+        _c("dgeo_readme_n@readme", R, r"entre ramas \(" + N + r" eventos de \d+ pads hijo\)", _muestra("A", "caso_completo"), 0.5),
+        _c("dgeo_readme_pads@readme", R, r"entre ramas \([\d.]+ eventos de " + N + r" pads hijo\)", _muestra("A", "pads"), 0.5),
+        _c("dgeo_cob_2016_2023@wiki", W_DGEO, r"\((\d+)% en conjunto\)", _cob(2016, 2023), 0.5),
+        _c("dgeo_cob_min@wiki", W_DGEO, r"cubren el (\d+) a \d+% de los hijos fracturados de 2016 a 2023", _cob_anio("min"), 0.5),
+        _c("dgeo_cob_max@wiki", W_DGEO, r"cubren el \d+ a (\d+)% de los hijos fracturados de 2016 a 2023", _cob_anio("max"), 0.5),
+        _c("dgeo_cob_2024@wiki", W_DGEO, r"pero solo el (\d+)% de los de 2024", _cob(2024, 2024), 0.5),
+        _c("dgeo_cob_2025@wiki", W_DGEO, r"y el (\d+)% de los de 2025", _cob(2025, 2025), 0.5),
+        _c("dgeo_readme_cob_2016_2023@readme", R, r"no dice que no haya dosis y respuesta\. La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el (\d+)% de esos hijos", _cob(2016, 2023), 0.5),
+        _c("dgeo_readme_cob_2024@readme", R, r"no dice que no haya dosis y respuesta\. La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el \d+% de esos hijos pero el (\d+)% de los de 2024", _cob(2024, 2024), 0.5),
+        _c("dgeo_readme_cob_2025@readme", R, r"no dice que no haya dosis y respuesta\. La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el \d+% de esos hijos pero el \d+% de los de 2024 y el (\d+)% de los de 2025", _cob(2025, 2025), 0.5),
+        _c("dgeo_readme_limites@readme", R, r"no pasó \(el menor MDE80 con Holm es de " + DEC + r" desvíos contra 0,22\)",
+           _puerta("mde_menor_holm"), 0.006, "{:.2f}"),
+    ]
+    # las frases de la pagina dependen del veredicto de la puerta: con otro veredicto el texto cambia y no hay frase que verificar
+    return [replace(c, opcional=True) if c.fichero == W_DGEO else c for c in cl]
+
+
+def _claims_alcance_rama() -> list[Claim]:
+    """Numeros de la pagina de alcance y dilucion entre ramas contra sus marts. Los puntos van con una decimal (tolerancia 0,05).
+    Las frases que dependen de un veredicto (alcance, dilucion, control, diferido) son opcionales: SKIP si el texto no las trae."""
+    INT, DECS = r"[\d.]+", r"-?\d+,\d+"
+
+    def _e(modelo: str, est: str, col: str = "valor", k: int = 1, f: float = 100.0) -> Callable:
+        return lambda con: f * con.execute(f"select {col} from mart_alcance_rama where modelo = ? and k = ? and estadistico = ?",
+                                           [modelo, k, est]).fetchone()[0]
+
+    def _pr(col: str, prueba: str = "H-R1", f: float = 1.0) -> Callable:
+        return lambda con: f * con.execute(f"select {col} from mart_alcance_rama_prueba where prueba = ?", [prueba]).fetchone()[0]
+
+    def _dif(control: str, col: str, f: float = 100.0) -> Callable:
+        return lambda con: f * con.execute(f"select {col} from mart_alcance_rama_diferido where control = ?", [control]).fetchone()[0]
+
+    def _anio(anio: int, col: str) -> Callable:
+        def fn(con):
+            r = con.execute(f"select {col} from mart_alcance_rama_anio where anio = ?", [anio]).fetchone()
+            return float("nan") if r is None else r[0]
+        return fn
+
+    def _cob(desde: int, hasta: int) -> Callable:
+        return lambda con: 100 * con.execute(
+            "select sum(horizontales_medidos) / sum(horizontales) from mart_trayectoria_cobertura "
+            "where nivel = 'hijo' and anio between ? and ?", [desde, hasta]).fetchone()[0]
+
+    def _hasta_2023(con) -> float:
+        h, t = con.execute("select sum(eventos) filter (where anio between 1 and 2023), sum(eventos) filter (where anio = 0) "
+                           "from mart_alcance_rama_anio").fetchone()
+        return 100 * h / t
+
+    def _fila(pref: str, celdas: list[tuple[str, str]], i: int, j: int = 0, ancla: str = "") -> str:
+        """Regex de la fila `| pref | celda | ... |` que captura el j-esimo `@` de la celda i. Cada celda es (plantilla, numero)."""
+        partes = []
+        for a, (plantilla, num) in enumerate(celdas[:i + 1]):
+            trozos = plantilla.split("@")
+            s = trozos[0]
+            for b, t in enumerate(trozos[1:]):
+                s += (f"({num})" if (a == i and b == j) else num) + t
+            partes.append(s)
+        return ancla + r"\| " + pref + r" \| " + r" \| ".join(partes) + r" \|"
+
+    def _sec(titulo: str) -> str:
+        return re.escape(titulo) + r"(?:(?!\n## ).)*?"
+
+    PTS, CNT = (0.05, "{:.1f}"), (0, "{:,.0f}")
+    out: list[Claim] = []
+
+    def add(id_, patron, fn, tol_fmt=PTS, opcional=False):
+        out.append(_c(f"alcance_{id_}@wiki", W_ALCANCE, patron, fn, tol_fmt[0], tol_fmt[1], opcional=opcional))
+
+    # la muestra
+    add("muestra_eventos", r"- Muestra: Son " + N + r" eventos", _pr("eventos"), CNT)
+    add("muestra_marco", r"- Muestra: Son [\d.]+ eventos \(el [\d.]+% de los " + N + r" eventos del estudio\)", _pr("eventos_marco"), CNT)
+    add("muestra_pct", r"- Muestra: Son [\d.]+ eventos \(el (\d+)% de los", lambda con: 100 * _pr("eventos")(con) / _pr("eventos_marco")(con),
+        (0.5, "{:.0f}"))
+    add("muestra_bloques", r"- Muestra: [^\n]*? en " + N + r" bloques de 5 km", _pr("bloques"), CNT)
+    pct = (0.5, "{:.0f}")
+    add("cobertura_2016_2023", r"cubren el (\d+)% de los hijos horizontales fracturados de 2016 a 2023", _cob(2016, 2023), pct, True)
+    add("cobertura_2024", r"pero solo el (\d+)% de los de 2024", _cob(2024, 2024), pct, True)
+    add("cobertura_2025", r"y el (\d+)% de los de 2025", _cob(2025, 2025), pct, True)
+    add("eventos_hasta_2023", r"el (\d+)% de los eventos son de hijos fracturados hasta 2023", _hasta_2023, pct, True)
+
+    # las lineas de lectura
+    add("lectura_alcance_m", r"llega hasta " + N + r" m entre ramas", _pr("alcance_m"), (0.5, "{:,.0f}"), True)
+    g0 = r"A menos de 300 m la brecha es "
+    add("lectura_brecha_0_300", g0 + SD + r" puntos", _e("principal", "brecha_0_300"), opcional=True)
+    add("lectura_brecha_0_300_ic_bajo", g0 + DECS + r" puntos \(IC 95%: " + SD + r" a ", _e("principal", "brecha_0_300", "ic_bajo"),
+        opcional=True)
+    add("lectura_brecha_0_300_ic_alto", g0 + DECS + r" puntos \(IC 95%: " + DECS + r" a " + SD + r"\)",
+        _e("principal", "brecha_0_300", "ic_alto"), opcional=True)
+    add("lectura_a", r"\(A, " + SD + r" puntos\)", _e("principal", "A"), opcional=True)
+    add("lectura_b", r"\(B, " + SD + r" puntos\)", _e("principal", "B"), opcional=True)
+    d0 = r"A menos B es "
+    add("lectura_a_menos_b", d0 + SD + r" puntos", _e("principal", "A_menos_B"), opcional=True)
+    add("lectura_a_menos_b_ic_bajo", d0 + DECS + r" puntos \(IC 95%: " + SD + r" a ", _e("principal", "A_menos_B", "ic_bajo"), opcional=True)
+    add("lectura_a_menos_b_ic_alto", d0 + DECS + r" puntos \(IC 95%: " + DECS + r" a " + SD + r"\)",
+        _e("principal", "A_menos_B", "ic_alto"), opcional=True)
+    c0 = r"rinden "
+    add("lectura_c_menos_l", c0 + DEC + r" puntos menos", _e("principal", "C_menos_L", f=-100.0), opcional=True)
+    ci = c0 + DECS.replace("-?", "") + r" puntos menos \(IC 95% de la diferencia: "
+    add("lectura_c_menos_l_ic_bajo", ci + SD + r" a ", _e("principal", "C_menos_L", "ic_bajo"), opcional=True)
+    add("lectura_c_menos_l_ic_alto", ci + DECS + r" a " + SD + r"\)", _e("principal", "C_menos_L", "ic_alto"), opcional=True)
+    cl = r"2\.000 m o más es "
+    add("lectura_limpio_diferencia", cl + SD + r" puntos", _e("principal", "C_menos_L"), opcional=True)
+    add("lectura_limpio_ic_bajo", cl + DECS + r" puntos \(IC 95%: " + SD + r" a ", _e("principal", "C_menos_L", "ic_bajo"), opcional=True)
+    add("lectura_limpio_ic_alto", cl + DECS + r" puntos \(IC 95%: " + DECS + r" a " + SD + r"\)",
+        _e("principal", "C_menos_L", "ic_alto"), opcional=True)
+    lat = r"Contra el control lateral limpio la brecha del mes 1 es "
+    sup = r"contra el control de superficie "
+    for sufijo, col, cap_l, cap_s in (("", "brecha_mes1", lat + SD + r" puntos", lat + DECS + r" puntos[^\n]*?" + sup + SD),
+                                      ("_ic_bajo", "brecha_ic_bajo", lat + DECS + r" puntos \(IC 95%: " + SD + r" a ",
+                                       sup + DECS + r" \(IC 95%: " + SD + r" a "),
+                                      ("_ic_alto", "brecha_ic_alto", lat + DECS + r" puntos \(IC 95%: " + DECS + r" a " + SD + r"\)",
+                                       sup + DECS + r" \(IC 95%: " + DECS + r" a " + SD + r"\)")):
+        add(f"lectura_diferido_lateral{sufijo}", cap_l, _dif("lateral_limpio", col), opcional=True)
+        add(f"lectura_diferido_usual{sufijo}", cap_s, _dif("usual", col), opcional=True)
+    pv = r"ya estaba "
+
+    def _previa_signo(con) -> float:
+        """La brecha previa que imprime la pagina junto a 'abajo' o 'arriba'; nan si la palabra no es la del signo del mart."""
+        v = _e("s2", "brecha_0_300", k=-1)(con)
+        m = re.search(r"ya estaba [\d.,]+ puntos (abajo|arriba)", (ROOT / W_ALCANCE).read_text(encoding="utf-8"))
+        if not m or (m.group(1) == "abajo") != (v < 0):
+            return float("nan")
+        return abs(v)
+
+    add("lectura_previa", pv + DEC + r" puntos (?:abajo|arriba)", _previa_signo, opcional=True)
+    add("lectura_previa_ic_bajo", pv + r"[^\n]*?\(IC 95% de la brecha: " + SD + r" a ", _e("s2", "brecha_0_300", "ic_bajo", k=-1),
+        opcional=True)
+    add("lectura_previa_ic_alto", pv + r"[^\n]*?\(IC 95% de la brecha: " + DECS + r" a " + SD + r"\)",
+        _e("s2", "brecha_0_300", "ic_alto", k=-1), opcional=True)
+
+    # tabla de H-R1 (modelo principal) y la previa de S2
+    sec1 = _sec("## H-R1: la brecha del mes 1 por banda de distancia entre ramas")
+    for etq, nombre in (("0 a 300 m", "brecha_0_300"), ("300 a 600 m", "brecha_300_600"), ("600 a 1.000 m", "brecha_600_1000"),
+                        ("1.000 a 2.000 m", "brecha_1000_2000")):
+        celdas = [("@", INT), ("@", DECS), ("@ a @", DECS), (r"@ \(@ a @\)", DECS)]
+        pref = re.escape(etq)
+        b = nombre[len("brecha_"):]
+        add(f"h1_{b}_eventos", _fila(pref, celdas, 0, ancla=sec1), _e("principal", nombre, "n", f=1), CNT)
+        add(f"h1_{b}_brecha", _fila(pref, celdas, 1, ancla=sec1), _e("principal", nombre))
+        add(f"h1_{b}_ic_bajo", _fila(pref, celdas, 2, 0, ancla=sec1), _e("principal", nombre, "ic_bajo"))
+        add(f"h1_{b}_ic_alto", _fila(pref, celdas, 2, 1, ancla=sec1), _e("principal", nombre, "ic_alto"))
+        for j, col in enumerate(("valor", "ic_bajo", "ic_alto")):
+            add(f"h1_{b}_previa_{col}", _fila(pref, celdas, 3, j, ancla=sec1), _e("s2", nombre, col, k=-1), opcional=True)
+    add("h1_control_eventos", sec1 + r"\| Control lateral \(2\.000 m o más\) \| " + N + r" \|",
+        _e("principal", "brecha_0_300", "n_ref", f=1), CNT)
+
+    # tabla de H-R2
+    sec2 = _sec("## H-R2: la dilución")
+    txt = ("[^|]*", "")
+    for etq, est in (("A (entre ramas)", "A"), ("B (superficie)", "B")):
+        celdas = [txt, ("@", INT), txt, ("@", INT), ("@", DECS), ("@ a @", DECS)]
+        pref = re.escape(etq)
+        add(f"h2_{est}_eventos", _fila(pref, celdas, 1, ancla=sec2), _e("principal", est, "n", f=1), CNT)
+        add(f"h2_{est}_control_eventos", _fila(pref, celdas, 3, ancla=sec2), _e("principal", est, "n_ref", f=1), CNT)
+        add(f"h2_{est}_brecha", _fila(pref, celdas, 4, ancla=sec2), _e("principal", est))
+        add(f"h2_{est}_ic_bajo", _fila(pref, celdas, 5, 0, ancla=sec2), _e("principal", est, "ic_bajo"))
+        add(f"h2_{est}_ic_alto", _fila(pref, celdas, 5, 1, ancla=sec2), _e("principal", est, "ic_alto"))
+    celdas = [("n/d", ""), ("n/d", ""), ("n/d", ""), ("n/d", ""), ("@", DECS), ("@ a @", DECS)]
+    add("h2_a_menos_b_brecha", _fila("A menos B", celdas, 4, ancla=sec2), _e("principal", "A_menos_B"))
+    add("h2_a_menos_b_ic_bajo", _fila("A menos B", celdas, 5, 0, ancla=sec2), _e("principal", "A_menos_B", "ic_bajo"))
+    add("h2_a_menos_b_ic_alto", _fila("A menos B", celdas, 5, 1, ancla=sec2), _e("principal", "A_menos_B", "ic_alto"))
+
+    # tabla de H-R3 y el recalculo del diferido
+    sec3 = _sec("## H-R3: el control de superficie")
+    add("h3_contaminado_eventos", _fila("Contaminado", [("@", INT)], 0, ancla=sec3), _e("principal", "C_menos_L", "n", f=1), CNT)
+    add("h3_limpio_eventos", _fila("Limpio", [("@", INT)], 0, ancla=sec3), _e("principal", "C_menos_L", "n_ref", f=1), CNT)
+    celdas = [("n/d", ""), (r"contaminado menos limpio: @ puntos \(IC 95%: @ a @\)", DECS)]
+    for j, col in enumerate(("valor", "ic_bajo", "ic_alto")):
+        add(f"h3_diferencia_{col}", _fila("Diferencia", celdas, 1, j, ancla=sec3), _e("principal", "C_menos_L", col), opcional=True)
+    mill, f6 = DECS, 1e-6
+    for control, etq in (("usual", "control de superficie usual \\(2 a 5 km\\)"), ("lateral_limpio", "control lateral limpio")):
+        celdas = [("@", INT), ("@", INT), ("@", DECS), ("@ a @", DECS), ("@", mill), ("@ a @", mill)]
+        k = "usual" if control == "usual" else "limpio"
+        add(f"h3_dif_{k}_cercanos", _fila(etq, celdas, 0, ancla=sec3), _dif(control, "n_cercanos", 1), CNT, True)
+        add(f"h3_dif_{k}_controles", _fila(etq, celdas, 1, ancla=sec3), _dif(control, "n_control", 1), CNT, True)
+        add(f"h3_dif_{k}_brecha", _fila(etq, celdas, 2, ancla=sec3), _dif(control, "brecha_mes1"), opcional=True)
+        add(f"h3_dif_{k}_ic_bajo", _fila(etq, celdas, 3, 0, ancla=sec3), _dif(control, "brecha_ic_bajo"), opcional=True)
+        add(f"h3_dif_{k}_ic_alto", _fila(etq, celdas, 3, 1, ancla=sec3), _dif(control, "brecha_ic_alto"), opcional=True)
+        add(f"h3_dif_{k}_bbl", _fila(etq, celdas, 4, ancla=sec3), _dif(control, "diferido_bbl", f6), opcional=True)
+        add(f"h3_dif_{k}_bbl_ic_bajo", _fila(etq, celdas, 5, 0, ancla=sec3), _dif(control, "diferido_ic_bajo", f6), opcional=True)
+        add(f"h3_dif_{k}_bbl_ic_alto", _fila(etq, celdas, 5, 1, ancla=sec3), _dif(control, "diferido_ic_alto", f6), opcional=True)
+    add("h3_rango_estudio_bajo", r"no es el rango del estudio \(" + DEC + r" a ", _rango_mbbl("neto_previa"), opcional=True)
+    add("h3_rango_estudio_alto", r"no es el rango del estudio \(\d+,\d+ a " + DEC + r" millones", _rango_mbbl("original"), opcional=True)
+
+    # eventos por anio del hijo y total
+    sec4 = _sec("## Eventos por año del hijo")
+    for anio in range(2011, 2027):
+        add(f"anio_{anio}_eventos", _fila(str(anio), [("@", INT)], 0, ancla=sec4), _anio(anio, "eventos"), CNT, True)
+    celdas = [("@", INT)] * 6
+    for i, col in enumerate(("eventos", "n_0_300", "n_300_600", "n_600_1000", "n_1000_2000", "n_control")):
+        add(f"anio_total_{col}", _fila("Total", celdas, i, ancla=sec4), _anio(0, col), CNT)
+
+    # la fila del README: las cifras que repite de la pagina, contra los mismos marts
+    fila = r"\| Alcance y dilución de la huella entre ramas[^\n]*?"
+    sd, n_ = f"({DECS})", f"({INT})"
+
+    def rd(id_, patron, fn, tol_fmt=PTS):
+        out.append(_c(f"alcance_readme_{id_}@readme", R, fila + patron, fn, tol_fmt[0], tol_fmt[1]))
+
+    rd("alcance_m", r"alcance medido hasta " + n_ + r" m entre ramas", _pr("alcance_m"), CNT)
+    rd("b0", r"es de " + sd + r" puntos a menos de 300 m", _e("principal", "brecha_0_300"))
+    rd("b1", r"puntos a menos de 300 m, " + sd + r" de 300 a 600 m", _e("principal", "brecha_300_600"))
+    rd("b2", r"de 300 a 600 m, " + sd + r" de 600 a 1\.000 m", _e("principal", "brecha_600_1000"))
+    rd("b3", r"de 600 a 1\.000 m y " + sd + r" de 1\.000 a 2\.000 m", _e("principal", "brecha_1000_2000"))
+    rd("eventos", r"sobre " + n_ + r" eventos con las dos ramas", _pr("eventos"), CNT)
+    rd("ic_bajo", r"a menos de 300 m: " + sd + r" a ", _e("principal", "brecha_0_300", "ic_bajo"))
+    rd("ic_alto", r"a menos de 300 m: " + DECS + r" a " + sd + r";", _e("principal", "brecha_0_300", "ic_alto"))
+    rd("a_menos_b", r"\(A menos B\) da " + sd + r" puntos", _e("principal", "A_menos_B"))
+    rd("a_menos_b_bajo", r"\(A menos B\) da " + DECS + r" puntos \(IC 95%: " + sd + r" a ", _e("principal", "A_menos_B", "ic_bajo"))
+    rd("a_menos_b_alto", r"\(A menos B\) da " + DECS + r" puntos \(IC 95%: " + DECS + r" a " + sd + r"\)", _e("principal", "A_menos_B", "ic_alto"))
+    rd("contaminado", r"rinden " + r"(\d+,\d+)" + r" puntos menos", _e("principal", "C_menos_L", f=-100.0))
+    rd("cob_2016_2023", r"cubren el (\d+)% de esos hijos", _cob(2016, 2023), pct)
+    rd("cob_2024", r"pero el (\d+)% de los de 2024", _cob(2024, 2024), pct)
+    rd("cob_2025", r"y el (\d+)% de los de 2025", _cob(2025, 2025), pct)
+
+    return out
+
+
+W_RIESGO = "wiki/hallazgos/riesgo.md"
+
+
+def _claims_riesgo() -> list[Claim]:
+    """Numeros de la pagina de riesgo de golpe fuerte contra sus marts: la lectura, la tabla de modelos, la calibracion, los coeficientes
+    de las variables fijas, el grupo con y sin rama, los eventos por ano y la fila del README. Los decimales van con dos cifras
+    (tolerancia 0,005) y los porcentajes con una (0,05). Las frases que dependen del veredicto son opcionales."""
+    DECS = r"-?\d+,\d+"
+    INT = r"[\d.]+"
+    out: list[Claim] = []
+
+    def add(id_, patron, fn, tol_fmt, opcional=False):
+        out.append(_c(f"riesgo_{id_}@wiki", W_RIESGO, patron, fn, tol_fmt[0], tol_fmt[1], opcional=opcional))
+
+    D2, P1, CNT = (0.005, "{:.2f}"), (0.05, "{:.1f}"), (0, "{:,.0f}")
+
+    def _m(modelo: str, col: str, f: float = 1.0) -> Callable:
+        return lambda con: f * con.execute(f"select {col} from mart_riesgo_modelo where modelo = ?", [modelo]).fetchone()[0]
+
+    def _p(col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_riesgo_prueba").fetchone()[0]
+
+    def _cal(dec: int, col: str, f: float = 1.0) -> Callable:
+        return lambda con: f * con.execute(f"select {col} from mart_riesgo_calibracion where decil = ?", [dec]).fetchone()[0]
+
+    def _coef(variable: str) -> Callable:
+        return lambda con: con.execute("select coef from mart_riesgo_coef where variable = ?", [variable]).fetchone()[0]
+
+    def _rama(grupo: str, col: str) -> Callable:
+        def fn(con):
+            r = con.execute(f"select {col} from mart_riesgo_rama where grupo = ?", [grupo]).fetchone()
+            return float("nan") if r is None or r[0] is None else r[0]
+        return fn
+
+    def _anio(anio: int, col: str) -> Callable:
+        def fn(con):
+            r = con.execute(f"select {col} from mart_riesgo_anio where anio = ?", [anio]).fetchone()
+            return float("nan") if r is None else r[0]
+        return fn
+
+    def _cob(desde: int, hasta: int) -> Callable:
+        return lambda con: 100 * con.execute(
+            "select sum(horizontales_medidos) / sum(horizontales) from mart_trayectoria_cobertura "
+            "where nivel = 'hijo' and anio between ? and ?", [desde, hasta]).fetchone()[0]
+
+    # la lectura
+    lec = r"- Muestra: Son "
+    add("muestra_eventos", lec + N + r" eventos cercanos", _p("eventos"), CNT)
+    add("muestra_entrenamiento", lec + r"[\d.]+ eventos cercanos[^\n]*?\): " + N + r" de entrenamiento", _p("n_entrenamiento"), CNT)
+    add("muestra_prueba", r"de entrenamiento \(hijos fracturados de 2016-01 a 2022-12\) y " + N + r" de prueba", _p("n_prueba"), CNT)
+    add("muestra_fuera", r"de 2023-01 a 2024-12\); " + N + r" quedan fuera", _p("fuera_ventana"), CNT)
+    add("muestra_con_rama", r"De los de prueba, " + N + r" tienen la rama del par medida", _rama("con_rama", "n"), CNT)
+    pct = (0.5, "{:.0f}")
+    add("cob_2016_2023", r"cubren el (\d+)% de los hijos horizontales fracturados de 2016 a 2023", _cob(2016, 2023), pct, True)
+    add("cob_2024", r"pero solo el (\d+)% de los de 2024", _cob(2024, 2024), pct, True)
+    add("cob_2025", r"y el (\d+)% de los de 2025", _cob(2025, 2025), pct, True)
+    add("prueba_2024_con_rama", r"fina en 2024: " + N + r" de sus", _anio(2024, "con_rama"), CNT, True)
+    add("prueba_2024_eventos", r"fina en 2024: [\d.]+ de sus " + N + r" eventos", _anio(2024, "eventos"), CNT, True)
+    add("prevalencia_entrenamiento", r"Ocurre en el (" + DECS + r")% de los eventos de entrenamiento", _m("principal", "prevalencia_entrenamiento", 100.0), P1)
+    add("prevalencia_prueba", r"y en el (" + DECS + r")% de los de prueba", _m("principal", "prevalencia_prueba", 100.0), P1)
+    ri = r"- Riesgo: [^\n]*?En la prueba el AUC es "
+    add("lectura_auc", ri + "(" + DECS + r")", _m("principal", "auc"), D2, True)
+    add("lectura_auc_bajo", ri + DECS + r" \(IC 95%: (" + DECS + r") a ", _m("principal", "auc_ic_bajo"), D2, True)
+    add("lectura_auc_alto", ri + DECS + r" \(IC 95%: " + DECS + r" a (" + DECS + r")\)", _m("principal", "auc_ic_alto"), D2, True)
+    hb = ri + DECS + r" \(IC 95%: " + DECS + r" a " + DECS + r"\) y la habilidad de Brier contra la tasa de entrenamiento por área es "
+    add("lectura_bss", hb + "(" + DECS + r")", _m("principal", "bss"), D2, True)
+    add("lectura_bss_bajo", hb + DECS + r" \(IC 95%: (" + DECS + r") a ", _m("principal", "bss_ic_bajo"), D2, True)
+    add("lectura_bss_alto", hb + DECS + r" \(IC 95%: " + DECS + r" a (" + DECS + r")\)", _m("principal", "bss_ic_alto"), D2, True)
+    cb = r"- Calibración \(descriptivo, tabla de abajo\): el décimo de mayor riesgo predice "
+    add("calib_pred_alto", cb + "(" + DECS + r")%", _cal(10, "pred_media", 100.0), P1, True)
+    add("calib_obs_alto", cb + DECS + r"% y observa (" + DECS + r")%", _cal(10, "obs_media", 100.0), P1, True)
+    add("calib_pred_bajo", cb + DECS + r"% y observa " + DECS + r"%; el de menor riesgo predice (" + DECS + r")%", _cal(1, "pred_media", 100.0), P1, True)
+    add("calib_obs_bajo", r"el de menor riesgo predice " + DECS + r"% y observa (" + DECS + r")%", _cal(1, "obs_media", 100.0), P1, True)
+    gl = r"- Geometría \(descriptivo, sin veredicto\): sin las variables de las ramas el AUC es "
+    for j, col in enumerate(("auc", "auc_ic_bajo", "auc_ic_alto")):
+        cap = [DECS, DECS, DECS]
+        cap[j] = "(" + DECS + ")"
+        add(f"geo_m2_{col}", gl + cap[0] + r" \(" + cap[1] + r" a " + cap[2] + r"\)", _m("m2_sin_rama", col), D2, True)
+        cap3 = [DECS, DECS, DECS]
+        cap3[j] = "(" + DECS + ")"
+        add(f"geo_m3_{col}", gl + DECS + r" \(" + DECS + r" a " + DECS + r"\) y con la distancia de superficie sola "
+            + cap3[0] + r" \(" + cap3[1] + r" a " + cap3[2] + r"\)", _m("m3_solo_km", col), D2, True)
+
+    # la tabla de modelos
+    etiquetas = {"principal": "Principal \\(todas las variables\\)", "m2_sin_rama": "M2: sin la geometría de las ramas",
+                 "m3_solo_km": "M3: solo la distancia de superficie", "m4_con_rama": "M4: solo eventos con la rama del par medida",
+                 "s1_umbral_m20": "S1: golpe fuerte desde -20 puntos", "s2_umbral_m40": "S2: golpe fuerte desde -40 puntos"}
+    trio = DECS + r" \(" + DECS + r" a " + DECS + r"\)"
+
+    def DECS_FIJO(t):
+        return t[0] + r" \(" + t[1] + r" a " + t[2] + r"\)"
+
+    def fila(modelo: str, i: int, j: int | None = None) -> str:
+        """Regex de la fila del modelo con una captura en la celda i (y, si es un trio, en su elemento j)."""
+        celdas = [r"[^|]*", INT, INT, r"[^|]*", trio, trio, r"[^|]*"]
+        if i in (1, 2):
+            celdas[i] = "(" + INT + ")"
+        elif i in (4, 5, 6):
+            t = [DECS, DECS, DECS]
+            t[j] = "(" + DECS + ")"
+            celdas[i] = DECS_FIJO(t)
+        elif i == 3:
+            celdas[3] = "(" + DECS + ")"
+        return r"\| " + etiquetas[modelo] + r" \| [^|]*\| " + r" \| ".join(c for c in (celdas[1], celdas[2], celdas[3], celdas[4], celdas[5], celdas[6])) + r" \|"
+
+    for modelo in etiquetas:
+        add(f"modelo_{modelo}_n_entrenamiento", fila(modelo, 1), _m(modelo, "n_entrenamiento"), CNT)
+        add(f"modelo_{modelo}_n_prueba", fila(modelo, 2), _m(modelo, "n_prueba"), CNT)
+        add(f"modelo_{modelo}_prevalencia", fila(modelo, 3), _m(modelo, "prevalencia_prueba", 100.0), P1)
+        for j, col in enumerate(("auc", "auc_ic_bajo", "auc_ic_alto")):
+            add(f"modelo_{modelo}_{col}", fila(modelo, 4, j), _m(modelo, col), D2)
+        for j, col in enumerate(("bss", "bss_ic_bajo", "bss_ic_alto")):
+            add(f"modelo_{modelo}_{col}", fila(modelo, 5, j), _m(modelo, col), D2)
+    for modelo in ("m2_sin_rama", "m3_solo_km"):
+        for j, col in enumerate(("dauc", "dauc_ic_bajo", "dauc_ic_alto")):
+            add(f"modelo_{modelo}_{col}", fila(modelo, 6, j), _m(modelo, col), D2)
+
+    # la calibracion por decil
+    for dec in range(1, 10 + 1):
+        fila_c = r"\| " + str(dec) + r" \| "
+        add(f"cal_{dec}_n", fila_c + "(" + INT + r")", _cal(dec, "n"), CNT)
+        add(f"cal_{dec}_pred", fila_c + INT + r" \| (" + DECS + r")", _cal(dec, "pred_media", 100.0), P1)
+        add(f"cal_{dec}_obs", fila_c + INT + r" \| " + DECS + r" \| (" + DECS + r")", _cal(dec, "obs_media", 100.0), P1)
+
+    # los coeficientes de las variables fijas
+    for var in ("intercepto", "km", "m_min", "falta_rama", "dif_azimut", "posicion_costado", "posicion_mixto", "posicion_punta", "edad_meses",
+                "acum_m3_por_m", "falta_largo_padre", "base_m3_d", "arena_por_m", "etapas", "falta_largo_hijo", "mismo_pad", "hijos_1km"):
+        add(f"coef_{var}", r"\| " + re.escape(var) + r" \| (" + DECS + r") \|", _coef(var), D2)
+
+    # con y sin rama
+    for grupo, etiqueta in (("con_rama", "Con la rama del par medida"), ("sin_rama", "Sin la rama del par medida")):
+        fila_r = r"\| " + etiqueta + r" \| "
+        add(f"rama_{grupo}_n", fila_r + "(" + INT + r")", _rama(grupo, "n"), CNT)
+        add(f"rama_{grupo}_golpes", fila_r + INT + r" \| (" + INT + r")", _rama(grupo, "golpes"), CNT)
+        add(f"rama_{grupo}_auc", fila_r + INT + r" \| " + INT + r" \| (" + DECS + r") \|", _rama(grupo, "auc"), D2)
+
+    # los eventos por ano
+    for anio in range(2011, 2027):
+        fila_a = r"\| " + str(anio) + r" \| (?:entrenamiento|prueba|fuera) \| "
+        add(f"anio_{anio}_eventos", fila_a + "(" + INT + r")", _anio(anio, "eventos"), CNT, True)
+        add(f"anio_{anio}_con_rama", fila_a + INT + r" \| (" + INT + r")", _anio(anio, "con_rama"), CNT, True)
+        add(f"anio_{anio}_golpes", fila_a + INT + r" \| " + INT + r" \| (" + INT + r") \|", _anio(anio, "golpes"), CNT, True)
+    add("reps", r"\(([\d.]+) remuestras, ", _p("reps"), CNT)
+    add("pads", r"remuestras, ([\d.]+) pads", _p("pads_prueba"), CNT)
+
+    # la fila del README: las cifras que repite de la pagina
+    fila_rd = r"\| Riesgo de golpe fuerte con un modelo logístico[^\n]*?"
+
+    def rd(id_, patron, fn, tol_fmt):
+        out.append(_c(f"riesgo_readme_{id_}@readme", R, fila_rd + patron, fn, tol_fmt[0], tol_fmt[1]))
+
+    rd("eventos", r"sobre " + N + r" eventos", _p("n_prueba"), CNT)
+    rd("auc", r"el AUC es (" + DECS + r") y la habilidad", _m("principal", "auc"), D2)
+    rd("bss", r"habilidad de Brier contra la tasa de entrenamiento por área es (" + DECS + r") \|", _m("principal", "bss"), D2)
+    rd("auc_bajo", r"del AUC: (" + DECS + r") a ", _m("principal", "auc_ic_bajo"), D2)
+    rd("auc_alto", r"del AUC: " + DECS + r" a (" + DECS + r");", _m("principal", "auc_ic_alto"), D2)
+    rd("bss_bajo", r"de la habilidad de Brier: (" + DECS + r") a ", _m("principal", "bss_ic_bajo"), D2)
+    rd("bss_alto", r"de la habilidad de Brier: " + DECS + r" a (" + DECS + r") \|", _m("principal", "bss_ic_alto"), D2)
+    rd("cob_2016_2023", r"cubren el (\d+)% de esos hijos", _cob(2016, 2023), pct)
+    rd("cob_2024", r"pero el (\d+)% de los de 2024", _cob(2024, 2024), pct)
+    rd("cob_2025", r"y el (\d+)% de los de 2025", _cob(2025, 2025), pct)
+    return out
 
 
 W_ROBOP = "wiki/hallazgos/robustez_operador.md"
@@ -1340,6 +2417,113 @@ def _claims_hijo_celdas() -> list[Claim]:
                  hc(*P, "pct_ic_bajo"), 0.05, d1))
     cl.append(_c("hcel_readme_alto@wiki", W_LIM, r"dentro de cuadrados de 2 km el hijo muy depletado da -?\d+,\d+% del virgen \(IC 95%: -?\d+,\d+% a " + SD + r"%",
                  hc(*P, "pct_ic_alto"), 0.05, d1))
+    return cl
+
+
+W_MEC = "wiki/hallazgos/mecanismo.md"
+
+
+def _claims_mecanismo() -> list[Claim]:
+    """Cifras de la pagina del mecanismo por la geometria de las ramas (resumen, tabla de modelos, bandas, limites), la linea del README
+    y el parrafo que la cita en la pagina del eje, contra los marts de pipeline.mecanismo."""
+    def mc(modelo: str, k: int, col: str, factor: float = 100.0) -> Callable:
+        return lambda con: factor * con.execute(
+            f"select {col} from mart_mecanismo_contraste where modelo = '{modelo}' and k = {k}").fetchone()[0]
+
+    def mb(modelo: str, banda: str, col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(
+            f"select {col} from mart_mecanismo_banda where modelo = '{modelo}' and banda = '{banda}'").fetchone()[0]
+
+    def vd(col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(f"select {col} from mart_mecanismo_veredicto").fetchone()[0]
+
+    def cercanos_16_23(con) -> float:
+        a, t = con.execute("select sum(case when anio between 2016 and 2023 then n_costado + n_punta else 0 end), "
+                           "sum(n_costado + n_punta) from mart_mecanismo_muestra").fetchone()
+        return 100.0 * a / t
+
+    cl = []
+
+    def frase(clave, fichero, lits, fns, tols, fmts):
+        for k, (fn, tol, fmt) in enumerate(zip(fns, tols, fmts)):
+            cl.append(_c(f"mec_{clave}_{k}@wiki", fichero, _fr(k, *lits), fn, tol, fmt))
+
+    d1, n0 = "{:.1f}", "{:,.0f}"
+    BP = ["0 a 300 m", "300 a 600 m", "600 a 1.000 m"]
+    frase("principal", W_MEC, ["Contraste costado menos punta al mes 1 (principal): ", " puntos (IC 95% por bloques de 5 km: ", " a ",
+                               "), sobre ", " costados y ", " puntas y ", " bloques."],
+          [mc("principal", 1, "contraste"), mc("principal", 1, "ic_bajo_5km"), mc("principal", 1, "ic_alto_5km"),
+           mc("principal", 1, "n_costado", 1), mc("principal", 1, "n_punta", 1), mc("principal", 1, "bloques_5km", 1)],
+          [0.05] * 3 + [0] * 3, [d1] * 3 + [n0] * 3)
+    frase("placebo", W_MEC, ["Mismo contraste en el mes -1 con la base de los meses -6 a -4: ", " puntos (IC 95% por bloques de 5 km: ",
+                             " a ", ")."],
+          [vd("placebo", 100), vd("placebo_ic_bajo", 100), vd("placebo_ic_alto", 100)], [0.05] * 3, [d1] * 3)
+    frase("cota", W_MEC, ["el límite más lejano de cero es ", " puntos, una cota superior"], [vd("placebo_ic_bajo", -100)], [0.05], [d1])
+    frase("serie", W_MEC, ["vale ", " puntos en el mes -3, ", " puntos en el mes -2 y ", " puntos en el mes 0."],
+          [mc("serie_base_limpia", -3, "contraste"), mc("serie_base_limpia", -2, "contraste"), mc("serie_base_limpia", 0, "contraste")],
+          [0.05] * 3, [d1] * 3)
+    frase("bandas", W_MEC, ["es de ", " puntos en la banda de 0 a 300 m (", " costados, ", " puntas), de ", " puntos en la banda de 300 a 600 m (",
+                            " costados, ", " puntas), de ", " puntos en la banda de 600 a 1.000 m (", " costados, ", " puntas)."],
+          [mb("principal", BP[0], "contraste", 100), mb("principal", BP[0], "n_costado"), mb("principal", BP[0], "n_punta"),
+           mb("principal", BP[1], "contraste", 100), mb("principal", BP[1], "n_costado"), mb("principal", BP[1], "n_punta"),
+           mb("principal", BP[2], "contraste", 100), mb("principal", BP[2], "n_costado"), mb("principal", BP[2], "n_punta")],
+          [0.05, 0, 0] * 3, [d1, n0, n0] * 3)
+    frase("otros_ic", W_MEC, ["por pads hijo, de ", " a ", "; por bloques de 2 km, de ", " a ", "."],
+          [mc("principal", 1, "ic_bajo_pad"), mc("principal", 1, "ic_alto_pad"), mc("principal", 1, "ic_bajo_2km"),
+           mc("principal", 1, "ic_alto_2km")], [0.05] * 4, [d1] * 4)
+    frase("variantes", W_MEC, ["Sin pesar por eventos: ", " puntos; con el costado definido por un solape de 0,5 o más: ", " puntos."],
+          [mc("sin_pesar", 1, "contraste"), mc("costado_05", 1, "contraste")], [0.05] * 2, [d1] * 2)
+    frase("anios", W_MEC, ["De los ", " eventos cercanos del modelo principal, ", "% corresponden"],
+          [vd("eventos_cercanos"), cercanos_16_23], [0, 0.05], [n0, d1])
+    frase("limite_banda", W_MEC, ["en la banda de 0 a 300 m: allí el contraste del mes -1 ya es de ", " puntos (sin IC"],
+          [mb("placebo", BP[0], "contraste", 100)], [0.05], [d1])
+    def peso_total(con) -> float:
+        return con.execute("select sum(peso) from mart_mecanismo_banda where modelo = 'principal'").fetchone()[0]
+
+    frase("limite_banda_peso", W_MEC, ["en esa banda el contraste del mes 1 es de ", " puntos y pesa ", " de ", " eventos en el promedio."],
+          [mb("principal", BP[0], "contraste", 100), mb("principal", BP[0], "peso"), peso_total], [0.05, 0, 0], [d1, n0, n0])
+    # table of models: principal and placebo rows (contrast and the 5 km interval)
+    for modelo, k, etq in [("principal", 1, r"Principal \(decide\) \| 1"), ("placebo", -1, r"Placebo en k = -1, base de los meses -6 a -4 \| -1")]:
+        fila = r"\| " + etq + r" \| [\d.]+ \| [\d.]+ \| "
+        cl.append(_c(f"mec_tabla_{modelo}_n@wiki", W_MEC, r"\| " + etq + r" \| " + N + r" \|", mc(modelo, k, "n_costado", 1), 0, n0))
+        cl.append(_c(f"mec_tabla_{modelo}_c@wiki", W_MEC, fila + "(" + NG + r") \|", mc(modelo, k, "contraste"), 0.05, d1))
+    # the paragraph of the page of the axis
+    cl.append(_c("mec_eje_contraste@wiki", "wiki/hallazgos/eje_parada.md",
+                 r"Al mes 1 el costado rinde " + "(" + NG + r") puntos menos que la punta", vd("contraste", -100), 0.05, d1))
+    cl.append(_c("mec_eje_placebo@wiki", "wiki/hallazgos/eje_parada.md",
+                 r"el mismo contraste en el mes -1 es de (" + NG + r") puntos", vd("placebo", 100), 0.05, d1))
+    # README row
+    fila = r"Mecanismo por la geometría de las ramas [^|]*\| [^|]*?"
+    cl.append(_c("mec_readme_contraste@readme", R, fila + r"un contraste de (" + NG + r") puntos", vd("contraste", 100), 0.05, d1))
+    cl.append(_c("mec_readme_costados@readme", R, fila + r"sobre (" + NG + r") costados y", vd("n_costado"), 0, n0))
+    cl.append(_c("mec_readme_puntas@readme", R, fila + r"costados y (" + NG + r") puntas", vd("n_punta"), 0, n0))
+    f3 = fila + r"\| [^|]*?"
+    cl.append(_c("mec_readme_ic_bajo@readme", R, f3 + r"IC 95% por bloques de 5 km: (" + NG + r") a", vd("ic_bajo", 100), 0.05, d1))
+    cl.append(_c("mec_readme_ic_alto@readme", R, f3 + r"IC 95% por bloques de 5 km: " + NG + r" a (" + NG + r");", vd("ic_alto", 100), 0.05, d1))
+    cl.append(_c("mec_readme_placebo_bajo@readme", R, f3 + r"\(IC (" + NG + r") a", vd("placebo_ic_bajo", 100), 0.05, d1))
+    cl.append(_c("mec_readme_placebo_alto@readme", R, f3 + r"\(IC " + NG + r" a (" + NG + r")\)", vd("placebo_ic_alto", 100), 0.05, d1))
+    f4 = fila + r"\| [^|]*\| [^|]*?"
+    # the README prints the verdict word: nan (FAIL) unless the stored verdict is the one it says
+    def cota_si_sostiene(con) -> float:
+        ver, bajo = con.execute("select veredicto, placebo_ic_bajo from mart_mecanismo_veredicto").fetchone()
+        return float("nan") if ver != "sostiene" else -100 * bajo
+
+    cl.append(_c("mec_readme_cota@readme", R, f4 + r"sostiene, con la regla fijada antes de correr [^|]*?diferencia previa de hasta ("
+                 + NG + r") puntos", cota_si_sostiene, 0.05, d1))
+    # coverage of the measured branches, as the page prints it (from mart_trayectoria_cobertura)
+    def cob(i: int) -> Callable:
+        def f(con) -> float:
+            from pipeline.mecanismo import cobertura_ramas
+            c = cobertura_ramas(con)
+            return float("nan") if c is None else float(c[i])
+        return f
+
+    frase("cobertura", W_MEC, ["las ramas medidas cubren de ", " a ", "% de los hijos fracturados de 2016 a 2023 pero solo ",
+                               "% de los de 2024 y ", "% de los de 2025"],
+          [cob(0), cob(1), cob(2), cob(3)], [0] * 4, [n0] * 4)
+    cl.append(_c("mec_readme_banda@readme", R, f4 + r"la banda de 0 a 300 m ya da (" + NG + r") en el mes -1",
+                 mb("placebo", BP[0], "contraste", 100), 0.05, d1))
+    cl.append(_c("mec_readme_placebo@readme", R, fila + r"\| [^|]*?el mes -1 da (" + NG + r") puntos", vd("placebo", 100), 0.05, d1))
     return cl
 
 
@@ -1831,9 +3015,9 @@ def _claims_inyeccion() -> list[Claim]:
         _c("iny_r4a_k@wiki", W_INY, r"de los mundos, " + N + r" de \d+; la regla", _iny_k("S5", 0, "brecha_mes1"), 0, "{:.0f}"),
         _c("iny_r4a_mundos@wiki", W_INY, r"de los mundos, \d+ de " + N + r"; la regla", _iny("S5", 0, "brecha_mes1", "mundos"), 0, "{:.0f}"),
         _c("iny_r4a_umbral@wiki", W_INY, r"la regla del libro dice como máximo " + PC, _iny_const("UMBRAL_R4A", 100), 0.5, "{:.0f}"),
-        _c("iny_r4a_operador@wiki", W_INY, r"el operador del libro es estricto \(< " + DEC + r"\)", _iny_const("UMBRAL_R4A"), 0.005, "{:.2f}"),
-        _c("iny_r4a_borde_k@wiki", W_INY, r"con " + N + r" de \d+ mundos \(\d+%\) cumple el texto", _iny_k("S5", 0, "brecha_mes1"), 0, "{:.0f}"),
-        _c("iny_r4a_borde_pc@wiki", W_INY, r"mundos \(" + PC + r"\) cumple el texto", _iny("S5", 0, "brecha_mes1", "ic_excluye_cero_frac", 100), 0.5, "{:.0f}"),
+        _c("iny_r4a_operador@wiki", W_INY, r"el operador del libro es estricto \(< " + DEC + r"\)", _iny_const("UMBRAL_R4A"), 0.005, "{:.2f}", opcional=True),
+        _c("iny_r4a_borde_k@wiki", W_INY, r"con " + N + r" de \d+ mundos \(\d+%\) cumple el texto", _iny_k("S5", 0, "brecha_mes1"), 0, "{:.0f}", opcional=True),
+        _c("iny_r4a_borde_pc@wiki", W_INY, r"mundos \(" + PC + r"\) cumple el texto", _iny("S5", 0, "brecha_mes1", "ic_excluye_cero_frac", 100), 0.5, "{:.0f}", opcional=True),
         _c("iny_r4a_exacto_bajo@wiki", W_INY, r"compatible con tasas de " + PC + r" a \d+%", _iny_exacto(0), 0.5, "{:.0f}"),
         _c("iny_r4a_exacto_alto@wiki", W_INY, r"compatible con tasas de \d+% a " + PC, _iny_exacto(1), 0.5, "{:.0f}"),
         _c("iny_r4a_brecha_nula@wiki", W_INY, r"La brecha media del mundo nulo es " + SD + r" puntos", _iny("S5", 0, "brecha_mes1", "recuperado_media"), 0.05, "{:.1f}"),
@@ -1862,10 +3046,13 @@ def _claims_inyeccion() -> list[Claim]:
         _c("iny_caso_recuperado@caso", CASO, r"se recupera como " + SD + r" puntos", _iny("S2", 20, "brecha_mes1", "recuperado_media"), 0.05, "{:.1f}"),
         _c("iny_caso_reglas_cumplidas@caso", CASO, r"se cumplen " + N + r" de las \d+ reglas", _veredictos_n(True), 0),
         _c("iny_caso_reglas_total@caso", CASO, r"se cumplen \d+ de las " + N + r" reglas", _veredictos_n(False), 0),
-        _c("iny_caso_fp_k@caso", CASO, r"borde exacto \(" + N + r" de \d+ mundos", _iny_k("S5", 0, "brecha_mes1"), 0, "{:.0f}"),
-        _c("iny_caso_fp_mundos@caso", CASO, r"borde exacto \(\d+ de " + N + r" mundos", _iny("S5", 0, "brecha_mes1", "mundos"), 0, "{:.0f}"),
-        _c("iny_caso_falsos_positivos@caso", CASO, r"mundos, " + PC + r"\): cumple el texto", _iny("S5", 0, "brecha_mes1", "ic_excluye_cero_frac", 100), 0.5, "{:.0f}"),
-        _c("iny_caso_umbral@caso", CASO, r"\(como máximo " + PC + r"\) pero no el operador", _iny_const("UMBRAL_R4A", 100), 0.5, "{:.0f}"),
+        _c("iny_caso_fp_k@caso", CASO, r"borde exacto \(" + N + r" de \d+ mundos", _iny_k("S5", 0, "brecha_mes1"), 0, "{:.0f}", opcional=True),
+        _c("iny_caso_fp_mundos@caso", CASO, r"borde exacto \(\d+ de " + N + r" mundos", _iny("S5", 0, "brecha_mes1", "mundos"), 0, "{:.0f}", opcional=True),
+        _c("iny_caso_falsos_positivos@caso", CASO, r"mundos, " + PC + r"\): cumple el texto", _iny("S5", 0, "brecha_mes1", "ic_excluye_cero_frac", 100), 0.5, "{:.0f}", opcional=True),
+        _c("iny_caso_fp_k_nuevo@caso", CASO, r"falsos positivos da " + N + r" de \d+ mundos", _iny_k("S5", 0, "brecha_mes1"), 0, "{:.0f}"),
+        _c("iny_caso_fp_pc_nuevo@caso", CASO, r"falsos positivos da \d+ de \d+ mundos \(" + PC + r"\)", _iny("S5", 0, "brecha_mes1", "ic_excluye_cero_frac", 100), 0.5, "{:.0f}"),
+        _c("iny_caso_fp_mundos_nuevo@caso", CASO, r"falsos positivos da \d+ de " + N + r" mundos", _iny("S5", 0, "brecha_mes1", "mundos"), 0, "{:.0f}"),
+        _c("iny_caso_umbral@caso", CASO, r"\(como máximo " + PC + r"\) pero no el operador", _iny_const("UMBRAL_R4A", 100), 0.5, "{:.0f}", opcional=True),
         _c("iny_mundos_plan@wiki", W_INY, r"La corrida con " + N + r" mundos por celda pasó", _iny_const("MUNDOS_PLAN"), 0, "{:.0f}"),
         _c("iny_tope_minutos@wiki", W_INY, r"pasó de los " + N + r" minutos que la regla", _iny_const("TOPE_MINUTOS"), 0, "{:.0f}"),
         _c("iny_l_pend_pts@wiki", W_INY, r"con el 40% es " + SD + r" y no", _iny("S3", 40, "pendiente_mes0", "plantado_puntos"), 0.05, "{:.1f}"),
@@ -1969,7 +3156,6 @@ def _claims_limites() -> list[Claim]:
         _c("readme_en_eventos@readme", R, r"\(([\d,]+) events\)", lambda con: _eventos_cercanos(con) / 1000, 0.0005, "{:.3f}"),
         _c("readme_controles_excluyen@readme", R, r"con " + N + r" de los 4 controles probados", ic_excluye_cero, 0),
         _c("readme_controles_n@readme", R, r"con \d+ de los " + N + r" controles probados", n_controles, 0),
-        _c("readme_eventos_propios@readme", R, r"reproduce la brecha del mes 1 y sus " + N + r" eventos", _eventos_cercanos, 0),
     ]
     return cl
 
@@ -2068,6 +3254,14 @@ CLAIMS: list[Claim] = [
     *_claims_decision(),
     *_claims_potencia_dosis(),
     *_claims_robustez_operador(),
+    *_claims_dias_perdidos(),
+    *_claims_golpes_mismo_mes(),
+    *_claims_golpes_mismo_padre(),
+    *_claims_calendario_golpes(),
+    *_claims_trayectorias(),
+    *_claims_alcance_rama(),
+    *_claims_riesgo(),
+    *_claims_dosis_geometria(),
     *_claims_resumen_operador(),
     *_claims_informe(),
     *_claims_mundo(),
@@ -2078,6 +3272,8 @@ CLAIMS: list[Claim] = [
     # child side (finding page, README row and case study paragraph)
     *_claims_hijo(),
     *_claims_hijo_celdas(),
+    *_claims_mecanismo(),
+    *_claims_hijo_pad(),
     *_claims_gas(),
     *_claims_literatura(),
     *_claims_limites(),
@@ -2086,6 +3282,9 @@ CLAIMS: list[Claim] = [
     *_claims_colorado(),
     *_claims_fuentes_mundo(),
     *_claims_mapa_base(),
+    *_claims_base_foto(),
+    *_claims_relieve_fino(),
+    *_claims_exactitud(),
     *_claims_replicacion(),
     *_claims_wyoming(),
     *_claims_replicacion(WYOMING),
@@ -2109,7 +3308,7 @@ CLAIMS: list[Claim] = [
     _c("holdout_eje_prueba@readme", R, r"(\d+) en los nuevos", _holdout_eje("Eje ajustado en la prueba")),
     # cost model (out-of-sample)
     _c("costo_r2@readme", R, r"R2 fuera de muestra " + NEG, _costo_cv_r2("modelo"), 0.005, "{:.2f}"),
-    _c("costo_r2_media_area@readme", R, r"la media del .rea da " + DEC, _costo_cv_r2("media_area"), 0.005, "{:.2f}"),
+    _c("costo_r2_media_area@readme", R, r"la media del .rea da " + SIG, _costo_cv_r2("media_area"), 0.005, "{:.2f}"),
     # robustness (finding page)
     _c("rob_subconjuntos@wiki", W_ROB, r"El IC de \d+ de (\d+) subconjuntos", _rob_n(), 0),
     _c("rob_subconjuntos@docs", D, r"en (\d+) subconjuntos", _rob_n(), 0),
@@ -2247,7 +3446,7 @@ CLAIMS: list[Claim] = [
     _c("eje_ic_alto@caso", CASO, r"\(IC de \d+ a (\d+)\)", _cuenca("ic_alto")),
     _c("shmax@caso", CASO, r"SHmax publicado, de " + DEC + r" grados", _shmax, 0.05, "{:.1f}", wh=False),
     _c("costo_r2@caso", CASO, r"su R2 es " + NEG + r" contra", _costo_cv_r2("modelo"), 0.005, "{:.2f}"),
-    _c("costo_r2_media_area@caso", CASO, r"contra " + DEC + r" de predecir la media", _costo_cv_r2("media_area"), 0.005, "{:.2f}"),
+    _c("costo_r2_media_area@caso", CASO, r"contra " + SIG + r" de predecir la media", _costo_cv_r2("media_area"), 0.005, "{:.2f}"),
     # test count (runs pytest --collect-only)
     _c("tests@readme", R, r"hay (\d+) tests", _n_tests, 0, wh=False, lento=True),
 ]
@@ -2255,7 +3454,34 @@ CLAIMS: list[Claim] = [
 
 # Numeros de README.md que son parte de una definicion y no un resultado: cada uno es una frase, no un numero suelto.
 README_DEFINICIONALES: tuple[str, ...] = (
-    r"datos a septiembre de 2026",
+    r"ajustado en 2023",
+    r"con el ajuste de 2023",
+    r"de 2024 a 2026",
+    r"pedía 100 eventos aislados en 2023",
+    r"b acotado en cero",
+    r"IC 95% por pads del padre",
+    r"MDE80",
+    r"contra 0,22",
+    r"a 1 km o más",
+    r"pedía 150 padres y 400 meses de golpe",
+    r"commit bddf1e0771",
+    r"banda de 0 a 300 m",
+    r"a menos de 600 m",
+    r"a menos de 300 m",
+    r"a menos de 1\.000 m",
+    r"de 300 a 600 m",
+    r"de 600 a 1\.000 m",
+    r"de 1\.000 a 2\.000 m",
+    r"\(300, 600, 1\.000 y 2\.000 m\)",
+    r"de los de 2024",
+    r"de los de 2025",
+    r"en la prueba de 2023 y 2024",
+    r"por cada 100 bbl por metro",
+    r"de 2016 a 2023",
+    r"Sentinel-2",
+    r"datos a octubre de 2026",
+    r"público de septiembre de 2026",
+    r"sus 2\.077 eventos",
     r"cohorte 2017",
     r"cohorte 2025",
     r"de 12 meses",
@@ -2288,7 +3514,6 @@ README_DEFINICIONALES: tuple[str, ...] = (
     r"m3 de petróleo",
     r"m3 por evento",
     r"Python 3\.13",
-    r"Vaca Muerta en 4D",
     r"la cuenca en 3D",
 )
 

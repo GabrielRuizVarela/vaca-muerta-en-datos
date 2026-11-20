@@ -6,7 +6,7 @@ Qué entra, qué se calcula, qué se publica y qué impide que una cifra publica
 
 ```
 Secretaría de Energía, datos abiertos
-(producción no convencional por pozo y mes; fracturas, Adjunto IV)
+(producción no convencional por pozo y mes; fracturas, Adjunto IV; trayectorias de pozo)
     |
     v
 pipeline.ingest ......... data/raw/ (una copia por fecha y hash, nunca se pisa) y data/manifest.json
@@ -21,6 +21,7 @@ pipeline.build .......... pipeline/sql/01 a 05 -> data/warehouse.duckdb
     v
 análisis ................ un módulo por pregunta (placebo, bloques, dosis, hijo, gas, carga_anual y los demás pasos de run_all)
     |                     cada uno lee int_ y mart_, escribe sus propios mart_ y arma su página de wiki/hallazgos/
+    |                     pipeline.trayectorias lee además la copia cruda de las trayectorias, que el SQL no usa
     v
 publicación ............. pipeline.figuras (docs/img/), pipeline.wiki (wiki/), pipeline.informe (site/informe.html),
     |                     pipeline.report (site/index.html), pipeline.replay (site/replay.html), pipeline.mundo (site/mundo.html)

@@ -1,0 +1,130 @@
+{
+ "dibujo": {
+  "eo_centro_pct": -0.13,
+  "eo_hoja_pct": [
+   -2.4,
+   1.7
+  ],
+  "eo_nucleo_pct": [
+   -0.4,
+   0.6
+  ],
+  "km_grado": 111.32,
+  "lat0": -38.3226,
+  "medio_segundo_m": [
+   12,
+   15
+  ],
+  "ns_pct": 0.29
+ },
+ "imagen": {
+  "agua_iou": 0.913,
+  "agua_mejor_iou": 0.913,
+  "agua_mejor_px": [
+   0,
+   0
+  ],
+  "busca_px": 8,
+  "claros_pct": 86,
+  "control_km": 1,
+  "control_sd": 0.5,
+  "embalses": [
+   "Embalse Los Barreales",
+   "Embalse Mari Menuco"
+  ],
+  "este_m": -7,
+  "mes_imagen": "2025-12",
+  "meses_antes": 6,
+  "norte_m": -6,
+  "pads": 767,
+  "pico_en_centro": true,
+  "pico_sd": 3.5,
+  "pixel_m": [
+   28,
+   36
+  ],
+  "suelto_mediana_m": 48
+ },
+ "pagina": {
+  "hash_datos": "9eaa4fdd0942",
+  "mes_datos": "2026-09",
+  "pozos": 3448
+ },
+ "relieve": {
+  "cumbres": [
+   {
+    "fuente_m": 2251,
+    "lat": -37.7381,
+    "lon": -68.9244,
+    "nombre": "Volcán Auca Mahuida",
+    "pagina_m": 2165
+   },
+   {
+    "fuente_m": 4698,
+    "lat": -36.6372,
+    "lon": -70.4322,
+    "nombre": "Volcán Domuyo",
+    "pagina_m": 4619
+   }
+  ],
+  "independiente": {
+   "fecha_consulta": "2026-11-19",
+   "fuente_max": 8.9,
+   "fuente_mediana": 2.1,
+   "n": 91,
+   "pagina_max": 10.7,
+   "pagina_mediana": 2.1
+  },
+  "niveles": [
+   {
+    "fuente_m": 414,
+    "nombre": "Embalse Los Barreales",
+    "pagina_m": 414
+   },
+   {
+    "fuente_m": 414,
+    "nombre": "Embalse Mari Menuco",
+    "pagina_m": 414
+   },
+   {
+    "fuente_m": 370,
+    "nombre": "Embalse Ezequiel Ramos Mexía",
+    "pagina_m": 370
+   },
+   {
+    "fuente_m": 272,
+    "nombre": "Lago Pellegrini",
+    "pagina_m": 272
+   }
+  ],
+  "pozos": {
+   "max": 28.4,
+   "mediana": 0.6,
+   "n": 3437,
+   "p90": 1.9,
+   "p99": 8.0
+  },
+  "pozos_nucleo": {
+   "max": 5.5,
+   "mediana": 0.5,
+   "n": 2552,
+   "p90": 1.3,
+   "p99": 2.4
+  },
+  "solo_hoja": {
+   "max": 28.4,
+   "mediana": 1.2,
+   "n": 3437,
+   "p90": 3.8,
+   "p99": 11.0
+  },
+  "solo_hoja_nucleo": {
+   "max": 21.9,
+   "mediana": 1.1,
+   "n": 2552,
+   "p90": 3.6,
+   "p99": 8.8
+  }
+ },
+ "v": 1
+}

@@ -6,12 +6,12 @@ Página generada por `pipeline/hijo.py`. Pregunta si un pozo fracturado cerca de
 
 Veredicto contra la regla fijada: **no firme**. La regla no permite concluir en ningún sentido. El IC del grupo muy depletado incluye cero y el punto es menor que 5% del rendimiento virgen, lo que sería una falsación de la degradación, pero la falsación exige un control negativo nulo y aquí no lo es: la misma exposición medida con pozos posteriores también se asocia con el rendimiento, con signo positivo, el contrario al de una degradación. Es compatible con que la ubicación, o un desarrollo posterior que sigue a los hijos que rindieron bien, empuje el rendimiento hacia arriba y tape una degradación; la versión continua del control negativo es nula, así que el control no nulo depende de los cortes por grupo. No permite leer el nulo del grupo muy depletado como ausencia de efecto.
 
-- Rendimiento de los hijos en zona virgen a 12 meses: mediana de 83,9 bbl por metro de rama, sobre 759 hijos de 256 pads.
-- Muy depletado contra virgen: -0,2 bbl por metro de rama (IC 95%: -12,8 a 12,4), o sea -0,3% del rendimiento virgen (IC 95%: -15,3% a 14,8%), sobre 1.585 hijos de 474 pads.
-- Control negativo, muy depletado contra virgen: 8,9 bbl por metro de rama (IC 95%: 2,1 a 15,7), o sea 10,6% del rendimiento virgen (IC 95%: 2,5% a 18,7%). No es nulo.
-- Exposición continua (descriptivo): -0,10 bbl por metro de rama por cada 100 bbl por metro de exposición (IC 95%: -0,93 a 0,73); con la exposición del control negativo: 0,08 (IC 95%: -0,09 a 0,24).
-- Por operadora (descriptivo, muy depletado contra virgen): YPF 4,3 bbl por metro (IC 95%: -1,1 a 9,7); resto -13,3 bbl por metro (IC 95%: -56,2 a 29,6).
-- Equilibrio (ubicación): el grupo muy depletado tiene 137 pozos de shale a menos de 5 km contra 79 del grupo virgen (p dentro de celdas 0,000), y 2.604 m de rama contra 2.550 m (p 0,000): se ubican en zonas de desarrollo más denso, que es lo que el control negativo ya muestra.
+- Rendimiento de los hijos en zona virgen a 12 meses: mediana de 84,2 bbl por metro de rama, sobre 778 hijos de 260 pads.
+- Muy depletado contra virgen: -0,2 bbl por metro de rama (IC 95%: -12,6 a 12,2), o sea -0,2% del rendimiento virgen (IC 95%: -15,0% a 14,5%), sobre 1.612 hijos de 481 pads.
+- Control negativo, muy depletado contra virgen: 8,9 bbl por metro de rama (IC 95%: 2,1 a 15,7), o sea 10,6% del rendimiento virgen (IC 95%: 2,5% a 18,6%). No es nulo.
+- Exposición continua (descriptivo): -0,06 bbl por metro de rama por cada 100 bbl por metro de exposición (IC 95%: -0,86 a 0,75); con la exposición del control negativo: 0,08 (IC 95%: -0,08 a 0,25).
+- Por operadora (descriptivo, muy depletado contra virgen): YPF 3,9 bbl por metro (IC 95%: -1,4 a 9,3); resto -11,5 bbl por metro (IC 95%: -52,9 a 29,9).
+- Equilibrio (ubicación): el grupo muy depletado tiene 138 pozos de shale a menos de 5 km contra 80 del grupo virgen (p dentro de celdas 0,000), y 2.606 m de rama contra 2.580 m (p 0,000): se ubican en zonas de desarrollo más denso, que es lo que el control negativo ya muestra.
 - El IC del modelo principal es ancho: en porcentaje del rendimiento virgen, no excluye una diferencia relevante en ninguno de los dos sentidos.
 - Se publican todos los modelos calculados; el veredicto sale solo del modelo principal y su control negativo.
 
@@ -28,16 +28,16 @@ El control negativo repite el modelo con la exposición de pozos que empezaron a
 
 ## Grupos
 
-El grupo poco depletado llega hasta 435 bbl por metro de exposición y el muy depletado empieza en 436; en el control negativo los cortes son los de sus propias exposiciones positivas. La exposición es el petróleo acumulado de los vecinos por metro de rama del hijo.
+El grupo poco depletado llega hasta 434 bbl por metro de exposición y el muy depletado empieza en 435; en el control negativo los cortes son los de sus propias exposiciones positivas. La exposición es el petróleo acumulado de los vecinos por metro de rama del hijo.
 
 | Exposición | Grupo | Hijos | Pads | Exposición mínima (bbl/m) | Exposición máxima (bbl/m) | Mediana a 12 meses (bbl/m) | Media a 12 meses (bbl/m) |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Exposición real | virgen | 759 | 256 | 0 | 0 | 83,9 | 87,7 |
-| Exposición real | poco depletado | 413 | 150 | 0 | 435 | 84,7 | 87,9 |
-| Exposición real | muy depletado | 413 | 104 | 436 | 11.926 | 94,9 | 96,1 |
-| Exposición de control negativo | virgen | 908 | 273 | 0 | 0 | 83,9 | 86,8 |
-| Exposición de control negativo | poco depletado | 339 | 99 | 2 | 794 | 87,7 | 88,6 |
-| Exposición de control negativo | muy depletado | 338 | 124 | 811 | 20.779 | 97,8 | 99,9 |
+| Exposición real | virgen | 778 | 260 | 0 | 0 | 84,2 | 88,0 |
+| Exposición real | poco depletado | 417 | 151 | 0 | 434 | 84,5 | 87,6 |
+| Exposición real | muy depletado | 417 | 105 | 435 | 11.926 | 95,1 | 97,0 |
+| Exposición de control negativo | virgen | 925 | 277 | 0 | 0 | 84,1 | 87,1 |
+| Exposición de control negativo | poco depletado | 344 | 101 | 2 | 817 | 87,7 | 88,9 |
+| Exposición de control negativo | muy depletado | 343 | 124 | 817 | 20.898 | 97,8 | 100,0 |
 
 ## Coeficientes
 
@@ -45,16 +45,16 @@ Cada coeficiente es la diferencia de petróleo de 12 meses por metro de rama con
 
 | Modelo | Término | Coeficiente (bbl/m) | % del virgen | IC 95% (bbl/m) | Hijos | Pads | p |
 | --- | --- | ---: | ---: | --- | ---: | ---: | ---: |
-| Principal | poco depletado | 2,9 | 3,5 | -3,9 a 9,7 | 1.585 | 474 | 0,401 |
-| Principal | muy depletado | -0,2 | -0,3 | -12,8 a 12,4 | 1.585 | 474 | 0,973 |
-| Control negativo | poco depletado | -0,9 | -1,1 | -8,1 a 6,2 | 1.585 | 474 | 0,796 |
-| Control negativo | muy depletado | 8,9 | 10,6 | 2,1 a 15,7 | 1.585 | 474 | 0,011 |
-| Continua | por 100 bbl/m | -0,1 | -0,1 | -0,9 a 0,7 | 1.585 | 474 | 0,808 |
-| Continua, control negativo | por 100 bbl/m | 0,1 | 0,1 | -0,1 a 0,2 | 1.585 | 474 | 0,347 |
-| Solo YPF | poco depletado | 4,3 | 5,2 | -1,4 a 10,0 | 987 | 266 | 0,139 |
-| Solo YPF | muy depletado | 4,3 | 5,2 | -1,1 a 9,7 | 987 | 266 | 0,122 |
-| Resto | poco depletado | -1,0 | -1,2 | -16,7 a 14,6 | 598 | 208 | 0,898 |
-| Resto | muy depletado | -13,3 | -15,6 | -56,2 a 29,6 | 598 | 208 | 0,544 |
+| Principal | poco depletado | 2,3 | 2,7 | -4,5 a 9,0 | 1.612 | 481 | 0,512 |
+| Principal | muy depletado | -0,2 | -0,2 | -12,6 a 12,2 | 1.612 | 481 | 0,974 |
+| Control negativo | poco depletado | 0,2 | 0,2 | -6,6 a 7,0 | 1.612 | 481 | 0,963 |
+| Control negativo | muy depletado | 8,9 | 10,6 | 2,1 a 15,7 | 1.612 | 481 | 0,010 |
+| Continua | por 100 bbl/m | -0,1 | -0,1 | -0,9 a 0,7 | 1.612 | 481 | 0,889 |
+| Continua, control negativo | por 100 bbl/m | 0,1 | 0,1 | -0,1 a 0,2 | 1.612 | 481 | 0,334 |
+| Solo YPF | poco depletado | 4,0 | 4,9 | -1,5 a 9,6 | 1.001 | 269 | 0,156 |
+| Solo YPF | muy depletado | 3,9 | 4,7 | -1,4 a 9,3 | 1.001 | 269 | 0,147 |
+| Resto | poco depletado | -2,9 | -3,4 | -19,3 a 13,5 | 611 | 212 | 0,729 |
+| Resto | muy depletado | -11,5 | -13,4 | -52,9 a 29,9 | 611 | 212 | 0,587 |
 
 ## Equilibrio entre grupos, antes del resultado
 
@@ -62,22 +62,22 @@ Medias de diseño y de ubicación por grupo de exposición real. El p es el de l
 
 | Variable | Virgen | Poco depletado | Muy depletado | p dentro de celdas | p sin celdas |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Rama horizontal (m) | 2.550 | 2.508 | 2.604 | 0,000 | 0,542 |
-| Etapas | 39,7 | 39,3 | 42,3 | 0,026 | 0,158 |
-| Arena por metro (tn/m) | 3,68 | 3,50 | 3,76 | 0,430 | 0,002 |
-| Cohorte (año del primer petróleo) | 2021,81 | 2021,20 | 2022,92 | n/d | 0,000 |
-| YPF (% de los hijos) | 54,5 | 63,4 | 75,3 | n/d | 0,001 |
-| Latitud (grados) | -38,281 | -38,261 | -38,280 | 0,970 | 0,728 |
-| Longitud (grados) | -68,624 | -68,665 | -68,649 | 0,275 | 0,119 |
-| Pozos de shale a menos de 5 km | 79 | 109 | 137 | 0,000 | 0,000 |
+| Rama horizontal (m) | 2.580 | 2.512 | 2.606 | 0,000 | 0,544 |
+| Etapas | 40,3 | 39,4 | 42,4 | 0,011 | 0,210 |
+| Arena por metro (tn/m) | 3,68 | 3,50 | 3,76 | 0,532 | 0,003 |
+| Cohorte (año del primer petróleo) | 2021,89 | 2021,24 | 2022,93 | n/d | 0,000 |
+| YPF (% de los hijos) | 55,0 | 62,8 | 74,6 | n/d | 0,003 |
+| Latitud (grados) | -38,281 | -38,260 | -38,276 | 0,999 | 0,753 |
+| Longitud (grados) | -68,624 | -68,663 | -68,653 | 0,241 | 0,127 |
+| Pozos de shale a menos de 5 km | 80 | 110 | 138 | 0,000 | 0,000 |
 
 ## Muestra
 
-- Paso 1, mart_pozo_12m (petrolíferos de shale con 12 meses): 2.073 hijos.
-- Paso 2, con área, pad, coordenadas y primer petróleo: 2.073 hijos.
-- Paso 3, con rama, etapas y arena: 1.626 hijos.
-- Paso 4, con fecha de primera fractura: 1.626 hijos.
-- Paso 5, primer petróleo entre 0 y 12 meses después de la fractura: 1.585 hijos.
+- Paso 1, mart_pozo_12m (petrolíferos de shale con 12 meses): 2.100 hijos.
+- Paso 2, con área, pad, coordenadas y primer petróleo: 2.100 hijos.
+- Paso 3, con rama, etapas y arena: 1.653 hijos.
+- Paso 4, con fecha de primera fractura: 1.653 hijos.
+- Paso 5, primer petróleo entre 0 y 12 meses después de la fractura: 1.612 hijos.
 
 ## Límites
 

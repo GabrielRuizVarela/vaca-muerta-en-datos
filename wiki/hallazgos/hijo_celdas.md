@@ -4,15 +4,15 @@ Página generada por `pipeline/hijo_celdas.py`. Repite la pregunta de [Hijos cer
 
 ## Resumen
 
-Veredicto contra la regla fijada: **no firme**. La regla no permite concluir en ningún sentido. El control negativo del grupo que decide ahora es nulo, a diferencia de hijo.md, pero el hijo muy depletado queda en -11,2% del rendimiento virgen (IC 95%: -33,8% a 11,5%): el IC incluye cero y el punto supera el 5% del virgen. Con este dato no se puede afirmar ni descartar una degradación del hijo.
+Veredicto contra la regla fijada: **no firme**. La regla no permite concluir en ningún sentido. El control negativo del grupo que decide ahora es nulo, a diferencia de hijo.md, pero el hijo muy depletado queda en -10,9% del rendimiento virgen (IC 95%: -33,4% a 11,6%): el IC incluye cero y el punto supera el 5% del virgen. Con este dato no se puede afirmar ni descartar una degradación del hijo.
 
-- Muy depletado contra virgen, dentro de celdas de 2 km: -9,4 bbl por metro de rama (IC 95%: -28,3 a 9,6), o sea -11,2% del rendimiento virgen (IC 95%: -33,8% a 11,5%), sobre 1.585 hijos en 261 celdas.
-- Rendimiento de los hijos en zona virgen a 12 meses: mediana de 83,9 bbl por metro de rama.
-- Control negativo, muy depletado contra virgen: 8,7 bbl por metro de rama (IC 95%: -1,4 a 18,9). Es nulo. El del grupo poco depletado, que la regla no usa, da 9,4 (IC 95%: 2,1 a 16,7), que no es nulo: el control queda limpio solo en el grupo que decide, y aun ahí su punto es positivo.
-- Cota superior de la pérdida del hijo muy depletado: 28,3 bbl por metro de rama, o 33,8% del rendimiento virgen. Es la mayor pérdida compatible con el dato público (límite bajo del IC), no una estimación.
-- Celdas que comparan: 52 celdas tienen a la vez hijos virgen y muy depletados, con 707 de los 1.585 hijos; las demás aportan a los controles pero no a la comparación.
-- Con celdas de 5 km (descriptivo) el muy depletado da 1,2 bbl por metro (IC 95%: -5,2 a 7,6); con celdas de 1 km, -11,8 (IC 95%: -44,6 a 21,1). El signo depende del tamaño de la celda y ningún IC excluye cero.
-- Dentro de las celdas, el hijo muy depletado es de cohorte más reciente (año medio 2022,92 contra 2021,81), con más etapas (42,3 contra 39,7) y más pozos alrededor (15,3 contra 7,2); el modelo los controla, pero cambios de práctica propios de un lugar quedan confundidos con la depleción.
+- Muy depletado contra virgen, dentro de celdas de 2 km: -9,2 bbl por metro de rama (IC 95%: -28,1 a 9,8), o sea -10,9% del rendimiento virgen (IC 95%: -33,4% a 11,6%), sobre 1.612 hijos en 265 celdas.
+- Rendimiento de los hijos en zona virgen a 12 meses: mediana de 84,2 bbl por metro de rama.
+- Control negativo, muy depletado contra virgen: 7,0 bbl por metro de rama (IC 95%: -3,3 a 17,3). Es nulo. El del grupo poco depletado, que la regla no usa, da 8,1 (IC 95%: 0,9 a 15,4), que no es nulo: el control queda limpio solo en el grupo que decide, y aun ahí su punto es positivo.
+- Cota superior de la pérdida del hijo muy depletado: 28,1 bbl por metro de rama, o 33,4% del rendimiento virgen. Es la mayor pérdida compatible con el dato público (límite bajo del IC), no una estimación.
+- Celdas que comparan: 53 celdas tienen a la vez hijos virgen y muy depletados, con 715 de los 1.612 hijos; las demás aportan a los controles pero no a la comparación.
+- Con celdas de 5 km (descriptivo) el muy depletado da 0,6 bbl por metro (IC 95%: -6,0 a 7,2); con celdas de 1 km, -11,1 (IC 95%: -44,0 a 21,7). El signo depende del tamaño de la celda y ningún IC excluye cero.
+- Dentro de las celdas, el hijo muy depletado es de cohorte más reciente (año medio 2022,93 contra 2021,89), con más etapas (42,4 contra 40,3) y más pozos alrededor (15,4 contra 7,2); el modelo los controla, pero cambios de práctica propios de un lugar quedan confundidos con la depleción.
 
 ## Qué le dice a un operador
 
@@ -28,20 +28,20 @@ Diferencia de petróleo de 12 meses por metro de rama contra el grupo virgen (en
 
 | Modelo | Término | Coeficiente (bbl/m) | % del virgen | IC 95% (bbl/m) | Hijos | Conglomerados | p |
 | --- | --- | ---: | ---: | --- | ---: | ---: | ---: |
-| Principal (celdas de 2 km) | poco depletado | -2,7 | -3,3 | -10,4 a 5,0 | 1.585 | 261 | 0,486 |
-| Principal (celdas de 2 km) | muy depletado | -9,4 | -11,2 | -28,3 a 9,6 | 1.585 | 261 | 0,333 |
-| Control negativo | poco depletado | 9,4 | 11,2 | 2,1 a 16,7 | 1.585 | 261 | 0,012 |
-| Control negativo | muy depletado | 8,7 | 10,4 | -1,4 a 18,9 | 1.585 | 261 | 0,092 |
-| Celdas de 1 km | poco depletado | -6,8 | -8,1 | -22,1 a 8,5 | 1.585 | 352 | 0,384 |
-| Celdas de 1 km | muy depletado | -11,8 | -14,0 | -44,6 a 21,1 | 1.585 | 352 | 0,483 |
-| Celdas de 5 km | poco depletado | 0,5 | 0,6 | -4,1 a 5,1 | 1.585 | 132 | 0,830 |
-| Celdas de 5 km | muy depletado | 1,2 | 1,5 | -5,2 a 7,6 | 1.585 | 132 | 0,705 |
-| Sin densidad final | poco depletado | -2,8 | -3,3 | -10,5 a 5,0 | 1.585 | 261 | 0,483 |
-| Sin densidad final | muy depletado | -9,0 | -10,7 | -27,5 a 9,5 | 1.585 | 261 | 0,342 |
-| Errores por pad | poco depletado | -2,7 | -3,3 | -10,1 a 4,6 | 1.585 | 474 | 0,467 |
-| Errores por pad | muy depletado | -9,4 | -11,2 | -27,7 a 9,0 | 1.585 | 474 | 0,318 |
-| Continua | por 100 bbl/m | -0,5 | -0,6 | -1,4 a 0,4 | 1.585 | 261 | 0,291 |
-| Continua, control negativo | por 100 bbl/m | -0,2 | -0,2 | -0,4 a 0,1 | 1.585 | 261 | 0,199 |
+| Principal (celdas de 2 km) | poco depletado | -2,9 | -3,4 | -10,5 a 4,8 | 1.612 | 265 | 0,461 |
+| Principal (celdas de 2 km) | muy depletado | -9,2 | -10,9 | -28,1 a 9,8 | 1.612 | 265 | 0,342 |
+| Control negativo | poco depletado | 8,1 | 9,7 | 0,9 a 15,4 | 1.612 | 265 | 0,028 |
+| Control negativo | muy depletado | 7,0 | 8,3 | -3,3 a 17,3 | 1.612 | 265 | 0,181 |
+| Celdas de 1 km | poco depletado | -6,5 | -7,8 | -21,6 a 8,6 | 1.612 | 357 | 0,396 |
+| Celdas de 1 km | muy depletado | -11,1 | -13,2 | -44,0 a 21,7 | 1.612 | 357 | 0,507 |
+| Celdas de 5 km | poco depletado | -1,3 | -1,6 | -6,6 a 4,0 | 1.612 | 132 | 0,625 |
+| Celdas de 5 km | muy depletado | 0,6 | 0,7 | -6,0 a 7,2 | 1.612 | 132 | 0,861 |
+| Sin densidad final | poco depletado | -2,9 | -3,5 | -10,6 a 4,8 | 1.612 | 265 | 0,458 |
+| Sin densidad final | muy depletado | -8,7 | -10,3 | -27,2 a 9,8 | 1.612 | 265 | 0,356 |
+| Errores por pad | poco depletado | -2,9 | -3,4 | -10,2 a 4,4 | 1.612 | 481 | 0,442 |
+| Errores por pad | muy depletado | -9,2 | -10,9 | -27,5 a 9,2 | 1.612 | 481 | 0,326 |
+| Continua | por 100 bbl/m | -0,4 | -0,5 | -1,3 a 0,5 | 1.612 | 265 | 0,370 |
+| Continua, control negativo | por 100 bbl/m | -0,2 | -0,2 | -0,4 a 0,1 | 1.612 | 265 | 0,153 |
 
 ## Equilibrio dentro de las celdas
 
@@ -49,11 +49,11 @@ Medias por grupo de exposición real y p de la prueba conjunta (Wald, errores po
 
 | Variable | Virgen | Poco depletado | Muy depletado | p dentro de celdas |
 | --- | ---: | ---: | ---: | ---: |
-| Rama horizontal (m) | 2.550 | 2.508 | 2.604 | 0,000 |
-| Etapas | 39,7 | 39,3 | 42,3 | 0,000 |
+| Rama horizontal (m) | 2.580 | 2.512 | 2.606 | 0,000 |
+| Etapas | 40,3 | 39,4 | 42,4 | 0,000 |
 | Arena por metro (tn/m) | 3,68 | 3,50 | 3,76 | 0,000 |
-| Cohorte (año del primer petróleo) | 2021,81 | 2021,20 | 2022,92 | 0,000 |
-| Pozos a menos de 1 km (cualquier fecha) | 7,2 | 10,4 | 15,3 | 0,000 |
+| Cohorte (año del primer petróleo) | 2021,89 | 2021,24 | 2022,93 | 0,000 |
+| Pozos a menos de 1 km (cualquier fecha) | 7,2 | 10,3 | 15,4 | 0,000 |
 
 ## Límites
 

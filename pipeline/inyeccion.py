@@ -581,7 +581,7 @@ def pagina_inyeccion(con) -> str:
         n50 = int(c("S5", 0, "brecha_mes1", "mundos"))
         k50 = round(c("S5", 0, "brecha_mes1", "ic_excluye_cero_frac") * n50)
         L.append(f"- La salida de esa corrida de {_g(n50)} mundos se guardó en `docs/inyeccion_50_mundos.txt` y se publica acá, fuera de tope y "
-                 f"sin cambiar los veredictos fijados. R1: {_g(c('S2', 20, 'brecha_mes1', 'recuperado_media'), 1)} puntos. R2: partes de "
+                 f"sin cambiar los veredictos fijados. Se corrió con una versión anterior de los datos y no se repitió con la actual, así que sus cifras son de esa versión. R1: {_g(c('S2', 20, 'brecha_mes1', 'recuperado_media'), 1)} puntos. R2: partes de "
                  f"{_pc(c('S1', 100, 'brecha_mes1', 'parte_dias'))} y {_pc(c('S2', 20, 'brecha_mes1', 'parte_tasa'))}. R3: IC que excluye cero "
                  f"en {_pc(c('S3', 40, 'pendiente_mes0', 'ic_excluye_cero_frac'))} de los mundos. R4a: {_pc(c('S5', 0, 'brecha_mes1', 'ic_excluye_cero_frac'))} "
                  f"({_g(k50)} de {_g(n50)}), que con {_g(n50)} mundos pasaría también el operador estricto. R4b: pretendencia "

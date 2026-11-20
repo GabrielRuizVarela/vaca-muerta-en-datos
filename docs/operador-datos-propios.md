@@ -37,7 +37,7 @@ El módulo se niega a correr (código de salida 2, con el motivo) si cualquier r
 
 ## Validación con el dato público
 
-Se exportaron las tablas públicas del warehouse (3.448 pozos con su pad, la primera fractura de cada pozo y `fct_produccion`) a CSV fuera del repo y se corrió el modo con 2.000 repeticiones:
+Se exportaron las tablas públicas del warehouse (3.448 pozos con su pad, la primera fractura de cada pozo y `fct_produccion`) a CSV fuera del repo y se corrió el modo con 2.000 repeticiones (con los datos de septiembre de 2026; no se repitió con los de octubre):
 
 | cifra | estudio público | modo local sobre el mismo dato |
 | --- | --- | --- |

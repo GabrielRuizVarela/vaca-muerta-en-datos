@@ -310,7 +310,10 @@ def test_the_lineage_covers_every_table_of_the_warehouse():
     finally:
         con.close()
     destinos = {d for d, _, _, _ in linaje.filas_linaje()}
-    assert destinos == tablas, (sorted(tablas - destinos), sorted(destinos - tablas))
+    solo_con_colorado = {d for d in destinos if d.startswith(("mart_dias_perdidos_colorado", "mart_golpes_mismo_mes_colorado", "mart_golpes_mismo_padre_colorado"))}  # run_all --with-colorado
+    # el paso 2 de dosis_geometria solo escribe sus tablas si la puerta de potencia pasa
+    solo_si_pasa_la_puerta = {d for d in destinos if d.startswith("mart_dosis_geometria_") and not d.endswith(("_muestra", "_potencia", "_sim", "_puerta"))}
+    assert not tablas - destinos and not destinos - tablas - solo_con_colorado - solo_si_pasa_la_puerta, (sorted(tablas - destinos), sorted(destinos - tablas))
 
 
 def test_following_imports_takes_the_used_functions_and_sql_constants_and_not_the_whole_module(tmp_path):

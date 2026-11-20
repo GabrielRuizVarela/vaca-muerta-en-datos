@@ -375,7 +375,7 @@ def bloque_eje(data: dict) -> str:
              f"{sentido}, {firmeza}.")
     if data.get("eje_parada"):
         linea += (" La regla de parada fijada antes de correr se cumplió: la dirección no se separa del SHmax publicado ni de la "
-                  "forma en que se disponen los pads (la geometría de las ramas no se pudo probar), y no se presenta como hallazgo sobre esfuerzos ni sobre la fractura.")
+                  "forma en que se disponen los pads (la geometría de las ramas se probó con otra prueba, costado contra punta, en mecanismo.md), y no se presenta como hallazgo sobre esfuerzos ni sobre la fractura.")
     cv = data.get("costo_cv")
     costo = ""
     if cv:

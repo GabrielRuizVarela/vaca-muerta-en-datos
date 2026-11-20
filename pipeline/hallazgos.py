@@ -132,7 +132,7 @@ HIPOTESIS = [
               "Entre eventos cercanos a 0,3 a 1 km, el sector de rumbos de superficie de 56,25 a 101,25 grados pierde más "
               "producción al mes 1 que el sector de 0 +/- 22,5 grados (diferencia de medianas del índice). Es una descripción de la "
               "muestra: el sector contiene a la vez el eje estimado (93 grados) y el SHmax publicado (67,5), así que no distingue "
-              "entre ellos, y con datos públicos esa dirección no se separa de cómo se disponen los pads, y la geometría de las ramas no se pudo probar (regla de parada, "
+              "entre ellos, y con datos públicos esa dirección no se separa de cómo se disponen los pads, y la geometría de las ramas se probó con otra prueba (costado contra punta, mecanismo.md; regla de parada, "
               "eje_parada.md). Antes se llamaba `anisotropia` y figuraba como confirmado.",
               _SQL_ANISOTROPIA, "<", -0.10, "índice", firmeza=True),
     Hipotesis("sincronia_mes0",

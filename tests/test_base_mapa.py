@@ -8,7 +8,7 @@ import zipfile
 import numpy as np
 import pytest
 
-from pipeline import base_mapa
+from pipeline import base_foto, base_mapa
 from pipeline.ingest import DATA, ROOT
 
 RAW = DATA / "raw" / "base_mapa"
@@ -16,7 +16,10 @@ PRODUCTO = DATA / "base_mapa.json"
 TIPOS_AGUA = {"embalse", "lago", "rio"}
 CAMPOS_FUENTE = {"capa", "titulo", "organismo", "url", "licencia", "sha256", "fecha"}
 
-needs_raw = pytest.mark.skipif(not RAW.exists(), reason="raw base_mapa not present")
+# the relief tiles alone are enough for the relief; the whole product needs the three folders
+needs_raw = pytest.mark.skipif(not all((RAW / d).exists() for d in ("skadi", "ign", "energia")),
+                               reason="raw base_mapa not present")
+needs_tiles = pytest.mark.skipif(not (RAW / "skadi").exists(), reason="raw relief tiles not present")
 
 
 def leer_producto():
@@ -266,7 +269,30 @@ def test_recuentos_a_mano():
 
 def test_pagina_es_la_del_repo():
     _, base = leer_producto()
-    assert base_mapa.pagina(base) == base_mapa.PAGINA.read_text(encoding="utf-8")
+    assert base_mapa.pagina(base, base_mapa.leer_foto(), base_mapa.leer_fino(),
+                            base_mapa.leer_exactitud()) == base_mapa.PAGINA.read_text(encoding="utf-8")
+
+
+def test_pagina_sin_relieve_fino_no_habla_de_el():
+    """No finer relief, no line about it; with it the page says what it covers, and points to Exactitud only if there."""
+    _, base = leer_producto()
+    sin, con = base_mapa.pagina(base), base_mapa.pagina(base, None, base_mapa.leer_fino())
+    assert "relieve fino" not in sin and base_mapa.leer_fino(DATA / "no_hay.json") is None
+    assert "- relieve fino del núcleo: entre los 69,25° y los 68,25° de longitud oeste y entre los 38,85° y los 38,1° " in con
+    assert "bloques de 4 por 4 muestras" in con and "(ver Exactitud)" not in con
+    assert base_mapa.leer_exactitud(DATA / "no_hay.json") is None
+    assert "(ver Exactitud)." in base_mapa.pagina(base, None, base_mapa.leer_fino(), base_mapa.leer_exactitud())
+
+
+def test_pagina_sin_imagen_no_habla_de_ella():
+    """No imagery manifest, no section about it and no command for it."""
+    _, base = leer_producto()
+    sin, con = base_mapa.pagina(base), base_mapa.pagina(base, base_mapa.leer_foto())
+    assert "Imagen del suelo" not in sin and "base_foto" not in sin and "imagen" not in sin.lower()
+    assert base_mapa.leer_foto(DATA / "no_hay.json") is None
+    if base_mapa.leer_foto() is not None:
+        assert "## Imagen del suelo" in con and con.index("## Imagen del suelo") < con.index("## Qué no es")
+        assert "python -m pipeline.base_foto --verificar" in con and "`data/base_foto.json`. No se edita a mano." in con
 
 
 def test_pagina_nombra_cada_fuente_con_licencia_y_huella():
@@ -288,14 +314,19 @@ def test_pagina_nombra_cada_fuente_con_licencia_y_huella():
 def test_main_pagina_verificar_y_salida(tmp_path, monkeypatch, capsys):
     """The command line without the raw files: the page from the product, a check that never writes, --salida."""
     _, base = leer_producto()
-    destino, hoja = tmp_path / "base_mapa.json", tmp_path / "mapa_base.md"
+    fino, original = base_mapa.leer_fino(), base_mapa.FINO.read_bytes()
+    destino, hoja, destino_fino = tmp_path / "base_mapa.json", tmp_path / "mapa_base.md", tmp_path / "fino.json"
     destino.write_bytes(PRODUCTO.read_bytes())
+    destino_fino.write_bytes(original)
     monkeypatch.setattr(base_mapa, "DESTINO", destino)
+    monkeypatch.setattr(base_mapa, "FINO", destino_fino)
     monkeypatch.setattr(base_mapa, "PAGINA", hoja)
     monkeypatch.setattr(base_mapa, "ROOT", tmp_path)
     monkeypatch.setattr(base_mapa, "construir", lambda: base)
+    monkeypatch.setattr(base_mapa, "construir_relieve_fino", lambda: fino)
+    esperada = base_mapa.pagina(base, base_mapa.leer_foto(), fino, base_mapa.leer_exactitud())
     assert base_mapa.main(["--pagina"]) == 0
-    assert hoja.read_text(encoding="utf-8") == base_mapa.pagina(base)
+    assert hoja.read_text(encoding="utf-8") == esperada
     capsys.readouterr()
     assert base_mapa.main(["--verificar"]) == 0
     assert capsys.readouterr().out.startswith("verificar ok bytes " + str(PRODUCTO.stat().st_size) + " sha256 ")
@@ -303,14 +334,75 @@ def test_main_pagina_verificar_y_salida(tmp_path, monkeypatch, capsys):
     assert base_mapa.main(["--verificar"]) == 1
     assert "verificar difieren (mapa_base.md)" in capsys.readouterr().out
     assert hoja.read_text(encoding="utf-8") == "otra\n"
+    destino_fino.write_text("{}\n", encoding="utf-8")
+    assert base_mapa.main(["--verificar"]) == 1
+    assert "verificar difieren (fino.json, mapa_base.md)" in capsys.readouterr().out
     otra = tmp_path / "otra.json"
     assert base_mapa.main(["--salida", str(otra)]) == 0
     assert otra.read_bytes() == PRODUCTO.read_bytes() and hoja.read_text(encoding="utf-8") == "otra\n"
     destino.unlink()
     assert base_mapa.main([]) == 0
-    assert destino.read_bytes() == PRODUCTO.read_bytes() and hoja.read_text(encoding="utf-8") == base_mapa.pagina(base)
+    assert destino.read_bytes() == PRODUCTO.read_bytes() and destino_fino.read_bytes() == original
+    assert hoja.read_text(encoding="utf-8") == esperada
+
+
+# ---- finer relief of the core ----
+
+def test_peso_fino_is_zero_on_the_edge_and_one_past_the_margin():
+    caja = (0.0, 0.0, 10.0, 5.0)
+    assert base_mapa.peso_fino(caja, 0.1, 5, 2.5) == base_mapa.peso_fino(caja, 0.1, 1.0, 2.5) == 1
+    assert base_mapa.peso_fino(caja, 0.1, 0, 2.5) == base_mapa.peso_fino(caja, 0.1, 5, 5) == 0
+    assert base_mapa.peso_fino(caja, 0.1, -1, 2.5) == base_mapa.peso_fino(caja, 0.1, 5, 6) == 0
+    assert base_mapa.peso_fino(caja, 0.1, 0.5, 2.5) == pytest.approx(0.5)        # half way into the margin
+    assert base_mapa.peso_fino(caja, 0.1, 5, 0.125) == pytest.approx(0.15625)    # a quarter of the way: 3t² - 2t³
+
+
+def test_cota_mixta_goes_from_the_sheet_to_the_finer_grid_without_a_step():
+    z, caja = np.full((4, 4), 100, dtype=np.int64), (0.0, 0.0, 4.0, 4.0)
+    fino = {"z": np.full((10, 10), 200, dtype=np.int64), "caja": (1.0, 1.0, 3.0, 3.0), "margen": 0.25}
+    assert base_mapa.cota_mixta(z, caja, None, 2, 2) == base_mapa.cota_mixta(z, caja, fino, 0.5, 2) == 100
+    assert base_mapa.cota_mixta(z, caja, fino, 2, 2) == 200
+    assert base_mapa.cota_mixta(z, caja, fino, 1, 2) == 100                      # on the edge the sheet still rules
+    assert base_mapa.cota_mixta(z, caja, fino, 1.25, 2) == pytest.approx(150)    # half way into the margin
+    assert base_mapa.cota_mixta(z, caja, fino, 1.001, 2) == pytest.approx(100, abs=0.01)
+    assert base_mapa.cota_mixta(z, caja, fino, 9, 9) is None
+
+
+def test_producto_relieve_fino():
+    """The finer relief in the repo: its box, its counts and the same source as the sheet, cell by cell."""
+    fino = base_mapa.leer_fino()
+    z = base_mapa.decodificar_relieve(fino)
+    lon0, lat0, lon1, lat1 = base_mapa.NUCLEO
+    assert z.shape == (fino["filas"], fino["cols"]) == (round((lat1 - lat0) * 900), round((lon1 - lon0) * 900))
+    assert (int(z.min()), int(z.max())) == (fino["min"], fino["max"])
+    medio = .5 / 3600   # the samples sit on whole arc-seconds, so a block is centred half a second north-west
+    assert fino["caja"] == pytest.approx([lon0 - medio, lat0 + medio, lon1 - medio, lat1 + medio], abs=1e-12)
+    assert (fino["paso_seg"], fino["margen"]) == (base_mapa.PASO_FINO, base_mapa.MARGEN_FINO)
+    assert base_mapa.FINO.read_text(encoding="utf-8") == base_mapa.serializar(fino)
+    assert base_mapa.recuentos_fino(fino) == {"cols": 900, "filas": 675, "paso_seg": 4, "cota_min": 217,
+                                              "cota_max": 886, "margen_pct": 4, "m_este": 97, "m_sur": 124}
+    assert base_foto.NUCLEO is base_mapa.NUCLEO
+    # a cell of the sheet is 5 by 4 cells of the finer grid; the core starts half a sheet cell down, at row 338
+    _, base = leer_producto()
+    hoja = base_mapa.decodificar_relieve(base["relieve"])[338:338 + 168, 225:225 + 180]
+    assert np.abs(z[2:2 + 4 * 168].reshape(168, 4, 180, 5).mean(axis=(1, 3)) - hoja).max() <= 1
+
+
+def test_abrir_fino_decodes_the_product_for_cota_mixta():
+    fino = base_mapa.abrir_fino(base_mapa.leer_fino())
+    assert fino["z"].shape == (675, 900) and fino["margen"] == base_mapa.MARGEN_FINO
+    _, base = leer_producto()
+    z = base_mapa.decodificar_relieve(base["relieve"])
+    lon, lat = -68.75, -38.475   # the middle of the core: the finer grid alone
+    assert base_mapa.cota_mixta(z, base_mapa.CAJA, fino, lon, lat) == base_mapa.cota(fino["z"], fino["caja"], lon, lat)
+    assert base_mapa.cota_mixta(z, base_mapa.CAJA, fino, -70.0, -37.0) == base_mapa.cota(z, base_mapa.CAJA, -70.0, -37.0)
 
 
 @needs_raw
 def test_construir_reproduce_referencia():
     assert base_mapa.serializar(base_mapa.construir()).encode("utf-8") == PRODUCTO.read_bytes()
+
+
+@needs_tiles
+def test_construir_relieve_fino_reproduce_referencia():
+    assert base_mapa.serializar(base_mapa.construir_relieve_fino()).encode("utf-8") == base_mapa.FINO.read_bytes()

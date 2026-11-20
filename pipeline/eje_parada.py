@@ -26,7 +26,8 @@ COLS = [("pata", "integer"), ("nombre", "varchar"), ("estado", "varchar"), ("dis
 
 FRASE = ("La caída de los padres cercanos no es igual en todas las direcciones de superficie en la muestra completa (con "
          "intervalos por pads), pero con datos públicos esa dirección no se separa del SHmax publicado ni de la forma en que se "
-         "disponen los pads; la geometría de las ramas no se pudo probar. No es un hallazgo sobre esfuerzos ni sobre la fractura.")
+         "disponen los pads; la geometría de las ramas se probó con otra prueba (costado contra punta, mecanismo.md). No es un hallazgo "
+         "sobre esfuerzos ni sobre la fractura.")
 
 
 def _existe(con, tabla: str) -> bool:
@@ -88,7 +89,7 @@ def patas(con) -> list[dict]:
     if filas:
         disp = any(bool(f[1]) for f in filas)
         det = " ".join(f"{f[0]}: {'se cumple' if f[1] else 'no se cumple'} ({f[2].rstrip('.')})." for f in filas if f[0] != "veredicto")
-        det += " La pieza 3 (modelo de ramas) no se hizo: no hay azimut de rama ni coordenadas de fondo en el warehouse."
+        det += " La pieza 3 (modelo de ramas del eje) no se hizo dentro de esta pata y sigue sin hacerse; con las trayectorias publicadas se hizo una prueba distinta (costado contra punta) en mecanismo.md."
         out.append({"pata": 3, "nombre": NOMBRE_PATA3,
                     "estado": "dispara" if disp else "no dispara", "dispara": disp, "detalle": det})
     else:
@@ -141,13 +142,37 @@ def pagina_eje_parada(con) -> str:
     L.append("")
     for p in ps:
         L += [f"### Pata {p['pata']}: {p['estado']}", "", p["detalle"], ""]
+    if _existe(con, "mart_mecanismo_veredicto"):
+        r = con.execute("select * from mart_mecanismo_veredicto").fetchone()
+        if r:
+            v, c1, ic_b, ic_a, pl, pl_b, pl_a = r[0], r[4], r[5], r[6], r[7], r[8], r[9]
+            if v == "sostiene":
+                res = (f"Resultado: {v}. Al mes 1 el costado rinde {_g(-100 * c1, 1)} puntos menos que la punta "
+                       f"(IC 95% por bloques de 5 km: {_g(100 * ic_b, 1)} a {_g(100 * ic_a, 1)}) y el mismo contraste en el mes -1 es de "
+                       f"{_g(100 * pl, 1)} puntos (IC {_g(100 * pl_b, 1)} a {_g(100 * pl_a, 1)}), que incluye cero. Es un resultado nuevo "
+                       "y distinto: no revive el eje de la brújula, que sigue retirado, y sigue siendo una huella medida, no una "
+                       "medición de esfuerzos.")
+            elif v == "ubicación":
+                res = ("Resultado: ubicación. La diferencia del mes 1 ya se separaba de cero antes de la fractura: viene de "
+                       "dónde están los pozos. Ni con la geometría de las ramas se separa un mecanismo.")
+            elif v == "no firme":
+                res = ("Resultado: no firme. Ni con la geometría de las ramas se sostiene un mecanismo direccional. El eje de la "
+                       "brújula sigue retirado.")
+            else:
+                res = ("Resultado: sin muestra. No hubo eventos suficientes en el costado y la punta para decidir. El eje de la "
+                       "brújula sigue retirado.")
+            L += ["## La geometría de las ramas, probada aparte", "",
+                  "La pata 3 decía que el modelo de ramas del eje no se podía hacer, y sigue sin hacerse. Con las trayectorias publicadas "
+                  "se hizo otra cosa en [mecanismo.md](mecanismo.md), una prueba nueva con su regla fijada antes de correr (no es una repetición del "
+                  "eje): el contraste entre el padre al costado de la rama del hijo y el de la punta.", "", res, ""]
     L += ["## Qué no cambia", "",
           "- La brecha del mes 1, su cierre a los 6 meses, la sincronía, la descomposición entre días y caudal por día, la validación "
           "por inyección y la replicación en Colorado no dependen del eje y no se tocan.",
           "- La regla de parada es sobre la dirección. No dice que la caída sea falsa ni que el eje sea cero: dice que con datos "
           "públicos no se puede afirmar que la dirección sea propia de la fractura.",
-          "- Lo que haría falta para reabrirla: azimut de rama y coordenadas de fondo (para el modelo de ramas), o unas 2 veces los "
-          "eventos actuales con un desarrollo distinto del de Loma Campana.", ""]
+          "- Lo que haría falta para reabrirla: azimut de rama y coordenadas de fondo (para el modelo de ramas del eje), o unas 2 veces "
+          "los eventos actuales con un desarrollo distinto del de Loma Campana. La prueba de costado contra punta de mecanismo.md no "
+          "reemplaza ese modelo.", ""]
     return "\n".join(L)
 
 

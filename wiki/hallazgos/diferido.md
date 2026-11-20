@@ -10,15 +10,15 @@ Para cada evento cercano (un padre a menos de 1 km de un hijo recién fracturado
 
 | Variante | Barriles diferidos | Eventos | Meses de padre | Barriles por evento |
 |---|---|---|---|---|
-| Original (cota superior) | 10.723.754 | 2.077 | 14.257 | 5.163 |
-| Sin duplicar | 8.024.400 | 2.073 | 11.750 | 3.871 |
-| Sin duplicar y descontando la brecha previa (cota inferior) | 5.812.431 | 2.073 | 11.750 | 2.804 |
+| Original (cota superior) | 11.445.600 | 2.094 | 14.454 | 5.466 |
+| Sin duplicar | 8.730.623 | 2.090 | 11.939 | 4.177 |
+| Sin duplicar y descontando la brecha previa (cota inferior) | 6.374.451 | 2.090 | 11.939 | 3.050 |
 
-- Original: 10.723.754 barriles. Suma los meses 0 a 6 de cada evento; un mismo mes de un padre con varios hijos puede entrar más de una vez.
-- Sin duplicar: 8.024.400 barriles. Cada mes de calendario de un padre se atribuye una sola vez, al evento más cercano en el tiempo entre los que lo preceden (el de la fecha de fractura más reciente que no pasa del mes).
-- Sin duplicar y descontando la brecha previa: 5.812.431 barriles. A cada mes se le resta la brecha previa a la fractura, 4,1 puntos del nivel de la base de cada padre (el promedio de la brecha cercano menos control de los meses -3 a -1 en la base limpia de la página de falsación), constante y cortada en cero para que la resta no vuelva negativo un mes con diferido positivo.
+- Original: 11.445.600 barriles. Suma los meses 0 a 6 de cada evento; un mismo mes de un padre con varios hijos puede entrar más de una vez.
+- Sin duplicar: 8.730.623 barriles. Cada mes de calendario de un padre se atribuye una sola vez, al evento más cercano en el tiempo entre los que lo preceden (el de la fecha de fractura más reciente que no pasa del mes).
+- Sin duplicar y descontando la brecha previa: 6.374.451 barriles. A cada mes se le resta la brecha previa a la fractura, 4,2 puntos del nivel de la base de cada padre (el promedio de la brecha cercano menos control de los meses -3 a -1 en la base limpia de la página de falsación), constante y cortada en cero para que la resta no vuelva negativo un mes con diferido positivo.
 
-El diferido de los meses 0 a 6 va de 5,8 a 10,7 millones de barriles. No se da un punto medio: el rango dice qué tanto depende la cifra de cómo se cuente, no cuál es la verdadera.
+El diferido de los meses 0 a 6 va de 6,4 a 11,4 millones de barriles. No se da un punto medio: el rango dice qué tanto depende la cifra de cómo se cuente, no cuál es la verdadera.
 
 ## Por evento, a 24 meses
 
@@ -26,23 +26,23 @@ El acumulado de los meses 0 a 24 desde la fractura del hijo, por evento y contra
 
 | Eventos | P25 (bbl) | Mediana (bbl) | P75 (bbl) | Media (bbl) | Con diferido positivo |
 |---|---|---|---|---|---|
-| 1.408 | -16.080 | -1.200 | 12.353 | -2.830 | 47% |
+| 1.432 | -15.972 | -954 | 12.782 | -2.797 | 47% |
 
-Intervalo de 95% de la mediana: -2.550 a 4 barriles; de la media: -6.503 a 1.337 barriles (bootstrap por pads hijo, 400 repeticiones).
+Intervalo de 95% de la mediana: -2.494 a 240 barriles; de la media: -6.855 a 646 barriles (bootstrap por pads hijo, 400 repeticiones).
 
-La mediana por evento a 24 meses (-1.200 barriles) queda por debajo de cero: a los 24 meses el padre típico no acumula diferido contra su control, y el intervalo de 95% de la mediana incluye el cero (no se distingue de un padre sin diferido a esa altura). Es otro horizonte que el de los totales de arriba (meses 0 a 6): el diferido del primer tramo y el acumulado a 24 meses no se suman ni se restan.
+La mediana por evento a 24 meses (-954 barriles) queda por debajo de cero: a los 24 meses el padre típico no acumula diferido contra su control, y el intervalo de 95% de la mediana incluye el cero (no se distingue de un padre sin diferido a esa altura). Es otro horizonte que el de los totales de arriba (meses 0 a 6): el diferido del primer tramo y el acumulado a 24 meses no se suman ni se restan.
 
 ## Por operadora del padre, por evento
 
 | Operadora | Eventos | Mediana por evento (bbl, IC 95%) | Media por evento (bbl, IC 95%) | Con diferido positivo |
 |---|---|---|---|---|
-| Toda la cuenca | 1.408 | -1.200 (-2.550 a 4) | -2.830 (-6.503 a 1.337) | 47% |
-| YPF | 983 | -767 (-2.169 a 325) | -3.672 (-8.029 a 1.243) | 47% |
-| Tecpetrol | 127 | -4.961 (-7.655 a -1.590) | -3.764 (-7.100 a 530) | 35% |
-| Vista | 109 | 5.205 (-9.641 a 10.329) | -1.770 (-16.314 a 9.402) | 57% |
-| Pan American Energy | 96 | -6.322 (-19.511 a 13.530) | -1.227 (-9.798 a 12.188) | 44% |
-| Shell | 48 | 2.033 (-16.587 a 15.181) | 4.513 (-11.847 a 25.514) | 52% |
-| Otras (menos de 30 eventos) | 45 | 893 (-5.013 a 9.020) | 4.357 (-9.701 a 23.771) | 53% |
+| Toda la cuenca | 1.432 | -954 (-2.494 a 240) | -2.797 (-6.855 a 646) | 47% |
+| YPF | 985 | -699 (-2.079 a 333) | -3.564 (-7.918 a 1.363) | 47% |
+| Tecpetrol | 137 | -4.844 (-7.604 a 1.453) | -2.746 (-6.954 a 1.680) | 39% |
+| Vista | 112 | 5.167 (-12.335 a 11.551) | -5.198 (-24.674 a 7.774) | 56% |
+| Pan American Energy | 96 | -6.093 (-19.404 a 13.728) | -1.003 (-9.606 a 12.400) | 45% |
+| Shell | 52 | -749 (-14.871 a 10.693) | 2.937 (-12.286 a 20.613) | 50% |
+| Otras (menos de 30 eventos) | 50 | 3.250 (-5.013 a 10.785) | 8.132 (-8.193 a 24.929) | 58% |
 
 El reparto por operadora no es una comparación de desempeño: cambian el tipo de pozo, la edad y las prácticas de declaración. Los intervalos son bootstrap de percentiles por conglomerados de pads hijo, sin ajuste por comparaciones múltiples.
 

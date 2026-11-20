@@ -10,7 +10,7 @@
 | Pozos shale con ubicación | 12 |
 | Pads | 6 |
 | Eventos cercanos de interferencia | 1 |
-| Petróleo diferido (bbl) | 72.036 |
+| Petróleo diferido (bbl) | 72.014 |
 
 ## Operadores
 
@@ -20,11 +20,11 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p161223](../pad/pad-p161223.md) | Pan American Energy | 1 | 72.036 |
+| [p161223](../pad/pad-p161223.md) | Pan American Energy | 1 | 72.014 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

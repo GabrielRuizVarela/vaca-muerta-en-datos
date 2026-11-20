@@ -6,9 +6,9 @@ Se prueba si la brecha del mes 1 de 2026 sigue mayor que la de 2021 a 2024 cuand
 
 **no firme**.
 
-D (brecha de 2026 menos brecha de 2021 a 2024, muestra de antigüedad constante): -14,7 puntos, IC 95 % [-46,2, 12,7].
+D (brecha de 2026 menos brecha de 2021 a 2024, muestra de antigüedad constante): -15,1 puntos, IC 95 % [-43,5, 10,9].
 
-Eventos cercanos de 2026 con el mes 1 medido: 195. Bloques de 5 km en total: 69.
+Eventos cercanos de 2026 con el mes 1 medido: 212. Bloques de 5 km en total: 70.
 
 Remuestras del bootstrap con D definido: 400 de 400. El IC sale de los percentiles de esas; una remuestra en la que un período queda sin cercanos o sin controles no tiene D y no entra.
 
@@ -33,7 +33,7 @@ Brecha del mes 1 por año en puntos (índice por 100), con IC 95 % por bloques d
 | 2023 | constante | 63 | 76 | 1051 | 25 | -27,9 | -57,1 | -13,4 |
 | 2024 | constante | 87 | 133 | 1540 | 32 | -9,6 | -27,7 | -1,0 |
 | 2025 | constante | 122 | 206 | 2123 | 40 | -48,6 | -73,2 | -25,6 |
-| 2026 | constante | 88 | 195 | 1788 | 30 | -35,6 | -66,8 | -11,9 |
+| 2026 | constante | 92 | 212 | 1800 | 31 | -36,1 | -66,9 | -13,1 |
 | 2019 | completa | 74 | 80 | 820 | 31 | -16,2 | -53,0 | 5,5 |
 | 2020 | completa | 38 | 41 | 459 | 17 | -4,3 | -88,3 | 30,1 |
 | 2021 | completa | 106 | 137 | 1482 | 36 | -20,7 | -41,3 | -6,4 |
@@ -41,11 +41,11 @@ Brecha del mes 1 por año en puntos (índice por 100), con IC 95 % por bloques d
 | 2023 | completa | 157 | 213 | 2397 | 51 | -19,7 | -33,3 | -12,4 |
 | 2024 | completa | 176 | 279 | 2540 | 56 | -22,6 | -33,6 | -10,2 |
 | 2025 | completa | 200 | 372 | 3132 | 66 | -32,4 | -55,6 | -18,9 |
-| 2026 | completa | 125 | 243 | 2081 | 41 | -44,5 | -70,9 | -21,4 |
+| 2026 | completa | 130 | 260 | 2110 | 43 | -44,4 | -66,9 | -24,4 |
 
 ## Descriptivo
 
-D con 2025 y 2026 juntos: -22,4 puntos, IC 95 % [-42,3, -2,3] (401 cercanos, 77 bloques, 400 de 400 remuestras con D definido).
+D con 2025 y 2026 juntos: -21,5 puntos, IC 95 % [-40,7, -5,4] (418 cercanos, 78 bloques, 400 de 400 remuestras con D definido).
 
 La muestra completa reproduce mart_interferencia_anual 2019 a 2026: sí (misma cantidad de eventos cercanos y la misma brecha en cada año, con una tolerancia de 1e-9 en el índice).
 

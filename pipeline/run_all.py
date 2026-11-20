@@ -1,8 +1,8 @@
 """One command for the whole chain, with timings.
 
-  uv run python -m pipeline.run_all                  # build, carga, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, carga_anual, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, potencia_dosis, robustez_operador, anillo, inyeccion, hijo, hijo_celdas, gas, decision, figuras, wiki, informe, report, replay, mundo, [globo], claims
+  uv run python -m pipeline.run_all                  # build, carga, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, carga_anual, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, potencia_dosis, robustez_operador, dias_perdidos, golpes_mismo_mes, golpes_mismo_padre, calendario_golpes, anillo, inyeccion, hijo, hijo_celdas, gas, decision, trayectorias, alcance_rama, riesgo, dosis_geometria, mecanismo, hijo_pad, figuras, wiki, informe, report, replay, mundo, [globo], claims
   uv run python -m pipeline.run_all --with-ingest    # also download first (needs the Secretaria server)
-  uv run python -m pipeline.run_all --with-colorado  # also download and build the Colorado (DJ basin) warehouse and run its replication; opt-in, needs the network
+  uv run python -m pipeline.run_all --with-colorado  # also download and build the Colorado (DJ basin) warehouse and run its replication, dias_perdidos, golpes_mismo_mes and golpes_mismo_padre there; opt-in, needs the network
   uv run python -m pipeline.run_all --only build,wiki
   uv run python -m pipeline.run_all --skip report,replay
   uv run python -m pipeline.run_all --list
@@ -57,15 +57,28 @@ PASOS: list[Paso] = [
     Paso("dosis_pad", "pipeline.dosis_pad"),
     Paso("potencia_dosis", "pipeline.potencia_dosis"),
     Paso("robustez_operador", "pipeline.robustez_operador"),
+    Paso("dias_perdidos", "pipeline.dias_perdidos"),
+    Paso("golpes_mismo_mes", "pipeline.golpes_mismo_mes"),
+    Paso("golpes_mismo_padre", "pipeline.golpes_mismo_padre"),
+    Paso("calendario_golpes", "pipeline.calendario_golpes"),
     Paso("anillo", "pipeline.anillo"),
     Paso("inyeccion", "pipeline.inyeccion"),
     Paso("hijo", "pipeline.hijo"),
     Paso("hijo_celdas", "pipeline.hijo_celdas"),
     Paso("gas", "pipeline.gas"),
     Paso("decision", "pipeline.decision"),
+    Paso("trayectorias", "pipeline.trayectorias"),
+    Paso("alcance_rama", "pipeline.alcance_rama"),
+    Paso("riesgo", "pipeline.riesgo"),
+    Paso("dosis_geometria", "pipeline.dosis_geometria"),
+    Paso("mecanismo", "pipeline.mecanismo"),
+    Paso("hijo_pad", "pipeline.hijo_pad"),
     Paso("colorado_ingest", "pipeline.colorado.ingest", solo_con_colorado=True),
     Paso("colorado_build", "pipeline.colorado.build", solo_con_colorado=True),
     Paso("replicacion", "pipeline.replicacion", solo_con_colorado=True),
+    Paso("dias_perdidos_colorado", "pipeline.dias_perdidos", solo_con_colorado=True, args=("--cuenca", "colorado")),
+    Paso("golpes_mismo_mes_colorado", "pipeline.golpes_mismo_mes", solo_con_colorado=True, args=("--cuenca", "colorado")),
+    Paso("golpes_mismo_padre_colorado", "pipeline.golpes_mismo_padre", solo_con_colorado=True, args=("--cuenca", "colorado")),
     Paso("figuras", "pipeline.figuras"),
     Paso("wiki", "pipeline.wiki"),
     Paso("informe", "pipeline.informe"),

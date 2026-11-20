@@ -10,7 +10,7 @@
 | Pozos shale con ubicación | 30 |
 | Pads | 9 |
 | Eventos cercanos de interferencia | 8 |
-| Petróleo diferido (bbl) | 90.213 |
+| Petróleo diferido (bbl) | 90.387 |
 
 ## Operadores
 
@@ -20,13 +20,13 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p155096](../pad/pad-p155096.md) | Vista | 3 | 49.726 |
-| [p165374](../pad/pad-p165374.md) | Vista | 3 | 25.140 |
-| [p155095](../pad/pad-p155095.md) | Vista | 2 | 15.347 |
+| [p155096](../pad/pad-p155096.md) | Vista | 3 | 49.707 |
+| [p165374](../pad/pad-p165374.md) | Vista | 3 | 25.281 |
+| [p155095](../pad/pad-p155095.md) | Vista | 2 | 15.399 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

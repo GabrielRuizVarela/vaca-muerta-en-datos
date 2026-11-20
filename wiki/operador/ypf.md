@@ -6,11 +6,11 @@ Operador shale con ubicación en Vaca Muerta. Página `ypf`.
 
 | Indicador | Valor |
 |---|---|
-| Petróleo Vaca Muerta (kbbl/d, 2026-09) | 349,51 |
-| Pozos shale con ubicación | 1.900 |
+| Petróleo Vaca Muerta (kbbl/d, 2026-10) | 357,86 |
+| Pozos shale con ubicación | 1.919 |
 | Áreas operadas | 33 |
 | Eventos cercanos de interferencia | 1.338 |
-| Petróleo diferido (bbl) | 7.848.447 |
+| Petróleo diferido (bbl) | 7.986.339 |
 
 ## Areas operadas
 
@@ -52,15 +52,15 @@ Operador shale con ubicación en Vaca Muerta. Página `ypf`.
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p164465](../pad/pad-p164465.md) | LA AMARGA CHICA | 12 | 637.182 |
-| [p163068](../pad/pad-p163068.md) | LA AMARGA CHICA | 16 | 623.392 |
-| [p165347](../pad/pad-p165347.md) | BANDURRIA SUR | 12 | 578.367 |
-| [p159580](../pad/pad-p159580.md) | LOMA CAMPANA | 15 | 412.931 |
-| [p165418](../pad/pad-p165418.md) | LA AMARGA CHICA | 6 | 340.868 |
+| [p164465](../pad/pad-p164465.md) | LA AMARGA CHICA | 12 | 637.725 |
+| [p163068](../pad/pad-p163068.md) | LA AMARGA CHICA | 16 | 623.996 |
+| [p165347](../pad/pad-p165347.md) | BANDURRIA SUR | 12 | 610.429 |
+| [p159580](../pad/pad-p159580.md) | LOMA CAMPANA | 15 | 413.672 |
+| [p165418](../pad/pad-p165418.md) | LA AMARGA CHICA | 6 | 341.767 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_vm_mensual`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

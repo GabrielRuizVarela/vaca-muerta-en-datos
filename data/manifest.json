@@ -1,22 +1,32 @@
 {
   "produccion_no_convencional": {
     "url": "http://datos.energia.gob.ar/dataset/c846e79c-026c-4040-897f-1ad3543b407c/resource/b5b58cdc-9e07-41f9-b392-fb9ec68b0725/download/produccin-de-pozos-de-gas-y-petrleo-no-convencional.csv",
-    "etag": "\"1792702856.77-148923474\"",
-    "last_modified": "Thu, 22 Oct 2026 21:00:56 GMT",
-    "bytes": 148923474,
-    "loaded_at": "2026-11-15T03:50:45+00:00",
-    "sha256": "61cecc31c8dd81fd474c4094f2605b2b01b5a5d157e2089db7f3c548c410deae",
-    "path": "produccion_no_convencional/2026-11-15_61cecc31c8dd.csv",
-    "checked_at": "2026-11-15T03:54:07+00:00"
+    "etag": "\"1795186858.55-150669961\"",
+    "last_modified": "Fri, 20 Nov 2026 15:00:58 GMT",
+    "bytes": 150669961,
+    "loaded_at": "2026-11-20T16:50:17+00:00",
+    "sha256": "b10e752147193083908b3ec655816545e69a240e41be819c79e80c7ad6477f3c",
+    "path": "produccion_no_convencional/2026-11-20_b10e75214719.csv",
+    "checked_at": "2026-11-20T16:50:17+00:00"
   },
   "fractura_adjunto_iv": {
     "url": "http://datos.energia.gob.ar/dataset/71fa2e84-0316-4a1b-af68-7f35e41f58d7/resource/2280ad92-6ed3-403e-a095-50139863ab0d/download/datos-de-fractura-de-pozos-de-hidrocarburos-adjunto-iv-actualizacin-diaria.csv",
-    "etag": "\"1794628806.47-1271920\"",
-    "last_modified": "Sat, 14 Nov 2026 04:00:06 GMT",
+    "etag": "\"1795147307.22-1271920\"",
+    "last_modified": "Fri, 20 Nov 2026 04:01:47 GMT",
     "bytes": 1271920,
-    "loaded_at": "2026-11-15T03:51:02+00:00",
+    "loaded_at": "2026-11-20T16:50:39+00:00",
     "sha256": "ff95734bf485b1a27ecb75e3a44dda3035e5496805cf3970a28d19802bf03026",
-    "path": "fractura_adjunto_iv/2026-11-15_ff95734bf485.csv",
-    "checked_at": "2026-11-15T03:54:28+00:00"
+    "path": "fractura_adjunto_iv/2026-11-20_ff95734bf485.csv",
+    "checked_at": "2026-11-20T16:50:39+00:00"
+  },
+  "trayectorias_pozo": {
+    "url": "http://datos.energia.gob.ar/dataset/f5c0b5a5-b402-44d7-8fe0-f9e4fcb78b8d/resource/94741ac7-4f46-4efe-b112-d3f82a4ef7c5/download/trayectorias-de-pozo-vaca-muerta.csv",
+    "etag": "\"1794718816.01-40497312\"",
+    "last_modified": "Sun, 15 Nov 2026 05:00:16 GMT",
+    "bytes": 40497312,
+    "loaded_at": "2026-11-20T16:50:40+00:00",
+    "sha256": "83093dc4b7bad3b7ab54449bbfb074264f3b6cb17d675c9494a2336403db3034",
+    "path": "trayectorias_pozo/2026-11-20_83093dc4b7ba.csv",
+    "checked_at": "2026-11-20T16:50:40+00:00"
   }
 }

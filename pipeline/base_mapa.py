@@ -21,6 +21,8 @@ agua:[{n, t:"embalse|lago|rio", km2, p:[b64 rings]}],
 limites:[{n, l:[...]}], localidades:[{n, prov, lon, lat}],
 bloques:[{n, c, op, km2, p:[...]}],
 fuentes:[{capa, titulo, organismo, url, licencia, sha256, fecha}]}.
+A second product, data/base_relieve_nucleo.json, is the finer relief of the
+core: {v:1, caja, paso_seg, margen, cols, filas, min, max, d}, same codec.
 Vectors are base64 of little-endian Uint16 (x, y) pairs quantised over the
 box (x east from lon0, y south from lat1). Relief d is base64 of rows
 (row 0 is north): an absolute Uint16 LE, then one Int8 delta per column,
@@ -69,8 +71,16 @@ from pipeline.ingest import DATA, ROOT
 RAW = DATA / "raw" / "base_mapa"
 DESTINO = DATA / "base_mapa.json"
 PAGINA = ROOT / "wiki" / "hallazgos" / "mapa_base.md"
+FOTO = DATA / "base_foto.json"  # the ground imagery of pipeline.base_foto: the page has a section about it
+FINO = DATA / "base_relieve_nucleo.json"
+EXACTITUD = DATA / "exactitud.json"  # the finer relief of the core, the second product of this module
 CAJA = (-70.5, -39.6, -67.5, -36.6)  # lon0, lat0, lon1, lat1
 COLS, FILAS = 540, 675  # blocks of 20 x 16 one-arc-second samples
+# The finer relief covers the core (the box of the fine ground image) in blocks of PASO_FINO arc-seconds.
+# MARGEN_FINO is the share of that box, from its edge inwards, over which a reader blends it into the sheet grid.
+NUCLEO = (-69.25, -38.85, -68.25, -38.1)
+PASO_FINO = 4
+MARGEN_FINO = 0.04
 Q = 65535
 MX, MY = 4, 5  # approximate metres per quantisation unit in x and y
 RIO_MIN_KM = 60.0
@@ -259,6 +269,23 @@ def construir_relieve(raw: Path = RAW) -> tuple[dict, list[tuple[str, str]]]:
     z = media_bloques(mosaico[f0:f0 + FILAS * by, c0:c0 + COLS * bx], FILAS, COLS, by, bx)
     rel = {"cols": COLS, "filas": FILAS, "min": int(z.min()), "max": int(z.max()), "d": _b64(codificar_relieve(z))}
     return rel, hs
+
+
+def construir_relieve_fino(raw: Path = RAW) -> dict:
+    """Build the finer relief of the core: blocks of PASO_FINO arc-seconds over NUCLEO, same tiles, same codec.
+
+    A tile sample sits on a whole arc-second, so the mean of a block of samples belongs half a second north-west
+    of the centre of the block of cells that NUCLEO would give. The product's caja carries that shift, so a cell
+    centre is where its samples are.
+    """
+    lon0, lat0, lon1, lat1 = NUCLEO
+    mosaico, _ = cargar_mosaico(raw)
+    c0, f0 = round((lon0 + 71) * 3600), round((-36 - lat1) * 3600)
+    cols, filas = round((lon1 - lon0) * 3600) // PASO_FINO, round((lat1 - lat0) * 3600) // PASO_FINO
+    z = media_bloques(mosaico[f0:f0 + filas * PASO_FINO, c0:c0 + cols * PASO_FINO], filas, cols, PASO_FINO, PASO_FINO)
+    m = .5 / 3600
+    return {"v": 1, "caja": [lon0 - m, lat0 + m, lon1 - m, lat1 + m], "paso_seg": PASO_FINO, "margen": MARGEN_FINO,
+            "cols": cols, "filas": filas, "min": int(z.min()), "max": int(z.max()), "d": _b64(codificar_relieve(z))}
 
 
 # ---------- vectors ----------
@@ -559,6 +586,31 @@ def cota(z: np.ndarray, caja: tuple[float, float, float, float], lon: float, lat
 
 # ---------- wiki page ----------
 
+def abrir_fino(fino: dict) -> dict:
+    """Decode the finer relief once: its grid, its box and its blend margin."""
+    return {"z": decodificar_relieve(fino), "caja": tuple(fino["caja"]), "margen": fino["margen"]}
+
+
+def peso_fino(caja: tuple[float, float, float, float], margen: float, lon: float, lat: float) -> float:
+    """Weight of the finer relief at a point: 0 outside its box and on its edge, 1 past the margin (smoothstep)."""
+    lon0, lat0, lon1, lat1 = caja
+    qx, qy = (lon - lon0) / (lon1 - lon0), (lat1 - lat) / (lat1 - lat0)
+    t = max(0.0, min(1.0, min(qx, 1 - qx, qy, 1 - qy) / margen))
+    return t * t * (3 - 2 * t)
+
+
+def cota_mixta(z: np.ndarray, caja: tuple[float, float, float, float], fino: dict | None,
+               lon: float, lat: float) -> float | None:
+    """Elevation the page draws: the sheet grid, blended into the finer grid (abrir_fino) inside its box."""
+    h = cota(z, caja, lon, lat)
+    if h is None or fino is None:
+        return h
+    w = peso_fino(fino["caja"], fino["margen"], lon, lat)
+    if w <= 0:
+        return h
+    return h + (cota(fino["z"], fino["caja"], lon, lat) - h) * w
+
+
 CAPA_ES = {"relieve": "Relieve", "rios": "Ríos", "agua": "Lagos, embalses y cauces anchos",
            "limites": "Límites interprovinciales", "localidades": "Localidades", "bloques": "Concesiones de explotación"}
 
@@ -583,20 +635,144 @@ def recuentos(base: dict) -> dict[str, int]:
             "bloques": len(base["bloques"]), "operadoras": len({b["op"] for b in base["bloques"]})}
 
 
-def pagina(base: dict) -> str:
-    """The wiki page of the base map, from the product alone (same product, same bytes)."""
+def recuentos_fino(fino: dict) -> dict[str, int]:
+    """Counts of the finer relief printed on the wiki page; pipeline.claims pins each one against the product."""
+    lon0, lat0, lon1, lat1 = fino["caja"]
+    paso_m = fino["paso_seg"] / 3600 * 111320
+    return {"cols": fino["cols"], "filas": fino["filas"], "paso_seg": fino["paso_seg"],
+            "cota_min": fino["min"], "cota_max": fino["max"], "margen_pct": round(fino["margen"] * 100),
+            "m_este": round(paso_m * math.cos(math.radians((lat0 + lat1) / 2))), "m_sur": round(paso_m)}
+
+
+def leer_fino(ruta: Path | None = None) -> dict | None:
+    """The finer relief of the core as written by this module, or None when it is not built."""
+    ruta = FINO if ruta is None else ruta
+    return json.loads(ruta.read_text(encoding="utf-8")) if ruta.exists() else None
+
+
+def leer_foto(ruta: Path | None = None) -> dict | None:
+    """The manifest of the ground imagery that pipeline.base_foto writes, or None when it is not built."""
+    ruta = FOTO if ruta is None else ruta
+    return json.loads(ruta.read_text(encoding="utf-8")) if ruta.exists() else None
+
+
+def _linea_fino(fino: dict) -> str:
+    f = recuentos_fino(fino)
+    lon0, lat0, lon1, lat1 = (f"{abs(v):.2f}".rstrip("0").replace(".", ",") for v in NUCLEO)
+    return (f"- relieve fino del núcleo: entre los {lon0}° y los {lon1}° de longitud oeste y entre los {lat0}° y los "
+            f"{lat1}° de latitud sur, donde está la mayoría de los pozos, una segunda grilla fina de "
+            f"{_miles(f['cols'])} por {_miles(f['filas'])} celdas de {f['paso_seg']} segundos de arco (cerca de "
+            f"{f['m_este']} m hacia el este y {f['m_sur']} m hacia el sur), con cotas de {_miles(f['cota_min'])} a "
+            f"{_miles(f['cota_max'])} m. La página dibuja esta y la funde con la de la hoja en una franja junto a "
+            f"cada borde, el {f['margen_pct']} % del lado del recorte;")
+
+
+def leer_exactitud(ruta: Path | None = None) -> dict | None:
+    """The accuracy measurements that pipeline.exactitud writes, or None when they are not there."""
+    ruta = EXACTITUD if ruta is None else ruta
+    return json.loads(ruta.read_text(encoding="utf-8")) if ruta.exists() else None
+
+
+def _dec(v: float, n: int = 1) -> str:
+    return f"{abs(v):.{n}f}".replace(".", ",")
+
+
+def seccion_exactitud(e: dict) -> list[str]:
+    """The wiki section that quotes data/exactitud.json; pipeline.claims pins each number against that file."""
+    r, im, d, pg = e["relieve"], e["imagen"], e["dibujo"], e["pagina"]
+    po, nu, ho, hn, ind = r["pozos"], r["pozos_nucleo"], r["solo_hoja"], r["solo_hoja_nucleo"], r.get("independiente")
+
+    def lugares(filas):
+        return "; ".join(f"{f['nombre']}: {_miles(f['fuente_m'])} m en la fuente y {_miles(f['pagina_m'])} m en la "
+                         "página" for f in filas) + "."
+
+    def largas(v):
+        return f"un {_dec(v)} % {'largas' if v >= 0 else 'cortas'}"
+
+    L = [
+        "## Exactitud",
+        "",
+        "Qué tan bien ubica la página lo que dibuja. Lo mide `python -m pipeline.exactitud` sobre la página publicada "
+        f"(datos a {pg['mes_datos']}, {_miles(pg['pozos'])} pozos) y lo guarda en `data/exactitud.json`. Cada línea dice "
+        "si es una medida o un supuesto.",
+        "",
+        f"- medido, relieve contra su fuente: en las bocas de los {_miles(po['n'])} pozos que caen dentro de la hoja, "
+        "la cota que dibuja la página difiere de la del modelo de un segundo de arco en "
+        f"{_dec(po['mediana'])} m de mediana; el 99 % queda a {_dec(po['p99'])} m o menos y el peor caso es de "
+        f"{_dec(po['max'])} m."
+        + ("" if nu is None else " Con la grilla de la hoja sola, en esos mismos pozos, la mediana era de "
+           f"{_dec(ho['mediana'])} m y el 99 % quedaba a {_dec(ho['p99'])} m o menos. En los {_miles(nu['n'])} pozos "
+           f"donde rige entero el relieve fino, la mediana es de {_dec(nu['mediana'])} m, el 99 % queda a "
+           f"{_dec(nu['p99'])} m o menos y el peor caso es de {_dec(nu['max'])} m; en esos, con la grilla de la hoja "
+           f"sola eran {_dec(hn['mediana'])} m y {_dec(hn['p99'])} m."),
+        "- medido, cumbres: una celda promedia el terreno que cubre, así que la página rebaja las cumbres. "
+        + lugares(r["cumbres"]),
+        "- medido, espejos de agua: " + lugares(r["niveles"]),
+    ]
+    if ind:
+        a, m, dia = ind["fecha_consulta"].split("-")
+
+        def mas(v):
+            return f"{_dec(v)} m {'más' if v >= 0 else 'menos'}"
+
+        L.append(
+            f"- medido, relieve contra un modelo independiente: en una muestra fija de {ind['n']} bocas, la fuente da "
+            f"{mas(ind['fuente_mediana'])} que el modelo Copernicus GLO-90 en la mediana, con una diferencia máxima de "
+            f"{_dec(ind['fuente_max'])} m; la página da {mas(ind['pagina_mediana'])}, con una máxima de "
+            f"{_dec(ind['pagina_max'])} m. Los valores de GLO-90 se consultaron una sola vez, el {dia}/{m}/{a}, y "
+            "quedaron, con su fuente y su atribución, en `data/exactitud_glo90.json`.")
+    dx, dy = im["agua_mejor_px"]
+    L += [
+        f"- medido, pozos sobre la imagen: se apilaron los recortes de la imagen centrados en {_miles(im['pads'])} "
+        f"locaciones, las de pozos que producían al menos {im['meses_antes']} meses antes de la imagen. La pila tiene "
+        f"su máximo{' en el píxel del centro' if im['pico_en_centro'] else ''}, de {_dec(im['pico_sd'])} desvíos sobre "
+        f"el entorno, y su centro queda a {abs(im['este_m'])} m al {'este' if im['este_m'] >= 0 else 'oeste'} y "
+        f"{abs(im['norte_m'])} m al {'norte' if im['norte_m'] >= 0 else 'sur'} de la posición publicada; un píxel mide "
+        f"{im['pixel_m'][0]} por {im['pixel_m'][1]} m. El {im['claros_pct']} % de las locaciones cae sobre suelo más "
+        f"claro que su entorno. La misma pila corrida {im['control_km']} km al este no muestra ningún máximo: llega a "
+        f"{_dec(im['control_sd'])} desvíos. La imagen se ve blanda de cerca porque cada píxel cubre esas decenas de "
+        "metros: es resolución, no un error de ubicación.",
+        f"- medido, agua sobre la imagen: el contorno de {' y '.join(im['embalses'])} coincide con el agua de la "
+        f"imagen en el {_dec(100 * im['agua_iou'])} % (intersección sobre unión)"
+        + (f", y ningún corrimiento de hasta {im['busca_px']} píxeles lo mejora." if (dx, dy) == (0, 0) else
+           f"; corrido {abs(dx)} píxeles al {'este' if dx >= 0 else 'oeste'} y {abs(dy)} al "
+           f"{'sur' if dy >= 0 else 'norte'} llega al {_dec(100 * im['agua_mejor_iou'])} %."),
+        f"- supuesto, el dibujo es plano: la página dibuja cada grado de latitud como {_dec(d['km_grado'], 2)} km y "
+        f"cada grado de longitud como {_dec(d['km_grado'], 2)} km por el coseno de la latitud del pozo mediano. Contra "
+        "el elipsoide WGS84, eso "
+        f"{'alarga' if d['ns_pct'] >= 0 else 'acorta'} las distancias norte-sur un {_dec(d['ns_pct'], 2)} %. Las "
+        f"distancias este-oeste quedan {largas(d['eo_nucleo_pct'][0])} en el borde norte del núcleo y "
+        f"{largas(d['eo_nucleo_pct'][1])} en el borde sur; en los bordes de la hoja, {largas(d['eo_hoja_pct'][0])} al "
+        f"norte y {largas(d['eo_hoja_pct'][1])} al sur. Las distancias entre pozos del estudio no salen del dibujo: se "
+        "calculan con la latitud de cada pozo.",
+        "- supuesto, registro de la grilla de la hoja: sus celdas quedan medio segundo de arco corridas respecto de "
+        f"las muestras que promedian, cerca de {d['medio_segundo_m'][0]} m al este y {d['medio_segundo_m'][1]} m al "
+        "sur. El relieve fino lo corrige en el núcleo, y el efecto ya está dentro de las diferencias medidas arriba.",
+        "",
+    ]
+    return L
+
+
+def pagina(base: dict, foto: dict | None = None, fino: dict | None = None, exactitud: dict | None = None) -> str:
+    """The wiki page of the base map, from the product alone (same product, same bytes).
+
+    foto is the manifest of the ground imagery (leer_foto()); with it the page gains the section about the image.
+    fino is the finer relief of the core (leer_fino()); with it the page says what it covers and how it is built.
+    exactitud is what pipeline.exactitud measured (leer_exactitud()); with it the page gains the accuracy section.
+    """
     r = recuentos(base)
     lon0, lat0, lon1, lat1 = base["caja"]
     seg_x, seg_y = round((lon1 - lon0) * 3600 / r["cols"]), round((lat1 - lat0) * 3600 / r["filas"])
     L = [
-        "# Mapa base del mundo 4D: fuentes y licencias",
+        "# Mapa base de Vaca Muerta en 3D: fuentes y licencias",
         "",
         "Lo que se ve debajo de los pozos en `site/mundo.html` (relieve, ríos, lagos y embalses, límites entre "
         "provincias, localidades y concesiones de explotación) es dato publicado por tres organismos, no una estimación "
         "de este estudio. La regla es una sola: sin fuente no hay capa. Ningún río se dibuja de memoria y ningún bloque "
         "se inventa a partir de los pozos.",
         "",
-        "Esta página la escribe `python -m pipeline.base_mapa` a partir de `data/base_mapa.json`. No se edita a mano.",
+        "Esta página la escribe `python -m pipeline.base_mapa` a partir de `data/base_mapa.json`"
+        + (" y, para la imagen del suelo, de `data/base_foto.json`" if foto is not None else "") + ". No se edita a mano.",
         "",
         "## Qué cubre",
         "",
@@ -605,6 +781,7 @@ def pagina(base: dict) -> str:
         "",
         f"- relieve: una grilla de {r['cols']} por {r['filas']} celdas ({seg_x} por {seg_y} segundos de arco, cerca de "
         f"500 m de lado), con cotas de {_miles(r['cota_min'])} a {_miles(r['cota_max'])} m sobre el nivel del mar;",
+        *([] if fino is None else [_linea_fino(fino)]),
         f"- {_miles(r['rios'])} ríos y arroyos con nombre, los que suman {RIO_MIN_KM:.0f} km o más dentro de la hoja;",
         f"- {_miles(r['agua_con_nombre'])} cuerpos de agua con nombre ({r['embalses']} embalses, {r['lagos']} lagos y "
         f"{r['cauces']} cauces anchos) y {_miles(r['agua_sin_nombre'])} contornos sin nombre;",
@@ -639,7 +816,12 @@ def pagina(base: dict) -> str:
         "## Cómo se arma cada capa",
         "",
         f"- Relieve: cada celda es la media entera de {seg_x} por {seg_y} muestras de un segundo de arco, sin contar "
-        "los vacíos de la fuente.",
+        "los vacíos de la fuente."
+        + ("" if fino is None else f" El relieve fino del núcleo sale de las mismas teselas con bloques de "
+           f"{fino['paso_seg']} por {fino['paso_seg']} muestras. Cada muestra de la fuente cae sobre un segundo de "
+           "arco entero, así que la media de un bloque corresponde a medio segundo al noroeste del centro que le "
+           "daría la caja: la caja del relieve fino lleva ese corrimiento y la de la hoja no"
+           + (" (ver Exactitud)." if exactitud is not None else ".")),
         "- Ríos: las líneas de agua perenne se agrupan por nombre completo, se unen los tramos que comparten un extremo "
         f"y se simplifican con una tolerancia de {TOL_RIO} m. Quedan los nombres que suman {RIO_MIN_KM:.0f} km o más.",
         f"- Agua: todos los embalses y cauces anchos, y los lagos de {LAGO_MIN_KM2:.0f} km² o más, con una tolerancia de "
@@ -651,6 +833,13 @@ def pagina(base: dict) -> str:
         f"- Todas las coordenadas se guardan en una grilla de {_miles(Q)} pasos por lado: cerca de {MX} m hacia el este "
         f"y {MY} m hacia el sur.",
         "",
+    ]
+    if foto is not None:
+        from pipeline import base_foto  # here and not at the top: base_foto imports this module
+        L += base_foto.seccion(foto)
+    if exactitud is not None:
+        L += seccion_exactitud(exactitud)
+    L += [
         "## Qué no es",
         "",
         "- No es cartografía oficial y no sirve para medir un lindero: las líneas están simplificadas.",
@@ -658,6 +847,12 @@ def pagina(base: dict) -> str:
         "titular ni permisos de exploración.",
         "- El relieve es el terreno. No dice nada de la profundidad de una formación: en la página la profundidad sigue "
         "siendo un esquema, y así está rotulada.",
+    ]
+    if foto is not None:
+        L.append("- La imagen del suelo tiene fecha y no cambia con el reloj de la página: un pozo posterior a esa "
+                 "fecha puede no tener todavía su locación en ella, y al mirar un mes anterior se ven locaciones que "
+                 "todavía no existían. La página lo dice en pantalla.")
+    L += [
         "",
         "## Reproducir",
         "",
@@ -665,6 +860,18 @@ def pagina(base: dict) -> str:
         "uv run python -m pipeline.base_mapa --descargar   # baja lo que falta a data/raw/base_mapa y arma el producto",
         "uv run python -m pipeline.base_mapa --verificar   # compara con data/base_mapa.json y con esta página",
         "uv run python -m pipeline.base_mapa --pagina      # reescribe solo esta página, sin los archivos crudos",
+    ]
+    if foto is not None:
+        L += [
+            "uv run --with pillow python -m pipeline.base_foto --descargar   # baja las ventanas que faltan y arma la imagen",
+            "uv run python -m pipeline.base_foto --verificar   # compara data/base_foto.json con los dos archivos WebP",
+        ]
+    if exactitud is not None:
+        L += [
+            "uv run --with pillow python -m pipeline.exactitud   # mide la página armada y escribe data/exactitud.json",
+            "uv run --with pillow python -m pipeline.exactitud --verificar   # mide de nuevo y compara",
+        ]
+    L += [
         "```",
         "",
     ]
@@ -733,21 +940,24 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m pipeline.base_mapa", description="Build the base map product.")
     ap.add_argument("--descargar", action="store_true", help="fetch the missing sources first")
     ap.add_argument("--verificar", action="store_true",
-                    help="compare with data/base_mapa.json and the wiki page, never write")
+                    help="compare with the two products and the wiki page, never write")
     ap.add_argument("--salida", type=Path, default=None, help="write the product somewhere else, leave the page alone")
     ap.add_argument("--pagina", action="store_true", help="rewrite only the wiki page from data/base_mapa.json")
     args = ap.parse_args(argv)
     if args.pagina:
-        PAGINA.write_text(pagina(json.loads(DESTINO.read_text(encoding="utf-8"))), encoding="utf-8")
+        PAGINA.write_text(pagina(json.loads(DESTINO.read_text(encoding="utf-8")), leer_foto(), leer_fino(),
+                                 leer_exactitud()), encoding="utf-8")
         print(f"wrote {PAGINA}")
         return 0
     if args.descargar:
         descargar()
-    base = construir()
-    datos, texto = serializar(base).encode("utf-8"), pagina(base).encode("utf-8")
+    base, fino = construir(), construir_relieve_fino()
+    datos, datos_fino = serializar(base).encode("utf-8"), serializar(fino).encode("utf-8")
+    texto = pagina(base, leer_foto(), fino, leer_exactitud()).encode("utf-8")
     h = _sha(datos)
     if args.verificar:
-        distintos = [str(ruta.relative_to(ROOT)) for ruta, esperado in ((DESTINO, datos), (PAGINA, texto))
+        distintos = [str(ruta.relative_to(ROOT))
+                     for ruta, esperado in ((DESTINO, datos), (FINO, datos_fino), (PAGINA, texto))
                      if not ruta.exists() or ruta.read_bytes() != esperado]
         if not distintos:
             print(f"verificar ok bytes {len(datos)} sha256 {h}")
@@ -758,8 +968,10 @@ def main(argv: list[str] | None = None) -> int:
         args.salida.write_bytes(datos)
     else:
         DESTINO.write_bytes(datos)
+        FINO.write_bytes(datos_fino)
         PAGINA.write_bytes(texto)
     print(f"bytes {len(datos)} sha256 {h}")
+    print(f"relieve fino bytes {len(datos_fino)} sha256 {_sha(datos_fino)}")
     return 0
 
 

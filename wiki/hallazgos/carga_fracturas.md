@@ -2,7 +2,7 @@
 
 Descriptivo, sin veredicto: este análisis mide cuánto tarda cada fractura en aparecer en el dato público de fracturas (Adjunto IV), contando desde el mes en que empezó hasta el mes en que el operador cargó el registro. No evalúa si el rezago es razonable ni lo atribuye a una causa, y no cambia ningún otro resultado del repositorio.
 
-Edición del archivo de fracturas (U, último mes de carga): 2026-11. La carga empieza en 2019-06 (P0); las 970 fracturas de hijos que empezaron antes se cargaron de golpe después y quedan fuera de toda estadística de rezago. Hay 0 hijos con carga anterior al inicio: se cuentan aquí y quedan fuera de la curva.
+Edición del archivo de fracturas (U, último mes de carga): 2026-11. La carga empieza en 2019-06 (P0); las 970 fracturas de hijos que empezaron antes se cargaron de golpe después y quedan fuera de toda estadística de rezago. Hay 1 hijos con carga anterior al inicio: se cuentan aquí y quedan fuera de la curva.
 
 ## Curva de carga
 
@@ -48,7 +48,7 @@ Incluye todos los hijos con carga desde P0, también los de cohortes que todaví
 | 2023 | 334 | 5,0 | 33,8 % | 89,9 % |
 | 2024 | 355 | 4,0 | 48,2 % | 89,4 % |
 | 2025 | 457 | 3,0 | 57,1 % | 77,9 % |
-| 2026 | 246 | 3,0 | 64,6 % | 0,1 % |
+| 2026 | 254 | 3,0 | 65,6 % | 0,1 % |
 
 ## Meses de inicio con carga incompleta
 
@@ -64,10 +64,10 @@ Meses de inicio con completitud estimada menor que 0,80.
 | 2026-04 | 34 | 72,5 % |
 | 2026-05 | 33 | 69,6 % |
 | 2026-06 | 33 | 65,9 % |
-| 2026-07 | 9 | 54,6 % |
-| 2026-08 | 7 | 34,1 % |
+| 2026-07 | 13 | 54,6 % |
+| 2026-08 | 10 | 34,1 % |
 | 2026-09 | 3 | 13,6 % |
-| 2026-10 | 0 | 2,9 % |
+| 2026-10 | 1 | 2,9 % |
 | 2026-11 | 0 | 0,1 % |
 
 ## Límites

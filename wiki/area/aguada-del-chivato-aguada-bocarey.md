@@ -10,7 +10,7 @@
 | Pozos shale con ubicación | 2 |
 | Pads | 2 |
 | Eventos cercanos de interferencia | 1 |
-| Petróleo diferido (bbl) | 107 |
+| Petróleo diferido (bbl) | 119 |
 
 ## Operadores
 
@@ -20,11 +20,11 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p137680](../pad/pad-p137680.md) | PATAGONIA ENERGY S.A. | 1 | 107 |
+| [p137680](../pad/pad-p137680.md) | PATAGONIA ENERGY S.A. | 1 | 119 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

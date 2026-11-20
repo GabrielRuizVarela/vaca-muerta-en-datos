@@ -42,10 +42,10 @@ text { fill: var(--texto); font-family: 'DejaVu Sans', Helvetica, Arial, sans-se
 </g>
 <g class="area" data-area="BANDURRIA SUR" data-definido="no">
 <title>BANDURRIA SUR: eje 21,2 grados, IC 95% de 148,3 a 94,8, contraste 87,4 puntos, p de permutación 0,346, eje no definido</title>
-<line class="ref" x1="442.4" y1="201.1" x2="383.3" y2="225.6"/>
-<line class="eje-ndef" x1="425.5" y1="180.7" x2="400.2" y2="245.9" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
-<circle class="centro-ndef" cx="412.8" cy="213.3" r="3"/>
-<text class="etiqueta" x="445.8" y="219.8" text-anchor="start">BANDURRIA SUR</text>
+<line class="ref" x1="442.3" y1="200.5" x2="383.1" y2="225.0"/>
+<line class="eje-ndef" x1="425.3" y1="180.1" x2="400.1" y2="245.3" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
+<circle class="centro-ndef" cx="412.7" cy="212.7" r="3"/>
+<text class="etiqueta" x="445.6" y="219.2" text-anchor="start">BANDURRIA SUR</text>
 </g>
 <g class="area" data-area="FORTIN DE PIEDRA" data-definido="si">
 <title>FORTIN DE PIEDRA: eje 62,0 grados, IC 95% de 49,5 a 88,3, contraste 93,5 puntos, p de permutación 0,020, eje definido</title>
@@ -58,10 +58,10 @@ text { fill: var(--texto); font-family: 'DejaVu Sans', Helvetica, Arial, sans-se
 </g>
 <g class="area" data-area="LA AMARGA CHICA" data-definido="no">
 <title>LA AMARGA CHICA: eje 77,4 grados, IC 95% de 3,1 a 149,8, contraste 15,5 puntos, p de permutación 0,376, eje no definido</title>
-<line class="ref" x1="489.8" y1="143.7" x2="430.6" y2="168.2"/>
-<line class="eje-ndef" x1="473.9" y1="152.9" x2="446.5" y2="159.0" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
-<circle class="centro-ndef" cx="460.2" cy="155.9" r="3"/>
-<text class="etiqueta" x="490.2" y="162.4" text-anchor="start">LA AMARGA CHICA</text>
+<line class="ref" x1="490.1" y1="144.7" x2="431.0" y2="169.2"/>
+<line class="eje-ndef" x1="474.2" y1="153.9" x2="446.9" y2="160.0" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
+<circle class="centro-ndef" cx="460.5" cy="156.9" r="3"/>
+<text class="etiqueta" x="490.5" y="163.4" text-anchor="start">LA AMARGA CHICA</text>
 </g>
 <g class="area" data-area="LA CALERA" data-definido="no">
 <title>LA CALERA: eje 155,4 grados, IC 95% de 77,9 a 61,2, contraste 42,1 puntos, p de permutación 0,296, eje no definido</title>
@@ -79,12 +79,12 @@ text { fill: var(--texto); font-family: 'DejaVu Sans', Helvetica, Arial, sans-se
 </g>
 <g class="area" data-area="LOMA CAMPANA" data-definido="si">
 <title>LOMA CAMPANA: eje 101,5 grados, IC 95% de 77,6 a 130,9, contraste 17,9 puntos, p de permutación 0,046, eje definido</title>
-<path class="cono" data-apertura="53.2" d="M400.2,264.6 L427.5,258.6 A28.0,28.0 0 0 1 421.4,282.9 Z"/>
-<path class="cono" data-apertura="53.2" d="M400.2,264.6 L372.8,270.6 A28.0,28.0 0 0 1 379.0,246.3 Z"/>
+<path class="cono" data-apertura="53.2" d="M400.1,264.5 L427.5,258.5 A28.0,28.0 0 0 1 421.3,282.9 Z"/>
+<path class="cono" data-apertura="53.2" d="M400.1,264.5 L372.8,270.5 A28.0,28.0 0 0 1 379.0,246.2 Z"/>
 <line class="ref" x1="429.7" y1="252.3" x2="370.6" y2="276.8"/>
-<line class="eje-def" x1="413.9" y1="267.4" x2="386.5" y2="261.8" marker-start="url(#punta-def)" marker-end="url(#punta-def)"/>
-<circle class="centro-def" cx="400.2" cy="264.6" r="3"/>
-<text class="etiqueta" x="430.2" y="271.1" text-anchor="start">LOMA CAMPANA</text>
+<line class="eje-def" x1="413.9" y1="267.3" x2="386.4" y2="261.8" marker-start="url(#punta-def)" marker-end="url(#punta-def)"/>
+<circle class="centro-def" cx="400.1" cy="264.5" r="3"/>
+<text class="etiqueta" x="430.1" y="271.0" text-anchor="start">LOMA CAMPANA</text>
 </g>
 </g>
 <g id="escala" aria-label="Escala de 20 kilómetros">
@@ -106,8 +106,8 @@ text { fill: var(--texto); font-family: 'DejaVu Sans', Helvetica, Arial, sans-se
 <text x="110" y="680.0">IC 95% del eje (solo si está definido)</text>
 <text class="nota" x="380" y="624.0">Largo del segmento proporcional al contraste</text>
 <text class="nota" x="380" y="640.0">(mínimo y máximo acotados).</text>
-<text class="nota" x="380" y="664.0">Cuenca (no se dibuja): eje 92,9 grados,</text>
-<text class="nota" x="380" y="680.0">IC de 69,9 a 122,5 (apertura 52,6),</text>
-<text class="nota" x="380" y="696.0">eje definido, n = 1734.</text>
+<text class="nota" x="380" y="664.0">Cuenca (no se dibuja): eje 93,2 grados,</text>
+<text class="nota" x="380" y="680.0">IC de 69,6 a 122,8 (apertura 53,2),</text>
+<text class="nota" x="380" y="696.0">eje definido, n = 1751.</text>
 </g>
 </svg>

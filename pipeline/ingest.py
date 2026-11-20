@@ -26,6 +26,11 @@ SOURCES = {
     "produccion_no_convencional": "http://datos.energia.gob.ar/dataset/c846e79c-026c-4040-897f-1ad3543b407c/resource/b5b58cdc-9e07-41f9-b392-fb9ec68b0725/download/produccin-de-pozos-de-gas-y-petrleo-no-convencional.csv",
     "fractura_adjunto_iv": "http://datos.energia.gob.ar/dataset/71fa2e84-0316-4a1b-af68-7f35e41f58d7/resource/2280ad92-6ed3-403e-a095-50139863ab0d/download/datos-de-fractura-de-pozos-de-hidrocarburos-adjunto-iv-actualizacin-diaria.csv",
 }
+# Same server and licence (CC-BY-4.0), but not read by the warehouse SQL: a module reads it after the build
+# (trayectorias_pozo: pipeline.trayectorias).
+OTRAS = {
+    "trayectorias_pozo": "http://datos.energia.gob.ar/dataset/f5c0b5a5-b402-44d7-8fe0-f9e4fcb78b8d/resource/94741ac7-4f46-4efe-b112-d3f82a4ef7c5/download/trayectorias-de-pozo-vaca-muerta.csv",
+}
 
 
 def load_manifest(path: Path = MANIFEST) -> dict:
@@ -95,7 +100,7 @@ def fetch(name: str, url: str, manifest: dict, raw_dir: Path = DATA / "raw") -> 
 def main() -> int:
     DATA.mkdir(exist_ok=True)
     manifest = load_manifest()
-    for name, url in SOURCES.items():
+    for name, url in {**SOURCES, **OTRAS}.items():
         status = fetch(name, url, manifest)
         print(f"{name}: {status}")
         save_manifest(manifest)

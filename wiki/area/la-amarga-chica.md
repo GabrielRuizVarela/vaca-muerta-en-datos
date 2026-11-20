@@ -7,10 +7,10 @@
 | Indicador | Valor |
 |---|---|
 | Operadores | 1 |
-| Pozos shale con ubicación | 343 |
-| Pads | 86 |
+| Pozos shale con ubicación | 351 |
+| Pads | 88 |
 | Eventos cercanos de interferencia | 316 |
-| Petróleo diferido (bbl) | 3.270.976 |
+| Petróleo diferido (bbl) | 3.269.428 |
 
 ## Operadores
 
@@ -20,15 +20,15 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p164465](../pad/pad-p164465.md) | YPF | 12 | 637.182 |
-| [p163068](../pad/pad-p163068.md) | YPF | 16 | 623.392 |
-| [p165418](../pad/pad-p165418.md) | YPF | 6 | 340.868 |
-| [p166924](../pad/pad-p166924.md) | YPF | 4 | 257.087 |
-| [p166776](../pad/pad-p166776.md) | YPF | 6 | 228.825 |
+| [p164465](../pad/pad-p164465.md) | YPF | 12 | 637.725 |
+| [p163068](../pad/pad-p163068.md) | YPF | 16 | 623.996 |
+| [p165418](../pad/pad-p165418.md) | YPF | 6 | 341.767 |
+| [p166924](../pad/pad-p166924.md) | YPF | 4 | 250.747 |
+| [p166776](../pad/pad-p166776.md) | YPF | 6 | 231.402 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

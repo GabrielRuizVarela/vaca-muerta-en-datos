@@ -5,8 +5,8 @@ Página generada por `pipeline/eje_exposicion.py`. Compara el eje de mayor merma
 ## Resumen
 
 - Veredicto: **geometria explica el eje**. Dispara la regla de parada.
-- Condición (i): el eje de merma de Loma Campana (101 grados) cae dentro del IC de su eje de exposición (88 a 117): sí; el de la cuenca (93) dentro del suyo (90 a 102): sí. Se cumple.
-- Condición (ii): la cuenca reponderada queda en 92 grados, IC 57 a 125 (ancho 68), p 0,088: definido. No se cumple.
+- Condición (i): el eje de merma de Loma Campana (101 grados) cae dentro del IC de su eje de exposición (88 a 117): sí; el de la cuenca (93) dentro del suyo (90 a 101): sí. Se cumple.
+- Condición (ii): la cuenca reponderada queda en 91 grados, IC 49 a 128 (ancho 79), p 0,200: sin definir. Se cumple.
 - Loma Campana reponderada: 99 grados, IC 73 a 126, p 0,040 (definido).
 
 ## Eje de merma contra ejes de exposición
@@ -15,11 +15,11 @@ Por área: el eje de merma con su IC (mart_anisotropia_area), el eje de exposici
 
 | Área | Eventos | Pads | Eje merma | IC merma | Eje exposición | IC exposición | Rbar | Eje filas | IC filas | Razón autovalores | Dist merma-exp | Merma en IC exp | Dist merma-filas | Merma en IC filas |
 | --- | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: | --- | ---: | ---: | --- | ---: | --- |
-| Cuenca | 1.734 | 324 | 93 | 70 a 122 | 95 | 90 a 102 | 0,368 | 105 | 101 a 108 | 4,6 | 2,3 | sí | 11,8 | no |
+| Cuenca | 1.751 | 325 | 93 | 70 a 123 | 95 | 90 a 101 | 0,365 | 105 | 101 a 109 | 4,6 | 1,9 | sí | 11,4 | no |
 | LOMA CAMPANA | 694 | 148 | 101 | 78 a 131 | 100 | 88 a 117 | 0,209 | 103 | 100 a 105 | 21,5 | 1,6 | sí | 1,3 | sí |
 | LA AMARGA CHICA | 275 | 49 | 77 | 3 a 150 | 86 | 76 a 98 | 0,430 | 164 | 155 a 173 | 4,4 | 9,0 | sí | 86,1 | no |
 | FORTIN DE PIEDRA | 143 | 27 | 62 | 50 a 88 | 82 | 73 a 89 | 0,644 | 43 | 38 a 47 | 18,9 | 20,1 | no | 19,2 | no |
-| BAJADA DEL PALO OESTE | 132 | 13 | 22 | 130 a 105 | 86 | 80 a 95 | 0,804 | 70 | 65 a 108 | 11,2 | 64,1 | no | 47,9 | no |
+| BAJADA DEL PALO OESTE | 132 | 13 | 22 | 130 a 105 | 86 | 80 a 95 | 0,804 | 70 | 65 a 108 | 11,2 | 64,1 | no | 47,8 | no |
 | BANDURRIA SUR | 126 | 21 | 21 | 148 a 95 | 108 | 100 a 118 | 0,758 | 119 | 114 a 154 | 8,2 | 86,9 | no | 82,3 | no |
 | LINDERO ATRAVESADO | 87 | 10 | 67 | 175 a 135 | 143 | 124 a 167 | 0,410 | 3 | 93 a 91 | 4,6 | 76,1 | no | 64,3 | sí |
 | LA CALERA | 64 | 15 | 155 | 78 a 61 | 88 | 77 a 97 | 0,663 | 88 | 72 a 98 | 7,2 | 67,2 | no | 67,1 | no |
@@ -30,7 +30,7 @@ Eje de merma reestimado con mínimos cuadrados ponderados (cada dirección pesa 
 
 | Área | Eventos | Eje (grados) | IC 95% (grados) | Ancho IC | Contraste (puntos) | p permutación | Definido |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | --- |
-| Cuenca | 1.734 | 92 | 57 a 125 | 68 | 13,0 | 0,088 | sí |
+| Cuenca | 1.751 | 91 | 49 a 128 | 79 | 11,6 | 0,200 | no |
 | LOMA CAMPANA | 694 | 99 | 73 a 126 | 53 | 18,4 | 0,040 | sí |
 
 ## Pieza 3: modelo de ramas (no hecha)

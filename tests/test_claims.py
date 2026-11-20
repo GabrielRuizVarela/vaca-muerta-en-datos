@@ -50,6 +50,19 @@ def test_skip_sin_warehouse_y_con_wh(tmp_path):
     assert verificar([c], raiz=tmp_path, wh=tmp_path / "w.duckdb")[0].estado == "PASS"
 
 
+def test_skip_sin_la_tabla_de_un_paso_opcional(tmp_path):
+    _doc(tmp_path, "n = 5")
+    c = Claim("t", "doc.md", r"n = (\d+)", lambda con: con.execute("select n from extra").fetchone()[0], tabla="extra")
+    wh = tmp_path / "w.duckdb"
+    duckdb.connect(str(wh)).close()
+    r = verificar([c], raiz=tmp_path, wh=wh)[0]
+    assert r.estado == "SKIP" and "extra" in r.detalle
+    con = duckdb.connect(str(wh))
+    con.execute("create table extra as select 5 as n")
+    con.close()
+    assert verificar([c], raiz=tmp_path, wh=wh)[0].estado == "PASS"
+
+
 def test_lento_se_omite_con_rapido(tmp_path):
     _doc(tmp_path, "n = 5")
     c = Claim("l", "doc.md", r"n = (\d+)", lambda con: 5.0, requiere_wh=False, lento=True)

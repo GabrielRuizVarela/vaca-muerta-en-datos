@@ -10,7 +10,7 @@
 | Pozos shale con ubicación | 39 |
 | Pads | 11 |
 | Eventos cercanos de interferencia | 21 |
-| Petróleo diferido (bbl) | 194.064 |
+| Petróleo diferido (bbl) | 194.687 |
 
 ## Operadores
 
@@ -20,14 +20,14 @@
 
 | Pad | Operador | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p162843](../pad/pad-p162843.md) | Shell | 8 | 138.088 |
-| [p164926](../pad/pad-p164926.md) | Shell | 8 | 91.165 |
-| [p164676](../pad/pad-p164676.md) | Shell | 4 | -7.792 |
-| [p159168](../pad/pad-p159168.md) | Shell | 1 | -27.397 |
+| [p162843](../pad/pad-p162843.md) | Shell | 8 | 138.350 |
+| [p164926](../pad/pad-p164926.md) | Shell | 8 | 91.349 |
+| [p164676](../pad/pad-p164676.md) | Shell | 4 | -7.682 |
+| [p159168](../pad/pad-p159168.md) | Shell | 1 | -27.330 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.

@@ -28,7 +28,17 @@ Salidas dentro de ``out_dir``:
     hallazgos/decision_operador.md  brecha, diferido y valor por edad del padre y banda de distancia (si corrio pipeline.decision)
     hallazgos/potencia_dosis.md  potencia del nulo de dosis y respuesta (si corrio pipeline.potencia_dosis)
     hallazgos/robustez_operador.md  brecha del mes 1 y cierre del mes 6 sacando de a un operador y de a un area (si corrio pipeline.robustez_operador)
+    hallazgos/dias_perdidos.md  dias de produccion que pierde un padre alrededor de la fractura de un hijo, por operador (si corrio pipeline.dias_perdidos)
+    hallazgos/golpes_mismo_mes.md  si a un padre le cuesta menos recibir varios hijos en un mes que en meses separados (si corrio pipeline.golpes_mismo_mes)
+    hallazgos/golpes_mismo_padre.md  lo mismo con cada padre como su propio control (si corrio pipeline.golpes_mismo_padre)
+    hallazgos/calendario_golpes.md  matrices de costo, calendario optimo y backtest ajustado en 2023 (si corrio pipeline.calendario_golpes)
+    hallazgos/trayectorias.md  trayectorias de pozo publicadas: cobertura y distancia entre ramas frente a la de superficie (si corrio pipeline.trayectorias)
+    hallazgos/alcance_rama.md  alcance y dilucion de la huella medidos entre ramas, regla fijada de antemano (si corrio pipeline.alcance_rama)
+    hallazgos/riesgo.md        riesgo de golpe fuerte con un modelo logistico probado hacia adelante, regla fijada de antemano (si corrio pipeline.riesgo)
+    hallazgos/dosis_geometria.md  dosis con la geometria de las ramas, detras de una puerta de potencia (si corrio pipeline.dosis_geometria)
     hallazgos/hijo_celdas.md   el lado del hijo comparando hijos del mismo cuadrado de 2 km (si corrio pipeline.hijo_celdas)
+    hallazgos/mecanismo.md      la geometria de las ramas: el padre al costado de la rama del hijo contra el de la punta (si corrio pipeline.mecanismo)
+    hallazgos/hijo_pad.md      el lado del hijo comparando hijos del mismo pad segun las ramas a menos de 600 m (si corrio pipeline.hijo_pad)
     hallazgos/gas.md           el padre gasifero con el gas como resultado (si corrio pipeline.gas)
     hallazgos/literatura.md    comparacion con la literatura (escrita a mano; el indice la enlaza si existe)
     hallazgos/prospectiva.md   prueba prospectiva congelada (la escribe pipeline.prospectiva; el indice la enlaza si existe)
@@ -37,7 +47,7 @@ Salidas dentro de ``out_dir``:
     hallazgos/replicacion.md   el estudio de eventos sobre Colorado (lo escribe pipeline.replicacion, solo con --with-colorado)
     hallazgos/replicacion_cuencas.md   la lectura de la familia de cuencas (la escribe pipeline.familia)
     hallazgos/placebo.md       pretendencia, fechas falsas y permutacion del estudio de eventos (si corrio pipeline.placebo)
-    hallazgos/mapa_base.md     fuentes y licencias del mapa base del mundo 4D (la escribe pipeline.base_mapa; el indice la enlaza si existe)
+    hallazgos/mapa_base.md     fuentes y licencias del mapa base de la pagina 3D (la escribe pipeline.base_mapa; el indice la enlaza si existe)
     grafo.json                grafo de operadores, areas, pads y pozos
 """
 from __future__ import annotations
@@ -50,7 +60,7 @@ from pathlib import Path
 
 import duckdb
 
-from pipeline import anillo, bloques, costo, decision, descomposicion, diferido, dosis, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, gas, potencia, potencia_dosis, hijo, hijo_celdas, inyeccion, linaje, mapa, placebo, robustez, robustez_operador, sincronia, validacion
+from pipeline import alcance_rama, anillo, bloques, calendario_golpes, costo, decision, descomposicion, dias_perdidos, diferido, dosis, dosis_geometria, golpes_mismo_mes, golpes_mismo_padre, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, gas, hijo_pad, potencia, potencia_dosis, hijo, hijo_celdas, inyeccion, linaje, mapa, mecanismo, placebo, riesgo, robustez, robustez_operador, sincronia, trayectorias, validacion
 from pipeline import hallazgos as hz
 from pipeline.ingest import DATA, ROOT, load_manifest
 
@@ -603,8 +613,28 @@ def build_wiki(con, manifest, out_dir) -> dict:
         ("gas", "mart_gas_veredicto", "gas.md", gas.pagina_gas),
         # lado del hijo dentro de celdas de 2 km (necesita pipeline.hijo_celdas)
         ("hijo_celdas", "mart_hijo_celdas_resumen", "hijo_celdas.md", hijo_celdas.pagina_hijo_celdas),
+        # geometria de las ramas: el padre al costado de la rama del hijo contra el de la punta (necesita pipeline.mecanismo)
+        ("mecanismo", "mart_mecanismo_veredicto", "mecanismo.md", mecanismo.pagina_mecanismo),
         # robustez por operador y area (necesita pipeline.robustez_operador, que corre despues de pipeline.placebo)
         ("rob_op", "mart_robustez_operador_veredicto", "robustez_operador.md", robustez_operador.pagina_robustez_operador),
+        # dias parados del padre por operador (necesita pipeline.dias_perdidos, que corre despues de pipeline.descomposicion)
+        ("dias", "mart_dias_perdidos_prueba", "dias_perdidos.md", dias_perdidos.pagina_dias_perdidos),
+        # golpes en el mismo mes: costo fijo del mes contra costo por hijo (necesita pipeline.golpes_mismo_mes, despues de dias_perdidos)
+        ("golpes", "mart_golpes_mismo_mes_prueba", "golpes_mismo_mes.md", golpes_mismo_mes.pagina_golpes_mismo_mes),
+        # golpes en el mismo mes con el padre como su propio control (necesita pipeline.golpes_mismo_padre, despues de golpes_mismo_mes)
+        ("golpes_padre", "mart_golpes_mismo_padre_prueba", "golpes_mismo_padre.md", golpes_mismo_padre.pagina_golpes_mismo_padre),
+        # calendario de golpes: matrices de costo, optimizador y backtest (necesita pipeline.calendario_golpes, despues de golpes_mismo_padre)
+        ("calendario", "mart_calendario_prueba", "calendario_golpes.md", calendario_golpes.pagina_calendario_golpes),
+        # trayectorias de pozo publicadas, cobertura y distancia entre ramas (necesita pipeline.trayectorias)
+        ("tray", "mart_trayectoria_resumen", "trayectorias.md", trayectorias.pagina_trayectorias),
+        # alcance y dilucion de la huella medidos entre ramas (necesita pipeline.alcance_rama, despues de trayectorias)
+        ("alcance_rama", "mart_alcance_rama_prueba", "alcance_rama.md", alcance_rama.pagina_alcance_rama),
+        # riesgo de golpe fuerte, modelo logistico probado hacia adelante (necesita pipeline.riesgo, despues de trayectorias)
+        ("riesgo", "mart_riesgo_prueba", "riesgo.md", riesgo.pagina_riesgo),
+        # dosis y respuesta con la geometria de las ramas, detras de una puerta de potencia (necesita pipeline.trayectorias y pipeline.potencia_dosis)
+        ("dosis_geo", "mart_dosis_geometria_puerta", "dosis_geometria.md", dosis_geometria.pagina_dosis_geometria),
+        # lado del hijo dentro del pad con la distancia entre ramas (necesita pipeline.hijo_pad, despues de trayectorias)
+        ("hijo_pad", "mart_hijo_pad_coef", "hijo_pad.md", hijo_pad.pagina_hijo_pad),
     ]
     for flag, tabla, archivo, funcion in paginas_mart:
         hay[flag] = tabla is None or con.execute(
@@ -632,7 +662,17 @@ def build_wiki(con, manifest, out_dir) -> dict:
     hay_potencia_dosis = hay["potencia_dosis"]
     hay_gas = hay["gas"]
     hay_hijo_celdas = hay["hijo_celdas"]
+    hay_mecanismo = hay["mecanismo"]
     hay_rob_op = hay["rob_op"]
+    hay_dias = hay["dias"]
+    hay_tray = hay["tray"]
+    hay_golpes = hay["golpes"]
+    hay_golpes_padre = hay["golpes_padre"]
+    hay_alcance_rama = hay["alcance_rama"]
+    hay_calendario = hay["calendario"]
+    hay_riesgo = hay["riesgo"]
+    hay_dosis_geo = hay["dosis_geo"]
+    hay_hijo_pad = hay["hijo_pad"]
 
     # regla de parada del eje: potencia, controles negativos y exposicion (necesitan pipeline.potencia, eje_controles y eje_exposicion)
     paginas_eje = [("mart_potencia_resumen", "potencia.md", potencia.pagina_potencia),
@@ -691,6 +731,8 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Lado del hijo (rendimiento de 12 meses según el petróleo ya producido a menos de 1 km): [hijo.md](hallazgos/hijo.md).")
     if hay_hijo_celdas:
         L.append("- Lado del hijo dentro de celdas de 2 km (hijos del mismo lugar fracturados antes y después de que sus vecinos produjeran): [hijo_celdas.md](hallazgos/hijo_celdas.md).")
+    if hay_mecanismo:
+        L.append("- Mecanismo por la geometría de las ramas (padres al costado de la rama del hijo contra padres en su punta, con placebo previo a la fractura): [mecanismo.md](hallazgos/mecanismo.md).")
     if hay_gas:
         L.append("- El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).")
     if (out_dir / "hallazgos" / "literatura.md").exists():
@@ -721,6 +763,34 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Potencia del nulo de dosis y respuesta (qué efecto mínimo habría podido verse): [potencia_dosis.md](hallazgos/potencia_dosis.md).")
     if hay_rob_op:
         L.append("- Robustez por operador y área (la brecha del mes 1 y el cierre del mes 6 sacando de a un operador y de a un área): [robustez_operador.md](hallazgos/robustez_operador.md).")
+    if hay_dias:
+        co = dias_perdidos.marts(con, "colorado") is not None
+        L.append("- Días que pierde un padre cuando fracturan a un hijo, por operador (si la diferencia entre operadores se mantiene y si más días "
+                 "compran mejor caudal después" + (", con la prueba confirmatoria en Colorado" if co else "") + "): [dias_perdidos.md](hallazgos/dias_perdidos.md).")
+    if hay_golpes:
+        co = golpes_mismo_mes.marts(con, "colorado") is not None
+        L.append("- Golpes en el mismo mes: si a un padre le cuesta menos recibir varios hijos en un mes que los mismos hijos en meses "
+                 "separados (costo fijo del mes contra costo por hijo, la primera pieza del optimizador de calendario"
+                 + (", con la prueba confirmatoria en Colorado" if co else "") + "): [golpes_mismo_mes.md](hallazgos/golpes_mismo_mes.md).")
+    if hay_golpes_padre:
+        co = golpes_mismo_padre.marts(con, "colorado") is not None
+        L.append("- Golpes en el mismo mes con el padre como su propio control: la misma pregunta, comparando cada padre consigo mismo entre "
+                 "sus meses de golpe de distinta cantidad de hijos (segunda pieza del optimizador de calendario"
+                 + (", con la prueba confirmatoria en Colorado" if co else "") + "): [golpes_mismo_padre.md](hallazgos/golpes_mismo_padre.md).")
+    if hay_calendario:
+        L.append("- Calendario de golpes: matrices de costo de los dos casos (aditivo y costo fijo más hijo), el calendario de fractura que menos "
+                 "pérdida tendría y un backtest ajustado en 2023 que predice 2024 a 2026, con la regla fijada antes de correr (tercera pieza "
+                 "del optimizador de calendario, solo el lado del padre): [calendario_golpes.md](hallazgos/calendario_golpes.md).")
+    if hay_tray:
+        L.append("- Trayectorias de pozo publicadas por la Secretaría de Energía: cuántos hijos y pares cubren y cuánto cambia la distancia al medirla entre ramas en lugar de entre bocas (descriptivo): [trayectorias.md](hallazgos/trayectorias.md).")
+    if hay_alcance_rama:
+        L.append("- Alcance y dilución de la huella del padre medidos entre ramas (distancia lateral a lateral) en lugar de entre bocas, con la regla fijada de antemano: [alcance_rama.md](hallazgos/alcance_rama.md).")
+    if hay_riesgo:
+        L.append("- Riesgo de golpe fuerte: cuán probable es que un padre cercano pierda más de 30 puntos de índice al mes 1 de la fractura de un hijo, con un modelo logístico probado hacia adelante (2023 y 2024) y la regla fijada antes de correr: [riesgo.md](hallazgos/riesgo.md).")
+    if hay_dosis_geo:
+        L.append("- Dosis y respuesta con la geometría de las ramas, detrás de una puerta de potencia (el efecto mínimo detectable de los padres cercanos entre ramas), con la regla fijada de antemano: [dosis_geometria.md](hallazgos/dosis_geometria.md).")
+    if hay_hijo_pad:
+        L.append("- Lado del hijo dentro del pad: hijos del mismo pad fracturados con más o menos petróleo ya producido por pozos cuya rama pasa a menos de 600 m, con la regla fijada antes de correr: [hijo_pad.md](hallazgos/hijo_pad.md).")
     if (out_dir / "hallazgos" / "colorado_datos.md").exists():
         L.append("- Colorado (cuenca DJ), datos y conteos de la replicación en otra cuenca: [colorado_datos.md](hallazgos/colorado_datos.md).")
     if (out_dir / "hallazgos" / "replicacion.md").exists():
@@ -734,7 +804,7 @@ def build_wiki(con, manifest, out_dir) -> dict:
     if hay_eje.get("eje_parada.md"):
         L.append("- Regla de parada del eje de merma (potencia, ventana previa, bloques y exposición): [eje_parada.md](hallazgos/eje_parada.md), con [potencia.md](hallazgos/potencia.md), [eje_controles.md](hallazgos/eje_controles.md) y [eje_exposicion.md](hallazgos/eje_exposicion.md).")
     if (out_dir / "hallazgos" / "mapa_base.md").exists():
-        L.append("- Mapa base del mundo 4D (fuente, licencia y huella del relieve, el agua, los límites, las localidades y las concesiones): [mapa_base.md](hallazgos/mapa_base.md).")
+        L.append("- Mapa base de Vaca Muerta en 3D (fuente, licencia y huella del relieve, el agua, los límites, las localidades y las concesiones): [mapa_base.md](hallazgos/mapa_base.md).")
     L.append(f"- Grafo: [grafo.json](grafo.json) con {len(grafo['nodos'])} nodos y "
              f"{_vigentes(grafo['aristas'])} aristas vigentes.")
     L.append("")

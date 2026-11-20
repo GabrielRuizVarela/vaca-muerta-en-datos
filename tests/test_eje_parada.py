@@ -5,7 +5,7 @@ import duckdb
 from pipeline import eje_parada as ep
 
 
-def _con(potencia=None, previa=None, bloques=None, expo=None):
+def _con(potencia=None, previa=None, bloques=None, expo=None, mecanismo=None):
     con = duckdb.connect()
     if potencia is not None:
         con.execute("create table mart_potencia_resumen(escenario varchar, m80 double, m80_texto varchar, veredicto varchar, "
@@ -24,6 +24,12 @@ def _con(potencia=None, previa=None, bloques=None, expo=None):
     if expo is not None:
         con.execute("create table mart_eje_exposicion_veredicto(condicion varchar, cumple boolean, detalle varchar, dispara_regla_parada boolean)")
         con.execute("insert into mart_eje_exposicion_veredicto values ('(i) a', ?, 'd', ?)", [expo, expo])
+    if mecanismo is not None:
+        con.execute("create table mart_mecanismo_veredicto(veredicto varchar, n_costado integer, n_punta integer, "
+                    "bandas integer, contraste double, ic_bajo double, ic_alto double, placebo double, placebo_ic_bajo double, "
+                    "placebo_ic_alto double, eventos_cercanos integer, controles integer, bloques_5km integer)")
+        con.execute("insert into mart_mecanismo_veredicto values (?, 100, 90, 3, -0.28, -0.36, -0.20, -0.056, -0.14, 0.02, "
+                    "190, 500, 10)", [mecanismo])
     return con
 
 
@@ -66,6 +72,18 @@ def test_incompleta_si_faltan_patas_y_ninguna_dispara():
     con = _con(potencia=(1.5, "1,5 veces", "separable"), previa=False)
     assert ep.se_cumple(con) is False
     assert "incompleta" in ep.pagina_eje_parada(con)
+
+
+def test_la_seccion_del_mecanismo_aparece_solo_si_el_mart_existe():
+    con = _con(potencia=(1.5, "1,5 veces", "separable"), previa=False, bloques=False, expo=True, mecanismo="sostiene")
+    pag = ep.pagina_eje_parada(con)
+    assert "## La geometría de las ramas, probada aparte" in pag
+    assert "[mecanismo.md](mecanismo.md)" in pag
+    assert "Resultado: sostiene." in pag
+    assert "28,0 puntos menos que la punta" in pag
+    assert chr(0x2013) not in pag and chr(0x2014) not in pag
+    sin_mart = _con(potencia=(1.5, "1,5 veces", "separable"), previa=False, bloques=False, expo=True)
+    assert "## La geometría de las ramas, probada aparte" not in ep.pagina_eje_parada(sin_mart)
 
 
 def test_aviso_solo_si_dispara():

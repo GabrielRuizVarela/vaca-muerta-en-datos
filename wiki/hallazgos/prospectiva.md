@@ -4,7 +4,15 @@ Página generada por `pipeline/prospectiva.py`. El resultado principal se midió
 
 ## Estado
 
-- **Pendiente.** El warehouse llega a 2026-09, sin meses posteriores a los congelados (2026-09): no hay nada que puntuar. Se puntúa cuando se publique un mes nuevo.
+Puntuado con los datos hasta 2026-10.
+
+- **P1, brecha del mes 1: sin muestra.** Muestra bajo los mínimos: 0 cercanos, 17 controles, 1 bloques de 5 km.
+- **P2, cierre al mes 6: sin muestra.** Muestra bajo los mínimos: 48 cercanos, 429 controles, 11 bloques de 5 km.
+
+| Predicción | Mes | Cercanos | Controles | Bloques de 5 km | Brecha | IC 95% por bloques de 5 km | Veredicto |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| P1, brecha del mes 1 | 1 | 0 | 17 | 1 | n/d | n/d a n/d | sin muestra |
+| P2, cierre al mes 6 | 6 | 48 | 429 | 11 | 0,5 | -29,2 a 24,0 | sin muestra |
 
 ## Lo congelado
 

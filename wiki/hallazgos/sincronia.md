@@ -6,8 +6,8 @@ Página generada por `pipeline/sincronia.py`. Pregunta si la brecha del mes de l
 
 Veredicto contra la regla fijada: **sostiene**. La caída sigue a la fecha de fractura dentro del mes: la pendiente es negativa, su IC excluye cero y pasa el umbral.
 
-- Pendiente de la brecha del mes 0: -2,1 puntos de índice por cada 0,1 de fracción del mes (IC 95%: -3,1 a -1,0), sobre 2.027 eventos cercanos y 17.760 controles de 742 pads hijo. Entre un inicio el último día y uno el primer día del mes la brecha cambia -20,6 puntos.
-- Pendiente del mes -1, sin días expuestos: -0,7 puntos por cada 0,1 (IC 95%: -1,8 a 0,5), sobre 2.023 eventos cercanos.
+- Pendiente de la brecha del mes 0: -2,1 puntos de índice por cada 0,1 de fracción del mes (IC 95%: -3,3 a -0,8), sobre 2.044 eventos cercanos y 17.792 controles de 745 pads hijo. Entre un inicio el último día y uno el primer día del mes la brecha cambia -20,8 puntos.
+- Pendiente del mes -1, sin días expuestos: -0,7 puntos por cada 0,1 (IC 95%: -1,9 a 0,6), sobre 2.040 eventos cercanos.
 - Se publican los tres grupos y las dos pendientes calculados; no se eligió el mejor.
 
 ## Regla fijada antes de correr
@@ -25,15 +25,15 @@ Los cortes son los terciles de f0 de los eventos cercanos y control juntos, los 
 | Grupo | f0 desde | f0 hasta | Eventos cercanos | Eventos control | Brecha del mes 0 (puntos) | IC 95% (puntos) |
 | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | 1 | 0,032 | 0,387 | 673 | 6.041 | -14,5 | -19,4 a -8,4 |
-| 2 | 0,393 | 0,710 | 736 | 6.122 | -21,4 | -30,0 a -14,0 |
-| 3 | 0,714 | 1,000 | 618 | 5.597 | -32,2 | -38,6 a -24,3 |
+| 2 | 0,393 | 0,710 | 753 | 6.131 | -22,1 | -28,9 a -15,5 |
+| 3 | 0,714 | 1,000 | 618 | 5.620 | -32,4 | -39,0 a -23,7 |
 
 ## Pendiente
 
 | Mes | Eventos cercanos | Eventos control | Pads hijo | Pendiente (puntos por 0,1 de f0) | IC 95% (puntos por 0,1) |
 | ---: | ---: | ---: | ---: | ---: | --- |
-| -1 | 2.023 | 17.712 | 742 | -0,7 | -1,8 a 0,5 |
-| 0 | 2.027 | 17.760 | 742 | -2,1 | -3,1 a -1,0 |
+| -1 | 2.040 | 17.744 | 745 | -0,7 | -1,9 a 0,6 |
+| 0 | 2.044 | 17.792 | 745 | -2,1 | -3,3 a -0,8 |
 
 El mes -1 es el control de calendario: ahí la fractura del hijo todavía no empezó, así que una pendiente negativa en ese mes no puede ser una dosis posterior al inicio.
 La pendiente del mes -1 tiene el mismo signo que la del mes 0 pero su IC incluye cero: no se puede descartar que una parte de la pendiente del mes 0 sea calendario o anticipación, y el IC no alcanza para medir cuánta.

@@ -11,41 +11,41 @@ Prueba agregada después de ver los resultados de pipeline.dosis: la regla se fi
 
 Reproducción de pipeline.dosis en k = 1: reproduce pipeline.dosis (diferencia máxima 0,0000).
 
-### Mes 1 (n = 1.395, pads = 247)
+### Mes 1 (n = 1.402, pads = 248)
 
 | Variable | Coef por desvío | IC 95% | p Holm | Cumple |
 | --- | ---: | --- | ---: | --- |
-| arena por etapa | 0,015 | -0,196 a 0,139 | 1,000 | no |
-| arena por metro de rama | -0,033 | -0,201 a 0,106 | 1,000 | no |
-| presión máxima de tratamiento | 0,053 | -0,210 a 0,178 | 1,000 | no |
-| depleción del padre | 0,096 | -0,104 a 0,292 | 1,000 | no |
+| arena por etapa | 0,021 | -0,186 a 0,149 | 1,000 | no |
+| arena por metro de rama | -0,029 | -0,198 a 0,107 | 1,000 | no |
+| presión máxima de tratamiento | 0,052 | -0,221 a 0,175 | 1,000 | no |
+| depleción del padre | 0,095 | -0,102 a 0,290 | 1,000 | no |
 
-### Mes 2 (n = 1.415, pads = 249)
-
-| Variable | Coef por desvío | IC 95% | p Holm | Cumple |
-| --- | ---: | --- | ---: | --- |
-| arena por etapa | -0,012 | -0,203 a 0,136 | 1,000 | no |
-| arena por metro de rama | 0,061 | -0,139 a 0,259 | 1,000 | no |
-| presión máxima de tratamiento | 0,017 | -0,176 a 0,150 | 1,000 | no |
-| depleción del padre | 0,147 | -0,080 a 0,363 | 1,000 | no |
-
-### Mes 3 (n = 1.410, pads = 247)
+### Mes 2 (n = 1.429, pads = 251)
 
 | Variable | Coef por desvío | IC 95% | p Holm | Cumple |
 | --- | ---: | --- | ---: | --- |
-| arena por etapa | 0,037 | -0,034 a 0,183 | 1,000 | no |
-| arena por metro de rama | 0,043 | -0,071 a 0,140 | 1,000 | no |
-| presión máxima de tratamiento | 0,023 | -0,159 a 0,126 | 1,000 | no |
-| depleción del padre | 0,144 | -0,056 a 0,318 | 1,000 | no |
+| arena por etapa | -0,014 | -0,199 a 0,142 | 1,000 | no |
+| arena por metro de rama | 0,071 | -0,140 a 0,273 | 1,000 | no |
+| presión máxima de tratamiento | 0,016 | -0,172 a 0,149 | 1,000 | no |
+| depleción del padre | 0,133 | -0,099 a 0,362 | 1,000 | no |
 
-### Mes 4 (n = 1.406, pads = 248)
+### Mes 3 (n = 1.426, pads = 249)
 
 | Variable | Coef por desvío | IC 95% | p Holm | Cumple |
 | --- | ---: | --- | ---: | --- |
-| arena por etapa | 0,037 | -0,038 a 0,154 | 1,000 | no |
-| arena por metro de rama | -0,002 | -0,100 a 0,070 | 1,000 | no |
-| presión máxima de tratamiento | 0,003 | -0,111 a 0,173 | 1,000 | no |
-| depleción del padre | 0,222 | 0,044 a 0,360 | 0,256 | no |
+| arena por etapa | 0,038 | -0,032 a 0,193 | 1,000 | no |
+| arena por metro de rama | 0,044 | -0,068 a 0,140 | 1,000 | no |
+| presión máxima de tratamiento | 0,022 | -0,151 a 0,136 | 1,000 | no |
+| depleción del padre | 0,146 | -0,053 a 0,323 | 1,000 | no |
+
+### Mes 4 (n = 1.412, pads = 249)
+
+| Variable | Coef por desvío | IC 95% | p Holm | Cumple |
+| --- | ---: | --- | ---: | --- |
+| arena por etapa | 0,037 | -0,033 a 0,152 | 1,000 | no |
+| arena por metro de rama | -0,002 | -0,100 a 0,074 | 1,000 | no |
+| presión máxima de tratamiento | 0,001 | -0,117 a 0,162 | 1,000 | no |
+| depleción del padre | 0,227 | 0,052 a 0,359 | 0,224 | no |
 
 ## Qué no prueba
 

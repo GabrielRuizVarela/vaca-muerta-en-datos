@@ -6,11 +6,11 @@ Operador shale con ubicación en Vaca Muerta. Página `phoenix-global-resources`
 
 | Indicador | Valor |
 |---|---|
-| Petróleo Vaca Muerta (kbbl/d, 2026-09) | 24,10 |
-| Pozos shale con ubicación | 69 |
+| Petróleo Vaca Muerta (kbbl/d, 2026-10) | 27,06 |
+| Pozos shale con ubicación | 73 |
 | Áreas operadas | 5 |
 | Eventos cercanos de interferencia | 2 |
-| Petróleo diferido (bbl) | 6.373 |
+| Petróleo diferido (bbl) | 6.455 |
 
 ## Areas operadas
 
@@ -24,11 +24,11 @@ Operador shale con ubicación en Vaca Muerta. Página `phoenix-global-resources`
 
 | Pad | Área | Eventos cercanos | Petróleo diferido (bbl) |
 |---|---|---|---|
-| [p159884](../pad/pad-p159884.md) | MATA MORA NORTE | 2 | 6.373 |
+| [p159884](../pad/pad-p159884.md) | MATA MORA NORTE | 2 | 6.455 |
 
 ## Fuentes
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_vm_mensual`, `mart_interferencia_diferida`.
 
-- produccion_no_convencional: sha256 `61cecc31c8dd`, cargado 2026-11-15T03:50:45+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-15T03:51:02+00:00.
+- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.
