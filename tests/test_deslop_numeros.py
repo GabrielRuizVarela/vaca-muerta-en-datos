@@ -22,7 +22,31 @@ El contrato:
    Otra excepción declarada (fix/replay-contador): el contador de `site/replay.html` deja de acumular y muestra el
    diferido del mes, porque un total que solo sube se lee como pérdida. Cambia solo el código del guion (sale el
    redondeo a millones), no el texto visible ni los datos; la huella del archivo de esa página se rehízo solo por eso.
+   Otra excepción declarada (ui/informe-horizonte): `site/informe.html` pasa al sistema Horizonte (pipeline/sistema.py). Salen los números
+   de las tres líneas de Google Fonts (pesos y anchos de IBM Plex y Archivo) y se rehizo solo la huella del archivo de esa
+   página; el texto visible y los datos no cambian (se comprobó que, sin los bloques `<style>`, las cifras del archivo son las mismas
+   salvo esas líneas).
+   Otra excepción declarada (ui/replay-horizonte): `site/replay.html` y `site/mundo.html` pasan al sistema Horizonte
+   (pipeline/sistema.py), de noche, y en cualquier configuración del sistema. Cambia solo el chrome (los bloques
+   `<style>`, con los tokens y las dos letras del sistema); el texto visible y los datos no cambian, y la huella del
+   archivo de esas dos páginas se rehízo solo por eso.
+   En la misma rama, los `summary` de la leyenda y de las fuentes de `site/mundo.html` dejan el triángulo y el peso de
+   la hoja base (tienen su propio ícono): la huella de mundo se rehízo otra vez solo por ese CSS.
+   Otra excepción declarada (ui/mundo-marco-horizonte): el marco de `site/mundo.html` (placas, botones, planilla y
+   barra de tiempo) pasa a los tokens del sistema Horizonte, y una frase del titular corrige qué son los controles de
+   la comparación. Cambia solo el chrome (el bloque `<style>`) y esa frase; el texto visible conserva sus cifras, los
+   datos no cambian, y la huella del archivo de esa página se rehízo solo por eso.
    Página nueva (espera): `site/espera.html` entró a la foto con sus cifras; las nuevas son los supuestos de la regla de plata (pipeline/espera.py).
+   Otra excepción declarada (espera-claims): el control de `site/espera.html` se describe por la distancia ("a 2 a 5 km de
+   un pozo nuevo") y no por la edad (revisión independiente, F1); entran el 2 y el 5 de esa distancia, que ya están en el
+   README. La clave de esa página se rehízo solo por eso.
+   Página del globo sobre el sistema v2 (`ui/globo-horizonte`): `site/globo.html` recibe la hoja de estilo del sistema, así que cambian
+   los números que están dentro del archivo (tamaños de letra y colores de la base) y su huella se rehízo solo por eso. El texto visible
+   y sus cifras no cambian.
+   Otra excepción declarada (copy/auditoria-honestidad): `site/informe.html` suma la cota superior y la brecha previa a la fractura
+   bajo el -23,0 de la ficha ("19 puntos menos" sin ella, y el mes 1 de la nota); `site/globo.html` suma que la brecha de Colorado al
+   mes 6 no se cierra del todo (-5,9, que ya está en wiki/hallazgos/replicacion.md). Entran un "1" y dos "19" en informe, y un "-5,9" y un "6" en globo; ninguna es una cifra
+   nueva en el repositorio. La clave de cada página se rehízo solo por eso.
 
 Para rehacer la foto (solo si cambia la base): `python tests/test_deslop_numeros.py --congelar <ref-git>`.
 """

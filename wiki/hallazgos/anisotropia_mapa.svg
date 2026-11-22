@@ -1,17 +1,60 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 760" width="760" height="760" role="img" aria-labelledby="t d">
 <title id="t">Mapa de ejes de interferencia por área contra el SHmax publicado</title>
 <desc id="d">Por cada área con pozos ubicados, el eje de máxima merma estimado de la interferencia (grados desde el norte) frente al SHmax publicado de 67,5 grados. Trazo continuo: eje definido; trazo gris punteado: eje no definido. El cono azul es el intervalo de confianza de 95% y solo se dibuja si el eje está definido. El eje no es una medición de esfuerzos.</desc>
-<style>
-:root { --fondo: #ffffff; --texto: #1f2328; --suave: #6e7781; --linea: #d0d7de; --eje: #1f2328;
-        --ref: #bc4c00; --cono: #0969da; }
-@media (prefers-color-scheme: dark) {
-  :root { --fondo: #0d1117; --texto: #e6edf3; --suave: #8b949e; --linea: #30363d; --eje: #e6edf3;
-          --ref: #f0883e; --cono: #58a6ff; }
+<style>:root {
+  color-scheme: light;
+  --cielo: #C9D7DC;
+  --estepa: #A39A7A;
+  --lutita: #2A2623;
+  --orilla: #2A2623;
+  --tinta: #1B2A31;
+  --hueso: #EDE6D6;
+  --jarilla: #3E4A4F;
+  --s1: #2A78D6;
+  --s2: #0E6F6B;
+  --s3: #C2592F;
+  --s4: #B88A00;
+  --s5: #C0508A;
 }
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --cielo: #18222B;
+    --estepa: #3A362B;
+    --lutita: #0F0E0D;
+    --orilla: #9FB0B6;
+    --tinta: #E6DFCF;
+    --hueso: #EDE6D6;
+    --jarilla: #9FB0B6;
+    --s1: #3987E5;
+    --s2: #5CC9BC;
+    --s3: #E0825E;
+    --s4: #D9B23A;
+    --s5: #DE7FB0;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cielo: #18222B;
+  --estepa: #3A362B;
+  --lutita: #0F0E0D;
+  --orilla: #9FB0B6;
+  --tinta: #E6DFCF;
+  --hueso: #EDE6D6;
+  --jarilla: #9FB0B6;
+  --s1: #3987E5;
+  --s2: #5CC9BC;
+  --s3: #E0825E;
+  --s4: #D9B23A;
+  --s5: #DE7FB0;
+}
+
+:root { --fondo: var(--cielo); --texto: var(--tinta); --suave: var(--jarilla); --linea: var(--jarilla);
+        --eje: var(--tinta); --ref: var(--s3); --cono: var(--s1); }
 .fondo { fill: var(--fondo); }
 .marco { fill: none; stroke: var(--linea); stroke-width: 1; }
-text { fill: var(--texto); font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 11px; }
-.titulo { font-size: 15px; font-weight: bold; }
+text { fill: var(--texto); font-family: "Archivo", "Arial Narrow", system-ui, sans-serif; font-size: 11px; }
+.titulo { font-size: 15px; font-weight: 600; }
 .nota { fill: var(--suave); }
 .eje-def { stroke: var(--eje); stroke-width: 3; fill: none; }
 .eje-ndef { stroke: var(--suave); stroke-width: 2; stroke-dasharray: 6 4; fill: none; }

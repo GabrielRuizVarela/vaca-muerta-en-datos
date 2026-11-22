@@ -6,7 +6,8 @@ Cada escritor es una funcion pura de datos simples (listas de tuplas o diccionar
 determinista (formato numerico fijo, orden fijo, sin fechas ni identificadores al azar), sin fuentes externas y con
 `<title>` y `<desc>`. Los datos salen de los marts ya construidos; esta pagina no calcula nada nuevo.
 La cuarta (`inyeccion_svg`) pone lo recuperado contra lo plantado en la validacion por inyeccion.
-Texto en espanol, sin rayas largas. Paleta de Okabe e Ito (segura para daltonismo) y trazos distintos por serie.
+Texto en espanol, sin rayas largas. Paleta del sistema visual v2 ("Horizonte") por nombre de token, con trazos distintos
+por serie: el color de cada serie sale de `var(--s1)` a `var(--s5)`, nunca de un hex fijo.
 """
 from __future__ import annotations
 
@@ -17,24 +18,28 @@ from xml.sax.saxutils import escape
 
 import duckdb
 
+from pipeline import sistema
+
 ROOT = Path(__file__).resolve().parent.parent
 WAREHOUSE = ROOT / "data" / "warehouse.duckdb"
 SALIDA = ROOT / "docs" / "img"
 ARCHIVOS = ("caso_event_study.svg", "caso_distancia.svg", "caso_anio.svg", "caso_inyeccion.svg")
 
 ANCHO = 700
-AZUL, NARANJA, NEGRO, GRIS, CLARO = "#0072B2", "#D55E00", "#222222", "#6b6b6b", "#e4e4e4"
+# Los colores salen del sistema visual v2 ("Horizonte") por nombre, no por valor: la misma figura sirve para el
+# papel claro y para el oscuro. En el SVG van siempre en un `style=`, porque un atributo de presentacion no toma var().
+AZUL, NARANJA, NEGRO = "var(--s1)", "var(--s3)", "var(--tinta)"
 
-ESTILO = f"""
-text {{ fill: {NEGRO}; font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 11px; }}
-.titulo {{ font-size: 15px; font-weight: bold; }}
-.sub {{ fill: {GRIS}; }}
-.eje {{ stroke: {NEGRO}; stroke-width: 1; fill: none; }}
-.rejilla {{ stroke: {CLARO}; stroke-width: 1; }}
-.cero {{ stroke: {NEGRO}; stroke-width: 1.2; }}
-.marca {{ stroke: {GRIS}; stroke-width: 1; stroke-dasharray: 4 3; }}
-.banda {{ fill: #f0e442; fill-opacity: 0.25; }}
-.pie {{ fill: {GRIS}; font-size: 10px; }}
+ESTILO = sistema.css_tokens() + f"""
+text {{ fill: var(--tinta); font-family: {sistema.ARCHIVO}; font-size: 11px; }}
+.titulo {{ font-size: 15px; font-weight: 600; }}
+.sub {{ fill: var(--jarilla); }}
+.eje {{ stroke: var(--tinta); stroke-width: 1; fill: none; }}
+.rejilla {{ stroke: var(--tinta); stroke-width: 1; stroke-opacity: 0.15; }}
+.cero {{ stroke: var(--tinta); stroke-width: 1.2; }}
+.marca {{ stroke: var(--jarilla); stroke-width: 1; stroke-dasharray: 4 3; }}
+.banda {{ fill: var(--s4); fill-opacity: 0.25; }}
+.pie {{ fill: var(--jarilla); font-size: 10px; }}
 """.strip()
 
 
@@ -82,7 +87,7 @@ def _abrir(alto: int, titulo: str, desc: str, cabecera: str) -> list[str]:
             f'<title id="t">{escape(titulo)}</title>',
             f'<desc id="d">{escape(desc)}</desc>',
             f"<style>{ESTILO}</style>",
-            f'<rect x="0" y="0" width="{ANCHO}" height="{alto}" fill="#ffffff"/>',
+            f'<rect x="0" y="0" width="{ANCHO}" height="{alto}" style="fill:var(--cielo)"/>',
             f'<text class="titulo" x="20" y="26">{escape(titulo)}</text>',
             f'<text class="sub" x="20" y="43">{escape(cabecera)}</text>']
 
@@ -123,16 +128,16 @@ def _panel_lineas(out: list[str], x0: float, y0: float, w: float, h: float, ks: 
         pts = sorted(s["puntos"])
         d = " ".join(f'{"M" if i == 0 else "L"}{_n(px(k))},{_n(py(v))}' for i, (k, v) in enumerate(pts))
         dash = f' stroke-dasharray="{s["trazo"]}"' if s["trazo"] else ""
-        out.append(f'<path d="{d}" fill="none" stroke="{s["color"]}" stroke-width="2"{dash}/>')
+        out.append(f'<path d="{d}" style="fill:none;stroke:{s["color"]}" stroke-width="2"{dash}/>')
         for k, v in pts:
-            out.append(f'<circle cx="{_n(px(k))}" cy="{_n(py(v))}" r="2.5" fill="{s["color"]}"/>')
+            out.append(f'<circle cx="{_n(px(k))}" cy="{_n(py(v))}" r="2.5" style="fill:{s["color"]}"/>')
         if marca_k is not None:
             for k, v in pts:
                 if k == marca_k:
-                    out.append(f'<circle cx="{_n(px(k))}" cy="{_n(py(v))}" r="6" fill="none" stroke="{s["color"]}" stroke-width="1.5"/>')
+                    out.append(f'<circle cx="{_n(px(k))}" cy="{_n(py(v))}" r="6" style="fill:none;stroke:{s["color"]}" stroke-width="1.5"/>')
                     ancla, dx = ("start", 10) if marca_k < (kmin + kmax) / 2 else ("end", -10)
                     out.append(f'<text x="{_n(px(k) + dx)}" y="{_n(py(v) + 4 + s.get("dy", 0))}" text-anchor="{ancla}" '
-                               f'style="fill:{s["color"]};font-weight:bold">{_c(v)}</text>')
+                               f'style="fill:var(--tinta);font-weight:bold">{_c(v)}</text>')
     out.append(f'<text x="{_n(x0 - 38)}" y="{_n(y0 + h / 2)}" text-anchor="middle" '
                f'transform="rotate(-90 {_n(x0 - 38)} {_n(y0 + h / 2)})">{escape(ytitulo)}</text>')
     if xtitulo:
@@ -143,7 +148,7 @@ def _leyenda(out: list[str], x: float, y: float, series: list[dict]) -> None:
     for i, s in enumerate(series):
         yy = y + 16 * i
         dash = f' stroke-dasharray="{s["trazo"]}"' if s["trazo"] else ""
-        out.append(f'<line x1="{_n(x)}" y1="{_n(yy)}" x2="{_n(x + 28)}" y2="{_n(yy)}" stroke="{s["color"]}" stroke-width="2"{dash}/>')
+        out.append(f'<line x1="{_n(x)}" y1="{_n(yy)}" x2="{_n(x + 28)}" y2="{_n(yy)}" style="stroke:{s["color"]}" stroke-width="2"{dash}/>')
         out.append(f'<text x="{_n(x + 34)}" y="{_n(yy + 4)}">{escape(s["nombre"])}</text>')
 
 
@@ -157,12 +162,12 @@ def evento_svg(original: list[tuple[int, float]], limpia: list[tuple[int, float]
     """
     ks = sorted({k for k, _ in original} | {k for k, _ in limpia})
     k1 = dict(original).get(1)
-    desc = ("Brecha del petróleo entre los padres a menos de 1 km y los controles de la misma edad, por mes desde la fractura "
+    desc = ("Brecha del petróleo entre los padres a menos de 1 km y los pozos de control a 2 a 5 km de un pozo hijo, por mes desde la fractura "
             "del pozo hijo, en puntos del índice. La brecha cae en el mes 1" + (f" a {_c(k1)} puntos" if k1 is not None else "")
             + ", ya era negativa antes de la fractura y casi se cierra a los 6 meses. Medida, no causa.")
     alto = 660 if descomp else 400
     out = _abrir(alto, "Brecha de petróleo por mes desde la fractura del hijo", desc,
-                 "Padres a menos de 1 km menos controles de la misma edad a 2 a 5 km, en puntos del índice de caudal")
+                 "Padres a menos de 1 km menos pozos de control a 2 a 5 km de un pozo hijo, en puntos del índice de caudal")
     s1 = [{"nombre": "Base de los meses -3 a -1 (resultado principal)", "color": AZUL, "trazo": "", "puntos": original},
           {"nombre": "Base de los meses -6 a -4 (muestra la pretendencia)", "color": NARANJA, "trazo": "6 4", "puntos": limpia}]
     xtit = "Meses desde la fractura del hijo (k = 0 es el mes de la fractura)"
@@ -212,10 +217,10 @@ def distancia_svg(bandas: list[dict]) -> str:
         yc = y0 + fila * i + fila / 2
         color = NARANJA if b.get("ref") else AZUL
         x_a, x_b = sorted((px(0), px(b["brecha"])))
-        out.append(f'<rect x="{_n(x_a)}" y="{_n(yc - 8)}" width="{_n(max(x_b - x_a, 0.5))}" height="16" fill="{color}" fill-opacity="0.85"/>')
-        out.append(f'<line x1="{_n(px(b["ic_bajo"]))}" y1="{_n(yc)}" x2="{_n(px(b["ic_alto"]))}" y2="{_n(yc)}" stroke="{NEGRO}" stroke-width="1.5"/>')
+        out.append(f'<rect x="{_n(x_a)}" y="{_n(yc - 8)}" width="{_n(max(x_b - x_a, 0.5))}" height="16" style="fill:{color}" fill-opacity="0.85"/>')
+        out.append(f'<line x1="{_n(px(b["ic_bajo"]))}" y1="{_n(yc)}" x2="{_n(px(b["ic_alto"]))}" y2="{_n(yc)}" style="stroke:var(--tinta)" stroke-width="1.5"/>')
         for v in (b["ic_bajo"], b["ic_alto"]):
-            out.append(f'<line x1="{_n(px(v))}" y1="{_n(yc - 4)}" x2="{_n(px(v))}" y2="{_n(yc + 4)}" stroke="{NEGRO}" stroke-width="1.5"/>')
+            out.append(f'<line x1="{_n(px(v))}" y1="{_n(yc - 4)}" x2="{_n(px(v))}" y2="{_n(yc + 4)}" style="stroke:var(--tinta)" stroke-width="1.5"/>')
         out.append(f'<text x="{_n(x0 - 12)}" y="{_n(yc + 4)}" text-anchor="end">{escape(b["etiqueta"])}</text>')
         out.append(f'<text class="pie" x="20" y="{_n(yc + 4)}">n = {_miles(b["n"])}</text>')
         out.append(f'<text x="{_n(px(b["ic_alto"]) + 6)}" y="{_n(yc + 4)}" style="font-weight:bold">{_c(b["brecha"])}</text>')
@@ -237,11 +242,11 @@ def anio_svg(anios: list[tuple[int, int, float]]) -> str:
 
     ultimo = max(a for a, _, _ in anios)
     v_ult = next(v for a, _, v in anios if a == ultimo)
-    desc = ("Brecha del petróleo al mes 1 entre padres a menos de 1 km y controles de la misma edad, por año de la fractura del hijo, "
+    desc = ("Brecha del petróleo al mes 1 entre padres a menos de 1 km y pozos de control a 2 a 5 km de un pozo hijo, por año de la fractura del hijo, "
             f"con el número de eventos de cada año. En {ultimo}, año en curso, marca {_c(abs(v_ult), 0)} puntos menos, con fracturas "
             "todavía sin cargar. Medida, no causa.")
     out = _abrir(alto, "Brecha del mes 1 por año de la fractura", desc,
-                 "Padres a menos de 1 km menos controles de la misma edad, en puntos del índice de caudal")
+                 "Padres a menos de 1 km menos pozos de control a 2 a 5 km de un pozo hijo, en puntos del índice de caudal")
     for t in _ticks(lo, hi, paso):
         out.append(f'<line class="rejilla" x1="{_n(x0)}" y1="{_n(py(t))}" x2="{_n(x0 + w)}" y2="{_n(py(t))}"/>')
         out.append(f'<text x="{_n(x0 - 6)}" y="{_n(py(t) + 4)}" text-anchor="end">{_c(t, 0)}</text>')
@@ -251,7 +256,7 @@ def anio_svg(anios: list[tuple[int, int, float]]) -> str:
         cx = x0 + pitch * (i + 0.5)
         y_a, y_b = sorted((py(0), py(v)))
         op = "0.35" if n < 30 else "0.9"
-        out.append(f'<rect x="{_n(cx - pitch * 0.36)}" y="{_n(y_a)}" width="{_n(pitch * 0.72)}" height="{_n(max(y_b - y_a, 0.5))}" fill="{AZUL}" fill-opacity="{op}"/>')
+        out.append(f'<rect x="{_n(cx - pitch * 0.36)}" y="{_n(y_a)}" width="{_n(pitch * 0.72)}" height="{_n(max(y_b - y_a, 0.5))}" style="fill:var(--s1)" fill-opacity="{op}"/>')
         ty = y_b + 12 if v < 0 else y_a - 4
         out.append(f'<text x="{_n(cx)}" y="{_n(ty)}" text-anchor="middle" style="font-size:10px">{_c(v, 0)}</text>')
         out.append(f'<text x="{_n(cx)}" y="{_n(y0 + h + 18)}" text-anchor="middle">{a}</text>')
@@ -273,7 +278,7 @@ def _panel_recuperado(out: list[str], x0: float, y0: float, lado: float, puntos:
         f = (v - lo) / (hi - lo)
         return y0 + lado - f * lado if y else x0 + f * lado
 
-    out.append(f'<text style="font-weight:bold" x="{_n(x0)}" y="{_n(y0 - 10)}">{escape(titulo)}</text>')
+    out.append(f'<text style="font-weight:600" x="{_n(x0)}" y="{_n(y0 - 10)}">{escape(titulo)}</text>')
     for t in _ticks(lo, hi, paso):
         out.append(f'<line class="rejilla" x1="{_n(x0)}" y1="{_n(pos(t, True))}" x2="{_n(x0 + lado)}" y2="{_n(pos(t, True))}"/>')
         out.append(f'<line class="rejilla" x1="{_n(pos(t))}" y1="{_n(y0)}" x2="{_n(pos(t))}" y2="{_n(y0 + lado)}"/>')
@@ -284,14 +289,14 @@ def _panel_recuperado(out: list[str], x0: float, y0: float, lado: float, puntos:
     for p in puntos:
         x = pos(p["plantado"])
         out.append(f'<line x1="{_n(x)}" y1="{_n(pos(p["p05"], True))}" x2="{_n(x)}" y2="{_n(pos(p["p95"], True))}" '
-                   f'stroke="{p["color"]}" stroke-width="2"/>')
-        out.append(f'<circle cx="{_n(x)}" cy="{_n(pos(p["media"], True))}" r="4" fill="{p["color"]}"/>')
+                   f'style="stroke:{p["color"]}" stroke-width="2"/>')
+        out.append(f'<circle cx="{_n(x)}" cy="{_n(pos(p["media"], True))}" r="4" style="fill:{p["color"]}"/>')
     out.append(f'<text x="{_n(x0 + lado / 2)}" y="{_n(y0 + lado + 32)}" text-anchor="middle">Plantado ({escape(unidad)})</text>')
     out.append(f'<text x="{_n(x0 - 40)}" y="{_n(y0 + lado / 2)}" text-anchor="middle" '
                f'transform="rotate(-90 {_n(x0 - 40)} {_n(y0 + lado / 2)})">Recuperado ({escape(unidad)})</text>')
 
 
-COLOR_ESCENARIO = {"S1": AZUL, "S2": NARANJA, "S3": AZUL, "S4": "#009E73", "S5": NEGRO}
+COLOR_ESCENARIO = {"S1": AZUL, "S2": NARANJA, "S3": AZUL, "S4": "var(--s2)", "S5": NEGRO}
 ETIQUETA_ESCENARIO = {"S1": "S1 cierre", "S2": "S2 caída de caudal", "S3": "S3 caída dentro del mes", "S4": "S4 brecha previa",
                       "S5": "S5 nulo"}
 
@@ -311,7 +316,7 @@ def inyeccion_svg(celdas: list[dict], mundos: int) -> str:
     _panel_recuperado(out, 410, 90, 250, pb, "Pendiente del mes 0", "puntos por 0,1 de f0")
     x = 30.0
     for e in [e for e in ("S1", "S2", "S3", "S4", "S5") if any(c["escenario"] == e for c in celdas)]:
-        out.append(f'<circle cx="{_n(x)}" cy="414" r="4" fill="{COLOR_ESCENARIO[e]}"/>')
+        out.append(f'<circle cx="{_n(x)}" cy="414" r="4" style="fill:{COLOR_ESCENARIO[e]}"/>')
         out.append(f'<text x="{_n(x + 10)}" y="418">{escape(ETIQUETA_ESCENARIO[e])}</text>')
         x += 32 + 6.4 * len(ETIQUETA_ESCENARIO[e])
     out.append('<text class="pie" x="20" y="446">Punto: media de los mundos; barra: del 5% al 95%; recta punteada: recuperado igual a plantado.</text>')

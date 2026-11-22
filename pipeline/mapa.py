@@ -9,6 +9,8 @@ from __future__ import annotations
 import math
 from xml.sax.saxutils import escape, quoteattr
 
+from pipeline import sistema
+
 SHMAX_PUBLICADO = 67.5  # grados desde el norte, en sentido horario (RAGA 2024)
 KM_POR_GRADO = 111.2
 ANCHO, ALTO = 760, 760
@@ -32,29 +34,25 @@ order by upper(trim(a.area))
 """
 SQL_CUENCA = "select n, eje_grados, ic_bajo, ic_alto, p_perm, usa_en_costo from mart_anisotropia_area where area = 'Cuenca'"
 
-ESTILO = """
-:root { --fondo: #ffffff; --texto: #1f2328; --suave: #6e7781; --linea: #d0d7de; --eje: #1f2328;
-        --ref: #bc4c00; --cono: #0969da; }
-@media (prefers-color-scheme: dark) {
-  :root { --fondo: #0d1117; --texto: #e6edf3; --suave: #8b949e; --linea: #30363d; --eje: #e6edf3;
-          --ref: #f0883e; --cono: #58a6ff; }
-}
-.fondo { fill: var(--fondo); }
-.marco { fill: none; stroke: var(--linea); stroke-width: 1; }
-text { fill: var(--texto); font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 11px; }
-.titulo { font-size: 15px; font-weight: bold; }
-.nota { fill: var(--suave); }
-.eje-def { stroke: var(--eje); stroke-width: 3; fill: none; }
-.eje-ndef { stroke: var(--suave); stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
-.centro-def { fill: var(--eje); }
-.centro-ndef { fill: var(--fondo); stroke: var(--suave); stroke-width: 1.5; }
-.ref { stroke: var(--ref); stroke-width: 1.2; fill: none; }
-.cono { fill: var(--cono); fill-opacity: 0.22; stroke: var(--cono); stroke-opacity: 0.6; stroke-width: 0.8; }
-.punta-def { fill: var(--eje); }
-.punta-ndef { fill: var(--suave); }
-.etiqueta { font-size: 11px; }
-.norte { stroke: var(--texto); stroke-width: 1.5; fill: var(--texto); }
-.escala { stroke: var(--texto); stroke-width: 2; fill: none; }
+ESTILO = sistema.css_tokens() + f"""
+:root {{ --fondo: var(--cielo); --texto: var(--tinta); --suave: var(--jarilla); --linea: var(--jarilla);
+        --eje: var(--tinta); --ref: var(--s3); --cono: var(--s1); }}
+.fondo {{ fill: var(--fondo); }}
+.marco {{ fill: none; stroke: var(--linea); stroke-width: 1; }}
+text {{ fill: var(--texto); font-family: {sistema.ARCHIVO}; font-size: 11px; }}
+.titulo {{ font-size: 15px; font-weight: 600; }}
+.nota {{ fill: var(--suave); }}
+.eje-def {{ stroke: var(--eje); stroke-width: 3; fill: none; }}
+.eje-ndef {{ stroke: var(--suave); stroke-width: 2; stroke-dasharray: 6 4; fill: none; }}
+.centro-def {{ fill: var(--eje); }}
+.centro-ndef {{ fill: var(--fondo); stroke: var(--suave); stroke-width: 1.5; }}
+.ref {{ stroke: var(--ref); stroke-width: 1.2; fill: none; }}
+.cono {{ fill: var(--cono); fill-opacity: 0.22; stroke: var(--cono); stroke-opacity: 0.6; stroke-width: 0.8; }}
+.punta-def {{ fill: var(--eje); }}
+.punta-ndef {{ fill: var(--suave); }}
+.etiqueta {{ font-size: 11px; }}
+.norte {{ stroke: var(--texto); stroke-width: 1.5; fill: var(--texto); }}
+.escala {{ stroke: var(--texto); stroke-width: 2; fill: none; }}
 """
 
 

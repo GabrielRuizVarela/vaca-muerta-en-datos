@@ -15,6 +15,7 @@ import duckdb
 
 from pipeline.ingest import DATA, ROOT
 from pipeline.robustez import SHMAX
+from pipeline.sistema import sistema_css
 
 TEMPLATE = Path(__file__).parent / "report_template.html"
 CHARTJS = Path(__file__).parent / "vendor" / "chart.umd.min.js"
@@ -246,7 +247,7 @@ def hallazgo(data: dict) -> str:
     brecha = f"{pts(bruta, -1)} puntos menos" if neta is None else f"entre {pts(neta, -1)} y {pts(bruta, -1)} puntos menos"
     return ('<div class="hallazgo" id="hallazgo">'
             '<p class="frase">Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden '
-            f'{brecha} que pozos de control de la misma edad a 2 a 5 km ({fmt(r["eventos"])} eventos).</p>'
+            f'{brecha} que pozos de control a 2 a 5 km de un pozo hijo ({fmt(r["eventos"])} eventos).</p>'
             '<p class="apoyo">A los 6 meses la brecha casi se cierra: es producción diferida, no perdida.</p></div>')
 
 
@@ -361,9 +362,13 @@ def bloque_eje(data: dict) -> str:
                    "el eje no está definido o no hay evidencia")
     else:
         firmeza = "sin cortes de robustez para juzgar su firmeza"
-    linea = (f"Eje de mayor merma en la cuenca: <strong>{fmt(eje['eje_grados'])} grados</strong> "
-             f"(IC 95% de {fmt(eje['ic_bajo'])} a {fmt(eje['ic_alto'])}, p de permutación {fmt(eje['p_perm'], 3)}); "
-             f"{sentido}, {firmeza}.")
+    if data.get("eje_parada"):
+        linea = (f"Eje de mayor merma: retirado (regla de parada). En la muestra da <strong>{fmt(eje['eje_grados'])} grados</strong> "
+                 f"(IC 95% de {fmt(eje['ic_bajo'])} a {fmt(eje['ic_alto'])}), {firmeza}.")
+    else:
+        linea = (f"Eje de mayor merma en la cuenca: <strong>{fmt(eje['eje_grados'])} grados</strong> "
+                 f"(IC 95% de {fmt(eje['ic_bajo'])} a {fmt(eje['ic_alto'])}, p de permutación {fmt(eje['p_perm'], 3)}); "
+                 f"{sentido}, {firmeza}.")
     if data.get("eje_parada"):
         linea += (" La regla de parada fijada antes de correr se cumplió: la dirección no se separa del SHmax publicado ni de la "
                   "forma en que se disponen los pads (la geometría de las ramas se probó con otra prueba, costado contra punta, en mecanismo.md), y no se presenta como hallazgo sobre esfuerzos ni sobre la fractura.")
@@ -378,6 +383,38 @@ def bloque_eje(data: dict) -> str:
             f'punto: estimación; línea punteada: SHmax publicado ({fmt(eje["shmax"], 1) if eje.get("shmax") is not None else "s/d"} grados). n = {fmt(eje["n"])} eventos.</p>{costo}</div>')
 
 
+PERFIL_ALTO = 24  # alto del escenario de las láminas con eje de tiempo, en puntos de brecha
+
+
+def perfil_brecha(data: dict) -> tuple[str, str]:
+    """La banda de la brecha con su borde superior dibujado mes a mes (meses -3 a 6, de `interferencia.curva`).
+
+    Devuelve (área, línea) como atributos `d` de un `<path>` en el viewBox `0 0 100 PERFIL_ALTO`: x va de 0 (mes -3) a
+    100 (mes 6), y del suelo (y = PERFIL_ALTO) sube un punto de brecha por unidad. Los meses con el padre por encima del
+    control quedan en el suelo (horizonte cerrado). Las cifras van solo en atributos: el texto visible no cambia.
+
+    Los meses -3 a -1 salen de `interferencia.pretrend` (mart_placebo_pretrend), los mismos que cita la lámina ("ya había
+    una brecha de -2,5, -3,6 y -6,3 puntos"): la banda no puede mostrar un horizonte cerrado antes de la fractura cuando
+    el texto dice que la brecha ya estaba. Sin ese mart, la curva.
+    """
+    curva = data["interferencia"]["curva"]
+    por = {(r["banda"], r["k"]): r["indice"] for r in curva}
+    previa = {r["k"]: r["brecha"] for r in data["interferencia"].get("pretrend") or [] if r["k"] < 0}
+    ks = sorted({r["k"] for r in curva if -3 <= r["k"] <= 6})
+    if not ks:
+        return "M0 24 H100", "M0 24 H100"
+    puntos = []
+    for k in ks:
+        cerca, ctrl = por.get(("cercano", k)), por.get(("control", k))
+        if k in previa:
+            alto = max(0.0, -previa[k] * 100)
+        else:
+            alto = max(0.0, (ctrl - cerca) * 100) if cerca is not None and ctrl is not None else 0.0
+        puntos.append((round((k - ks[0]) / max(1, ks[-1] - ks[0]) * 100, 2), round(PERFIL_ALTO - min(alto, PERFIL_ALTO), 2)))
+    borde = " ".join(f"L{x} {y}" for x, y in puntos)
+    return f"M0 {PERFIL_ALTO} {borde} L100 {PERFIL_ALTO} Z", "M" + borde[1:]
+
+
 BANNER_TITULO = "MUESTRA: no son las cifras de la cuenca"
 BANNER_HTML = ('<aside class="muestra" role="note" style="border:3px solid #b45309;background:#fef3c7;color:#451a03;'
                'padding:14px 18px;margin:0 0 20px;border-radius:6px;font-size:16px">'
@@ -389,7 +426,10 @@ BANNER_HTML = ('<aside class="muestra" role="note" style="border:3px solid #b453
 def render(data: dict, out: Path, banner: bool = False) -> None:
     payload = json.dumps(data, ensure_ascii=False, default=str).replace("</", "<\\/")
     out.parent.mkdir(parents=True, exist_ok=True)
+    area, linea = perfil_brecha(data)
     html = (TEMPLATE.read_text()
+            .replace("__PERFIL_AREA__", area)
+            .replace("__PERFIL_LINEA__", linea)
             .replace("<!--__TITULARES__-->", titulares(data))
             .replace("<!--__HALLAZGO__-->", hallazgo(data))
             .replace("<!--__NO_SE_MIDE__-->", NO_SE_MIDE)
@@ -399,6 +439,7 @@ def render(data: dict, out: Path, banner: bool = False) -> None:
             .replace("<!--__KPIS_INTERF__-->", kpis_interferencia(data))
             .replace("<!--__FINDING_INTERF__-->", lectura_interferencia(data))
             .replace("<!--__FINDING_DISENO__-->", lectura_diseno(data))
+            .replace("/*__SISTEMA__*/", sistema_css())
             .replace("/*__CHARTJS__*/", CHARTJS.read_text())
             .replace("/*__DATA__*/null", payload))
     if banner:

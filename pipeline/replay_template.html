@@ -1,20 +1,22 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vaca Muerta, mes a mes</title>
 <meta name="description" content="Repetición temporal de Vaca Muerta: cada pozo shale desde 2011, sus fracturas, los golpes de agua en pozos vecinos y el avance de las operadoras.">
 <style>
-/* Los colores y las letras son los de "Vaca Muerta en 3D" (pipeline/mundo_template.html). Una prueba compara este
-   bloque con el de esa página: si cambia uno, cambia el otro. */
+/*__SISTEMA__*/
+/* El chrome de la página (fondo, tinta, líneas y letras) lo trae el sistema; lo que queda aquí es la familia: los colores
+   de los datos y los pigmentos de las operadoras, que el replay y el mundo comparten. Una prueba compara este bloque con
+   el de esa página: si cambia uno, cambia el otro. */
 :root {
   color-scheme: dark;
-  --fondo: #06141b; --panel: rgba(8, 26, 35, .86); --linea: #1d3a48; --tinta: #ece5d3; --tinta-2: #b4bfc0; --tinta-3: #8497a0;
+  --fondo: var(--cielo); --panel: color-mix(in srgb, var(--cielo) 88%, transparent); --linea: color-mix(in srgb, var(--tinta) 16%, var(--cielo)); --tinta-2: color-mix(in srgb, var(--tinta) 55%, var(--jarilla)); --tinta-3: var(--jarilla);
   --dato: #ece5d3; --medido: #5fd3c4; --supuesto: #c796f2; --petroleo: #f4b860; --mal: #f08a6c;
   --azul: #4472d8; --rosa: #cf5a86; --oliva: #8f9a2e; --ladrillo: #b04a2a; --celeste: #3a9ec2; --ciruela: #8c4c96; --gris: #6f8a99; --bien: #5fd3c4;
-  --ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --relato: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --ui: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --relato: "Faustina", Georgia, serif;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -23,11 +25,10 @@ a { color: inherit; }
 button, select { font: inherit; color: inherit; }
 button { cursor: pointer; background: transparent; border: 1px solid var(--linea); border-radius: 999px; padding: 5px 13px; }
 button:hover { border-color: var(--tinta-3); }
-:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
 [hidden] { display: none !important; }
 
 /* Las tres clases de cosa se distinguen también por forma: lleno, con aro, a rayas. */
-.marca { display: inline-block; font: 600 13px/1 var(--ui); padding: 3px 7px 4px; border-radius: 10px; margin-right: 6px; vertical-align: 1px; text-transform: lowercase; }
+.marca { width: auto; height: auto; border: 0; transform: none; background: none; display: inline-block; font: 600 13px/1 var(--ui); padding: 3px 7px 4px; border-radius: 10px; margin-right: 6px; vertical-align: 1px; text-transform: lowercase; }
 .marca.dato { background: var(--dato); color: var(--fondo); }
 .marca.medido { color: var(--medido); box-shadow: inset 0 0 0 1.5px var(--medido); }
 .marca.supuesto { color: var(--supuesto); border: 1.5px dashed var(--supuesto); padding: 2px 6px 3px; }
@@ -210,7 +211,7 @@ select { background: var(--fondo); border: 1px solid var(--linea); border-radius
     <div class="pane" id="pane-h" role="tabpanel" aria-labelledby="tab-h">
       <p class="lead"><span class="marca dato">dato</span>Cada punto es un pozo de Vaca Muerta shale en su ubicación de superficie y su tamaño sigue el caudal de petróleo. Reproducí la historia desde 2011 y mirá tres cosas.</p>
       <div class="find">
-        <h2>Los golpes de agua siguen un eje</h2>
+        <h2>Tras la fractura del hijo, sube el corte de agua del padre</h2>
         <p id="cifra-agua" hidden><span class="marca medido">medido</span>Tras la fractura de un hijo a menos de 1 km, el corte de agua mediano del padre pasa de <span id="wc-antes"></span> en el mes anterior a <span id="wc-mes2"></span> en el mes 2. En los controles (2 a 5 km) queda en <span id="wc-control"></span>.</p>
         <div class="seg" id="band" role="group" aria-label="Distancia al hijo"><button type="button" data-v="0.3" aria-pressed="true">0,3 a 1 km</button><button type="button" data-v="1" aria-pressed="false">1 a 2 km</button></div>
         <canvas id="rose" aria-label="Rosa de rumbos de la interferencia" style="aspect-ratio: 1.12"></canvas>
@@ -458,7 +459,7 @@ const PIGMENTO_DE = { ypf: "azul", vista: "rosa", pluspetrol: "oliva", shell: "l
 function readColors() {
   const cs = getComputedStyle(document.documentElement), g = (n) => cs.getPropertyValue(n).trim();
   const de = OPS.map((n) => PIGMENTO_DE[n.toLowerCase().replace(/[^a-z]/g, "")] || null), libres = PIGMENTOS.filter((c) => !de.includes(c));
-  C = { map: "rgb(" + Base.suelo(.5, 600).join(", ") + ")", grid: "rgba(236, 229, 211, .06)", ink: g("--tinta"), ink2: g("--tinta-2"), ink3: g("--tinta-3"), line: g("--linea"), fondo: g("--fondo"), panel: "#081922",
+  C = { map: "rgb(" + Base.suelo(.5, 600).join(", ") + ")", grid: "rgba(236, 229, 211, .06)", ink: g("--tinta"), ink2: g("--tinta-2"), ink3: g("--tinta-3"), line: g("--linea"), fondo: g("--fondo"), panel: g("--fondo"),
     golpe: g("--mal"), cierre: g("--petroleo"), ambos: g("--tinta"), sin: g("--gris"), prod: g("--bien"), parado: g("--petroleo"), ui: g("--ui"), relato: g("--relato") };
   C.opc = OPS.map((n, i) => g("--" + (i === NOP - 1 ? "gris" : de[i] || libres.shift() || "gris")));
 }

@@ -1,18 +1,65 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 420" width="700" height="420" role="img" aria-labelledby="t d">
 <title id="t">Brecha del mes 1 por año de la fractura</title>
-<desc id="d">Brecha del petróleo al mes 1 entre padres a menos de 1 km y controles de la misma edad, por año de la fractura del hijo, con el número de eventos de cada año. En 2026, año en curso, marca 44 puntos menos, con fracturas todavía sin cargar. Medida, no causa.</desc>
-<style>text { fill: #222222; font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif; font-size: 11px; }
-.titulo { font-size: 15px; font-weight: bold; }
-.sub { fill: #6b6b6b; }
-.eje { stroke: #222222; stroke-width: 1; fill: none; }
-.rejilla { stroke: #e4e4e4; stroke-width: 1; }
-.cero { stroke: #222222; stroke-width: 1.2; }
-.marca { stroke: #6b6b6b; stroke-width: 1; stroke-dasharray: 4 3; }
-.banda { fill: #f0e442; fill-opacity: 0.25; }
-.pie { fill: #6b6b6b; font-size: 10px; }</style>
-<rect x="0" y="0" width="700" height="420" fill="#ffffff"/>
+<desc id="d">Brecha del petróleo al mes 1 entre padres a menos de 1 km y pozos de control a 2 a 5 km de un pozo hijo, por año de la fractura del hijo, con el número de eventos de cada año. En 2026, año en curso, marca 44 puntos menos, con fracturas todavía sin cargar. Medida, no causa.</desc>
+<style>:root {
+  color-scheme: light;
+  --cielo: #C9D7DC;
+  --estepa: #A39A7A;
+  --lutita: #2A2623;
+  --orilla: #2A2623;
+  --tinta: #1B2A31;
+  --hueso: #EDE6D6;
+  --jarilla: #3E4A4F;
+  --s1: #2A78D6;
+  --s2: #0E6F6B;
+  --s3: #C2592F;
+  --s4: #B88A00;
+  --s5: #C0508A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --cielo: #18222B;
+    --estepa: #3A362B;
+    --lutita: #0F0E0D;
+    --orilla: #9FB0B6;
+    --tinta: #E6DFCF;
+    --hueso: #EDE6D6;
+    --jarilla: #9FB0B6;
+    --s1: #3987E5;
+    --s2: #5CC9BC;
+    --s3: #E0825E;
+    --s4: #D9B23A;
+    --s5: #DE7FB0;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cielo: #18222B;
+  --estepa: #3A362B;
+  --lutita: #0F0E0D;
+  --orilla: #9FB0B6;
+  --tinta: #E6DFCF;
+  --hueso: #EDE6D6;
+  --jarilla: #9FB0B6;
+  --s1: #3987E5;
+  --s2: #5CC9BC;
+  --s3: #E0825E;
+  --s4: #D9B23A;
+  --s5: #DE7FB0;
+}
+text { fill: var(--tinta); font-family: "Archivo", "Arial Narrow", system-ui, sans-serif; font-size: 11px; }
+.titulo { font-size: 15px; font-weight: 600; }
+.sub { fill: var(--jarilla); }
+.eje { stroke: var(--tinta); stroke-width: 1; fill: none; }
+.rejilla { stroke: var(--tinta); stroke-width: 1; stroke-opacity: 0.15; }
+.cero { stroke: var(--tinta); stroke-width: 1.2; }
+.marca { stroke: var(--jarilla); stroke-width: 1; stroke-dasharray: 4 3; }
+.banda { fill: var(--s4); fill-opacity: 0.25; }
+.pie { fill: var(--jarilla); font-size: 10px; }</style>
+<rect x="0" y="0" width="700" height="420" style="fill:var(--cielo)"/>
 <text class="titulo" x="20" y="26">Brecha del mes 1 por año de la fractura</text>
-<text class="sub" x="20" y="43">Padres a menos de 1 km menos controles de la misma edad, en puntos del índice de caudal</text>
+<text class="sub" x="20" y="43">Padres a menos de 1 km menos pozos de control a 2 a 5 km de un pozo hijo, en puntos del índice de caudal</text>
 <line class="rejilla" x1="70.0" y1="330.0" x2="680.0" y2="330.0"/>
 <text x="64.0" y="334.0" text-anchor="end">-50</text>
 <line class="rejilla" x1="70.0" y1="288.3" x2="680.0" y2="288.3"/>
@@ -29,63 +76,63 @@
 <text x="64.0" y="84.0" text-anchor="end">10</text>
 <line class="cero" x1="70.0" y1="121.7" x2="680.0" y2="121.7"/>
 <path class="eje" d="M70.0,80.0 L70.0,330.0"/>
-<rect x="75.7" y="121.7" width="29.3" height="144.0" fill="#0072B2" fill-opacity="0.35"/>
+<rect x="75.7" y="121.7" width="29.3" height="144.0" style="fill:var(--s1)" fill-opacity="0.35"/>
 <text x="90.3" y="277.6" text-anchor="middle" style="font-size:10px">-35</text>
 <text x="90.3" y="348.0" text-anchor="middle">2012</text>
 <text class="pie" x="90.3" y="362.0" text-anchor="middle">9</text>
-<rect x="116.4" y="121.7" width="29.3" height="9.9" fill="#0072B2" fill-opacity="0.35"/>
+<rect x="116.4" y="121.7" width="29.3" height="9.9" style="fill:var(--s1)" fill-opacity="0.35"/>
 <text x="131.0" y="143.6" text-anchor="middle" style="font-size:10px">-2</text>
 <text x="131.0" y="348.0" text-anchor="middle">2013</text>
 <text class="pie" x="131.0" y="362.0" text-anchor="middle">14</text>
-<rect x="157.0" y="121.7" width="29.3" height="8.5" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="157.0" y="121.7" width="29.3" height="8.5" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="171.7" y="142.2" text-anchor="middle" style="font-size:10px">-2</text>
 <text x="171.7" y="348.0" text-anchor="middle">2014</text>
 <text class="pie" x="171.7" y="362.0" text-anchor="middle">72</text>
-<rect x="197.7" y="90.6" width="29.3" height="31.1" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="197.7" y="90.6" width="29.3" height="31.1" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="212.3" y="86.6" text-anchor="middle" style="font-size:10px">7</text>
 <text x="212.3" y="348.0" text-anchor="middle">2015</text>
 <text class="pie" x="212.3" y="362.0" text-anchor="middle">201</text>
-<rect x="238.4" y="121.7" width="29.3" height="103.6" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="238.4" y="121.7" width="29.3" height="103.6" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="253.0" y="237.3" text-anchor="middle" style="font-size:10px">-25</text>
 <text x="253.0" y="348.0" text-anchor="middle">2016</text>
 <text class="pie" x="253.0" y="362.0" text-anchor="middle">70</text>
-<rect x="279.0" y="121.7" width="29.3" height="100.2" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="279.0" y="121.7" width="29.3" height="100.2" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="293.7" y="233.9" text-anchor="middle" style="font-size:10px">-24</text>
 <text x="293.7" y="348.0" text-anchor="middle">2017</text>
 <text class="pie" x="293.7" y="362.0" text-anchor="middle">58</text>
-<rect x="319.7" y="121.7" width="29.3" height="73.3" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="319.7" y="121.7" width="29.3" height="73.3" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="334.3" y="206.9" text-anchor="middle" style="font-size:10px">-18</text>
 <text x="334.3" y="348.0" text-anchor="middle">2018</text>
 <text class="pie" x="334.3" y="362.0" text-anchor="middle">55</text>
-<rect x="360.4" y="121.7" width="29.3" height="67.4" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="360.4" y="121.7" width="29.3" height="67.4" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="375.0" y="201.0" text-anchor="middle" style="font-size:10px">-16</text>
 <text x="375.0" y="348.0" text-anchor="middle">2019</text>
 <text class="pie" x="375.0" y="362.0" text-anchor="middle">80</text>
-<rect x="401.0" y="121.7" width="29.3" height="18.1" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="401.0" y="121.7" width="29.3" height="18.1" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="415.7" y="151.7" text-anchor="middle" style="font-size:10px">-4</text>
 <text x="415.7" y="348.0" text-anchor="middle">2020</text>
 <text class="pie" x="415.7" y="362.0" text-anchor="middle">41</text>
-<rect x="441.7" y="121.7" width="29.3" height="86.2" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="441.7" y="121.7" width="29.3" height="86.2" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="456.3" y="219.9" text-anchor="middle" style="font-size:10px">-21</text>
 <text x="456.3" y="348.0" text-anchor="middle">2021</text>
 <text class="pie" x="456.3" y="362.0" text-anchor="middle">137</text>
-<rect x="482.4" y="121.7" width="29.3" height="143.9" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="482.4" y="121.7" width="29.3" height="143.9" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="497.0" y="277.6" text-anchor="middle" style="font-size:10px">-35</text>
 <text x="497.0" y="348.0" text-anchor="middle">2022</text>
 <text class="pie" x="497.0" y="362.0" text-anchor="middle">232</text>
-<rect x="523.0" y="121.7" width="29.3" height="82.2" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="523.0" y="121.7" width="29.3" height="82.2" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="537.7" y="215.9" text-anchor="middle" style="font-size:10px">-20</text>
 <text x="537.7" y="348.0" text-anchor="middle">2023</text>
 <text class="pie" x="537.7" y="362.0" text-anchor="middle">213</text>
-<rect x="563.7" y="121.7" width="29.3" height="94.2" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="563.7" y="121.7" width="29.3" height="94.2" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="578.3" y="227.8" text-anchor="middle" style="font-size:10px">-23</text>
 <text x="578.3" y="348.0" text-anchor="middle">2024</text>
 <text class="pie" x="578.3" y="362.0" text-anchor="middle">279</text>
-<rect x="604.4" y="121.7" width="29.3" height="135.1" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="604.4" y="121.7" width="29.3" height="135.1" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="619.0" y="268.7" text-anchor="middle" style="font-size:10px">-32</text>
 <text x="619.0" y="348.0" text-anchor="middle">2025</text>
 <text class="pie" x="619.0" y="362.0" text-anchor="middle">372</text>
-<rect x="645.0" y="121.7" width="29.3" height="184.9" fill="#0072B2" fill-opacity="0.9"/>
+<rect x="645.0" y="121.7" width="29.3" height="184.9" style="fill:var(--s1)" fill-opacity="0.9"/>
 <text x="659.7" y="318.6" text-anchor="middle" style="font-size:10px">-44</text>
 <text x="659.7" y="348.0" text-anchor="middle">2026</text>
 <text class="pie" x="659.7" y="362.0" text-anchor="middle">260</text>

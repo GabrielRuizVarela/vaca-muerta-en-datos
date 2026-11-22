@@ -1,29 +1,29 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vaca Muerta en 3D</title>
 <meta name="description" content="La cuenca shale de Vaca Muerta mes a mes, con cada elemento rotulado como dato público, medición del estudio o supuesto de quien lee.">
 <style>
+/*__SISTEMA__*/
 :root {
   color-scheme: dark;
-  --fondo: #06141b; --panel: rgba(8, 26, 35, .86); --linea: #1d3a48; --tinta: #ece5d3; --tinta-2: #b4bfc0; --tinta-3: #8497a0;
+  --fondo: var(--cielo); --panel: color-mix(in srgb, var(--cielo) 88%, transparent); --linea: color-mix(in srgb, var(--tinta) 16%, var(--cielo)); --tinta-2: color-mix(in srgb, var(--tinta) 55%, var(--jarilla)); --tinta-3: var(--jarilla);
   --dato: #ece5d3; --medido: #5fd3c4; --supuesto: #c796f2; --petroleo: #f4b860; --mal: #f08a6c;
   --azul: #4472d8; --rosa: #cf5a86; --oliva: #8f9a2e; --ladrillo: #b04a2a; --celeste: #3a9ec2; --ciruela: #8c4c96; --gris: #6f8a99; --bien: #5fd3c4;
-  --ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --relato: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --ui: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --relato: "Faustina", Georgia, serif;
 }
 /* El bloque de arriba es el de la familia: la página del replay lo comparte nombre por nombre. Lo que sigue es solo
    de esta página, que tiene un solo papel: placas del color del panel pero casi opacas, porque van sobre una imagen
    clara; un radio para las placas y otro para los controles, y un borde más firme para lo que se puede tocar. */
-:root { --placa: rgba(8, 26, 35, .94); --linea-2: #2b4c5c; --realce: #133443; --hueco: rgba(3, 12, 17, .55); --r: 10px; --r2: 7px; --sombra: 0 14px 34px rgba(1, 8, 12, .4); }
+:root { --placa: color-mix(in srgb, var(--cielo) 94%, transparent); --linea-2: color-mix(in srgb, var(--tinta) 26%, var(--cielo)); --realce: color-mix(in srgb, var(--tinta) 10%, var(--cielo)); --hueco: color-mix(in srgb, var(--lutita) 55%, transparent); --r: 10px; --r2: 7px; --sombra: 0 14px 34px color-mix(in srgb, var(--lutita) 40%, transparent); }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; background: var(--fondo); color: var(--tinta); font: 15px/1.5 var(--ui); font-variant-numeric: tabular-nums; }
 a { color: inherit; }
 button, select, input { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
 [hidden] { display: none !important; }
 
 .resumen { max-width: 68ch; margin: 0 auto; padding: 48px 20px 24px; }
@@ -36,7 +36,7 @@ button, select, input { font: inherit; color: inherit; }
 .sin-webgl { max-width: 68ch; margin: 0 auto; padding: 24px 20px 0; color: var(--petroleo); }
 
 /* Las tres clases de cosa se distinguen también por forma: lleno, con aro, a rayas. */
-.marca { display: inline-block; font: 600 13px/1 var(--ui); padding: 3px 7px 4px; border-radius: 10px; margin-right: 6px; vertical-align: 1px; text-transform: lowercase; }
+.marca { width: auto; height: auto; border: 0; transform: none; background: none; display: inline-block; font: 600 13px/1 var(--ui); padding: 3px 7px 4px; border-radius: 10px; margin-right: 6px; vertical-align: 1px; text-transform: lowercase; }
 .marca.dato { background: var(--dato); color: var(--fondo); }
 .marca.medido { color: var(--medido); box-shadow: inset 0 0 0 1.5px var(--medido); }
 .marca.supuesto { color: var(--supuesto); border: 1.5px dashed var(--supuesto); padding: 2px 6px 3px; }
@@ -101,19 +101,19 @@ body:not(.en-suelo) .ley-suelo, .en-suelo .ley-luz { display: none; }
 /* Botones. Los de ícono solo llevan su nombre en aria-label. */
 .botones { display: flex; flex-wrap: wrap; gap: 8px; }
 button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; background: transparent; border: 1px solid var(--linea-2); border-radius: var(--r2); padding: 6px 12px; line-height: 1.25; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; }
-button:hover:not(:disabled) { border-color: var(--tinta-3); background: rgba(236, 229, 211, .05); }
+button:hover:not(:disabled) { border-color: var(--tinta-3); background: color-mix(in srgb, var(--tinta) 5%, transparent); }
 button:disabled { opacity: .4; cursor: default; }
 button.principal { background: var(--tinta); color: var(--fondo); border-color: var(--tinta); font-weight: 600; }
-button.principal:hover:not(:disabled) { background: #fbf5e4; border-color: #fbf5e4; }
+button.principal:hover:not(:disabled) { background: var(--hueso); border-color: var(--hueso); }
 button[aria-pressed="true"] { border-color: var(--petroleo); color: var(--petroleo); }
 button.solo { padding: 6px; border-color: transparent; color: var(--tinta-2); }
-button.solo:hover:not(:disabled) { border-color: transparent; background: rgba(236, 229, 211, .09); color: var(--tinta); }
+button.solo:hover:not(:disabled) { border-color: transparent; background: color-mix(in srgb, var(--tinta) 9%, transparent); color: var(--tinta); }
 button.quieto { border-color: transparent; color: var(--tinta-3); }
 button.quieto:hover:not(:disabled) { border-color: transparent; color: var(--tinta); }
 /* Una opción entre varias: un riel con una pieza encendida. Lo usan la lectura de la escena y la velocidad. */
 .riel { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--linea); border-radius: 9px; background: var(--hueco); }
 .riel button { border: 0; border-radius: 6px; padding: 5px 10px; color: var(--tinta-3); }
-.riel button:hover:not(:disabled) { color: var(--tinta); background: rgba(236, 229, 211, .06); }
+.riel button:hover:not(:disabled) { color: var(--tinta); background: color-mix(in srgb, var(--tinta) 6%, transparent); }
 .riel button[aria-pressed="true"]:hover:not(:disabled) { background: var(--realce); }
 .riel button[aria-pressed="true"] { background: var(--realce); color: var(--tinta); box-shadow: inset 0 0 0 1px var(--linea-2); }
 
@@ -159,10 +159,10 @@ button.quieto:hover:not(:disabled) { border-color: transparent; color: var(--tin
 .margen .regla-km i { display: block; height: 7px; border: 1.5px solid var(--tinta-2); border-top: 0; }
 .margen .fuentes summary { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: var(--r2); cursor: pointer; list-style: none; }
 .margen .fuentes summary::-webkit-details-marker { display: none; }
-.margen .fuentes summary:hover { background: rgba(236, 229, 211, .07); color: var(--tinta); }
+.margen .fuentes summary:hover { background: color-mix(in srgb, var(--tinta) 7%, transparent); color: var(--tinta); }
 .margen .fuentes summary .ico { order: -1; }
 .margen .fuentes .s-corto { display: none; }
-.margen .fuentes ul { position: absolute; right: -1px; bottom: calc(100% + 8px); width: min(430px, calc(100vw - 40px)); max-height: calc(100vh - var(--alto-tiempo, 176px) - var(--alto-margen, 64px) - 48px); overflow: auto; list-style: none; margin: 0; padding: 12px 14px; display: grid; gap: 8px; background: #0a1f29; border: 1px solid var(--linea); border-radius: var(--r); box-shadow: var(--sombra); line-height: 1.4; }
+.margen .fuentes ul { position: absolute; right: -1px; bottom: calc(100% + 8px); width: min(430px, calc(100vw - 40px)); max-height: calc(100vh - var(--alto-tiempo, 176px) - var(--alto-margen, 64px) - 48px); overflow: auto; list-style: none; margin: 0; padding: 12px 14px; display: grid; gap: 8px; background: var(--placa); border: 1px solid var(--linea); border-radius: var(--r); box-shadow: var(--sombra); line-height: 1.4; }
 .margen .fuentes li b { color: var(--tinta); font-weight: 600; }
 
 /* Recorrido guiado */
@@ -193,10 +193,10 @@ button.quieto:hover:not(:disabled) { border-color: transparent; color: var(--tin
 .relato #saltar { margin-left: auto; }
 
 /* Ficha del pozo: una fila por dato, con su marca. */
-.ficha { position: absolute; right: 20px; top: 16px; width: min(372px, calc(100vw - 40px)); max-height: calc(100vh - var(--alto-tiempo, 176px) - var(--alto-margen, 64px) - 52px); overflow: auto; padding: 16px 18px 8px; scrollbar-width: thin; scrollbar-color: #2c4a59 transparent; }
+.ficha { position: absolute; right: 20px; top: 16px; width: min(372px, calc(100vw - 40px)); max-height: calc(100vh - var(--alto-tiempo, 176px) - var(--alto-margen, 64px) - 52px); overflow: auto; padding: 16px 18px 8px; scrollbar-width: thin; scrollbar-color: var(--linea-2) transparent; }
 .ficha h2 { font: 400 24px/1.15 var(--relato); margin: 0 38px 3px 0; overflow-wrap: anywhere; }
 .ficha #ficha-sub { display: flex; align-items: center; gap: 7px; margin: 0 0 12px; color: var(--tinta-2); font-size: 13px; }
-.ficha #ficha-sub::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--op, var(--tinta-3)); box-shadow: 0 0 0 1.2px #f6f0df; }
+.ficha #ficha-sub::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--op, var(--tinta-3)); box-shadow: 0 0 0 1.2px var(--tinta); }
 .ficha #ficha-cerrar { position: absolute; right: 10px; top: 10px; }
 .ficha canvas { width: 100%; height: 64px; display: block; }
 .ficha #ficha-max { margin: 4px 0 10px; color: var(--tinta-3); font-size: 13px; }
@@ -217,9 +217,9 @@ button.quieto:hover:not(:disabled) { border-color: transparent; color: var(--tin
 .pestanas #plegar .ico { transition: transform .2s; }
 .taller.plegado #plegar .ico { transform: rotate(180deg); }
 .taller .hoja { padding: 14px 16px 12px; overflow: auto; overscroll-behavior: contain; }
-.taller .hoja, .padres { scrollbar-width: thin; scrollbar-color: #2c4a59 transparent; }
+.taller .hoja, .padres { scrollbar-width: thin; scrollbar-color: var(--linea-2) transparent; }
 /* A una placa con barra a la que le queda contenido debajo se le desvanece el borde inferior: avisa que sigue. */
-.taller .hoja.sigue::after, .ficha.sigue::after { content: ""; display: block; position: sticky; bottom: -12px; height: 48px; margin: -48px -4px 0; background: linear-gradient(rgba(8, 26, 35, 0), #081a23 82%); pointer-events: none; }
+.taller .hoja.sigue::after, .ficha.sigue::after { content: ""; display: block; position: sticky; bottom: -12px; height: 48px; margin: -48px -4px 0; background: linear-gradient(color-mix(in srgb, var(--placa) 0%, transparent), var(--placa) 82%); pointer-events: none; }
 .ficha.sigue::after { bottom: -8px; }
 .taller.plegado .hoja { display: none; }
 .taller.plegado .pestanas { border-bottom-color: transparent; padding-bottom: 1px; }
@@ -247,7 +247,7 @@ kbd { display: inline-block; min-width: 20px; padding: 0 5px; border: 1px solid 
 .busca input:hover { border-color: var(--tinta-3); }
 .busca ul { list-style: none; margin: 4px 0 0; padding: 0; }
 .busca li button { display: flex; justify-content: flex-start; align-items: baseline; gap: 8px; width: 100%; border: 0; border-radius: 5px; padding: 4px 6px; text-align: left; }
-.busca li button:hover, .busca li button:focus-visible { background: rgba(132, 151, 160, .14); }
+.busca li button:hover, .busca li button:focus-visible { background: color-mix(in srgb, var(--jarilla) 14%, transparent); }
 .busca li b { font-weight: 600; white-space: nowrap; }
 .busca li span { color: var(--tinta-3); font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .taller .busca p { margin: 6px 0 0; color: var(--tinta-2); font-size: 13px; }
@@ -263,6 +263,8 @@ kbd { display: inline-block; min-width: 20px; padding: 0 5px; border: 1px solid 
 .leyenda { margin: 0 0 12px; font-size: 13px; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea); }
 .leyenda summary { display: flex; align-items: center; gap: 8px; padding: 8px 0; cursor: pointer; color: var(--tinta); list-style: none; }
 .leyenda summary::-webkit-details-marker { display: none; }
+.leyenda summary::before, .margen .fuentes summary::before { content: none; }
+.leyenda summary, .margen .fuentes summary { min-height: auto; font-weight: 400; }
 .leyenda summary .ico:first-child { color: var(--tinta-3); }
 .leyenda summary .ico:last-child { margin-left: auto; color: var(--tinta-3); transition: transform .2s; }
 .leyenda[open] summary .ico:last-child { transform: rotate(180deg); }
@@ -284,7 +286,7 @@ kbd { display: inline-block; min-width: 20px; padding: 0 5px; border: 1px solid 
 .campo input { grid-column: 1 / -1; width: 100%; height: 18px; margin: 1px 0 0; accent-color: var(--supuesto); }
 .padres { max-height: 152px; overflow: auto; margin: 0 0 8px; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea); }
 .padres table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.padres th { position: sticky; top: 0; background: #0a1f29; color: var(--tinta-3); font-weight: 400; text-align: right; padding: 3px 4px; }
+.padres th { position: sticky; top: 0; background: var(--cielo); color: var(--tinta-3); font-weight: 400; text-align: right; padding: 3px 4px; }
 .padres td { text-align: right; padding: 1px 4px; white-space: nowrap; }
 .padres th:first-child, .padres td:first-child { text-align: left; }
 .padres td button { display: inline-block; border: 0; border-radius: 3px; padding: 1px 3px; color: var(--medido); font-weight: 600; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
@@ -320,9 +322,9 @@ kbd { display: inline-block; min-width: 20px; padding: 0 5px; border: 1px solid 
 .llegadas .t { color: var(--tinta); min-width: 4.8em; text-align: right; }
 
 /* Consola: el reloj, sus mandos y la línea de tiempo, con un borde firme contra el mapa. Abajo, el pie de imprenta. */
-.tiempo { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 32px; background: rgba(7, 23, 31, .97); border-top: 1px solid var(--linea); box-shadow: 0 -10px 30px rgba(1, 8, 12, .3); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 30px; align-items: end; }
+.tiempo { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 32px; background: color-mix(in srgb, var(--cielo) 97%, transparent); border-top: 1px solid var(--linea); box-shadow: 0 -10px 30px color-mix(in srgb, var(--lutita) 30%, transparent); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 30px; align-items: end; }
 .tiempo .lectura { min-width: 262px; }
-.tiempo #mes { font: 400 56px/1 var(--relato); letter-spacing: -.01em; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.tiempo #mes { font: 400 56px/1 var(--relato); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
 .tiempo .conteo { display: flex; gap: 26px; margin-top: 8px; }
 .tiempo .conteo div { display: grid; gap: 4px; }
 .tiempo .conteo b { font: 400 36px/1 var(--relato); font-variant-numeric: lining-nums tabular-nums; color: var(--tinta); }
@@ -332,7 +334,7 @@ kbd { display: inline-block; min-width: 20px; padding: 0 5px; border: 1px solid 
 .tiempo .franja { min-width: 0; align-self: stretch; display: flex; flex-direction: column; gap: 8px; }
 .tiempo .mandos { display: flex; gap: 10px; align-items: center; margin-top: 14px; }
 #andar { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--tinta); border-color: var(--tinta); color: var(--fondo); }
-#andar:hover:not(:disabled) { background: #fbf5e4; border-color: #fbf5e4; }
+#andar:hover:not(:disabled) { background: var(--hueso); border-color: var(--hueso); }
 #andar[aria-pressed="true"], #andar[aria-pressed="true"]:hover:not(:disabled) { background: var(--petroleo); border-color: var(--petroleo); color: var(--fondo); }
 #andar .ico { width: 20px; height: 20px; }
 .vel button { min-width: 34px; padding: 5px 8px; }
@@ -340,22 +342,22 @@ kbd { display: inline-block; min-width: 20px; padding: 0 5px; border: 1px solid 
 .tiempo .fila { display: flex; align-items: center; justify-content: space-between; gap: 4px 18px; min-width: 0; min-height: 30px; }
 #ver-tabla { flex: none; padding: 4px 10px 4px 8px; font-size: 13px; color: var(--tinta-2); }
 #ver-tabla:hover { color: var(--tinta); }
-dialog.planilla { width: min(1000px, calc(100vw - 32px)); max-height: min(720px, calc(100vh - 48px)); padding: 0; background: #0a1d26; color: var(--tinta); border: 1px solid var(--linea); border-radius: var(--r); box-shadow: var(--sombra); overflow: hidden; }
+dialog.planilla { width: min(1000px, calc(100vw - 32px)); max-height: min(720px, calc(100vh - 48px)); padding: 0; background: var(--placa); color: var(--tinta); border: 1px solid var(--linea); border-radius: var(--r); box-shadow: var(--sombra); overflow: hidden; }
 dialog.planilla[open] { display: flex; flex-direction: column; }
-dialog.planilla::backdrop { background: rgba(3, 10, 14, .62); }
+dialog.planilla::backdrop { background: color-mix(in srgb, var(--lutita) 62%, transparent); }
 .planilla-cab { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 12px 6px 18px; }
 .planilla-cab h2 { font: 400 24px/1.15 var(--relato); margin: 0; }
 .planilla-nota { margin: 0; padding: 0 18px 12px; max-width: 86ch; font-size: 13px; line-height: 1.45; color: var(--tinta-2); }
 .planilla-caja { overflow: auto; border-top: 1px solid var(--linea); }
 .planilla table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
-.planilla th, .planilla td { padding: 4px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid rgba(132, 151, 160, .14); }
-.planilla thead th { position: sticky; top: 0; z-index: 1; background: #0a1d26; font-weight: 600; line-height: 1.25; color: var(--tinta-2); vertical-align: bottom; box-shadow: 0 1px 0 var(--linea); }
+.planilla th, .planilla td { padding: 4px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid color-mix(in srgb, var(--jarilla) 14%, transparent); }
+.planilla thead th { position: sticky; top: 0; z-index: 1; background: var(--cielo); font-weight: 600; line-height: 1.25; color: var(--tinta-2); vertical-align: bottom; box-shadow: 0 1px 0 var(--linea); }
 .planilla thead th i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; background: var(--c); }
 .planilla tbody th, .planilla thead th:first-child { text-align: left; }
 .planilla tbody th { font-weight: 400; color: var(--tinta-2); }
-.planilla tbody th, .planilla thead th:first-child { position: sticky; left: 0; background: #0a1d26; }   /* el mes queda a la vista al correr de costado */
+.planilla tbody th, .planilla thead th:first-child { position: sticky; left: 0; background: var(--cielo); }   /* el mes queda a la vista al correr de costado */
 .planilla thead th:first-child { z-index: 2; }
-.planilla tr.ahora th, .planilla tr.ahora td { background: #283132; color: var(--tinta); }
+.planilla tr.ahora th, .planilla tr.ahora td { background: var(--realce); color: var(--tinta); }
 .ops { display: flex; flex-wrap: wrap; gap: 3px 16px; list-style: none; margin: 0; padding: 0; min-width: 0; font-size: 13px; color: var(--tinta-2); }
 .ops li { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .ops i, .globo i { flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
@@ -367,20 +369,20 @@ dialog.planilla::backdrop { background: rgba(3, 10, 14, .62); }
 .tiempo canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tiempo .eje-f, .tiempo .eje-y { position: absolute; left: 6px; z-index: 1; margin: 0; font-size: 13px; line-height: 15px; color: var(--tinta-3); white-space: nowrap; pointer-events: none; text-shadow: 0 0 4px var(--fondo), 0 0 2px var(--fondo); }
 .tiempo .eje-f { display: flex; gap: 18px; }
-.tiempo .eje-f > span { background: #07171f; box-shadow: 0 0 0 3px #07171f; border-radius: 1px; }
+.tiempo .eje-f > span { background: var(--cielo); box-shadow: 0 0 0 3px var(--cielo); border-radius: 1px; }
 .tiempo .eje-y { transform: translateY(-100%); }
 #rezago-f { display: flex; align-items: center; gap: 6px; }
 #rezago-f i { flex: none; width: 10px; height: 10px; border-radius: 3px; }
 .tiempo.sin-rezago #rezago-f, .tiempo.sin-pico #pico-f { display: none; }
 /* Lo que la reproducción todavía no recorrió queda bajo un velo: el gráfico se llena a medida que el tiempo avanza. */
 #velo, #marca-tiempo, #mira { position: absolute; top: 0; bottom: 17px; left: calc(6px + (100% - 12px) * var(--f, 0)); pointer-events: none; }
-#velo { right: 0; background: rgba(7, 23, 31, .66); }
+#velo { right: 0; background: color-mix(in srgb, var(--cielo) 66%, transparent); }
 #marca-tiempo { width: 2px; margin-left: -1px; background: var(--tinta); }
 #marca-tiempo::before { content: ""; position: absolute; left: -5px; top: -5px; width: 12px; height: 9px; border-radius: 3px; background: var(--tinta); }
 #mira { width: 1px; background: var(--tinta-2); opacity: .7; }
 .tiempo input[type=range] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 .tiempo input[type=range]:focus-visible + #marca-tiempo { outline: 2px solid var(--petroleo); outline-offset: 2px; }
-.globo { position: absolute; bottom: calc(100% + 10px); left: 0; z-index: 6; min-width: 188px; padding: 10px 12px; background: #0a1f29; border: 1px solid var(--linea-2); border-radius: var(--r2); font-size: 13px; line-height: 1.25; color: var(--tinta-2); pointer-events: none; box-shadow: var(--sombra); }
+.globo { position: absolute; bottom: calc(100% + 10px); left: 0; z-index: 6; min-width: 188px; padding: 10px 12px; background: var(--placa); border: 1px solid var(--linea-2); border-radius: var(--r2); font-size: 13px; line-height: 1.25; color: var(--tinta-2); pointer-events: none; box-shadow: var(--sombra); }
 .globo .g-mes { margin-bottom: 6px; font: 400 18px/1.15 var(--relato); color: var(--tinta); }
 .globo .g-fila { display: grid; grid-template-columns: 12px 3.6em 1fr; gap: 8px; align-items: center; padding: 1.5px 0; white-space: nowrap; }
 .globo .g-fila b { font-weight: 600; color: var(--tinta); text-align: right; font-variant-numeric: tabular-nums; }
@@ -440,7 +442,7 @@ dialog.planilla::backdrop { background: rgba(3, 10, 14, .62); }
   .margen .fuentes summary { padding: 7px 6px; }
   .margen .fuentes summary .ico { display: none; }
   .margen .fuentes ul { position: static; width: auto; max-height: none; overflow: visible; margin: 8px 0 0; padding: 0; background: none; border: 0; box-shadow: none; }
-  .margen .fuentes[open] { position: fixed; z-index: 5; left: 8px; right: 8px; top: calc(var(--alto-titulo, 96px) + 16px); max-width: none; max-height: calc(100vh - var(--alto-tiempo, 176px) - var(--alto-titulo, 96px) - 28px); padding: 10px 12px; background: #0a1f29; border: 1px solid var(--linea); border-radius: var(--r); box-shadow: var(--sombra); overflow: auto; }
+  .margen .fuentes[open] { position: fixed; z-index: 5; left: 8px; right: 8px; top: calc(var(--alto-titulo, 96px) + 16px); max-width: none; max-height: calc(100vh - var(--alto-tiempo, 176px) - var(--alto-titulo, 96px) - 28px); padding: 10px 12px; background: var(--placa); border: 1px solid var(--linea); border-radius: var(--r); box-shadow: var(--sombra); overflow: auto; }
   .margen .fuentes[open] summary { padding: 0; }
   .margen .fuentes[open] .s-largo { display: inline; }
   .margen .fuentes[open] .s-corto { display: none; }
@@ -455,7 +457,7 @@ dialog.planilla::backdrop { background: rgba(3, 10, 14, .62); }
   <ul>
     <li><span class="marca dato">dato</span><b>{{n_pozos}} pozos shale con ubicación de superficie</b>, su caudal mensual de petróleo y sus fracturas, publicados por la Secretaría de Energía hasta {{mes_datos}}. El dato público no trae trayectorias de las ramas, presiones ni decisiones de cierre.</li>
     <li><span class="marca dato">dato</span>Debajo de los pozos está el lugar: el relieve de la misión SRTM, los ríos, lagos, límites y localidades del Instituto Geográfico Nacional y las concesiones de explotación de la Secretaría de Energía. El eje vertical se lee de dos maneras: como tiempo, donde cada pozo es una columna que brilla según el petróleo que dio cada mes, o como profundidad, que es un esquema y está rotulada como supuesto.</li>
-    <li><span class="marca medido">medido</span>Un mes después de fracturar un pozo hijo, los padres a menos de 1 km rinden <b>entre {{rango_bajo}} y {{rango_alto}} puntos menos</b> que controles de la misma edad a 2 a 5 km ({{n_cercanos}} eventos cercanos y {{n_controles}} de control). IC 95% por bloques de 5 km de la brecha de {{brecha1}} puntos: {{ic5_bajo}} a {{ic5_alto}} ({{bloques_5km}} bloques).</li>
+    <li><span class="marca medido">medido</span>Un mes después de fracturar un pozo hijo, los padres a menos de 1 km rinden <b>entre {{rango_bajo}} y {{rango_alto}} puntos menos</b> que pozos de control a 2 a 5 km de un pozo hijo ({{n_cercanos}} eventos cercanos y {{n_controles}} de control). IC 95% por bloques de 5 km de la brecha de {{brecha1}} puntos: {{ic5_bajo}} a {{ic5_alto}} ({{bloques_5km}} bloques).</li>
     <li><span class="marca medido">medido</span>A los 6 meses la brecha queda <b>entre {{cierre_min}} y {{cierre_max}} puntos</b> según el control que se use: casi se cierra.</li>
     <li><span class="marca medido">medido</span>Diferido medio por padre en los meses 0 a 6: <b>{{dif_bbl}} bbl</b> (IC 95%: {{dif_ic_bajo_bbl}} a {{dif_ic_alto_bbl}}). Cota superior de lo que podría no volver: {{cota_bbl}} bbl por evento; es un techo, no una estimación de la pérdida.</li>
     <li><span class="marca supuesto">supuesto</span>El precio, la tasa y los parámetros de roca los ponés vos. Con ellos la página hace cuentas de libro; ninguna es un pronóstico ni algo que el dato mensual haya visto.</li>

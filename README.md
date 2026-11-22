@@ -2,17 +2,17 @@
 
 Cuando se fractura un pozo nuevo junto a pozos que ya producían, ¿los que ya producían rinden menos? Se contesta con datos públicos de la Secretaría de Energía, en seis preguntas encadenadas: cada una nace de la duda que dejó la anterior. Esta es la versión corta; la larga, con la figura y un caso para recorrer, está en [`site/index.html`](site/index.html).
 
-**¿Le pega al vecino?** *Sostiene, con pretendencia.* Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control de la misma edad a 2 a 5 km (2.094 eventos). Hay una brecha previa a la fractura (por eso 23 es una cota superior y 19 a 20 el valor descontado).
+◐ **¿Le pega al vecino?** *Sostiene, con pretendencia.* Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control a 2 a 5 km de un pozo hijo (2.094 eventos). Hay una brecha previa a la fractura (por eso 23 es una cota superior y 19 a 20 el valor descontado).
 
-**¿O es un artefacto del método?** *Sostiene, con pretendencia.* Las fechas falsas y las permutaciones no reproducen la brecha, y una brecha plantada a propósito se recupera. Es una huella medida, no una causa demostrada.
+◐ **¿O es un artefacto del método?** *Sostiene, con pretendencia.* Las fechas falsas y las permutaciones no reproducen la brecha, y una brecha plantada a propósito se recupera. Es una huella medida, no una causa demostrada.
 
-**¿Se pierde o se atrasa?** *Sostiene.* A los 6 meses la brecha casi se cierra: es producción diferida, no perdida. Contra un control de la misma edad el diferido de los meses 0 a 6 va de 6,4 a 11,4 millones de barriles (sin duplicar y descontando la brecha previa hasta el total original).
+● **¿Se pierde o se atrasa?** *Sostiene.* A los 6 meses la brecha casi se cierra: es producción diferida, no perdida. Contra un control de la misma edad el diferido de los meses 0 a 6 va de 6,4 a 11,4 millones de barriles (sin duplicar y descontando la brecha previa hasta el total original).
 
-**¿Por dónde pasa?** *No firme.* El eje de mayor merma, que se publicó como hallazgo, no resistió una validación fuera de tiempo y se retiró como descripción de la muestra. Lo que sí se sostiene es el mecanismo por la geometría de las ramas.
+◐ **¿Por dónde pasa?** *No firme.* El eje de mayor merma, que se publicó como hallazgo, no resistió una validación fuera de tiempo y se retiró como descripción de la muestra. Lo que sí se sostiene es el mecanismo por la geometría de las ramas.
 
-**¿Se puede anticipar o planificar?** *No predice* el costo, *no predice el riesgo* y los dos intentos de planificar quedaron *sin muestra*: pedían más datos de los que hay.
+○ **¿Se puede anticipar o planificar?** *No predice* el costo, *no predice el riesgo* y los dos intentos de planificar quedaron *sin muestra*: pedían más datos de los que hay.
 
-**¿Pasa fuera de Vaca Muerta?** En otras cuencas, con los mismos estimadores y una regla fijada de antemano, la brecha del mes 1 se replica en 1 de 2 cuencas: en la cuenca DJ de Colorado sí y en Wyoming no (tabla de abajo).
+◐ **¿Pasa fuera de Vaca Muerta?** En otras cuencas, con los mismos estimadores y una regla fijada de antemano, la brecha del mes 1 se replica en 1 de 2 cuencas: en la cuenca DJ de Colorado sí y en Wyoming no (tabla de abajo).
 
 **Qué no sabemos.** Si la huella es una propiedad de Vaca Muerta o de cómo se ve el dato público, y qué parte de la brecha previa es efecto anticipado. La prueba prospectiva quedó congelada el 2026-11-18 con los datos hasta 2026-09: hacen falta 100 eventos cercanos con el mes medido y hoy está pendiente.
 
@@ -116,7 +116,7 @@ Proyecto personal, no afiliado ni avalado por ninguna empresa.
 ## Cómo se hizo
 
 Ingesta con hash (raw inmutable por versión), modelo en DuckDB, 29 controles de calidad (los bloqueantes frenan la publicación) y linaje de cada tabla en `wiki/hallazgos/linaje.md`.
-Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 1228 tests.
+Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 1241 tests.
 Preguntas en lenguaje natural sobre 16 operaciones tipadas de solo lectura (`agente/`, también como servidor MCP): exactitud 40/41 en desarrollo y 23/27 en reservadas, con la respuesta correcta calculada sobre el warehouse vigente.
 
 ## Decisiones de diseño

@@ -100,10 +100,10 @@ def test_fecha_verificada_es_la_mas_vieja_de_las_fuentes_y_falta_si_falta_una():
     assert informe.fecha_verificada({a: m[a]}) is None and informe.fecha_verificada(None) is None
 
 
-def test_la_pagina_solo_pide_a_la_red_sus_tipografias(d):
+def test_la_pagina_no_pide_nada_a_la_red(d):
     recurso = re.compile(r'<(?:link|script|img|iframe|source|video|audio)\b[^>]*?(?:src|href)="(?:https?:)?//([^/"]+)')
     for html in (informe.render(d), (ROOT / "site" / "informe.html").read_text(encoding="utf-8")):
-        assert set(recurso.findall(html)) == {"fonts.googleapis.com", "fonts.gstatic.com"}
+        assert set(recurso.findall(html)) == set()
         assert "url(http" not in html and "@import" not in html and "fetch(" not in html
     assert "<script src=" not in informe.TEMPLATE.read_text(encoding="utf-8")
 

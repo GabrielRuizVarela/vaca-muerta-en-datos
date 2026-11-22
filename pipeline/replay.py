@@ -38,6 +38,7 @@ import duckdb
 
 from pipeline import base_mapa
 from pipeline.ingest import DATA, ROOT
+from pipeline.sistema import sistema_css
 
 TEMPLATE = Path(__file__).parent / "replay_template.html"
 OUT = ROOT / "site" / "replay.html"
@@ -254,6 +255,7 @@ def collect(con, base_path: Path = base_mapa.DESTINO) -> dict:
 def render(data: dict, out: Path) -> int:
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/").replace("<!--", "<\\u0021--")
     html = TEMPLATE.read_text().replace("/*__DATA__*/null", payload)
+    html = html.replace("/*__SISTEMA__*/", sistema_css())
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html)
     size = out.stat().st_size

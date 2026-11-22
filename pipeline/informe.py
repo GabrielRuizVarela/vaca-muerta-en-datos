@@ -1,7 +1,7 @@
 """Informe para un operador (site/informe.html): una página con gráficos, armada desde los marts.
 
-Los datos, los gráficos y el código van dentro del archivo. Lo único que pide a la red son sus tres tipografías (Google
-Fonts); sin red se ve con las del sistema.
+Los datos, los gráficos y el código van dentro del archivo. No pide nada a la red: las dos tipografías del sistema
+Horizonte (pipeline.sistema) son archivos propios de site/fuentes.
 
   uv run python -m pipeline.informe                       # data/warehouse.duckdb -> site/informe.html
   uv run python -m pipeline.informe --fragmento OUT.html  # misma página sin doctype/head (para publicarla aparte)
@@ -23,6 +23,7 @@ import duckdb
 from pipeline.decision import valor_indicativo
 from pipeline.diferido import BBL_M3
 from pipeline.ingest import DATA, ROOT, SOURCES, load_manifest
+from pipeline.sistema import sistema_css
 from pipeline.wiki import num
 
 TEMPLATE = Path(__file__).parent / "informe_template.html"
@@ -191,7 +192,7 @@ def textos(d: dict) -> dict[str, str]:
 
 def render(d: dict, documento: bool = True) -> str:
     """Rellena la plantilla. documento=False deja la página sin doctype ni head (para un visor que la envuelve)."""
-    html = TEMPLATE.read_text(encoding="utf-8")
+    html = TEMPLATE.read_text(encoding="utf-8").replace("/*__SISTEMA__*/", sistema_css())
     for clave, valor in textos(d).items():
         html = html.replace("{{" + clave + "}}", valor)
     html = html.replace("/*__DATOS__*/null", json.dumps(d, ensure_ascii=False, separators=(",", ":")))

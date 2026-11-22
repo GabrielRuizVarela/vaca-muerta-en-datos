@@ -242,7 +242,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
 <section class="lamina" id="vecino">
   <div class="dentro entra">
     <h2>El vecino</h2>
-    <p class="cap" id="cap2">En los seis meses siguientes, ese vecino produjo 914 barriles menos que pozos de la misma edad lejos de una fractura.</p>
+    <p class="cap" id="cap2">En los seis meses siguientes, ese pozo vecino produjo 914 barriles menos que pozos de control a 2 a 5 km de un pozo nuevo.</p>
     <p class="cap suave">Es una huella medida contra un control, no una causa probada.</p>
 
     <div class="meses">
@@ -269,7 +269,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
 <section class="lamina" id="cuenca">
   <div class="dentro entra">
     <h2>En toda la cuenca</h2>
-    <p class="texto">Esto pasó <span class="cifra" id="n-casos">2.094</span> veces a menos de un kilómetro. Un mes después de la fractura, los vecinos que ya producían rinden entre <span class="cifra">19</span> y <span class="cifra">23</span> puntos menos que pozos de la misma edad; a los seis meses la brecha es de <span class="cifra">2,1</span> puntos.</p>
+    <p class="texto">Esto pasó <span class="cifra" id="n-casos">2.094</span> veces a menos de un kilómetro. Un mes después de la fractura, los pozos vecinos que ya producían rinden entre <span class="cifra">19</span> y <span class="cifra">23</span> puntos porcentuales menos que pozos de control a 2 a 5 km de un pozo nuevo; a los seis meses la brecha es de <span class="cifra">2,1</span> puntos porcentuales.</p>
 
     <details id="ver-curva">
       <summary>Ver los números</summary>
@@ -739,8 +739,8 @@ function frase(lo, hi, p, t, m) {
     var bbl = Math.round(ev.bbl);
     var verbo = bbl >= 0 ? "menos" : "más";
     document.getElementById("cap2").textContent =
-      "En los seis meses siguientes, ese vecino produjo " + numeroEs(Math.abs(bbl)) +
-      " barriles " + verbo + " que pozos de la misma edad lejos de una fractura.";
+      "En los seis meses siguientes, ese pozo vecino produjo " + numeroEs(Math.abs(bbl)) +
+      " barriles " + verbo + " que pozos de control a 2 a 5 km de un pozo nuevo.";
   }
 
   // ---- el mes: la linea de tiempo de un caso ----

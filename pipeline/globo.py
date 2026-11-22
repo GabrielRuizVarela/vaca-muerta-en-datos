@@ -50,6 +50,7 @@ from pipeline import fuentes_mundo, mundo, placebo, replicacion
 from pipeline.cuencas import COLORADO, WYOMING, Cuenca
 from pipeline.ingest import DATA, ROOT
 from pipeline.replay import BBL_PER_M3, month_key
+from pipeline.sistema import sistema_css
 from pipeline.wiki import num
 
 TEMPLATE = Path(__file__).parent / "globo_template.html"
@@ -348,6 +349,7 @@ def render(data: dict, out: Path = OUT) -> int:
     for clave, valor in textos(data).items():
         html = html.replace("{{" + clave + "}}", valor)
     html = html.replace("/*__NUCLEO__*/", _script(base, "nucleo")).replace("/*__MOTOR__*/", _script(base, "motor"))
+    html = html.replace("/*__SISTEMA__*/", sistema_css())
     if "{{" in html:
         raise ValueError("quedó un marcador sin reemplazar en la plantilla del globo")
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/").replace("<!--", "<\\u0021--")

@@ -333,9 +333,12 @@ def test_template_shares_the_tokens_of_the_mundo():
     """Palette and type families are the 3D world's, token by token."""
     a, b = _raiz(_tpl()), _raiz(_tpl_mundo())
     assert a == b
-    assert {"--fondo", "--tinta", "--petroleo", "--mal", "--ui", "--relato", "color-scheme"} <= set(a)
+    # --tinta no va en el bloque de la familia: la da el sistema, y --tinta: var(--tinta) sería un círculo
+    assert {"--fondo", "--petroleo", "--mal", "--ui", "--relato", "color-scheme"} <= set(a)
     # no second theme: the page is the family's dark one on every system setting
     assert "prefers-color-scheme" not in _tpl()
+    # the dark one is forced, so the system setting does not change it
+    assert 'data-theme="dark"' in _tpl() and 'data-theme="dark"' in _tpl_mundo()
 
 
 def test_template_operator_pigments_match_the_mundo():

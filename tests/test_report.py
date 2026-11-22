@@ -52,7 +52,11 @@ def test_titulares_eje_y_reproduccion(copia, tmp_path):
     assert e is not None
     assert f"{report.fmt(e['eje_grados'])} grados" in html
     assert f"IC 95% de {report.fmt(e['ic_bajo'])} a {report.fmt(e['ic_alto'])}" in html
-    assert f"p de permutación {report.fmt(e['p_perm'], 3)}" in html
+    if datos.get("eje_parada"):  # regla de parada cumplida: el eje se ve como retirado, sin p ni lectura E-O
+        assert "Eje de mayor merma: retirado (regla de parada)" in html
+        assert "p de permutación" not in html and "consistente con E-O" not in html
+    else:
+        assert f"p de permutación {report.fmt(e['p_perm'], 3)}" in html
     # reproducir
     assert 'id="reproducir"' in html and "Cómo reproducir" in html
     assert "uv sync" in html and "pipeline.run_all" in html and "uv run pytest" in html
@@ -119,6 +123,14 @@ def test_barra_eje_marca_el_shmax_publicado():
     svg = report.barra_eje(eje)
     assert 'class="shmax"' in svg and "SHmax 67,5" in svg
     assert 'class="shmax"' not in report.barra_eje(dict(eje, shmax=None))
+    # con la regla de parada cumplida el eje se lee retirado, sin p ni lectura este-oeste
+    eje_p = {"eje_grados": 93.0, "ic_bajo": 70.0, "ic_alto": 123.0, "p_perm": 0.036, "shmax": 67.5, "n": 1751,
+             "cortes": {"sin_evidencia": 6, "total": 13}}
+    con_parada = report.bloque_eje({"eje": eje_p, "eje_parada": {"cumplida": True}})
+    assert "Eje de mayor merma: retirado (regla de parada)" in con_parada
+    assert "93 grados" in con_parada and "p de permutación" not in con_parada and "consistente con E-O" not in con_parada
+    sin_parada = report.bloque_eje({"eje": eje_p})
+    assert "p de permutación 0,036" in sin_parada and "consistente con E-O" in sin_parada
 
 
 def test_kpis_interferencia_diferido_por_evento_y_rango_del_mes_1():
@@ -128,3 +140,4 @@ def test_kpis_interferencia_diferido_por_evento_y_rango_del_mes_1():
     html = report.kpis_interferencia(datos)
     assert "-19 a -23" in html
     assert "133" in html and "50 por evento (4 eventos)" in html   # 800/6 y 200/4, no la parte del total
+

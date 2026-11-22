@@ -20,7 +20,7 @@ Cuando se fractura un pozo nuevo, ¿los pozos vecinos que ya producían rinden m
 
 ## 3. El método en seis líneas
 
-1. Un evento es la fractura de un pozo nuevo (el hijo). Los padres son pozos que ya producían a menos de 1 km del hijo; los controles son pozos de la misma edad a 2 a 5 km del mismo hijo.
+1. Un evento es la fractura de un pozo nuevo (el hijo). Los padres son pozos que ya producían a menos de 1 km del hijo; los controles son pozos a 2 a 5 km de un pozo hijo.
 2. Cada pozo se mide contra su propio caudal previo, así que se comparan niveles relativos y no volúmenes.
 3. La brecha es la mediana del índice de los padres menos la de los controles, mes a mes (k = 0 es el mes de la fractura): un estudio de eventos con 2.094 eventos.
 4. Los intervalos de 95% son bootstrap por pads hijo, para no tratar como independientes a pozos que comparten una fractura; el de la brecha del mes 1 es además bootstrap por bloques espaciales de 5 km (sección 4), que es el que se informa.
@@ -33,7 +33,7 @@ Prueba del método con efectos plantados (`wiki/hallazgos/inyeccion.md`): sobre 
 
 ## 4. El resultado
 
-Un mes después de la fractura, los padres a menos de 1 km rinden entre 19 y 23 puntos menos que los controles de la misma edad. El 23 es el valor en bruto y una cota superior (-23,0 puntos con la base de los meses -3 a -1); el 19 descuenta la brecha previa a la fractura (el 20 es el mismo descuento sin los golpes previos de vecinos). El IC 95% por bloques espaciales de 5 km (145 bloques) de la brecha de 23,0 va de -30,0 a -17,0 puntos (por pads era -27,3 a -18,2); no cruza -10 y el rango de 19 a 23 se mantiene.
+Un mes después de la fractura, los padres a menos de 1 km rinden entre 19 y 23 puntos menos que los pozos de control a 2 a 5 km de un pozo hijo. El 23 es el valor en bruto y una cota superior (-23,0 puntos con la base de los meses -3 a -1); el 19 descuenta la brecha previa a la fractura (el 20, sin golpes previos de vecinos). El IC 95% por bloques espaciales de 5 km (145 bloques) de la brecha de 23,0 va de -30,0 a -17,0 puntos (por pads era -27,3 a -18,2); no cruza -10 y el rango de 19 a 23 se mantiene.
 
 ![Brecha de petróleo por mes desde la fractura del hijo, con la descomposición en días y caudal por día](img/caso_event_study.svg)
 

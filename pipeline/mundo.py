@@ -84,6 +84,7 @@ from pipeline import base_foto, base_mapa
 from pipeline.decision import valor_indicativo
 from pipeline.ingest import DATA, ROOT, load_manifest
 from pipeline.replay import BBL_PER_M3, MIN_ACTIVE, N_OPS, b64, month_key, q
+from pipeline.sistema import sistema_css
 from pipeline.wiki import num
 
 TEMPLATE = Path(__file__).parent / "mundo_template.html"
@@ -870,6 +871,7 @@ def render(data: dict, out: Path) -> int:
         raise ValueError("quedó un marcador sin reemplazar en la plantilla del mundo")
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/").replace("<!--", "<\\u0021--")
     html = html.replace("/*__DATA__*/null", payload)
+    html = html.replace("/*__SISTEMA__*/", sistema_css())
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8")
     size = out.stat().st_size

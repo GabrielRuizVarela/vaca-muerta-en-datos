@@ -1,18 +1,19 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>El globo: dónde se mide pozo por pozo</title>
 <meta name="description" content="La Tierra oscura salvo donde un regulador publica petróleo por pozo; cada cuenca medida se abre en la misma repetición mes a mes, con su veredicto.">
 <style>
+/*__SISTEMA__*/
 :root {
   color-scheme: dark;
-  --fondo: #06141b; --tierra: #0a1c25; --tinte: #1a3541; --trama: #3d6373; --linde: #6f8a99; --panel: rgba(8, 26, 35, .88); --linea: #1d3a48;
-  --tinta: #ece5d3; --tinta-2: #b4bfc0; --tinta-3: #8497a0;
+  --fondo: var(--cielo); --panel: color-mix(in srgb, var(--cielo) 88%, transparent); --linea: color-mix(in srgb, var(--tinta) 16%, var(--cielo));
+  --tinta-2: color-mix(in srgb, var(--tinta) 55%, var(--jarilla)); --tinta-3: var(--jarilla);
   --dato: #ece5d3; --medido: #5fd3c4; --supuesto: #c796f2; --petroleo: #f4b860; --mal: #f08a6c; --bien: #5fd3c4;
-  --ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --relato: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --ui: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --relato: "Faustina", Georgia, serif;
   --izq: 440px;
 }
 * { box-sizing: border-box; }
@@ -20,7 +21,6 @@ html, body { min-height: 100%; }
 body { margin: 0; background: var(--fondo); color: var(--tinta); font: 15px/1.5 var(--ui); font-variant-numeric: tabular-nums; }
 a { color: inherit; }
 button, select, input { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
 [hidden] { display: none !important; }
 
 /* Resumen estático: es la página sin JavaScript o sin WebGL, y lo que leen los lectores de pantalla. */
@@ -35,7 +35,8 @@ button, select, input { font: inherit; color: inherit; }
 .sin-webgl { max-width: 68ch; margin: 0 auto; padding: 0 20px 12px; color: var(--petroleo); }
 
 /* Las tres clases de cosa se distinguen también por forma: lleno, con aro, a rayas. */
-.marca { display: inline-block; font: 600 12px/1 var(--ui); padding: 3px 7px 4px; border-radius: 10px; margin-right: 6px; vertical-align: 1px; text-transform: lowercase; }
+/* La base del sistema dibuja .marca como un disco de 12 px; aquí las tres clases de cosa son pastillas de texto. */
+.marca { width: auto; height: auto; border: 0; transform: none; background: none; display: inline-block; font: 600 12px/1 var(--ui); padding: 3px 7px 4px; border-radius: 10px; margin-right: 6px; vertical-align: 1px; }
 .marca.dato { background: var(--dato); color: var(--fondo); }
 .marca.medido { color: var(--medido); box-shadow: inset 0 0 0 1.5px var(--medido); }
 .marca.supuesto { color: var(--supuesto); border: 1.5px dashed var(--supuesto); padding: 2px 6px 3px; }
@@ -60,12 +61,12 @@ button, select, input { font: inherit; color: inherit; }
 .rotulo { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 12.5px; line-height: 1.2; color: var(--tinta-2); text-shadow: 0 0 6px var(--fondo), 0 0 2px var(--fondo); }
 .rotulo.titulo-eje, .rotulo.pie-eje { color: var(--tinta-3); }
 .rotulo.serie { font-weight: 600; font-size: 13px; background: rgba(6, 20, 27, .82); padding: 2px 7px; border-radius: 3px; text-shadow: none; }
-.rotulo.cercano { color: var(--medido); } .rotulo.control { color: #dbe6ec; }
+.rotulo.cercano { color: var(--medido); } .rotulo.control { color: var(--tinta); }
 .rotulo.brecha { color: var(--mal); font-weight: 600; font-size: 14px; background: rgba(6, 20, 27, .82); padding: 3px 8px; border-radius: 3px; text-shadow: none; }
 @media (max-width: 760px) { .rotulo { white-space: normal; max-width: 240px; } }
 
 .marca-cuenca { position: fixed; left: 0; top: 0; width: 44px; height: 44px; margin: -22px 0 0 -22px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; z-index: 2; }
-.marca-cuenca:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 0; }
+.marca-cuenca:focus-visible { outline: 2px solid var(--tinta); outline-offset: 0; }
 
 .titulo { position: fixed; left: 20px; top: 16px; z-index: 3; pointer-events: none; max-width: calc(100vw - 150px); }
 .titulo h2 { margin: 0; font: 400 26px/1.1 var(--relato); }
@@ -113,7 +114,8 @@ button[aria-pressed="true"] { border-color: var(--petroleo); color: var(--petrol
 .grupo[aria-pressed="true"] { color: var(--tinta); }
 
 /* Dentro de una cuenca. */
-.veredicto { left: 20px; bottom: calc(var(--banda, 112px) + 10px); width: min(420px, calc(100vw - 40px)); }
+/* La base del sistema usa .veredicto para una fila de marcas; aquí es un panel de texto, de bloque. */
+.veredicto { left: 20px; bottom: calc(var(--banda, 112px) + 10px); width: min(420px, calc(100vw - 40px)); display: block; margin: 0; }
 .veredicto .rol { margin: 0; color: var(--tinta-3); font-size: 13px; }
 .veredicto h3 { font-size: 26px; margin: 2px 0 8px; }
 .veredicto .linea { margin: 0 0 6px; font-size: 14px; color: var(--tinta); }
@@ -163,8 +165,8 @@ body.volando .titulo, body.volando .pie { opacity: 0; }
   <h1>Dónde se puede medir pozo por pozo</h1>
   <p class="bajada">De {{n_auditadas}} jurisdicciones auditadas, {{n_con_fractura}} publican petróleo por pozo con fecha de fractura o terminación y {{n_entran}} entran al estudio. Lo oscuro no publica por pozo, o no pudimos verificarlo: no dice que no produce.</p>
   <ul>
-    <li><span class="marca medido">medido</span><b>Vaca Muerta, medición original.</b> Un mes después de fracturar un pozo hijo, los padres a menos de 1 km rinden <b>entre {{vm_rango_bajo}} y {{vm_rango_alto}} puntos menos</b> que controles de la misma edad a 2 a 5 km.</li>
-    <li data-cuenca="colorado" data-se-replica="{{co_replica}}"><span class="marca medido">medido</span><b>Colorado, {{co_lectura}}.</b> Brecha al mes 1 de <b>{{co_brecha}} puntos</b> (IC 95% por bloques de 5 km: {{co_ic_bajo}} a {{co_ic_alto}}). Colorado se midió antes de la auditoría y no tiene registro en ella.</li>
+    <li><span class="marca medido">medido</span><b>Vaca Muerta, medición original.</b> Un mes después de fracturar un pozo hijo, los padres a menos de 1 km rinden <b>entre {{vm_rango_bajo}} y {{vm_rango_alto}} puntos menos</b> que pozos de control a 2 a 5 km de un pozo hijo.</li>
+    <li data-cuenca="colorado" data-se-replica="{{co_replica}}"><span class="marca medido">medido</span><b>Colorado, {{co_lectura}}.</b> Brecha al mes 1 de <b>{{co_brecha}} puntos</b> (IC 95% por bloques de 5 km: {{co_ic_bajo}} a {{co_ic_alto}}). Al mes 6 la brecha no se cierra del todo (-5,9). Colorado se midió antes de la auditoría y no tiene registro en ella.</li>
     <li data-cuenca="wyoming" data-se-replica="{{wy_replica}}" data-incluye-cero="{{wy_cero_n}}"><span class="marca medido">medido</span><b>Wyoming, {{wy_lectura}}.</b> Brecha al mes 1 de <b>{{wy_brecha}} puntos</b> (IC 95% por bloques de 5 km: {{wy_ic_bajo}} a {{wy_ic_alto}}), {{wy_cero}}. El mes 0 es la primera fecha de terminación, no la fractura.</li>
   </ul>
   <p class="lectura-final">Se replica en {{replican}} de {{de}} cuencas. Sin estimación conjunta.</p>

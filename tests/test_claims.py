@@ -122,3 +122,19 @@ def test_caso_de_interferencia_sin_numeros_sueltos():
 def test_readme_sin_numeros_sueltos():
     """Cada cifra de README.md esta fijada por un claim o es parte de una definicion de README_DEFINICIONALES."""
     assert claims.numeros_sin_fijar(claims.R, claims.README_DEFINICIONALES) == []
+
+
+def test_espera_cada_cifra_fija_tiene_su_claim():
+    """Las siete cifras fijas del texto de site/espera.html coinciden con su patron sin warehouse (CI corre sin el)."""
+    texto = (claims.ROOT / claims.W_ESPERA).read_text(encoding="utf-8")
+    leidas = {c.id: claims.extraer(texto, c.patron) for c in claims._claims_espera()}
+    assert leidas == {"espera_eventos@site": 2094, "espera_brecha_descontada@site": 19, "espera_brecha_mes1@site": 23,
+                      "espera_brecha_mes6@site": 2.1, "espera_rango_inferior@site": 6.4, "espera_rango_superior@site": 11.4,
+                      "espera_mediana_24@site": -954}
+    assert {c.id for c in claims._claims_espera()} <= {c.id for c in claims.CLAIMS}
+
+
+def test_espera_no_dice_misma_edad():
+    """El control no se empareja por edad (revision independiente, F1): la pagina no lo describe asi."""
+    for ruta in (claims.W_ESPERA, "pipeline/espera_template.html"):
+        assert "misma edad" not in (claims.ROOT / ruta).read_text(encoding="utf-8")
