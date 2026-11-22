@@ -9,7 +9,7 @@ Una cifra es todo número con sus separadores y su signo (1.500, -23,0, 0,036), 
 
 El contrato:
 1. Las páginas que no son la puerta de entrada (hallazgos del wiki y páginas del sitio salvo `index.html`) conservan cada
-   cifra, con su cantidad, igual que en la foto.
+   cifra, con su cantidad, igual que en la foto, salvo las que se declaran en REMOVIDAS con su motivo.
 2. La puerta de entrada (README y `site/index.html`) puede repetir y reordenar cifras, porque la historia las cuenta de
    nuevo, pero el conjunto de cifras distintas de todo el repositorio visible no cambia: no entra ninguna y solo sale la
    que se declara en REMOVIDAS con su motivo (la meta es cero).
@@ -19,6 +19,10 @@ El contrato:
    Una excepción declarada (fix/cifras-discordantes): `costo_cv.media` pasó de la media del entrenamiento (-0.0029998...)
    a la media del área (-0.027, redondeada del wiki a 3 decimales: el dato crudo del 2026-11-20 ya no existe), para que
    el sitio compare contra la misma referencia que el README. La huella de la foto se rehízo solo por eso.
+   Otra excepción declarada (fix/replay-contador): el contador de `site/replay.html` deja de acumular y muestra el
+   diferido del mes, porque un total que solo sube se lee como pérdida. Cambia solo el código del guion (sale el
+   redondeo a millones), no el texto visible ni los datos; la huella del archivo de esa página se rehízo solo por eso.
+   Página nueva (espera): `site/espera.html` entró a la foto con sus cifras; las nuevas son los supuestos de la regla de plata (pipeline/espera.py).
 
 Para rehacer la foto (solo si cambia la base): `python tests/test_deslop_numeros.py --congelar <ref-git>`.
 """
@@ -44,12 +48,17 @@ CIFRA = re.compile(f"{FECHA}|{NUMERO}")
 TESTS_README = re.compile(r"hay \d+ tests")
 
 # cifra -> motivo. Cifras que estaban en la foto y ya no están en ninguna página. Vacío si todo se conserva.
-REMOVIDAS: dict[str, str] = {}
+# Una cifra declarada sale de una página y de la foto: el archivo congelado no se toca, se declara la excepción.
+REMOVIDAS: dict[str, str] = {
+    "28726": "los términos de la fuente no permiten reproducir las filas",
+    "33591": "los términos de la fuente no permiten reproducir las filas",
+}
 
 # La puerta de entrada: los dos archivos que la historia reescribió.
 PUERTA = ("README.md", "site/index.html")
 
-PAGINAS_HTML = ["site/index.html", "site/informe.html", "site/replay.html", "site/mundo.html", "site/globo.html"]
+PAGINAS_HTML = ["site/index.html", "site/informe.html", "site/replay.html", "site/mundo.html", "site/globo.html",
+                "site/espera.html"]
 
 
 def archivos() -> list[str]:
@@ -148,7 +157,11 @@ def test_las_cifras_no_cambian(ruta: str) -> None:
         assert _delta(antes[ruta]["visible"], ahora["visible"]) == {}, f"cambiaron cifras del texto visible de {ruta}"
         assert antes[ruta]["huella_archivo"] == ahora["huella_archivo"], f"cambiaron cifras dentro del código de {ruta}"
     else:
-        assert _delta(antes[ruta]["texto"], ahora["texto"]) == {}, f"cambiaron cifras de {ruta}"
+        delta = _delta(antes[ruta]["texto"], ahora["texto"])
+        nuevas = {k for k, v in delta.items() if v > 0}
+        assert nuevas == set(), f"entraron cifras nuevas en {ruta}"
+        salidas = {k for k, v in delta.items() if v < 0}
+        assert salidas <= set(REMOVIDAS), f"cambiaron cifras de {ruta}: declara en REMOVIDAS cada cifra que sale"
 
 
 def _ahora_de_todos() -> dict[str, dict]:

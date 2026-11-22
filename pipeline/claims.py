@@ -2527,6 +2527,520 @@ def _claims_mecanismo() -> list[Claim]:
     return cl
 
 
+W_CAU = "wiki/hallazgos/causal.md"
+
+
+def _claims_causal() -> list[Claim]:
+    """Cifras de la pagina del diseno causal (resumen, tablas, limites) y de la fila y el limite del README, contra los marts
+    de pipeline.causal. Un veredicto impreso que ya no es el del mart da nan (FAIL)."""
+    def vd(dis: str, col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_causal_veredicto where diseno = '{dis}'").fetchone()[0]
+
+    def se(modelo: str, e: int, col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_causal_serie where diseno = 'D1' and modelo = '{modelo}' "
+                                       f"and e = {e}").fetchone()[0]
+
+    def pl(dis: str, nombre: str, col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_causal_placebo where diseno = '{dis}' and placebo = "
+                                       f"'{nombre}'").fetchone()[0]
+
+    def ex(dis: str, cantidad: str, col: str = "valor", factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(f"select {col} from mart_causal_extra where diseno = '{dis}' and cantidad = "
+                                                f"'{cantidad}'").fetchone()[0]
+
+    def op(nombre: str, col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_causal_operador where operador = '{nombre}'").fetchone()[0]
+
+    def si_veredicto(dis: str, texto: str, fn: Callable) -> Callable:
+        def f(con) -> float:
+            v = con.execute(f"select veredicto from mart_causal_veredicto where diseno = '{dis}'").fetchone()[0]
+            return float(fn(con)) if v == texto else float("nan")
+        return f
+
+    def umbral_cierre(con) -> float:
+        from pipeline.causal import FRACCION_CIERRE
+        return FRACCION_CIERRE * vd("D2", "valor")(con)
+
+    cl = []
+    d1, n0, d2 = "{:.1f}", "{:,.0f}", "{:.2f}"
+
+    def frase(clave, fichero, lits, fns, tols, fmts):
+        for k, (fn, tol, fmt) in enumerate(zip(fns, tols, fmts)):
+            cl.append(_c(f"cau_{clave}_{k}@{'readme' if fichero == R else 'wiki'}", fichero, _fr(k, *lits), fn, tol, fmt,
+                         tabla="mart_causal_veredicto"))
+
+    V1, V1B, V2 = "no sobrevive a su placebo", "sin muestra", "sostiene: comunicación física causal bajo tendencias paralelas"
+    # resumen
+    frase("d1", W_CAU, ["**D1, caudal de petróleo al mes 1: no sobrevive a su placebo.** Un placebo da un efecto donde no debería "
+                        "haberlo: el diseño no separa la fractura de la selección. ATT(1) = ", " puntos (IC 95% por bloques de 5 km: ",
+                        " a ", "), ", " padres tratados en ", " bloques."],
+          [si_veredicto("D1", V1, vd("D1", "valor")), vd("D1", "ic_bajo"), vd("D1", "ic_alto"), vd("D1", "n_tratados"),
+           vd("D1", "n_bloques")], [0.05] * 3 + [0] * 2, [d1] * 3 + [n0] * 2)
+    frase("d1b", W_CAU, ["**D1b, persistencia en los meses 7 a 24: sin muestra.** La muestra no alcanza el mínimo que fijó la regla; "
+                         "el valor se publica pero no decide nada. ", " tratados (la regla pide 200); diferencia ", " puntos (IC 95%: ",
+                         " a ", ")."],
+          [si_veredicto("D1b", V1B, vd("D1b", "n_tratados")), vd("D1b", "valor"), vd("D1b", "ic_bajo"), vd("D1b", "ic_alto")],
+          [0, 0.05, 0.05, 0.05], [n0, d1, d1, d1])
+    frase("d2", W_CAU, ["**D2, corte de agua: " + V2 + ".** Ningún placebo rompe, el cierre solo no explica el salto y el IC queda "
+                        "entero sobre 2 puntos. Mide la proporción de agua, no su volumen: el corte también sube si el petróleo cae con el agua constante, y D2 no separa las dos cosas; el nombre del veredicto es el de la regla fijada. ATT_W = ", " puntos porcentuales (IC 95%: ", " a ", "), ", " tratados."],
+          [si_veredicto("D2", V2, vd("D2", "valor")), vd("D2", "ic_bajo"), vd("D2", "ic_alto"), vd("D2", "n_tratados")],
+          [0.05] * 3 + [0], [d1] * 3 + [n0])
+    frase("lectura", W_CAU, ["un cierre de más de medio mes sin hijo cerca lo sube ", " puntos porcentuales, menos de la mitad."],
+          [ex("D2", "cierre_placebo")], [0.05], [d1])
+    frase("lectura_pet", W_CAU, ["La caída del caudal de petróleo, en cambio, no sobrevive como causa con estos controles: el "
+                                 "placebo de nunca tratados da ", " puntos con un IC que excluye cero, y M* = ", " queda bajo 1."],
+          [pl("D1", "nunca_tratados", "att"), ex("D1", "M*")], [0.05, 0.005], [d1, d2])
+    # tabla de la serie de D1 (principal y S1)
+    for e in range(-3, 7):
+        fila = r"\| " + str(e) + r" \| [\d.]+ \| [\d.]+ \| "
+        cl.append(_c(f"cau_serie_{e}_n@wiki", W_CAU, r"\| " + str(e) + r" \| (" + N[1:-1] + r") \| [\d.]+ \|",
+                     se("principal", e, "n_tratados"), 0, n0, tabla="mart_causal_serie"))
+        cl.append(_c(f"cau_serie_{e}_att@wiki", W_CAU, fila + "(" + NG + r") \|", se("principal", e, "att"), 0.05, d1,
+                     tabla="mart_causal_serie"))
+        cl.append(_c(f"cau_serie_{e}_bajo@wiki", W_CAU, fila + NG + r" \| (" + NG + r") a", se("principal", e, "ic_bajo"), 0.05,
+                     d1, tabla="mart_causal_serie"))
+        cl.append(_c(f"cau_serie_{e}_alto@wiki", W_CAU, fila + NG + r" \| " + NG + r" a (" + NG + r") \|",
+                     se("principal", e, "ic_alto"), 0.05, d1, tabla="mart_causal_serie"))
+        f2 = fila + NG + r" \| " + NG + r" a " + NG + r" \| "
+        cl.append(_c(f"cau_serie_{e}_s1@wiki", W_CAU, f2 + "(" + NG + r") \|", se("S1", e, "att"), 0.05, d1,
+                     tabla="mart_causal_serie"))
+    # placebos (D1 y D2)
+    for dis, nombre, etq in [("D1", "fecha_falsa", "Fecha falsa"), ("D1", "distancia_falsa", "Distancia falsa"),
+                             ("D1", "nunca_tratados", "Nunca tratados"), ("D2", "previo", "Previo"),
+                             ("D2", "fecha_falsa", "Fecha falsa"), ("D2", "distancia_falsa", "Distancia falsa")]:
+        # las filas de D2 van despues del encabezado "ΔW (pp)"
+        pre = r"ΔW \(pp\).*?" if dis == "D2" else r"Placebos de D1.*?"
+        fila = pre + r"\| " + etq + r" \([^|]*\) \| "
+        cl.append(_c(f"cau_pl_{dis}_{nombre}_n@wiki", W_CAU, fila + r"(" + N[1:-1] + r") \|", pl(dis, nombre, "n_tratados"), 0,
+                     n0, tabla="mart_causal_placebo"))
+        f2 = fila + r"[\d.]+ \| "
+        cl.append(_c(f"cau_pl_{dis}_{nombre}_att@wiki", W_CAU, f2 + "(" + NG + r") \|", pl(dis, nombre, "att"), 0.05, d1,
+                     tabla="mart_causal_placebo"))
+        cl.append(_c(f"cau_pl_{dis}_{nombre}_bajo@wiki", W_CAU, f2 + NG + r" \| (" + NG + r") a", pl(dis, nombre, "ic_bajo"),
+                     0.05, d1, tabla="mart_causal_placebo"))
+        cl.append(_c(f"cau_pl_{dis}_{nombre}_alto@wiki", W_CAU, f2 + NG + r" \| " + NG + r" a (" + NG + r") \|",
+                     pl(dis, nombre, "ic_alto"), 0.05, d1, tabla="mart_causal_placebo"))
+    # M* y potencia
+    frase("mstar", W_CAU, ["M* = ", ": si cada paso posterior a la fractura pudiera desviarse"], [ex("D1", "M*")], [0.005], [d2])
+    frase("potencia", W_CAU, ["La pendiente previa que se detectaría con 80% de potencia es ", " puntos por mes."],
+          [ex("D1", "potencia_pretrendencia")], [0.05], [d1])
+    # operadores
+    for nombre in ("Pluspetrol", "Tecpetrol", "Vista", "YPF"):
+        fila = r"\| " + nombre + r" \| ([\d.]+) \| "
+        cl.append(_c(f"cau_op_{nombre}_n@wiki", W_CAU, fila, op(nombre, "n_tratados"), 0, n0, tabla="mart_causal_operador"))
+        f2 = r"\| " + nombre + r" \| [\d.]+ \| "
+        cl.append(_c(f"cau_op_{nombre}_att@wiki", W_CAU, f2 + "(" + NG + r") \|", op(nombre, "att"), 0.05, d1,
+                     tabla="mart_causal_operador"))
+        cl.append(_c(f"cau_op_{nombre}_alto@wiki", W_CAU, f2 + NG + r" \| " + NG + r" a (" + NG + r") \|", op(nombre, "ic_alto"),
+                     0.05, d1, tabla="mart_causal_operador"))
+    # D1b, D2 y descriptivos
+    frase("d1b_cuerpo", W_CAU, ["en los meses 1 a 24: ", " tratados en ", " bloques, diferencia "],
+          [vd("D1b", "n_tratados"), vd("D1b", "n_bloques")], [0, 0], [n0, n0])
+    frase("acum", W_CAU, ["Suma de los meses 0 a 23, sin veredicto: ", " puntos-mes (IC 95%: ", " a ", ")."],
+          [ex("D1b", "acumulado_e0_e23"), ex("D1b", "acumulado_e0_e23", "ic_bajo"), ex("D1b", "acumulado_e0_e23", "ic_alto")],
+          [0.05] * 3, [d1] * 3)
+    frase("d2_cuerpo", W_CAU, ["- ATT_W = ", " puntos porcentuales (IC 95%: ", " a ", "), ", " tratados, ", " bloques."],
+          [vd("D2", "valor"), vd("D2", "ic_bajo"), vd("D2", "ic_alto"), vd("D2", "n_tratados"), vd("D2", "n_bloques")],
+          [0.05] * 3 + [0] * 2, [d1] * 3 + [n0] * 2)
+    frase("cierre", W_CAU, ["grupo de edad: ", " puntos porcentuales (IC 95%: ", " a ", "), ", " meses cerrados."],
+          [ex("D2", "cierre_placebo"), ex("D2", "cierre_placebo", "ic_bajo"), ex("D2", "cierre_placebo", "ic_alto"),
+           ex("D2", "cierre_placebo", "n")], [0.05] * 3 + [0], [d1] * 3 + [n0])
+    frase("umbral", W_CAU, ["menos de la mitad del efecto (el umbral es ", ")."], [umbral_cierre], [0.05], [d1])
+    for pos in ("costado", "punta"):
+        fila = r"\| " + pos + r" \| "
+        cl.append(_c(f"cau_pos_{pos}_n@wiki", W_CAU, fila + r"([\d.]+) \|", ex("D1", f"posicion_{pos}", "n"), 0, n0,
+                     tabla="mart_causal_extra"))
+        cl.append(_c(f"cau_pos_{pos}_d1@wiki", W_CAU, fila + r"[\d.]+ \| (" + NG + r") \|", ex("D1", f"posicion_{pos}"), 0.05, d1,
+                     tabla="mart_causal_extra"))
+        f3 = fila + r"[\d.]+ \| " + NG + r" \| " + NG + r" a " + NG + r" \| [\d.]+ \| "
+        cl.append(_c(f"cau_pos_{pos}_d2@wiki", W_CAU, f3 + "(" + NG + r") \|", ex("D2", f"posicion_{pos}"), 0.05, d1,
+                     tabla="mart_causal_extra"))
+    frase("lee", W_CAU, ["en el mes 1 (meses con 0,9 del mes producido o más): de ", " a ", " puntos. Producen el mes entero ",
+                         "% de los tratados y ", "% de los controles"],
+          [ex("D1", "lee_ic_bajo", factor=100), ex("D1", "lee_ic_alto", factor=100), ex("D1", "lee_q_tratados", factor=100),
+           ex("D1", "lee_q_controles", factor=100)], [0.05, 0.05, 0.5, 0.5], [d1, d1, n0, n0])
+    frase("lim_pre", W_CAU, ["el mes -1 vale ", " puntos (IC 95%: ", " a ", ")."],
+          [se("principal", -1, "att"), se("principal", -1, "ic_bajo"), se("principal", -1, "ic_alto")], [0.05] * 3, [d1] * 3)
+    frase("lim_ctrl", W_CAU, ["con aún no tratados ATT(1) = ", ", sumando los nunca tratados ", ", y los nunca tratados con "
+                              "fechas sorteadas ya dan ", " puntos"],
+          [se("principal", 1, "att"), se("S1", 1, "att"), pl("D1", "nunca_tratados", "att")], [0.05] * 3, [d1] * 3)
+    # fila del README
+    fila = r"Diseño causal con controles aún no tratados [^|]*\| "
+    frase("readme_cifra", R, ["sube el corte de agua del padre ", " puntos porcentuales (", " tratados), pero sin los pozos de "
+                              "YPF no se separa de cero; el petróleo al mes 1 da ", " puntos (", " tratados)"],
+          [vd("D2", "valor"), vd("D2", "n_tratados"), vd("D1", "valor"), vd("D1", "n_tratados")], [0.05, 0, 0.05, 0],
+          [d1, n0, d1, n0])
+    frase("readme_ic", R, ["IC 95% por bloques de 5 km del corte de agua: ", " a ", "; un cierre de más de medio mes sin hijo cerca sube el "
+                           "corte ", " (IC ", " a ", "); del petróleo: ", " a ", ", pero padres nunca tratados con fechas sorteadas "
+                           "ya dan ", " (IC ", " a ", ")"],
+          [vd("D2", "ic_bajo"), vd("D2", "ic_alto"), ex("D2", "cierre_placebo"), ex("D2", "cierre_placebo", "ic_bajo"),
+           ex("D2", "cierre_placebo", "ic_alto"), vd("D1", "ic_bajo"), vd("D1", "ic_alto"), pl("D1", "nunca_tratados", "att"),
+           pl("D1", "nunca_tratados", "ic_bajo"), pl("D1", "nunca_tratados", "ic_alto")], [0.05] * 10, [d1] * 10)
+    # la frase de D3 en el medio de esta celda la verifica _claims_causal_profundo (readme_d3)
+    frase("readme_ver", R, ["; el petróleo no sobrevive "
+                            "a su placebo (M* = ", "), así que la brecha sigue siendo una huella y no se lee como efecto causal; la "
+                            "persistencia de los meses 7 a 24 queda sin muestra (", " tratados de 200)"],
+          [si_veredicto("D2", V2, si_veredicto("D1", V1, ex("D1", "M*"))), si_veredicto("D1b", V1B, vd("D1b", "n_tratados"))],
+          [0.005, 0], [d2, n0])
+    return cl
+
+
+W_CAUP = "wiki/hallazgos/causal_profundo.md"
+
+
+def _claims_causal_profundo() -> list[Claim]:
+    """Cifras de la pagina de causal profundo (D3: agua que entra o petroleo que sale) contra los marts de
+    pipeline.causal_profundo. Un veredicto impreso que ya no es el del mart da nan (FAIL)."""
+    from pipeline.causal_profundo import NOMBRE_D3, NOMBRE_PLACEBO_D3, TEXTO_D3
+
+    def d3(cantidad: str, col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(f"select {col} from mart_causal_profundo_d3 where cantidad = "
+                                                f"'{cantidad}'").fetchone()[0]
+
+    def vd(col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_causal_profundo_veredicto where diseno = 'D3'").fetchone()[0]
+
+    def si_veredicto(texto: str, fn: Callable) -> Callable:
+        def f(con) -> float:
+            v = con.execute("select veredicto from mart_causal_profundo_veredicto where diseno = 'D3'").fetchone()[0]
+            return float(fn(con)) if v == texto else float("nan")
+        return f
+
+    def cuota(cantidad: str, col: str) -> Callable:
+        return lambda con: 100 * d3(cantidad, col)(con) / d3("dA", col)(con)
+
+    cl = []
+    d1, n0 = "{:.1f}", "{:,.0f}"
+
+    def frase(clave, lits, fns, tols, fmts, tabla="mart_causal_profundo_d3", fichero=W_CAUP):
+        sufijo = "readme" if fichero == R else "wiki"
+        for k, (fn, tol, fmt) in enumerate(zip(fns, tols, fmts)):
+            cl.append(_c(f"caup_{clave}_{k}@{sufijo}", fichero, _fr(k, *lits), fn, tol, fmt, tabla=tabla))
+
+    V3 = "entra agua en los días producidos"
+    # resumen: el veredicto impreso va pegado a la primera cifra, que da nan si el mart dice otro
+    frase("agua", ["- ◐ **D3, agua que entra o petróleo que sale: " + V3 + ".** " + TEXTO_D3[V3] + "\n- Agua por día calendario: "," puntos del líquido de la base (IC 95% por bloques de 5 km: ", " a ",
+                   "), ", " padres tratados en ", " bloques."],
+          [si_veredicto(V3, vd("valor")), vd("ic_bajo"), vd("ic_alto"), vd("n_tratados"), vd("n_bloques")],
+          [0.05] * 3 + [0] * 2, [d1] * 3 + [n0] * 2, tabla="mart_causal_profundo_veredicto")
+    frase("pd", ["- Agua por día producido: ", " puntos (IC 95%: ", " a ", "), ", " tratados; petróleo por día producido: ",
+                 " (IC 95%: ", " a ", ")."],
+          [d3("dA_pd", "valor"), d3("dA_pd", "ic_bajo"), d3("dA_pd", "ic_alto"), d3("dA_pd", "n_tratados"),
+           d3("dO_pd", "valor"), d3("dO_pd", "ic_bajo"), d3("dO_pd", "ic_alto")],
+          [0.05] * 3 + [0] + [0.05] * 3, [d1] * 3 + [n0] + [d1] * 3)
+    frase("o", ["- Petróleo por día calendario: ", " puntos (IC 95%: ", " a ", ")."],
+          [d3("dO", "valor"), d3("dO", "ic_bajo"), d3("dO", "ic_alto")], [0.05] * 3, [d1] * 3)
+    frase("nt_dw", ["sobre el corte de agua de D2: ", " puntos porcentuales (IC 95%: ", " a ", "), ", " pseudo tratados"],
+          [d3("placebo_nunca_tratados_dW", "valor"), d3("placebo_nunca_tratados_dW", "ic_bajo"),
+           d3("placebo_nunca_tratados_dW", "ic_alto"), d3("placebo_nunca_tratados_dW", "n_tratados")],
+          [0.05] * 3 + [0], [d1] * 3 + [n0])
+    # tabla de volumenes
+    for k, nombre in NOMBRE_D3.items():
+        fila = r"\| " + re.escape(nombre) + r" \| "
+        cl.append(_c(f"caup_tab_{k}_n@wiki", W_CAUP, fila + N + r" \|", d3(k, "n_tratados"), 0, n0,
+                     tabla="mart_causal_profundo_d3"))
+        cl.append(_c(f"caup_tab_{k}_nc@wiki", W_CAUP, fila + r"[\d.]+ \| " + N + r" \|", d3(k, "n_controles"), 0, n0,
+                     tabla="mart_causal_profundo_d3"))
+        f3 = fila + r"[\d.]+ \| [\d.]+ \| "
+        cl.append(_c(f"caup_tab_{k}_att@wiki", W_CAUP, f3 + "(" + NG + r") \|", d3(k, "valor"), 0.05, d1,
+                     tabla="mart_causal_profundo_d3"))
+        cl.append(_c(f"caup_tab_{k}_bajo@wiki", W_CAUP, f3 + NG + r" \| (" + NG + r") a", d3(k, "ic_bajo"), 0.05, d1,
+                     tabla="mart_causal_profundo_d3"))
+        cl.append(_c(f"caup_tab_{k}_alto@wiki", W_CAUP, f3 + NG + r" \| " + NG + r" a (" + NG + r") \|", d3(k, "ic_alto"),
+                     0.05, d1, tabla="mart_causal_profundo_d3"))
+    # placebos
+    for k, nombre in NOMBRE_PLACEBO_D3.items():
+        fila = r"\| " + re.escape(nombre) + r" \| "
+        cl.append(_c(f"caup_pl_{k}_n@wiki", W_CAUP, fila + N + r" \|", d3(k, "n_tratados"), 0, n0,
+                     tabla="mart_causal_profundo_d3"))
+        f2 = fila + r"[\d.]+ \| "
+        cl.append(_c(f"caup_pl_{k}_att@wiki", W_CAUP, f2 + "(" + NG + r") \|", d3(k, "valor"), 0.05, d1,
+                     tabla="mart_causal_profundo_d3"))
+        cl.append(_c(f"caup_pl_{k}_bajo@wiki", W_CAUP, f2 + NG + r" \| (" + NG + r") a", d3(k, "ic_bajo"), 0.05, d1,
+                     tabla="mart_causal_profundo_d3"))
+        cl.append(_c(f"caup_pl_{k}_alto@wiki", W_CAUP, f2 + NG + r" \| " + NG + r" a (" + NG + r") \|", d3(k, "ic_alto"),
+                     0.05, d1, tabla="mart_causal_profundo_d3"))
+    # puente con D2 y limite de la muestra por dia producido
+    frase("puente", ["(D2 toma el mayor de los dos) da ", " puntos porcentuales (IC 95%: ", " a ", "), contra ", " de D2."],
+          [d3("dW_media", "valor"), d3("dW_media", "ic_bajo"), d3("dW_media", "ic_alto"),
+           lambda con: con.execute("select valor from mart_causal_veredicto where diseno = 'D2'").fetchone()[0]],
+          [0.05] * 4, [d1] * 4)
+    # texto de D2 en README (fila y limite) y en causal.md, segun el veredicto de D3
+    # el texto dice que el petroleo por dia producido "no se separa de cero": si su IC deja de incluir el cero, nan
+    def o_pd_cero(fn):
+        def g(con):
+            lo, hi = d3("dO_pd", "ic_bajo")(con), d3("dO_pd", "ic_alto")(con)
+            return fn(con) if lo <= 0 <= hi else float("nan")
+        return g
+
+    # empieza despues del enlace: numeros_sin_fijar borra el texto entre comillas invertidas antes de buscar
+    frase("readme_d3", ["(wiki/hallazgos/causal_profundo.md)), muestra que en los días que el padre produce entra agua: su agua "
+                        "por día producido sube ", " puntos del líquido de la base (IC ", " a ", ") y su petróleo por día "
+                        "producido no se separa de cero; el volumen de agua del mes no alcanza a separarse de cero (", ", IC ",
+                        " a ", "), y no se midió si es porque el padre pierde días;"],
+          [o_pd_cero(si_veredicto(V3, d3("dA_pd", "valor"))), d3("dA_pd", "ic_bajo"), d3("dA_pd", "ic_alto"), vd("valor"),
+           vd("ic_bajo"), vd("ic_alto")], [0.05] * 6, [d1] * 6, fichero=R)
+    frase("cau_d3", ["- ◐ **Debajo del corte de agua (D3, [causal_profundo.md](causal_profundo.md), regla fijada después): " + V3
+                     + ".** En los días que el padre produce, su agua por día sube ", " puntos del líquido de la base (IC 95%: ",
+                     " a ", ") y su petróleo por día no se separa de cero (", ", IC ", " a ",
+                     "); el volumen de agua del mes no alcanza a separarse de cero (", ", IC ", " a ",
+                     "), y no se midió si es porque ese mes el padre produce menos días. El nombre \"comunicación física\" se conserva con esa "
+                     "salvedad. El placebo de nunca tratados sobre el corte de agua, que la regla de D2 no tenía, da ",
+                     " puntos porcentuales (IC 95%: ", " a ", "): no rompe."],
+          [o_pd_cero(si_veredicto(V3, d3("dA_pd", "valor"))), d3("dA_pd", "ic_bajo"), d3("dA_pd", "ic_alto"), d3("dO_pd", "valor"),
+           d3("dO_pd", "ic_bajo"), d3("dO_pd", "ic_alto"), vd("valor"), vd("ic_bajo"), vd("ic_alto"),
+           d3("placebo_nunca_tratados_dW", "valor"), d3("placebo_nunca_tratados_dW", "ic_bajo"),
+           d3("placebo_nunca_tratados_dW", "ic_alto")], [0.05] * 12, [d1] * 12, fichero="wiki/hallazgos/causal.md")
+    frase("cuota", ["en el mismo commit que dio las cifras): quedan ", "% de los tratados y ", "% de los controles."],
+          [cuota("dA_pd", "n_tratados"), cuota("dA_pd", "n_controles")], [0.5, 0.5], [n0, n0])
+
+    # D4: dosis por distancia y por tamano del hijo
+    from pipeline.causal_profundo import NOMBRE_BANDA, NOMBRE_TERCIL
+
+    def d4(corte: str, banda: str, res: str, col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(f"select {col} from mart_causal_profundo_d4 where corte = '{corte}' and "
+                                                f"banda = '{banda}' and resultado = '{res}'").fetchone()[0]
+
+    def v4(dis: str, col: str, texto: str | None = None) -> Callable:
+        def f(con) -> float:
+            v = con.execute(f"select veredicto, {col} from mart_causal_profundo_veredicto where diseno = '{dis}'").fetchone()
+            return float(v[1]) if texto is None or v[0] == texto else float("nan")
+        return f
+
+    SG = "sin gradiente"
+    T4 = "mart_causal_profundo_d4"
+
+    def con_veredicto(dis: str, fn: Callable) -> Callable:
+        """La cifra pegada al veredicto impreso: nan si el mart ya no dice "sin gradiente"."""
+        return lambda con: fn(con) if con.execute(f"select veredicto from mart_causal_profundo_veredicto where diseno = "
+                                                  f"'{dis}'").fetchone()[0] == SG else float("nan")
+
+    frase("d4_dist", ["- ○ **D4, dosis por distancia: " + SG + ".** El corte de agua sube ", " puntos porcentuales con el "
+                      "primer golpe a menos de 0,5 km, ", " entre 0,5 y 1 km y ", " entre 1 y 2 km; la cercana menos la "
+                      "lejana da ", " (IC 95%: ", " a ", ")."],
+          [con_veredicto("D4_distancia", d4("distancia", "0-0.5", "dW", "valor")), d4("distancia", "0.5-1", "dW", "valor"),
+           d4("distancia", "1-2", "dW", "valor"), v4("D4_distancia", "valor"), v4("D4_distancia", "ic_bajo"),
+           v4("D4_distancia", "ic_alto")], [0.05] * 6, [d1] * 6, tabla=T4)
+    frase("d4_tam", ["- ○ **D4, dosis por tamaño del hijo (agua de fractura): " + SG + ".** Tercil alto ", ", medio ",
+                     ", bajo ", " puntos porcentuales; alto menos bajo ", " (IC 95%: ", " a ", ")."],
+          [con_veredicto("D4_tamano", d4("tamano_agua", "alto", "dW", "valor")), d4("tamano_agua", "medio", "dW", "valor"),
+           d4("tamano_agua", "bajo", "dW", "valor"), v4("D4_tamano", "valor"), v4("D4_tamano", "ic_bajo"),
+           v4("D4_tamano", "ic_alto")], [0.05] * 6, [d1] * 6, tabla=T4)
+    # renglon de D4 en el README (fila de D2) y en el resumen de causal.md
+    frase("readme_d4", ["la dosis, fijada también después, no da gradiente: la cercana menos la lejana da ",
+                        " puntos porcentuales (IC ", " a ", ") y el tercil de más agua de fractura del hijo menos el de "
+                        "menos da ", " (IC ", " a ", ");"],
+          [con_veredicto("D4_distancia", v4("D4_distancia", "valor")), v4("D4_distancia", "ic_bajo"),
+           v4("D4_distancia", "ic_alto"), con_veredicto("D4_tamano", v4("D4_tamano", "valor")), v4("D4_tamano", "ic_bajo"),
+           v4("D4_tamano", "ic_alto")], [0.05] * 6, [d1] * 6, tabla=T4, fichero=R)
+    frase("cau_d4", ["- ○ **Dosis (D4, [causal_profundo.md](causal_profundo.md), regla fijada después): " + SG + ".** El "
+                     "corte de agua no sube más cuando el primer golpe está más cerca (la cercana menos la lejana da ",
+                     " puntos porcentuales, IC 95%: ", " a ", ") ni cuando el hijo usa más agua de fractura (el tercil "
+                     "alto menos el bajo da ", ", IC 95%: ", " a ", ")."],
+          [con_veredicto("D4_distancia", v4("D4_distancia", "valor")), v4("D4_distancia", "ic_bajo"),
+           v4("D4_distancia", "ic_alto"), con_veredicto("D4_tamano", v4("D4_tamano", "valor")), v4("D4_tamano", "ic_bajo"),
+           v4("D4_tamano", "ic_alto")], [0.05] * 6, [d1] * 6, tabla=T4, fichero="wiki/hallazgos/causal.md")
+    # tablas de D4: | nombre | tratados | dW | IC dW | dA | IC dA |
+    celdas6 = [("dW", "valor"), ("dW", "ic_bajo"), ("dW", "ic_alto"), ("dA", "valor"), ("dA", "ic_bajo"), ("dA", "ic_alto")]
+    for corte, nombres in (("distancia", NOMBRE_BANDA), ("tamano_agua", NOMBRE_TERCIL)):
+        for b, nombre in nombres.items():
+            fila = r"\| " + re.escape(nombre) + r" \| "
+            dif = b in ("cercana_menos_lejana", "alto_menos_bajo")
+            if not dif:
+                cl.append(_c(f"caup_d4_{corte}_{b}_n@wiki", W_CAUP, fila + N + r" \|", d4(corte, b, "dW", "n_tratados"),
+                             0, n0, tabla=T4))
+            for j, (res, col) in enumerate(celdas6):
+                p_ = [("(" + NG + ")") if k == j else NG for k in range(6)]
+                patron = (fila + (r" \| " if dif else r"[\d.]+ \| ") + p_[0] + r" \| " + p_[1] + " a " + p_[2] + r" \| "
+                          + p_[3] + r" \| " + p_[4] + " a " + p_[5] + r" \|")
+                cl.append(_c(f"caup_d4_{corte}_{b}_{res}_{col}@wiki", W_CAUP, patron, d4(corte, b, res, col), 0.05, d1,
+                             tabla=T4))
+    frase("d4_fuera", [" y ", " quedan fuera porque su bloque no tiene ninguno"],
+          [d4("distancia", "fuera", "cuenta", "valor")], [0], [n0], tabla=T4)
+    frase("d4_12", ["la banda de 1 a 2 km también sube el corte (IC ", " a ", ")"],
+          [d4("distancia", "1-2", "dW", "ic_bajo"), d4("distancia", "1-2", "dW", "ic_alto")], [0.05] * 2, [d1] * 2, tabla=T4)
+    frase("d4_cob", ["Los cortes de los terciles salen de los ",
+                     " tratados de las celdas de D2 con el agua de fractura del hijo (",
+                     "% de los que tienen corte de agua)"],
+          [d4("tamano_agua", "cobertura", "cuenta", "n_tratados"), d4("tamano_agua", "cobertura", "cuenta", "valor", 100)],
+          [0, 0.5], [n0, n0], tabla=T4)
+    frase("d4_rama", ["el tercil más largo menos el más corto da ", " puntos porcentuales (IC 95%: ", " a ",
+                      "); tiene el dato el ", "% de los tratados"],
+          [d4("rama", "alto_menos_bajo", "dW", "valor"), d4("rama", "alto_menos_bajo", "dW", "ic_bajo"),
+           d4("rama", "alto_menos_bajo", "dW", "ic_alto"), d4("rama", "cobertura", "cuenta", "valor", 100)],
+          [0.05] * 3 + [0.5], [d1] * 3 + [n0], tabla=T4)
+
+    # D5 y D6: forma en el tiempo y donde se sostiene
+    from pipeline.causal_profundo import E_D5, NOMBRE_CORTE_D6
+    T5, T6 = "mart_causal_profundo_d5", "mart_causal_profundo_d6"
+    CAU = "wiki/hallazgos/causal.md"
+
+    def d5(e, res: str, col: str, factor: float = 1.0) -> Callable:
+        donde = "e is null" if e is None else f"e = {int(e)}"
+        return lambda con: factor * con.execute(f"select {col} from {T5} where {donde} and resultado = '{res}'").fetchone()[0]
+
+    def d6(corte: str, grupo: str, col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from {T6} where corte = '{corte}' and grupo = '{grupo}'").fetchone()[0]
+
+    def v56(dis: str, col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from mart_causal_profundo_veredicto where diseno = '{dis}'").fetchone()[0]
+
+    def persiste(fn: Callable) -> Callable:
+        """nan si D5 ya no dice "persiste"."""
+        return lambda con: fn(con) if v56("D5", "veredicto")(con) == "persiste" else float("nan")
+
+    def solo_ypf(fn: Callable) -> Callable:
+        """nan si D6 ya no dice que depende de YPF y solo de YPF."""
+        def f(con) -> float:
+            if v56("D6", "veredicto")(con) != "depende de un operador":
+                return float("nan")
+            malos = [r[0] for r in con.execute(f"select grupo from {T6} where corte = 'sin_operador' and "
+                                               "not coalesce(ic_bajo > 0, false)").fetchall()]
+            return fn(con) if malos == ["YPF"] else float("nan")
+        return f
+
+    def otro_total(con) -> float:
+        n, frac = con.execute(f"select n_tratados, valor from {T5} where resultado = 'otro_golpe_2_12'").fetchone()
+        return n / frac
+
+    def da_tarde(agg: str) -> Callable:
+        return lambda con: con.execute(f"select {agg}(valor) from {T5} where resultado = 'dA' and e >= 2").fetchone()[0]
+
+    t5 = ["la media de los meses 6 a 12 da ", " puntos porcentuales (IC 95%: ", " a ", "), ", " tratados, contra ",
+          " de los meses 0 y 1. El IC queda sobre cero en cada mes desde el mes ", "."]
+    f5 = [persiste(v56("D5", "valor")), v56("D5", "ic_bajo"), v56("D5", "ic_alto"), v56("D5", "n_tratados"),
+          d5(None, "dW_temprano", "valor"), d5(None, "primer_mes_ic_sobre_cero", "valor")]
+    tol5, fmt5 = [0.05] * 3 + [0, 0.05, 0], [d1] * 3 + [n0, d1, n0]
+    cola5 = "La suba del corte de agua no se cura en 12 meses: "
+    frase("d5_res", ["- ● **D5, forma en el tiempo: persiste.** " + cola5 + t5[0]] + t5[1:], f5, tol5, fmt5, tabla=T5)
+    frase("cau_d5", ["- ● **Forma en el tiempo (D5, [causal_profundo.md](causal_profundo.md), regla fijada después): "
+                     "persiste.** " + cola5 + t5[0]] + t5[1:], f5, tol5, fmt5, tabla=T5, fichero=CAU)
+    t6 = [" puntos porcentuales con un IC que incluye cero (IC 95%: ", " a ", "), sobre ", " tratados de ",
+          "; los de YPF solos dan ", " (IC 95%: ", " a ", "), ", " tratados. Sin YPF quedan ",
+          " tratados y el IC es ancho: el dato no muestra la suba fuera de YPF, ni la descarta. Sacar cualquiera de los "
+          "otros operadores con el mínimo (Pluspetrol, Tecpetrol, Vista) la deja sobre cero."]
+    f6 = [solo_ypf(d6("sin_operador", "YPF", "valor")), d6("sin_operador", "YPF", "ic_bajo"), d6("sin_operador", "YPF", "ic_alto"),
+          d6("sin_operador", "YPF", "n_tratados"), d6("todos", "todos", "n_tratados"), d6("operador", "YPF", "valor"),
+          d6("operador", "YPF", "ic_bajo"), d6("operador", "YPF", "ic_alto"), d6("operador", "YPF", "n_tratados"),
+          d6("sin_operador", "YPF", "n_tratados")]
+    tol6, fmt6 = [0.05] * 3 + [0, 0] + [0.05] * 3 + [0, 0], [d1] * 3 + [n0, n0] + [d1] * 3 + [n0, n0]
+    cola6 = ("depende de un operador: YPF.** La suba del corte de agua de D2 depende de YPF: sin los pozos de YPF da ")
+    frase("d6_res", ["- ◐ **D6, dónde se sostiene: " + cola6] + t6, f6, tol6, fmt6, tabla=T6)
+    frase("cau_d6", ["- ◐ **Dónde se sostiene (D6, [causal_profundo.md](causal_profundo.md), regla fijada después): " + cola6]
+          + t6, f6, tol6, fmt6, tabla=T6, fichero=CAU)
+    frase("d6_ver", ["Veredicto: " + cola6.replace(".** ", ". ")] + t6, f6, tol6, fmt6, tabla=T6)
+    # tabla de D5: | e | tratados | dW | IC | dA | IC | dO | IC |
+    for e in E_D5:
+        fila = r"\| " + str(e) + r" \| "
+        cl.append(_c(f"caup_d5_{e}_n@wiki", W_CAUP, fila + N + r" \|", d5(e, "dW", "n_tratados"), 0, n0, tabla=T5))
+        celdas9 = [(r, c) for r in ("dW", "dA", "dO") for c in ("valor", "ic_bajo", "ic_alto")]
+        for j, (res, col) in enumerate(celdas9):
+            p_ = [("(" + NG + ")") if k == j else NG for k in range(9)]
+            patron = (fila + r"[\d.]+ \| " + p_[0] + r" \| " + p_[1] + " a " + p_[2] + r" \| " + p_[3] + r" \| " + p_[4]
+                      + " a " + p_[5] + r" \| " + p_[6] + r" \| " + p_[7] + " a " + p_[8] + r" \|")
+            cl.append(_c(f"caup_d5_{e}_{res}_{col}@wiki", W_CAUP, patron, d5(e, res, col), 0.05, d1, tabla=T5))
+    frase("d5_media", ["- Media de los meses 6 a 12: ", " puntos porcentuales (IC 95%: ", " a ", "), con ",
+                       " tratados (el menor n de esos meses). Media de los meses 0 y 1: ", "."],
+          [d5(None, "dW_tarde", "valor"), d5(None, "dW_tarde", "ic_bajo"), d5(None, "dW_tarde", "ic_alto"),
+           d5(None, "dW_tarde", "n_tratados"), d5(None, "dW_temprano", "valor")], [0.05] * 3 + [0, 0.05],
+          [d1] * 3 + [n0, d1], tabla=T5)
+    frase("d5_primer", ["- Primer mes con el IC del corte de agua sobre cero: ", "."],
+          [d5(None, "primer_mes_ic_sobre_cero", "valor")], [0], [n0], tabla=T5)
+    frase("d5_otro", ["- ", " de ", " tratados (", "%) reciben otro golpe a menos de 2 km"],
+          [d5(None, "otro_golpe_2_12", "n_tratados"), otro_total, d5(None, "otro_golpe_2_12", "valor", 100)], [0, 0.5, 0.5],
+          [n0] * 3, tabla=T5)
+    frase("d5_fuera", ["no tiene ninguno del universo: ", "."], [d5(None, "fuera", "valor")], [0], [n0], tabla=T5)
+    frase("d5_pet", ["el petróleo por día calendario ya cae en el mes -1 (", " puntos, IC 95%: ", " a ", ")"],
+          [d5(-1, "dO", "valor"), d5(-1, "dO", "ic_bajo"), d5(-1, "dO", "ic_alto")], [0.05] * 3, [d1] * 3, tabla=T5)
+    frase("d5_agua", ["queda sobre cero en cada mes de 2 a 12, entre ", " y ", " puntos del líquido de la base."],
+          [da_tarde("min"), da_tarde("max")], [0.05] * 2, [d1] * 2, tabla=T5)
+    # tabla de D6: | corte | grupo | tratados | controles | dW | IC |
+    grupos6 = ([("todos", "todos")] + [(c, op) for op in ("Pluspetrol", "Tecpetrol", "Vista", "YPF")
+                                        for c in ("operador", "sin_operador")]
+               + [("edad", g) for g in ("6-11", "12-23", "24-47", "48+")]
+               + [("periodo", g) for g in ("hasta 2018", "2019-2021", "2022 en adelante")]
+               + [("area", g) for g in ("FORTIN DE PIEDRA", "LA AMARGA CHICA", "LOMA CAMPANA")])
+    def mismos_grupos(fn: Callable) -> Callable:
+        """nan si el mart publica otro conjunto de grupos que el que fijan estos claims (una fila sin claim)."""
+        def f(con) -> float:
+            en_mart = set(con.execute(f"select corte, grupo from {T6}").fetchall())
+            return fn(con) if en_mart == set(grupos6) else float("nan")
+        return f
+
+    for corte, grupo in grupos6:
+        fila = r"\| " + re.escape(NOMBRE_CORTE_D6[corte]) + r" \| " + re.escape(grupo) + r" \| "
+        clave = f"caup_d6_{corte}_{grupo}".replace(" ", "_")
+        cl.append(_c(f"{clave}_n@wiki", W_CAUP, fila + N + r" \|", mismos_grupos(d6(corte, grupo, "n_tratados")), 0, n0,
+                     tabla=T6))
+        cl.append(_c(f"{clave}_c@wiki", W_CAUP, fila + r"[\d.]+ \| " + N + r" \|", d6(corte, grupo, "n_controles"), 0, n0,
+                     tabla=T6))
+        for j, col in enumerate(("valor", "ic_bajo", "ic_alto")):
+            p_ = [("(" + NG + ")") if k == j else NG for k in range(3)]
+            patron = fila + r"[\d.]+ \| [\d.]+ \| " + p_[0] + r" \| " + p_[1] + " a " + p_[2] + r" \|"
+            cl.append(_c(f"{clave}_{col}@wiki", W_CAUP, patron, d6(corte, grupo, col), 0.05, d1, tabla=T6))
+    # README (fila de D2 y limite) y Lectura de causal.md
+    frase("readme_d6_titulo", ["puntos porcentuales (", " tratados), pero sin los pozos de YPF no se separa de cero;"],
+          [solo_ypf(d6("todos", "todos", "n_tratados"))], [0], [n0], tabla=T6, fichero=R)
+    frase("readme_d56", ["la suba no se cura en 12 meses (media de los meses 6 a 12, cada mes solo y no el mayor de dos como en D2: ", ", IC ", " a ",
+                         ") y depende de YPF: sin sus pozos da ", " con un IC que incluye cero (", " a ", ") sobre ",
+                         " tratados de ", ", así que el dato no la muestra fuera de YPF;"],
+          [persiste(v56("D5", "valor")), v56("D5", "ic_bajo"), v56("D5", "ic_alto"), solo_ypf(d6("sin_operador", "YPF", "valor")),
+           d6("sin_operador", "YPF", "ic_bajo"), d6("sin_operador", "YPF", "ic_alto"), d6("sin_operador", "YPF", "n_tratados"),
+           d6("todos", "todos", "n_tratados")], [0.05] * 6 + [0, 0], [d1] * 6 + [n0] * 2, tabla=T6, fichero=R)
+    frase("readme_lim_d56", ["la suba no se cura en 12 meses, y depende de YPF: sin sus pozos da ",
+                             " puntos porcentuales con un IC que incluye cero (", " a ", ", ",
+                             " tratados), así que no se lee como un efecto de toda la cuenca;"],
+          [persiste(solo_ypf(d6("sin_operador", "YPF", "valor"))), d6("sin_operador", "YPF", "ic_bajo"),
+           d6("sin_operador", "YPF", "ic_alto"), d6("sin_operador", "YPF", "n_tratados")], [0.05] * 3 + [0],
+          [d1] * 3 + [n0], tabla=T6, fichero=R)
+    frase("cau_lectura_d56", ["no se cura en los 12 meses siguientes (D5) y depende de YPF (D6): sin YPF da ",
+                              " puntos porcentuales con un IC que incluye cero (", " a ", "), sobre ",
+                              " tratados, así que el dato no la muestra fuera de YPF."],
+          [persiste(solo_ypf(d6("sin_operador", "YPF", "valor"))), d6("sin_operador", "YPF", "ic_bajo"),
+           d6("sin_operador", "YPF", "ic_alto"), d6("sin_operador", "YPF", "n_tratados")], [0.05] * 3 + [0],
+          [d1] * 3 + [n0], tabla=T6, fichero=CAU)
+
+    # D7: Colorado (el mart lo escribe solo `--cuenca colorado`; sin el, SKIP)
+    T7 = "mart_causal_profundo_d7"
+
+    def d7(res: str, col: str, factor: float = 1.0) -> Callable:
+        return lambda con: factor * con.execute(f"select {col} from {T7} where resultado = '{res}'").fetchone()[0]
+
+    def repite(fn: Callable) -> Callable:
+        """nan si D7 ya no dice "se repite"."""
+        def f(con) -> float:
+            v = con.execute(f"select veredicto from {T7} where resultado = 'D7'").fetchone()[0]
+            return fn(con) if v == "se repite" else float("nan")
+        return f
+
+    frase("d7_cob", ["- Cobertura del dato de agua: ", "% de los meses base (meses -6 a -4) de los ",
+                     " tratados de las celdas de D2 tienen agua y días efectivos"],
+          [d7("cobertura_agua", "valor", 100), d7("cobertura_agua", "n_tratados")], [0.5, 0], [n0, n0], tabla=T7)
+    frase("d7_d2", ["- D2, corte de agua: ", " puntos porcentuales (IC 95%: ", " a ", "), con ", " tratados; en Vaca Muerta, "],
+          [repite(d7("dW", "valor")), d7("dW", "ic_bajo"), d7("dW", "ic_alto"), d7("dW", "n_tratados")],
+          [0.05] * 3 + [0], [d1] * 3 + [n0], tabla=T7)
+    frase("d7_cierre", ["El placebo de cierre da ", " (IC 95%: ", " a ", ")"],
+          [d7("placebo_cierre", "valor"), d7("placebo_cierre", "ic_bajo"), d7("placebo_cierre", "ic_alto")],
+          [0.05] * 3, [d1] * 3, tabla=T7)
+    frase("d7_d3", ["- D3, en puntos del líquido base: agua por día calendario ", " (IC 95%: ", " a ",
+                    "), agua por día producido ", " (IC 95%: ", " a ", "), petróleo por día calendario ", " (IC 95%: ",
+                    " a ", "), con ", " tratados."],
+          [repite(d7("dA", "valor")), d7("dA", "ic_bajo"), d7("dA", "ic_alto"), d7("dA_pd", "valor"),
+           d7("dA_pd", "ic_bajo"), d7("dA_pd", "ic_alto"), d7("dO", "valor"), d7("dO", "ic_bajo"), d7("dO", "ic_alto"),
+           d7("dA", "n_tratados")], [0.05] * 9 + [0], [d1] * 9 + [n0], tabla=T7)
+    frase("cau_d7", ["- ● **Otra cuenca (D7, Colorado, [causal_profundo.md](causal_profundo.md), regla fijada después): "
+                     "se repite.** El corte de agua de D2 sostiene también en Colorado, y D3 da allí el mismo veredicto que "
+                     "en Vaca Muerta. En Colorado el corte de agua sube ", " puntos porcentuales (IC 95%: ", " a ", "), ",
+                     " tratados."],
+          [repite(d7("dW", "valor")), d7("dW", "ic_bajo"), d7("dW", "ic_alto"), d7("dW", "n_tratados")],
+          [0.05] * 3 + [0], [d1] * 3 + [n0], tabla=T7, fichero=CAU)
+    frase("readme_d7", ["en Colorado, la cuenca DJ (D7, regla fijada después), el mismo diseño se repite: el corte sube ",
+                        " puntos porcentuales (IC ", " a ", ", ", " tratados) y D3 da el mismo veredicto que en Vaca Muerta;"],
+          [repite(d7("dW", "valor")), d7("dW", "ic_bajo"), d7("dW", "ic_alto"), d7("dW", "n_tratados")],
+          [0.05] * 3 + [0], [d1] * 3 + [n0], tabla=T7, fichero=R)
+    return cl
+
+
 W_GAS = "wiki/hallazgos/gas.md"
 
 
@@ -3273,6 +3787,8 @@ CLAIMS: list[Claim] = [
     *_claims_hijo(),
     *_claims_hijo_celdas(),
     *_claims_mecanismo(),
+    *_claims_causal(),
+    *_claims_causal_profundo(),
     *_claims_hijo_pad(),
     *_claims_gas(),
     *_claims_literatura(),
@@ -3465,6 +3981,14 @@ README_DEFINICIONALES: tuple[str, ...] = (
     r"a 1 km o más",
     r"pedía 150 padres y 400 meses de golpe",
     r"commit bddf1e0771",
+    r"commit 8f52ff1",
+    r"D3, fijado después",
+    r"D7, regla fijada después", r"D3 da el mismo veredicto",
+    r"meses 7 a 24",
+    r"no se cura en 12 meses",
+    r"meses 6 a 12",
+    r"no el mayor de dos como en D2",
+    r"tratados de 200\)",
     r"banda de 0 a 300 m",
     r"a menos de 600 m",
     r"a menos de 300 m",

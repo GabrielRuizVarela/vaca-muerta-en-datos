@@ -18,7 +18,7 @@ import pytest
 
 from pipeline import base_foto, base_mapa, informe, mundo, replay
 from pipeline.decision import valor_indicativo
-from pipeline.ingest import DATA, ROOT
+from pipeline.ingest import DATA, ROOT, load_manifest
 
 WAREHOUSE = DATA / "warehouse.duckdb"
 SITE = ROOT / "site" / "mundo.html"
@@ -29,6 +29,17 @@ NODE = shutil.which("node")
 needs_wh = pytest.mark.skipif(not WAREHOUSE.exists(), reason="warehouse not built")
 needs_site = pytest.mark.skipif(not SITE.exists(), reason="site/mundo.html not generated")
 needs_node = pytest.mark.skipif(NODE is None, reason="node is not installed")
+
+
+def _crudo_presente() -> bool:
+    """El CSV crudo que nombra el manifiesto; la fuente reemplaza su archivo cada día y una copia nueva no lo trae."""
+    try:
+        return (DATA / "raw" / load_manifest()["produccion_no_convencional"]["path"]).exists()
+    except (KeyError, OSError, ValueError):
+        return False
+
+
+needs_raw = pytest.mark.skipif(not _crudo_presente(), reason="el CSV crudo del manifiesto no está en data/raw")
 
 # Runs the page's own core (the script with id "nucleo") against the data embedded in the same file.
 NODE_AUTOTEST = r"""
@@ -987,6 +998,7 @@ def test_timeline_and_wells_are_those_of_the_replay(data):
 
 
 @needs_wh
+@needs_raw
 def test_pozo_columns(data):
     p, m = data["pozos"], data["meta"]
     n = m["n_pozos"]

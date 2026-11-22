@@ -4,9 +4,9 @@ Qué dataset crudo alimenta cada tabla del warehouse. Se genera leyendo `pipelin
 
 Capas: crudo (CSV inmutable en `data/raw`), staging (`stg_`), intermedia (`int_`), hecho (`fct_`), dimensión (`dim_`) y mart (`mart_`). Los marts que escribe un módulo de Python se alimentan de las tablas que ese módulo lee en su código y en las funciones y el SQL de otros módulos de pipeline que importa y usa. El grano es el módulo: todos los marts de un módulo muestran los mismos orígenes, sin separar cuál de ellos usa cada mart. Un origen `manifiesto:` es un valor que `pipeline.build` lee de `data/manifest.json` y le pasa al SQL (la fecha de extracción del archivo de fracturas).
 
-Queda fuera la réplica en el warehouse de Colorado (`pipeline.replicacion`), que escribe con nombres tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*` y `mart_golpes_mismo_padre_colorado*` sí están: se guardan en este warehouse, pero se calculan desde el de Colorado, que tiene tablas con los mismos nombres.
+Queda fuera la réplica en el warehouse de Colorado (`pipeline.replicacion`), que escribe con nombres tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*`, `mart_golpes_mismo_padre_colorado*` y `mart_causal_profundo_d7` sí están: se guardan en este warehouse, pero se calculan desde el de Colorado, que tiene tablas con los mismos nombres.
 
-Hay 157 tablas con 837 relaciones de origen.
+Hay 168 tablas con 929 relaciones de origen.
 
 ## Árbol
 
@@ -26,6 +26,43 @@ manifiesto:fecha_extraccion
         mart_robustez_costo
         mart_robustez_eje
           mart_bloques
+      mart_causal_profundo_d3
+        mart_causal_extra
+        mart_causal_operador
+        mart_causal_placebo
+        mart_causal_serie
+        mart_causal_veredicto
+          mart_causal_profundo_d3 (ver arriba)
+          mart_causal_profundo_d4
+          mart_causal_profundo_d5
+            mart_causal_extra (ver arriba)
+            mart_causal_operador (ver arriba)
+            mart_causal_placebo (ver arriba)
+            mart_causal_serie (ver arriba)
+            mart_causal_veredicto (ver arriba)
+          mart_causal_profundo_d6
+            mart_causal_extra (ver arriba)
+            mart_causal_operador (ver arriba)
+            mart_causal_placebo (ver arriba)
+            mart_causal_serie (ver arriba)
+            mart_causal_veredicto (ver arriba)
+          mart_causal_profundo_d7
+            mart_causal_extra (ver arriba)
+            mart_causal_operador (ver arriba)
+            mart_causal_placebo (ver arriba)
+            mart_causal_serie (ver arriba)
+            mart_causal_veredicto (ver arriba)
+          mart_causal_profundo_veredicto
+            mart_causal_extra (ver arriba)
+            mart_causal_operador (ver arriba)
+            mart_causal_placebo (ver arriba)
+            mart_causal_serie (ver arriba)
+            mart_causal_veredicto (ver arriba)
+      mart_causal_profundo_d4 (ver arriba)
+      mart_causal_profundo_d5 (ver arriba)
+      mart_causal_profundo_d6 (ver arriba)
+      mart_causal_profundo_d7 (ver arriba)
+      mart_causal_profundo_veredicto (ver arriba)
       mart_costo_calibracion
       mart_costo_coef
       mart_costo_cv
@@ -351,6 +388,17 @@ raw:fractura_adjunto_iv
           mart_validacion_holdout (ver arriba)
           mart_validacion_resultados (ver arriba)
         mart_par_rama
+          mart_causal_extra (ver arriba)
+          mart_causal_operador (ver arriba)
+          mart_causal_placebo (ver arriba)
+          mart_causal_profundo_d3 (ver arriba)
+          mart_causal_profundo_d4 (ver arriba)
+          mart_causal_profundo_d5 (ver arriba)
+          mart_causal_profundo_d6 (ver arriba)
+          mart_causal_profundo_d7 (ver arriba)
+          mart_causal_profundo_veredicto (ver arriba)
+          mart_causal_serie (ver arriba)
+          mart_causal_veredicto (ver arriba)
           mart_mecanismo_banda
           mart_mecanismo_contraste
           mart_mecanismo_muestra
@@ -369,6 +417,11 @@ raw:fractura_adjunto_iv
           mart_alcance_rama_anio (ver arriba)
           mart_alcance_rama_diferido (ver arriba)
           mart_alcance_rama_prueba (ver arriba)
+          mart_causal_extra (ver arriba)
+          mart_causal_operador (ver arriba)
+          mart_causal_placebo (ver arriba)
+          mart_causal_serie (ver arriba)
+          mart_causal_veredicto (ver arriba)
           mart_hijo_pad_anio (ver arriba)
           mart_hijo_pad_coef (ver arriba)
           mart_hijo_pad_equilibrio (ver arriba)
@@ -434,6 +487,17 @@ raw:fractura_adjunto_iv
       mart_carga_curva
       mart_carga_fracturas
       mart_carga_operador
+      mart_causal_extra (ver arriba)
+      mart_causal_operador (ver arriba)
+      mart_causal_placebo (ver arriba)
+      mart_causal_profundo_d3 (ver arriba)
+      mart_causal_profundo_d4 (ver arriba)
+      mart_causal_profundo_d5 (ver arriba)
+      mart_causal_profundo_d6 (ver arriba)
+      mart_causal_profundo_d7 (ver arriba)
+      mart_causal_profundo_veredicto (ver arriba)
+      mart_causal_serie (ver arriba)
+      mart_causal_veredicto (ver arriba)
       mart_descomposicion_aditiva
       mart_descomposicion_cierres
       mart_descomposicion_distancia
@@ -587,6 +651,17 @@ raw:produccion_no_convencional
               mart_carga_curva (ver arriba)
               mart_carga_fracturas (ver arriba)
               mart_carga_operador (ver arriba)
+              mart_causal_extra (ver arriba)
+              mart_causal_operador (ver arriba)
+              mart_causal_placebo (ver arriba)
+              mart_causal_profundo_d3 (ver arriba)
+              mart_causal_profundo_d4 (ver arriba)
+              mart_causal_profundo_d5 (ver arriba)
+              mart_causal_profundo_d6 (ver arriba)
+              mart_causal_profundo_d7 (ver arriba)
+              mart_causal_profundo_veredicto (ver arriba)
+              mart_causal_serie (ver arriba)
+              mart_causal_veredicto (ver arriba)
               mart_costo_calibracion (ver arriba)
               mart_costo_coef (ver arriba)
               mart_costo_cv (ver arriba)
@@ -715,6 +790,12 @@ raw:produccion_no_convencional
         mart_hijo_pad_muestra (ver arriba)
         mart_hijo_pad_resumen (ver arriba)
         mart_pozo_12m (ver arriba)
+      mart_causal_profundo_d3 (ver arriba)
+      mart_causal_profundo_d4 (ver arriba)
+      mart_causal_profundo_d5 (ver arriba)
+      mart_causal_profundo_d6 (ver arriba)
+      mart_causal_profundo_d7 (ver arriba)
+      mart_causal_profundo_veredicto (ver arriba)
       mart_dias_perdidos (ver arriba)
       mart_dias_perdidos_colorado (ver arriba)
       mart_dias_perdidos_colorado_mitades (ver arriba)
@@ -765,6 +846,17 @@ raw:produccion_no_convencional
       mart_calendario_prueba (ver arriba)
       mart_carga_anual (ver arriba)
       mart_carga_anual_prueba (ver arriba)
+      mart_causal_extra (ver arriba)
+      mart_causal_operador (ver arriba)
+      mart_causal_placebo (ver arriba)
+      mart_causal_profundo_d3 (ver arriba)
+      mart_causal_profundo_d4 (ver arriba)
+      mart_causal_profundo_d5 (ver arriba)
+      mart_causal_profundo_d6 (ver arriba)
+      mart_causal_profundo_d7 (ver arriba)
+      mart_causal_profundo_veredicto (ver arriba)
+      mart_causal_serie (ver arriba)
+      mart_causal_veredicto (ver arriba)
       mart_costo_calibracion (ver arriba)
       mart_costo_coef (ver arriba)
       mart_costo_cv (ver arriba)
@@ -979,6 +1071,98 @@ seed:operadores
 | mart_carga_operador | mart | int_frac_hijo | pipeline.carga |
 | mart_carga_operador | mart | int_pozo_ubicacion | pipeline.carga |
 | mart_carga_operador | mart | stg_fractura | pipeline.carga |
+| mart_causal_extra | mart | fct_produccion | pipeline.causal |
+| mart_causal_extra | mart | int_frac_hijo | pipeline.causal |
+| mart_causal_extra | mart | int_pozo_ubicacion | pipeline.causal |
+| mart_causal_extra | mart | mart_causal_profundo_d3 | pipeline.causal |
+| mart_causal_extra | mart | mart_causal_profundo_d5 | pipeline.causal |
+| mart_causal_extra | mart | mart_causal_profundo_d6 | pipeline.causal |
+| mart_causal_extra | mart | mart_causal_profundo_d7 | pipeline.causal |
+| mart_causal_extra | mart | mart_causal_profundo_veredicto | pipeline.causal |
+| mart_causal_extra | mart | mart_par_rama | pipeline.causal |
+| mart_causal_extra | mart | mart_trayectoria_cobertura | pipeline.causal |
+| mart_causal_operador | mart | fct_produccion | pipeline.causal |
+| mart_causal_operador | mart | int_frac_hijo | pipeline.causal |
+| mart_causal_operador | mart | int_pozo_ubicacion | pipeline.causal |
+| mart_causal_operador | mart | mart_causal_profundo_d3 | pipeline.causal |
+| mart_causal_operador | mart | mart_causal_profundo_d5 | pipeline.causal |
+| mart_causal_operador | mart | mart_causal_profundo_d6 | pipeline.causal |
+| mart_causal_operador | mart | mart_causal_profundo_d7 | pipeline.causal |
+| mart_causal_operador | mart | mart_causal_profundo_veredicto | pipeline.causal |
+| mart_causal_operador | mart | mart_par_rama | pipeline.causal |
+| mart_causal_operador | mart | mart_trayectoria_cobertura | pipeline.causal |
+| mart_causal_placebo | mart | fct_produccion | pipeline.causal |
+| mart_causal_placebo | mart | int_frac_hijo | pipeline.causal |
+| mart_causal_placebo | mart | int_pozo_ubicacion | pipeline.causal |
+| mart_causal_placebo | mart | mart_causal_profundo_d3 | pipeline.causal |
+| mart_causal_placebo | mart | mart_causal_profundo_d5 | pipeline.causal |
+| mart_causal_placebo | mart | mart_causal_profundo_d6 | pipeline.causal |
+| mart_causal_placebo | mart | mart_causal_profundo_d7 | pipeline.causal |
+| mart_causal_placebo | mart | mart_causal_profundo_veredicto | pipeline.causal |
+| mart_causal_placebo | mart | mart_par_rama | pipeline.causal |
+| mart_causal_placebo | mart | mart_trayectoria_cobertura | pipeline.causal |
+| mart_causal_profundo_d3 | mart | dim_fractura_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d3 | mart | dim_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d3 | mart | fct_produccion | pipeline.causal_profundo |
+| mart_causal_profundo_d3 | mart | int_frac_hijo | pipeline.causal_profundo |
+| mart_causal_profundo_d3 | mart | int_pozo_ubicacion | pipeline.causal_profundo |
+| mart_causal_profundo_d3 | mart | mart_causal_veredicto | pipeline.causal_profundo |
+| mart_causal_profundo_d3 | mart | mart_par_rama | pipeline.causal_profundo |
+| mart_causal_profundo_d4 | mart | dim_fractura_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d4 | mart | dim_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d4 | mart | fct_produccion | pipeline.causal_profundo |
+| mart_causal_profundo_d4 | mart | int_frac_hijo | pipeline.causal_profundo |
+| mart_causal_profundo_d4 | mart | int_pozo_ubicacion | pipeline.causal_profundo |
+| mart_causal_profundo_d4 | mart | mart_causal_veredicto | pipeline.causal_profundo |
+| mart_causal_profundo_d4 | mart | mart_par_rama | pipeline.causal_profundo |
+| mart_causal_profundo_d5 | mart | dim_fractura_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d5 | mart | dim_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d5 | mart | fct_produccion | pipeline.causal_profundo |
+| mart_causal_profundo_d5 | mart | int_frac_hijo | pipeline.causal_profundo |
+| mart_causal_profundo_d5 | mart | int_pozo_ubicacion | pipeline.causal_profundo |
+| mart_causal_profundo_d5 | mart | mart_causal_veredicto | pipeline.causal_profundo |
+| mart_causal_profundo_d5 | mart | mart_par_rama | pipeline.causal_profundo |
+| mart_causal_profundo_d6 | mart | dim_fractura_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d6 | mart | dim_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d6 | mart | fct_produccion | pipeline.causal_profundo |
+| mart_causal_profundo_d6 | mart | int_frac_hijo | pipeline.causal_profundo |
+| mart_causal_profundo_d6 | mart | int_pozo_ubicacion | pipeline.causal_profundo |
+| mart_causal_profundo_d6 | mart | mart_causal_veredicto | pipeline.causal_profundo |
+| mart_causal_profundo_d6 | mart | mart_par_rama | pipeline.causal_profundo |
+| mart_causal_profundo_d7 | mart | dim_fractura_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d7 | mart | dim_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_d7 | mart | fct_produccion | pipeline.causal_profundo |
+| mart_causal_profundo_d7 | mart | int_frac_hijo | pipeline.causal_profundo |
+| mart_causal_profundo_d7 | mart | int_pozo_ubicacion | pipeline.causal_profundo |
+| mart_causal_profundo_d7 | mart | mart_causal_veredicto | pipeline.causal_profundo |
+| mart_causal_profundo_d7 | mart | mart_par_rama | pipeline.causal_profundo |
+| mart_causal_profundo_veredicto | mart | dim_fractura_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_veredicto | mart | dim_pozo | pipeline.causal_profundo |
+| mart_causal_profundo_veredicto | mart | fct_produccion | pipeline.causal_profundo |
+| mart_causal_profundo_veredicto | mart | int_frac_hijo | pipeline.causal_profundo |
+| mart_causal_profundo_veredicto | mart | int_pozo_ubicacion | pipeline.causal_profundo |
+| mart_causal_profundo_veredicto | mart | mart_causal_veredicto | pipeline.causal_profundo |
+| mart_causal_profundo_veredicto | mart | mart_par_rama | pipeline.causal_profundo |
+| mart_causal_serie | mart | fct_produccion | pipeline.causal |
+| mart_causal_serie | mart | int_frac_hijo | pipeline.causal |
+| mart_causal_serie | mart | int_pozo_ubicacion | pipeline.causal |
+| mart_causal_serie | mart | mart_causal_profundo_d3 | pipeline.causal |
+| mart_causal_serie | mart | mart_causal_profundo_d5 | pipeline.causal |
+| mart_causal_serie | mart | mart_causal_profundo_d6 | pipeline.causal |
+| mart_causal_serie | mart | mart_causal_profundo_d7 | pipeline.causal |
+| mart_causal_serie | mart | mart_causal_profundo_veredicto | pipeline.causal |
+| mart_causal_serie | mart | mart_par_rama | pipeline.causal |
+| mart_causal_serie | mart | mart_trayectoria_cobertura | pipeline.causal |
+| mart_causal_veredicto | mart | fct_produccion | pipeline.causal |
+| mart_causal_veredicto | mart | int_frac_hijo | pipeline.causal |
+| mart_causal_veredicto | mart | int_pozo_ubicacion | pipeline.causal |
+| mart_causal_veredicto | mart | mart_causal_profundo_d3 | pipeline.causal |
+| mart_causal_veredicto | mart | mart_causal_profundo_d5 | pipeline.causal |
+| mart_causal_veredicto | mart | mart_causal_profundo_d6 | pipeline.causal |
+| mart_causal_veredicto | mart | mart_causal_profundo_d7 | pipeline.causal |
+| mart_causal_veredicto | mart | mart_causal_profundo_veredicto | pipeline.causal |
+| mart_causal_veredicto | mart | mart_par_rama | pipeline.causal |
+| mart_causal_veredicto | mart | mart_trayectoria_cobertura | pipeline.causal |
 | mart_costo_calibracion | mart | dim_fractura_pozo | pipeline.costo |
 | mart_costo_calibracion | mart | fct_produccion | pipeline.costo |
 | mart_costo_calibracion | mart | int_interferencia_clase | pipeline.costo |

@@ -38,6 +38,8 @@ Salidas dentro de ``out_dir``:
     hallazgos/dosis_geometria.md  dosis con la geometria de las ramas, detras de una puerta de potencia (si corrio pipeline.dosis_geometria)
     hallazgos/hijo_celdas.md   el lado del hijo comparando hijos del mismo cuadrado de 2 km (si corrio pipeline.hijo_celdas)
     hallazgos/mecanismo.md      la geometria de las ramas: el padre al costado de la rama del hijo contra el de la punta (si corrio pipeline.mecanismo)
+    hallazgos/causal_profundo.md volumen de agua y de petroleo debajo del corte de agua de D2 (si corrio pipeline.causal_profundo)
+    hallazgos/causal.md         diseno causal: DiD escalonado con aun no tratados y el corte de agua, regla fijada de antemano (si corrio pipeline.causal)
     hallazgos/hijo_pad.md      el lado del hijo comparando hijos del mismo pad segun las ramas a menos de 600 m (si corrio pipeline.hijo_pad)
     hallazgos/gas.md           el padre gasifero con el gas como resultado (si corrio pipeline.gas)
     hallazgos/literatura.md    comparacion con la literatura (escrita a mano; el indice la enlaza si existe)
@@ -60,7 +62,7 @@ from pathlib import Path
 
 import duckdb
 
-from pipeline import alcance_rama, anillo, bloques, calendario_golpes, costo, decision, descomposicion, dias_perdidos, diferido, dosis, dosis_geometria, golpes_mismo_mes, golpes_mismo_padre, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, gas, hijo_pad, potencia, potencia_dosis, hijo, hijo_celdas, inyeccion, linaje, mapa, mecanismo, placebo, riesgo, robustez, robustez_operador, sincronia, trayectorias, validacion
+from pipeline import alcance_rama, anillo, bloques, calendario_golpes, causal, causal_profundo, costo, decision, descomposicion, dias_perdidos, diferido, dosis, dosis_geometria, golpes_mismo_mes, golpes_mismo_padre, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, gas, hijo_pad, potencia, potencia_dosis, hijo, hijo_celdas, inyeccion, linaje, mapa, mecanismo, placebo, riesgo, robustez, robustez_operador, sincronia, trayectorias, validacion
 from pipeline import hallazgos as hz
 from pipeline.ingest import DATA, ROOT, load_manifest
 
@@ -615,6 +617,10 @@ def build_wiki(con, manifest, out_dir) -> dict:
         ("hijo_celdas", "mart_hijo_celdas_resumen", "hijo_celdas.md", hijo_celdas.pagina_hijo_celdas),
         # geometria de las ramas: el padre al costado de la rama del hijo contra el de la punta (necesita pipeline.mecanismo)
         ("mecanismo", "mart_mecanismo_veredicto", "mecanismo.md", mecanismo.pagina_mecanismo),
+        # diseno causal: DiD escalonado con aun no tratados y corte de agua (necesita pipeline.causal)
+        ("causal", "mart_causal_veredicto", "causal.md", causal.pagina_causal),
+        # agua que entra o petroleo que sale, debajo del corte de agua de D2 (necesita pipeline.causal_profundo)
+        ("causal_profundo", "mart_causal_profundo_veredicto", "causal_profundo.md", causal_profundo.pagina_causal_profundo),
         # robustez por operador y area (necesita pipeline.robustez_operador, que corre despues de pipeline.placebo)
         ("rob_op", "mart_robustez_operador_veredicto", "robustez_operador.md", robustez_operador.pagina_robustez_operador),
         # dias parados del padre por operador (necesita pipeline.dias_perdidos, que corre despues de pipeline.descomposicion)
@@ -663,6 +669,8 @@ def build_wiki(con, manifest, out_dir) -> dict:
     hay_gas = hay["gas"]
     hay_hijo_celdas = hay["hijo_celdas"]
     hay_mecanismo = hay["mecanismo"]
+    hay_causal = hay["causal"]
+    hay_causal_profundo = hay["causal_profundo"]
     hay_rob_op = hay["rob_op"]
     hay_dias = hay["dias"]
     hay_tray = hay["tray"]
@@ -733,6 +741,10 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Lado del hijo dentro de celdas de 2 km (hijos del mismo lugar fracturados antes y después de que sus vecinos produjeran): [hijo_celdas.md](hallazgos/hijo_celdas.md).")
     if hay_mecanismo:
         L.append("- Mecanismo por la geometría de las ramas (padres al costado de la rama del hijo contra padres en su punta, con placebo previo a la fractura): [mecanismo.md](hallazgos/mecanismo.md).")
+    if hay_causal:
+        L.append("- Diseño causal (diferencias en diferencias escalonadas con controles aún no tratados; el corte de agua como canal físico, con placebo de cierre): [causal.md](hallazgos/causal.md).")
+    if hay_causal_profundo:
+        L.append("- Debajo del corte de agua: si entra agua o sale petróleo, con el mismo diseño y la regla fijada antes: [causal_profundo.md](hallazgos/causal_profundo.md).")
     if hay_gas:
         L.append("- El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).")
     if (out_dir / "hallazgos" / "literatura.md").exists():

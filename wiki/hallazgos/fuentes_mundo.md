@@ -77,7 +77,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: Oil_prod_vol (m3), con Prod_period (AAAAMM) y Prod_days; el condensado va aparte en Cond_prod_vol (m3) (unidad: m3). Anios: produccion 1954 a 2026 (cuatro archivos por tramo de anios); fracturas desde 2013 (visto) hasta 2026.
 - Fecha de fractura o terminacion: COMPLTN DATE y FRAC START TIME en hydraulic_fracture.csv del propio regulador (fecha con formato DD-MON-AA).
 - Terminos (https://www.bc-er.ca/files/gis/BCER-Open-Data-Licence.pdf): The Information Provider grants you a worldwide, royalty-free, perpetual, non-exclusive licence to use the Information, including for commercial purposes. You are free to copy, modify, publish, translate, adapt, distribute or otherwise use the Information in any medium, mode or format for any lawful purpose. (Licencia del portal de datos abiertos, que cubre la capa de superficie. Los CSV de IRIS cuelgan del Centro de datos, cuya pagina de terminos dice: It may not be reproduced or redistributed without the prior written permission of the Province of British Columbia, https://www.bc-er.ca/terms/) Permiten derivadas con atribucion: no_claro.
-- Notas: Se verifico con 2 pozos reales (28726 y 33591) que la clave WA une produccion, fractura y superficie. Los tres archivos se pueden unir y la fuente es tecnicamente completa; el corte es la licencia de los CSV y la columna de petroleo. Si el regulador aclara la licencia, el caso sigue abierto con las cifras de condensado como medida distinta (no es la regla actual).
+- Notas: Se verifico con 2 pozos reales que la clave WA une produccion, fractura y superficie. Los tres archivos se pueden unir y la fuente es tecnicamente completa; el corte es la licencia de los CSV y la columna de petroleo. Si el regulador aclara la licencia, el caso sigue abierto con las cifras de condensado como medida distinta (no es la regla actual). Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Brasil, Nacional (campos terrestres y maritimos)
 
@@ -87,7 +87,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: Petroleo (bbl/dia) (y Oleo (bbl/dia), Condensado (bbl/dia)) (unidad: bbl). Anios: 2005-2026 (un ZIP por anio, y por mes desde 2021); verificado 2010.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (https://www.gov.br/anp/pt-br/acesso-a-informacao/termo-uso-politica-privacidade-lgpd.pdf): TERMO DE USO E POLITICA DE PRIVACIDADE DA ANP | SGE - ANP | 2021 Permiten derivadas con atribucion: no_claro.
-- Notas: Respuesta a la pregunta puntual: si, los pozos onshore tienen produccion mensual por pozo en archivos propios (2010_01_producao_terra.csv dentro del ZIP; los maritimos van en producao_mar.csv). El encabezado real esta en la fila 5 (las primeras 4 son titulos del sistema SIGEP) y hay una fila de subencabezado para oleo asociado/no asociado. HEAD devuelve 403 pero GET funciona. La pagina de terminos que existe es una politica de privacidad (LGPD), no una licencia de reutilizacion de datos: no se encontro licencia explicita para publicar derivadas.
+- Notas: Respuesta a la pregunta puntual: si, los pozos onshore tienen produccion mensual por pozo en archivos propios (2010_01_producao_terra.csv dentro del ZIP; los maritimos van en producao_mar.csv). El encabezado real esta en la fila 5 (las primeras 4 son titulos del sistema SIGEP) y hay una fila de subencabezado para oleo asociado/no asociado. HEAD devuelve 403 pero GET funciona. La pagina de terminos que existe es una politica de privacidad (LGPD), no una licencia de reutilizacion de datos: no se encontro licencia explicita para publicar derivadas. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Canada, Alberta
 
@@ -117,7 +117,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: bbl). Anios: 2013-2026 (un XLSX por anio); verificado 2024.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (https://www.anh.gov.co/es/operaciones-y-regal%C3%ADas/sistemas-integrados-operaciones/estad%C3%ADsticas-de-producci%C3%B3n/): sin terminos visibles Permiten derivadas con atribucion: no_claro.
-- Notas: El titulo del propio archivo lo dice: 'PRODUCCION FISCALIZADA DE PETROLEO POR CAMPO'. La ANH tiene un visor y estadisticas de pozos perforados, pero no se encontro produccion por pozo en la pagina de estadisticas. El dataset de gas en datos.gov.co ('Produccion Fiscalizada Gas Consolidada', id 5dux-bfvx) tampoco es por pozo.
+- Notas: El titulo del propio archivo lo dice: 'PRODUCCION FISCALIZADA DE PETROLEO POR CAMPO'. La ANH tiene un visor y estadisticas de pozos perforados, pero no se encontro produccion por pozo en la pagina de estadisticas. El dataset de gas en datos.gov.co ('Produccion Fiscalizada Gas Consolidada', id 5dux-bfvx) tampoco es por pozo. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Estados Unidos, Texas
 
@@ -127,7 +127,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: bbl). Anios: Production Data Query Dump: 1993 a la fecha; datos de produccion de los ultimos 24 meses en el archivo statewide.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (https://www.rrc.texas.gov/site-policies/): The Railroad Commission of Texas (RRC) maintains this website as a public service. The following is the privacy policy for this website (all pages starting with www.rrc.texas.gov, www.propane.tx.gov, altenergy.rrc.texas.gov, webapps.rrc.texas.gov, or driller.rrc.texas.gov). Permiten derivadas con atribucion: no_claro.
-- Notas: Los archivos de datos estan en mft.rrc.texas.gov y ese host fallo con SSL_ERROR_SYSCALL, asi que no se pudo leer el encabezado real del CSV de produccion; la clasificacion se basa en las descripciones oficiales de la pagina de datos. Acceso marcado como scraping_necesario porque el unico enlace de descarga utilizable ('CSV Format') apunta a ese host MFT que no respondio.
+- Notas: Los archivos de datos estan en mft.rrc.texas.gov y ese host fallo con SSL_ERROR_SYSCALL, asi que no se pudo leer el encabezado real del CSV de produccion; la clasificacion se basa en las descripciones oficiales de la pagina de datos. Acceso marcado como scraping_necesario porque el unico enlace de descarga utilizable ('CSV Format') apunta a ese host MFT que no respondio. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Estados Unidos, Dakota del Norte
 
@@ -137,7 +137,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: Indice de reportes mensuales 2003-2026.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (https://www.nd.gov/content.htm?id=Disclaimer): sin terminos visibles en las paginas revisadas (el sitio enlaza 'Disclaimer' en https://www.nd.gov/content.htm?id=Disclaimer, que no se abrio en esta sesion) Permiten derivadas con atribucion: no_claro.
-- Notas: Confirmado el escenario esperado. Los PDFs mensuales publicos son 'fully searchable' pero no se abrio ninguno, conforme a la instruccion de no scrapear.
+- Notas: Confirmado el escenario esperado. Los PDFs mensuales publicos son 'fully searchable' pero no se abrio ninguno, conforme a la instruccion de no scrapear. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Estados Unidos, Registro nacional de fractura (FracFocus)
 
@@ -217,7 +217,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: no verificado.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (https://www.stats.gov.cn/english/): sin terminos visibles Permiten derivadas con atribucion: no_claro.
-- Notas: Verificacion liviana (una pagina). China no publica microdatos de pozos; las cifras por campo que circulan son de empresas o de agencias privadas.
+- Notas: Verificacion liviana (una pagina). China no publica microdatos de pozos; las cifras por campo que circulan son de empresas o de agencias privadas. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Estados Unidos, Montana
 
@@ -227,7 +227,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: no verificado.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (no verificado): no verificado: no se pudo abrir ninguna pagina del regulador ni de terminos Permiten derivadas con atribucion: no_claro.
-- Notas: Requiere repetir la verificacion desde otra red. No se uso ninguna via con login o pago.
+- Notas: Requiere repetir la verificacion desde otra red. No se uso ninguna via con login o pago. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Estados Unidos, Nuevo Mexico
 
@@ -237,7 +237,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: XLSX generado 8/6/2025 (estadisticas 2024); pagina indica reportes C-115 actualizados cada noche con 45 dias de retraso.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (https://www.emnrd.nm.gov/officeofsecretary/legal-disclaimer/): This website includes information maintained by the State of New Mexico, Energy, Minerals and Natural Resources Department (“EMNRD”), as well as links to other sites maintained by other entities, agencies, or third parties, as a public service. This information and links are provided for the convenience of the website user and do not constitute an official or final repository of such information or data. Permiten derivadas con atribucion: no_claro.
-- Notas: La pagina del FTP dice literalmente 'Publicly available OCD Documents and Files can be accessed via a freely-available FTP client, specifying hostname as [imagen] using port 21 and ‘anonymous connection, no other username / password needed’'; el hostname esta dentro de una imagen y el intento de conexion FTP agoto el timeout. El sitio web usa un SDK de documentos RealFile para Several reportes C-115 (no son archivos CSV directos). No se encontro fecha de fractura/terminacion por pozo en los archivos bajados.
+- Notas: La pagina del FTP dice literalmente 'Publicly available OCD Documents and Files can be accessed via a freely-available FTP client, specifying hostname as [imagen] using port 21 and ‘anonymous connection, no other username / password needed’'; el hostname esta dentro de una imagen y el intento de conexion FTP agoto el timeout. El sitio web usa un SDK de documentos RealFile para Several reportes C-115 (no son archivos CSV directos). No se encontro fecha de fractura/terminacion por pozo en los archivos bajados. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Estados Unidos, Oklahoma
 
@@ -247,7 +247,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: El CSV se actualiza cada noche (last-modified 2026-11-18); el archivo no declara anios cubiertos.
 - Fecha de fractura o terminacion: no verificado en este archivo; existe un 'Monthly Well Completions Report' XLSX separado (completions-wells-formations-base.xlsx).
 - Terminos (https://oklahoma.gov/about/policy-disclaimers.html): sin terminos visibles en las paginas revisadas (la pagina de datos solo enlaza 'Policies' en https://oklahoma.gov/about/policy-disclaimers.html, que no se abrio en esta sesion) Permiten derivadas con atribucion: no_claro.
-- Notas: El CSV de pozos pesa 127 MB pero acepta rangos; se bajo solo el primer bloque de 64 KB. Produccion podria estar en la Oklahoma Tax Commission, no revisada en esta tarea. Formato del id: API de 10 digitos (3500100002), comparable al API de FracFocus.
+- Notas: El CSV de pozos pesa 127 MB pero acepta rangos; se bajo solo el primer bloque de 64 KB. Produccion podria estar en la Oklahoma Tax Commission, no revisada en esta tarea. Formato del id: API de 10 digitos (3500100002), comparable al API de FracFocus. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Estados Unidos, Pennsylvania
 
@@ -257,7 +257,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: no verificado (la pagina lista mapas anuales de 2009 a 2019 y un Annual Report 2023).
 - Fecha de fractura o terminacion: SPUD date (fecha de inicio de perforacion) mencionada en la pagina de reportes; no es fecha de fractura.
 - Terminos (https://www.pa.gov/privacy-policy): sin terminos visibles en las paginas revisadas (la pagina de reportes solo enlaza 'Privacy & Disclaimers' en https://www.pa.gov/privacy-policy, que no se abrio en esta sesion) Permiten derivadas con atribucion: no_claro.
-- Notas: Verificacion de una sola linea segun el alcance asignado. No se eludio el bloqueo del portal greenport. La DEP publica ademas un data dictionary PDF de sus reportes interactivos.
+- Notas: Verificacion de una sola linea segun el alcance asignado. No se eludio el bloqueo del portal greenport. La DEP publica ademas un data dictionary PDF de sus reportes interactivos. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Estados Unidos, Utah
 
@@ -267,7 +267,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: no verificado.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (no verificado): no verificado: no se pudo abrir ninguna pagina del regulador ni de terminos Permiten derivadas con atribucion: no_claro.
-- Notas: Requiere repetir la verificacion desde otra red. El dominio opendata.utah.gov devuelve 'Domain Decommissioned'. No se intento ninguna via con login o pago.
+- Notas: Requiere repetir la verificacion desde otra red. El dominio opendata.utah.gov devuelve 'Domain Decommissioned'. No se intento ninguna via con login o pago. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Libia, Nacional
 
@@ -277,7 +277,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: no verificado.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (https://noc.ly/): sin terminos visibles Permiten derivadas con atribucion: no_claro.
-- Notas: Verificacion liviana (una pagina).
+- Notas: Verificacion liviana (una pagina). Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ### Mexico, Nacional (cuencas del sureste y Burgos)
 
@@ -317,7 +317,7 @@ Se auditaron 27 jurisdicciones. 2 entran al estudio. Por nivel: 3 publican produ
 - Petroleo mensual por pozo: no se pudo verificar (unidad: no se pudo verificar). Anios: no verificado.
 - Fecha de fractura o terminacion: no se pudo verificar.
 - Terminos (https://www.cdu.ru/): sin terminos visibles Permiten derivadas con atribucion: no_claro.
-- Notas: Verificacion liviana (una pagina). No se intento el sitio del Ministerio de Energia.
+- Notas: Verificacion liviana (una pagina). No se intento el sitio del Ministerio de Energia. Muestra no publicada: los términos de la fuente no permiten reproducir las filas.
 
 ## Que NO es
 

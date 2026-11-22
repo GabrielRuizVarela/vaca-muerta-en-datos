@@ -220,7 +220,7 @@ select { background: var(--fondo); border: 1px solid var(--linea); border-radius
         <h2>Los padres cercanos se recuperan</h2>
         <p id="cifra-brecha" hidden><span class="marca medido">medido</span>Frente a los controles, el caudal del padre cercano cae <span id="br-1"></span> en el mes 1 y la brecha es <span id="br-6"></span> en el mes 6. Es petróleo diferido, no perdido.</p>
         <canvas id="curva" aria-label="Caudal indexado del padre cercano y de los controles" style="aspect-ratio: 2.2"></canvas>
-        <p class="live"><span class="big" id="dif">0</span> <span id="dif-u">bbl diferidos hasta este mes</span></p>
+        <p class="live"><span class="big" id="dif">0</span> <span id="dif-u">bbl diferidos en este mes</span></p>
       </div>
       <div class="find">
         <h2>YPF gana participación</h2>
@@ -448,7 +448,7 @@ function feedText(g) {
 const S = { t: M - 1, playing: false, speed: 2, ops: null, area: "", mode: "op", sel: -1, padMode: false, band: 0.3, tab: "h", feedAt: -1 };
 let view = { cx: 0, cy: 0, k: 1 }, fitView = null;
 const vis = new Uint8Array(N); let visList = [];
-let cumDef = new Float64Array(M);
+let difMes = new Float64Array(M), padDef = new Uint32Array(M);
 let dirty = true, lastMonth = -1, C = {};
 
 /* Los colores salen de las variables de la hoja de estilo. Cada operadora lleva su pigmento por nombre, como en el
@@ -470,12 +470,21 @@ function applyFilters() {
     const ok = (!S.ops || S.ops.has(opIdx[i])) && (!S.area || W[i].area === S.area);
     vis[i] = ok ? 1 : 0; if (ok) visList.push(i);
   }
-  cumDef = new Float64Array(M + 8);
+  // Diferido del mes, no acumulado: cada evento reparte sus barriles en los meses 0 a 6 y después sale de la cuenta,
+  // porque el padre vuelve a su control. Un total que solo sube se leería como pérdida que se apila.
+  // Solo los eventos cercanos traen bbl (el km viene redondeado y no sirve para separarlos). Un padre con dos hijos
+  // en la ventana cuenta una vez.
+  difMes = new Float64Array(M + 8); padDef = new Uint32Array(M + 8);
+  const enVentana = new Map();
   EV.forEach((e) => {
-    if (e.t !== "interf" || e.km >= 1 || e.bbl === undefined || !vis[e.p]) return;
-    for (let k = 0; k < 7; k++) cumDef[e.mi + k] += e.bbl / 7;
+    if (e.t !== "interf" || e.bbl === undefined || !vis[e.p]) return;
+    for (let k = 0; k < 7; k++) {
+      difMes[e.mi + k] += e.bbl / 7;
+      const m = e.mi + k, ya = enVentana.get(e.p) || new Set();
+      if (!ya.has(m)) { ya.add(m); padDef[m]++; }
+      enVentana.set(e.p, ya);
+    }
   });
-  for (let m = 1; m < M + 8; m++) cumDef[m] += cumDef[m - 1];
   S.feedAt = -1; roseDirty = true;
 }
 
@@ -894,8 +903,10 @@ function refreshStats() {
   $("#s-pozos").textContent = fmt(act);
   $("#s-kbbl").textContent = fmt(TOT[mf], 0);
   $("#s-ypf").textContent = pct(SHARE[mf]);
-  const d = cumDef[mf], big = Math.abs(d) >= 1e6;
-  $("#dif").textContent = big ? fmt(d / 1e6, 2) : fmt(d); $("#dif-u").textContent = (big ? "millones de bbl" : "bbl") + " diferidos hasta " + monthLabel(mf);
+  const d = difMes[mf], np = padDef[mf];
+  const quien = fmt(np) + (np === 1 ? " padre cercano" : " padres cercanos") + " entre el mes de un hijo y seis meses después";
+  $("#dif").textContent = fmt(Math.abs(d));
+  $("#dif-u").textContent = (d >= 0 ? "bbl diferidos en " : "bbl por encima del control en ") + monthLabel(mf) + ", en " + quien;
   $("#share-live").innerHTML = `YPF aporta <b>${pct(SHARE[mf])}</b> de la cuenca en ${monthLabel(mf)}. Partió de ${pct(SHARE[shareStart])} en ${monthLabel(shareStart)} y hoy llega a ${pct(SHARE[M - 1])}.`;
   tlC.setAttribute("aria-valuemax", M - 1); tlC.setAttribute("aria-valuenow", m); tlC.setAttribute("aria-valuetext", monthLabel(m));
   drawShare(); if (S.sel >= 0) drawCard();
