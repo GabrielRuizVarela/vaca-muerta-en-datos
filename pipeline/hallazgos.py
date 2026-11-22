@@ -153,8 +153,7 @@ HIPOTESIS = [
               "Un hijo cerca de pozos depletados rinde menos petróleo por metro de rama a 12 meses que un hijo en zona virgen y el "
               "control negativo, con pozos posteriores, es nulo: el valor es el límite superior del IC del grupo muy depletado, si el "
               "control negativo es nulo (sin valor si no lo es), y queda por debajo de cero, en bbl por metro (regla fijada antes de "
-              "correr, pipeline/hijo.py). El estado sale del veredicto de esa regla: confirmado si sostiene, refutado si no se "
-              "sostiene, y no firme en cualquier otro caso (ubicación, no firme o sin muestra).",
+              "correr, pipeline/hijo.py).",
               "select case when c.ic_bajo <= 0 and 0 <= c.ic_alto then p.ic_alto end "
               "from mart_hijo_coef p, mart_hijo_coef c where p.modelo = 'principal' and p.termino = 'muy_depletado' "
               "and c.modelo = 'control_negativo' and c.termino = 'muy_depletado'", "<", 0.0, "bbl por metro",

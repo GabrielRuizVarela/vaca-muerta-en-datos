@@ -802,7 +802,7 @@ def pagina_riesgo(con) -> str:
     if m2 and m3:
         geo = [f"- Geometría (descriptivo, sin veredicto): sin las variables de las ramas el AUC es {_ic2(m2[5], m2[6], m2[7])} y con la distancia de "
                f"superficie sola {_ic2(m3[5], m3[6], m3[7])}. La diferencia de AUC contra el principal es {_ic2(m2[13], m2[14], m2[15])} sin las "
-               f"ramas y {_ic2(m3[13], m3[14], m3[15])} con la distancia de superficie sola. Es una lectura de esta muestra y no cambia el veredicto."]
+               f"ramas y {_ic2(m3[13], m3[14], m3[15])} con la distancia de superficie sola."]
 
     L = [f"# {TITULO}", "",
          "El modelo puntual de costo (`anisotropia.md`) predice barriles y falla fuera de muestra. Esta página hace la pregunta que un operador "
@@ -868,7 +868,7 @@ def pagina_riesgo(con) -> str:
           "- La mediana de control del resultado sale de todo el periodo, como en el estudio principal; no es una variable del modelo, pero el resultado de los eventos "
           "de entrenamiento y el de los de prueba comparten esa mediana.",
           "- El entrenamiento tiene cientos de eventos y muchas variables: un \"no predice el riesgo\" es contra estas variables y este modelo (logístico L2 sin ajuste) "
-          "y no prueba que nada prediga el riesgo. Los intervalos cubren el muestreo de la prueba, no el del entrenamiento.",
+          "y no prueba que nada prediga el riesgo.",
           "- La rama medida cubre sobre todo hijos de 2016 a 2023: las variables de rama de la prueba están medidas en una parte de los eventos y la muestra no dice nada de "
           "los hijos de 2025 en adelante.",
           "- Solo están los eventos con el hijo cercano a menos de 1 km en superficie: un padre con la rama cerca pero la boca lejos no está.",

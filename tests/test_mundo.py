@@ -945,7 +945,7 @@ def test_value_sliders_start_at_the_example_of_the_informe():
 def test_index_informe_and_readme_point_to_the_page():
     indice = (ROOT / "pipeline" / "report_template.html").read_text(encoding="utf-8")
     inf = (ROOT / "pipeline" / "informe_template.html").read_text(encoding="utf-8")
-    assert indice.count('href="mundo.html"') == 2
+    assert indice.count('href="mundo.html"') == 3   # la navegación, el enlace de la primera pregunta de la historia y la línea de recorrido del tablero
     assert 'href="mundo.html#libre&amp;hoja=plantar"' in inf
     app = _script(mundo.TEMPLATE.read_text(encoding="utf-8"), "app")
     assert "/libre/.test(ancla)" in app and re.search(r"hoja=\(plantar\|fisica\)", app)   # the link of the informe lands on the tool

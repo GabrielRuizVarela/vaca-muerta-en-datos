@@ -224,7 +224,7 @@ def veredicto_costo(filas: list[dict]) -> str:
         t += " (" + "; ".join(r["especificacion"] for r in excl) + ")"
     t += ". "
     if not base["ic_excluye_cero"] and not excl:
-        t += "Ninguna especificación permite afirmar el efecto: sigue siendo una tendencia, no una conclusión."
+        t += "Ninguna especificación permite afirmar el efecto."
     elif excl and len(excl) < len(otras):
         t += "El efecto no es robusto: solo aparece en algunas especificaciones."
     elif excl:

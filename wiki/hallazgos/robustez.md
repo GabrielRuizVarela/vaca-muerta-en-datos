@@ -41,7 +41,7 @@ Coeficiente `desvio_eje_10` (bbl diferidos en los meses 0 a 6 por cada 10 grados
 | Sin BAJADA DEL PALO OESTE | 1.928 | -570 | -1.281 a 547 | sí | no |
 | Solo eventos de 0,3 a 1 km | 1.751 | -416 | -1.781 a 654 | sí | no |
 
-El coeficiente de la muestra completa es -941 bbl por 10 grados (IC -1.581 a 278); no excluye el cero. El signo se repite en 6 de 6 especificaciones alternativas y el IC excluye el cero en 0. Ninguna especificación permite afirmar el efecto: sigue siendo una tendencia, no una conclusión.
+El coeficiente de la muestra completa es -941 bbl por 10 grados (IC -1.581 a 278); no excluye el cero. El signo se repite en 6 de 6 especificaciones alternativas y el IC excluye el cero en 0. Ninguna especificación permite afirmar el efecto.
 
 ## Límites
 

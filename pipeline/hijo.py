@@ -569,7 +569,7 @@ def pagina_hijo(con) -> str:
           "- El libro de hallazgos tiene su propio estado no firme: el estado de `hijo_depletado` sale del veredicto de arriba "
           "(confirmado si sostiene, refutado si no se sostiene, no firme en cualquier otro caso), no del valor.",
           "- El resultado de 12 meses deja fuera a los pozos recientes, que todavía no tienen 12 meses publicados.",
-          "- Los intervalos no tienen ajuste por comparaciones múltiples: se publican todos los modelos calculados, favorables o no. "
+          "- Los intervalos no tienen ajuste por comparaciones múltiples. "
           "Los coeficientes descriptivos entran en el conteo de pruebas del proyecto de [Bloques espaciales](bloques.md); los p de la "
           "prueba de equilibrio, que es un diagnóstico de la muestra, no.",
           ""]

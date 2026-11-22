@@ -127,7 +127,7 @@ Expectativa: valor < -0,020 (índice por unidad de fracción).
 
 ## hijo_depletado
 
-Un hijo cerca de pozos depletados rinde menos petróleo por metro de rama a 12 meses que un hijo en zona virgen y el control negativo, con pozos posteriores, es nulo: el valor es el límite superior del IC del grupo muy depletado, si el control negativo es nulo (sin valor si no lo es), y queda por debajo de cero, en bbl por metro (regla fijada antes de correr, pipeline/hijo.py). El estado sale del veredicto de esa regla: confirmado si sostiene, refutado si no se sostiene, y no firme en cualquier otro caso (ubicación, no firme o sin muestra).
+Un hijo cerca de pozos depletados rinde menos petróleo por metro de rama a 12 meses que un hijo en zona virgen y el control negativo, con pozos posteriores, es nulo: el valor es el límite superior del IC del grupo muy depletado, si el control negativo es nulo (sin valor si no lo es), y queda por debajo de cero, en bbl por metro (regla fijada antes de correr, pipeline/hijo.py).
 
 Expectativa: valor < 0,000 (bbl por metro).
 

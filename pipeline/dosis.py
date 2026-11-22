@@ -663,7 +663,7 @@ def pagina_dosis(con) -> str:
           "- Un coeficiente nulo no dice que no haya golpes de fractura: el espaciamiento real y la geometría de la fractura "
           "no están en el dato público, y el hijo más cercano puede no ser el que golpeó al padre.",
           "- Un coeficiente positivo no separa el golpe de un cierre preventivo más largo cuanto más grande es el trabajo: la "
-          "dosis puede mover la decisión del operador. Si hubiera una respuesta que crece con la dosis, crecería bajo las dos lecturas.",
+          "dosis puede mover la decisión del operador.",
           "- Los eventos de un mismo hijo comparten pad y calendario; el bootstrap por pads cubre eso, no la dependencia entre pads.",
           "- Los datos de presión de la base pública tienen ceros y valores atípicos: los ceros cuentan como faltantes y solo "
           "entran presiones entre 0 y 20.000 psi.", ""]

@@ -1,6 +1,6 @@
 # Límites y robustez, en detalle
 
-Página escrita a mano. El README lista los límites en una línea cada uno; acá está el detalle de cada uno, con sus cifras. Cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims`, y un test falla si aparece un número que ninguna verificación cubre.
+Página escrita a mano. El README lista los límites en una línea cada uno; acá está el detalle de los primeros, con sus cifras (los límites de las pruebas más nuevas se leen solo en el README). Cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims`, y un test falla si aparece un número que ninguna verificación cubre.
 
 ## Lo que el dato público no trae
 

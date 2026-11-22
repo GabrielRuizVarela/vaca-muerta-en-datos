@@ -3322,7 +3322,7 @@ CLAIMS: list[Claim] = [
     _c("pads_pozos@dq", DQ, r"sobre (\d+) pozos shale", _pads("pozos"), 0),
     # production and design
     _c("prod_kbbl_d@readme", R, r"produce unos (\d+) kbbl/d", _prod_kbbl),
-    _c("ypf_pct@readme", R, r"YPF el (\d+)%", _ypf_pct),
+    _c("ypf_pct@readme", R, r"YPF el " + DEC + r"%", _ypf_pct, 0.05, "{:.1f}"),
     _c("rama_2017@readme", R, r"unos " + N + r" m \(cohorte 2017\)", _diseno(2017, "rama_m_mediana"), 50),
     _c("rama_2025@readme", R, r"a " + N + r" m \(cohorte 2025\)", _diseno(2025, "rama_m_mediana"), 50),
     _c("bblm_2017@readme", R, r"baj. de (\d+) a \d+ bbl/m", _diseno(2017, "bbl_12m_por_m_mediana")),

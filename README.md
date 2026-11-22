@@ -1,17 +1,24 @@
 # Vaca Muerta en datos
 
-Pipeline reproducible sobre los datos abiertos de la Secretaría de Energía de Argentina (producción mensual por pozo no convencional y datos de fractura): ingesta con hash, modelo en DuckDB, controles de calidad publicados y un tablero estático. Con los datos a octubre de 2026, Vaca Muerta produce unos 709 kbbl/d de petróleo y YPF el 51%. En YPF la rama horizontal mediana pasó de unos 1.500 m (cohorte 2017) a 3.316 m (cohorte 2025), mientras el petróleo de 12 meses por metro de rama bajó de 83 a 79 bbl/m: una correlación, no una causa.
+Cuando se fractura un pozo nuevo junto a pozos que ya producían, ¿los que ya producían rinden menos? Se contesta con datos públicos de la Secretaría de Energía, en seis preguntas encadenadas: cada una nace de la duda que dejó la anterior. Esta es la versión corta; la larga, con la figura y un caso para recorrer, está en [`site/index.html`](site/index.html).
+
+**¿Le pega al vecino?** *Sostiene, con pretendencia.* Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control de la misma edad a 2 a 5 km (2.094 eventos). Hay una brecha previa a la fractura (por eso 23 es una cota superior y 19 a 20 el valor descontado).
+
+**¿O es un artefacto del método?** *Sostiene, con pretendencia.* Las fechas falsas y las permutaciones no reproducen la brecha, y una brecha plantada a propósito se recupera. Es una huella medida, no una causa demostrada.
+
+**¿Se pierde o se atrasa?** *Sostiene.* A los 6 meses la brecha casi se cierra: es producción diferida, no perdida. Contra un control de la misma edad el diferido de los meses 0 a 6 va de 6,4 a 11,4 millones de barriles (sin duplicar y descontando la brecha previa hasta el total original).
+
+**¿Por dónde pasa?** *No firme.* El eje de mayor merma, que se publicó como hallazgo, no resistió una validación fuera de tiempo y se retiró como descripción de la muestra. Lo que sí se sostiene es el mecanismo por la geometría de las ramas.
+
+**¿Se puede anticipar o planificar?** *No predice* el costo, *no predice el riesgo* y los dos intentos de planificar quedaron *sin muestra*: pedían más datos de los que hay.
+
+**¿Pasa fuera de Vaca Muerta?** En otras cuencas, con los mismos estimadores y una regla fijada de antemano, la brecha del mes 1 se replica en 1 de 2 cuencas: en la cuenca DJ de Colorado sí y en Wyoming no (tabla de abajo).
+
+**Qué no sabemos.** Si la huella es una propiedad de Vaca Muerta o de cómo se ve el dato público, y qué parte de la brecha previa es efecto anticipado. La prueba prospectiva quedó congelada el 2026-11-18 con los datos hasta 2026-09: hacen falta 100 eventos cercanos con el mes medido y hoy está pendiente.
+
+Contexto: con los datos a octubre de 2026, Vaca Muerta produce unos 709 kbbl/d de petróleo y YPF el 50,5%. En YPF la rama horizontal mediana pasó de unos 1.500 m (cohorte 2017) a 3.316 m (cohorte 2025), mientras el petróleo de 12 meses por metro de rama bajó de 83 a 79 bbl/m: una correlación, no una causa.
 
 Caso de estudio, con figuras y cada cifra verificada: [`docs/caso-interferencia.md`](docs/caso-interferencia.md).
-
-## Resultado
-
-Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control de la misma edad a 2 a 5 km (2.094 eventos).
-A los 6 meses la brecha casi se cierra: es producción diferida, no perdida.
-Contra un control de la misma edad el diferido de los meses 0 a 6 va de 6,4 a 11,4 millones de barriles (sin duplicar y descontando la brecha previa hasta el total original).
-En otras cuencas, con los mismos estimadores y una regla fijada de antemano, la brecha del mes 1 se replica en 1 de 2 cuencas: en la cuenca DJ de Colorado sí y en Wyoming no (tabla de abajo).
-Es una huella medida y sometida a pruebas de placebo y permutación, no una causa demostrada: hay una brecha previa a la fractura
-(por eso 23 es una cota superior y 19 a 20 el valor descontado).
 
 ## Result
 
@@ -26,13 +33,13 @@ The rest of this repository is in Spanish.
 - `docs/caso-interferencia.md`: el caso de estudio, con figuras y cada cifra con su verificación.
 - `site/index.html`: el tablero (estático, se abre directo en el navegador).
 - `site/replay.html`: la repetición mes a mes de pozos, fracturas y golpes de agua.
-- `site/mundo.html`: la cuenca en 3D para recorrer en el tiempo: cada pozo es un punto en su ubicación de superficie sobre una imagen satelital del suelo (Sentinel-2, con su fecha en pantalla), el estudio de eventos se arma desde el mapa, se puede plantar un pozo hijo hipotético y hacer dos cuentas de física con supuestos propios; cada elemento dice si es dato, medido o supuesto, y la página recalcula las respuestas del pipeline al abrir.
-- `site/globo.html`: el globo de las cuencas: la Tierra queda oscura salvo donde un regulador publica petróleo por pozo (cada jurisdicción auditada con la textura de su nivel; lo oscuro es "no publica por pozo", no "no produce"), y cada cuenca medida (Vaca Muerta, Colorado, Wyoming) se abre en la misma repetición mes a mes que `mundo.html`, con su veredicto leído de los marts; se arma con `pipeline/globo.py` y necesita los tres warehouses.
+- `site/mundo.html`: la cuenca en 3D para recorrer mes a mes. Cada pozo es un punto en su ubicación de superficie sobre una imagen satelital (Sentinel-2, con su fecha en pantalla). Desde el mapa se arma el estudio de eventos, se planta un pozo hijo hipotético y se hacen dos cuentas de física con supuestos propios. Cada elemento dice si es dato, medido o supuesto, y al abrir la página recalcula las respuestas del pipeline.
+- `site/globo.html`: el globo de las cuencas. Está oscuro salvo donde un regulador publica petróleo por pozo (lo oscuro es "no publica por pozo", no "no produce"); cada jurisdicción auditada se dibuja con la textura de su nivel. Cada cuenca medida (Vaca Muerta, Colorado, Wyoming) se abre en la misma repetición mes a mes que `mundo.html`, con su veredicto leído de los marts. Se arma con `pipeline/globo.py` y necesita los tres warehouses.
 - `site/informe.html`: el informe para un operador (curva del padre, distancia, edad, robustez por operador y área, cierre a 6 meses y calculadora de valor del diferido), armado desde los marts por `pipeline/informe.py`.
 - `wiki/hallazgos/interferencia.md`: el hallazgo con su historial por versión de datos.
 - `docs/verificacion.md`: cinco preguntas y cómo verificarlas.
 
-## Resultados y veredicto
+## Todos los resultados
 
 | Resultado | Cifra | Intervalo | Veredicto |
 | --- | --- | --- | --- |
@@ -63,7 +70,7 @@ The rest of this repository is in Spanish.
 Además del informe (`site/informe.html`):
 
 - Hoja resumen para un operador (qué se ve, qué no se sabe, qué hacer con esto), con cada cifra verificada: `docs/resumen-operador.md`.
-- Capa de decisión para un operador: la caída del mes 1, la parte de la brecha de caudal que se cierra a los 6 meses (80 a 91% según el control; quedan 2 a 5 puntos; no es volumen recuperado), el diferido medio por padre (485 a 869 m3 de petróleo en los meses 0 a 6) y una cota de lo que podría no volver (103 m3 por evento), por edad del padre y banda de espaciamiento, con precio y tasa como entradas de quien lo usa; dice qué dato interno resolvería lo que el dato público no resuelve (`wiki/hallazgos/decision_operador.md`).
+- Capa de decisión para un operador (`wiki/hallazgos/decision_operador.md`): la caída del mes 1, la parte de la brecha de caudal que se cierra a los 6 meses (80 a 91% según el control; quedan 2 a 5 puntos; no es volumen recuperado), el diferido medio por padre (485 a 869 m3 de petróleo en los meses 0 a 6) y una cota de lo que podría no volver (103 m3 por evento), por edad del padre y banda de espaciamiento. El precio y la tasa los pone quien la usa. Dice qué dato interno resolvería lo que el dato público no resuelve.
 - Modo con datos propios: el mismo estudio de eventos y el mismo modelo de dosis sobre los CSV de un operador, corrido en su máquina y con un rechazo automático si una ruta cae dentro del repo sin estar ignorada; sobre el dato público de septiembre de 2026 reproduce la brecha del mes 1 y sus 2.077 eventos (validación sin repetir con los datos de octubre) (`docs/operador-datos-propios.md`, `uv run python -m pipeline.local`).
 
 ## Cómo correrlo
@@ -86,7 +93,7 @@ Preguntas con un modelo propio (cualquier endpoint compatible con OpenAI, con `V
 
 ## Límites
 
-Lo que este estudio no puede decir con dato público, en una línea cada uno. El detalle, con cada cifra verificada, está en [`wiki/hallazgos/limites.md`](wiki/hallazgos/limites.md).
+Lo que este estudio no puede decir con dato público. Los primeros límites tienen su detalle, con cada cifra verificada, en [`wiki/hallazgos/limites.md`](wiki/hallazgos/limites.md); los de las pruebas más nuevas (alcance, riesgo, dosis con geometría, calendario) se leen solo acá.
 
 - No se afirma causalidad: es una huella medida contra un control, con una brecha previa a la fractura.
 - Datos mensuales y declarados por las operadoras: un cierre preventivo del operador se ve igual que un daño por interferencia, y las cifras pueden rectificarse después.
@@ -108,7 +115,7 @@ Proyecto personal, no afiliado ni avalado por ninguna empresa.
 ## Cómo se hizo
 
 Ingesta con hash (raw inmutable por versión), modelo en DuckDB, 29 controles de calidad (los bloqueantes frenan la publicación) y linaje de cada tabla en `wiki/hallazgos/linaje.md`.
-Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 1075 tests.
+Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 1134 tests.
 Preguntas en lenguaje natural sobre 16 operaciones tipadas de solo lectura (`agente/`, también como servidor MCP): exactitud 40/41 en desarrollo y 23/27 en reservadas, con la respuesta correcta calculada sobre el warehouse vigente.
 
 ## Decisiones de diseño

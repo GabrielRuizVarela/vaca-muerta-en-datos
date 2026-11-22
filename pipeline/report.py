@@ -59,18 +59,18 @@ def regla_parada_cumplida(con) -> bool:
 
 
 def costo_cv(con) -> dict | None:
-    """R2 fuera de muestra del modelo de costo y de la media del entrenamiento (mart_costo_cv, modelos 'modelo' y
-    'media_entrenamiento'), o None si el mart no existe."""
+    """R2 fuera de muestra del modelo de costo y de la media del área (mart_costo_cv, modelos 'modelo' y
+    'media_area': la misma referencia que nombran el README y docs/caso-interferencia.md), o None si el mart no existe."""
     if not tabla_existe(con, "mart_costo_cv"):
         return None
     cols = [r[0] for r in con.execute("describe mart_costo_cv").fetchall()]
     if "modelo" not in cols or "r2" not in cols:
         return None
     dato = {r["modelo"]: r["r2"] for r in rows(con, "select modelo, r2 from mart_costo_cv "
-                                                     "where modelo in ('modelo', 'media_entrenamiento')")}
-    if dato.keys() != {"modelo", "media_entrenamiento"} or None in dato.values():
+                                                     "where modelo in ('modelo', 'media_area')")}
+    if dato.keys() != {"modelo", "media_area"} or None in dato.values():
         return None
-    return {"completo": dato["modelo"], "media": dato["media_entrenamiento"]}
+    return {"completo": dato["modelo"], "media": dato["media_area"]}
 
 
 def brecha_neta(con) -> float | None:
@@ -243,18 +243,11 @@ def hallazgo(data: dict) -> str:
     """El resultado de la página, en HTML estático: la frase del README (Resultado) con las cifras del warehouse."""
     r = data["interferencia"]["resumen"]
     bruta, neta = r["brecha_mes_1"], r["brecha_mes_1_neta"]
-    if neta is None:
-        brecha = f"{pts(bruta, -1)} puntos menos"
-        previa = ""
-    else:
-        brecha = f"entre {pts(neta, -1)} y {pts(bruta, -1)} puntos menos"
-        previa = (f" Hay una brecha previa a la fractura: por eso {pts(bruta, -1)} es una cota superior y "
-                  f"{pts(neta, -1)} el valor descontado.")
+    brecha = f"{pts(bruta, -1)} puntos menos" if neta is None else f"entre {pts(neta, -1)} y {pts(bruta, -1)} puntos menos"
     return ('<div class="hallazgo" id="hallazgo">'
             '<p class="frase">Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden '
             f'{brecha} que pozos de control de la misma edad a 2 a 5 km ({fmt(r["eventos"])} eventos).</p>'
-            '<p class="apoyo">A los 6 meses la brecha casi se cierra: es producción diferida, no perdida. '
-            f'Es una huella medida, no una causa demostrada.{previa}</p></div>')
+            '<p class="apoyo">A los 6 meses la brecha casi se cierra: es producción diferida, no perdida.</p></div>')
 
 
 NO_SE_MIDE = (
@@ -313,9 +306,7 @@ def lectura_interferencia(data: dict) -> str:
             f'a los 6 meses la brecha casi se cierra ({pts(r["brecha_mes_6"], -1)} puntos). '
             f'{lectura_anual(data)} '
             f'Contra un control de la misma edad, suma {diferido_texto(r, "entre")} millones de barriles diferidos '
-            f'en los meses 0 a 6 ({"sin duplicar y descontando la brecha previa hasta el total original" if r.get("diferido_rango") else "cota superior"}). Límites: son coordenadas de superficie, no la trayectoria de la rama, '
-            'y un cierre preventivo del operador se ve igual que un daño en datos mensuales. '
-            'Es una huella medida, no una causa.</p>')
+            f'en los meses 0 a 6 ({"sin duplicar y descontando la brecha previa hasta el total original" if r.get("diferido_rango") else "cota superior"}).</p>')
 
 
 def lectura_diseno(data: dict) -> str:
@@ -331,7 +322,7 @@ def lectura_diseno(data: dict) -> str:
             f'a {fmt(b["bbl_12m_por_m_mediana"])} bbl/m (cohorte {b["cohorte"]}). '
             f'Los pozos producen más petróleo en total que en {a["cohorte"]}, pero cada metro de rama rinde menos. '
             'Es una correlación en datos públicos, no una causa: calidad de zona, espaciamiento y diseño de fractura son '
-            'hipótesis a validar con datos internos. La sección siguiente mide una de ellas: la interferencia entre pozos.</p>')
+            'hipótesis a validar con datos internos.</p>')
 
 
 def barra_eje(eje: dict) -> str:
@@ -380,7 +371,7 @@ def bloque_eje(data: dict) -> str:
     costo = ""
     if cv:
         verbo = "no supera" if cv["completo"] <= cv["media"] else "supera"
-        costo = (f"<p>El modelo de costo {verbo} a la media fuera de muestra "
+        costo = (f"<p>El modelo de costo {verbo} a la media del área fuera de muestra "
                  f"(R² {fmt(round(float(cv['completo']), 2) + 0.0, 2)} contra {fmt(round(float(cv['media']), 2) + 0.0, 2)}).</p>")
     return (f'<div class="resultado" id="eje"><p>{linea}</p>{barra_eje(eje)}'
             f'<p class="nota">Escala en grados desde el norte (0 a 180: un eje no tiene sentido). Barra: IC 95% por bootstrap; '

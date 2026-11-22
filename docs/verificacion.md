@@ -16,7 +16,7 @@ Las cinco preguntas que haría un revisor externo de ingeniería de datos, dónd
 | --- | --- | --- |
 | 1. El número de hoy sale del dato de hoy | `uv run python -m pipeline.claims` y `wiki/hallazgos/linaje.md` | todas las verificaciones en PASS contra el warehouse; el linaje muestra de qué tabla cruda sale cada tabla |
 | 2. Causalidad | `uv run python -m pipeline.placebo` (y `wiki/hallazgos/placebo.md`) | Fechas falsas y permutación pasan; la pretendencia existe y la página lo dice |
-| 3. Dirección contra los esfuerzos | `uv run python -m pipeline.validacion` (y `wiki/hallazgos/validacion.md`) | Eje estable de 82 a 93 grados pero no firme; no se separa del SHmax; regla de parada cumplida (`eje_parada.md`) |
+| 3. Dirección contra los esfuerzos | `uv run python -m pipeline.validacion` (y `wiki/hallazgos/validacion.md`) | Eje estable de 84 a 93 grados pero no firme; no se separa del SHmax; regla de parada cumplida (`eje_parada.md`) |
 | 4. Más volumen o frecuencia | `uv run python -m pipeline.run_all` | Cadena completa con tiempos por paso; solo la ingesta toca la red (`--with-ingest`) |
 | 5. El agente no inventa | `uv run python -m agente.eval.run --split holdout` y `uv run pytest tests/test_agente.py -q` | Argumentos validados, solo lectura, abstención ante lo que no está en los datos; 23/27 en reservadas con `nemotron-3.5-super` (no el modelo local) |
 
@@ -38,9 +38,9 @@ Raw inmutable y controles publicados. Intervalos por bootstrap de pads hijo, tes
 
 ## Qué se midió después, y qué dijo (los tres resultados incómodos están publicados)
 
-- **Validación del eje este-oeste** (`wiki/hallazgos/validacion.md`). El punto estimado es estable: 92 grados con los eventos viejos, 88 con los nuevos y 82 con el corte de agua como resultado alternativo. Pero no es firme: solo el salto del corte de agua deja un eje definido, ningún grupo de años lo define, y el eje de los eventos viejos no predice mejor los nuevos que el SHmax publicado o un eje al azar (mejoras de menos de 1% de la suma de cuadrados).
-- **Modelo de costo con validación cruzada** (`pipeline/costo.py`, `mart_costo_cv`). Fuera de muestra no le gana a predecir la media (R2 de unos -0,15 contra -0,00 y 0,01; el error absoluto es parecido) y el término del ángulo no agrega nada. Da un intervalo del 80% desde los residuos fuera de muestra (por ejemplo, el padre p165347: 232.720 bbl, de 174.725 a 399.391), que supone errores independientes entre padres.
-- **Placebo y pretendencia** (`wiki/hallazgos/placebo.md`). Las fechas falsas y la permutación pasan, pero los padres cercanos ya rendían menos antes de la fractura (-2,5, -3,5 y -6,3 puntos en los meses -3, -2 y -1). Los 23 puntos son una cota superior: contra ese nivel previo la caída adicional al mes 1 es de 19 a 20 puntos, si la brecha previa es un nivel y no un efecto anticipado (los datos mensuales no lo separan).
+- **Validación del eje este-oeste** (`wiki/hallazgos/validacion.md`). El punto estimado es estable: 92 grados con los eventos viejos, 89 con los nuevos y 84 con el corte de agua como resultado alternativo. Pero no es firme: solo el salto del corte de agua deja un eje definido, ningún grupo de años lo define, y el eje de los eventos viejos no predice mejor los nuevos que el SHmax publicado o un eje al azar (mejoras de menos de 1% de la suma de cuadrados).
+- **Modelo de costo con validación cruzada** (`pipeline/costo.py`, `mart_costo_cv`). Fuera de muestra no le gana a predecir la media (R2 de unos -0,18 contra -0,00 y -0,03; el error absoluto es parecido) y el término del ángulo no agrega nada. Da un intervalo del 80% desde los residuos fuera de muestra (por ejemplo, el padre p165347: 232.720 bbl, de 174.725 a 399.391), que supone errores independientes entre padres.
+- **Placebo y pretendencia** (`wiki/hallazgos/placebo.md`). Las fechas falsas y la permutación pasan, pero los padres cercanos ya rendían menos antes de la fractura (-2,5, -3,6 y -6,3 puntos en los meses -3, -2 y -1). Los 23 puntos son una cota superior: contra ese nivel previo la caída adicional al mes 1 es de 19 a 20 puntos, si la brecha previa es un nivel y no un efecto anticipado (los datos mensuales no lo separan).
 
 ## Qué es limitado
 

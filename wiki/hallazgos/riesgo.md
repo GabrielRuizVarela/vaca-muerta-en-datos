@@ -10,7 +10,7 @@ Esta página la escribe `python -m pipeline.wiki` con `pipeline.riesgo.pagina_ri
 - Golpe fuerte: el índice del mes 1 del padre menos la mediana del mismo grupo de edad de los controles queda por debajo de -30 puntos. Ocurre en el 44,7% de los eventos de entrenamiento y en el 42,3% de los de prueba.
 - Riesgo: **no predice el riesgo**. En la prueba el AUC es 0,67 (IC 95%: 0,60 a 0,74) y la habilidad de Brier contra la tasa de entrenamiento por área es 0,09 (IC 95%: -0,04 a 0,21). El AUC pasa el umbral de la regla (0,65 con límite bajo sobre 0,55) pero la habilidad de Brier no excluye cero: el modelo ordena los eventos de la prueba y no se puede afirmar que sus probabilidades mejoren la tasa de entrenamiento por área. La regla pide las dos cosas.
 - Calibración (descriptivo, tabla de abajo): el décimo de mayor riesgo predice 82,6% y observa 61,2%; el de menor riesgo predice 17,7% y observa 14,0%.
-- Geometría (descriptivo, sin veredicto): sin las variables de las ramas el AUC es 0,60 (0,52 a 0,66) y con la distancia de superficie sola 0,47 (0,40 a 0,55). La diferencia de AUC contra el principal es -0,08 (-0,13 a -0,02) sin las ramas y -0,20 (-0,28 a -0,11) con la distancia de superficie sola. Es una lectura de esta muestra y no cambia el veredicto.
+- Geometría (descriptivo, sin veredicto): sin las variables de las ramas el AUC es 0,60 (0,52 a 0,66) y con la distancia de superficie sola 0,47 (0,40 a 0,55). La diferencia de AUC contra el principal es -0,08 (-0,13 a -0,02) sin las ramas y -0,20 (-0,28 a -0,11) con la distancia de superficie sola.
 
 ## Modelos
 
@@ -118,7 +118,7 @@ Son descriptivos: no tienen intervalo ni prueba de significancia, y con variable
 
 - Es una asociación probada hacia adelante, sin afirmación causal: un riesgo alto no dice que la fractura del hijo cause el golpe.
 - La mediana de control del resultado sale de todo el periodo, como en el estudio principal; no es una variable del modelo, pero el resultado de los eventos de entrenamiento y el de los de prueba comparten esa mediana.
-- El entrenamiento tiene cientos de eventos y muchas variables: un "no predice el riesgo" es contra estas variables y este modelo (logístico L2 sin ajuste) y no prueba que nada prediga el riesgo. Los intervalos cubren el muestreo de la prueba, no el del entrenamiento.
+- El entrenamiento tiene cientos de eventos y muchas variables: un "no predice el riesgo" es contra estas variables y este modelo (logístico L2 sin ajuste) y no prueba que nada prediga el riesgo.
 - La rama medida cubre sobre todo hijos de 2016 a 2023: las variables de rama de la prueba están medidas en una parte de los eventos y la muestra no dice nada de los hijos de 2025 en adelante.
 - Solo están los eventos con el hijo cercano a menos de 1 km en superficie: un padre con la rama cerca pero la boca lejos no está.
 - La referencia por área usa la prevalencia de entrenamiento: una mejora sobre ella no es una mejora sobre un operador que ya conoce su campo.

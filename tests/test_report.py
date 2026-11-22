@@ -73,17 +73,17 @@ def test_modelo_de_costo_frente_a_la_media_solo_si_existe_el_mart(copia, tmp_pat
         con.execute("drop table if exists mart_costo_cv")
         _, sin = pagina(con, tmp_path, "sin.html")
         con.execute("create or replace table mart_costo_cv as select * from (values "
-                    "('modelo', -0.03), ('media_entrenamiento', 0.0), ('sin_angulo', -0.04)) t(modelo, r2)")
+                    "('modelo', -0.03), ('media_entrenamiento', 0.0), ('media_area', -0.03), ('sin_angulo', -0.04)) t(modelo, r2)")
         _, peor = pagina(con, tmp_path, "peor.html")
         con.execute("create or replace table mart_costo_cv as select * from (values "
-                    "('modelo', 0.12), ('media_entrenamiento', 0.0), ('sin_angulo', 0.1)) t(modelo, r2)")
+                    "('modelo', 0.12), ('media_entrenamiento', 0.0), ('media_area', -0.03), ('sin_angulo', 0.1)) t(modelo, r2)")
         _, mejor = pagina(con, tmp_path, "mejor.html")
         con.execute("drop table mart_costo_cv")
     finally:
         con.close()
     assert "modelo de costo" not in texto_visible(sin).split('id="eje"')[1].split("</div>")[0]
-    assert "El modelo de costo no supera a la media fuera de muestra (R² -0,03 contra 0,00)" in peor
-    assert "El modelo de costo supera a la media fuera de muestra (R² 0,12 contra 0,00)" in mejor
+    assert "El modelo de costo no supera a la media del área fuera de muestra (R² -0,03 contra -0,03)" in peor
+    assert "El modelo de costo supera a la media del área fuera de muestra (R² 0,12 contra -0,03)" in mejor
 
 
 @needs_wh
@@ -106,11 +106,11 @@ def test_pagina_con_marts_a_mano_sobre_warehouse_chico(warehouse, tmp_path):  # 
     con.execute("create table mart_anisotropia_area as select * from (values "
                 "('Cuenca', 92.9, 69.9, 122.5, 52.6, 0.022, 1734)) t(area, eje_grados, ic_bajo, ic_alto, ancho_ic, p_perm, n)")
     con.execute("create table mart_costo_cv as select * from (values ('modelo', -0.15), ('media_entrenamiento', 0.0), "
-                "('sin_angulo', -0.16)) t(modelo, r2)")
+                "('media_area', -0.03), ('sin_angulo', -0.16)) t(modelo, r2)")
     datos, html = pagina(con, tmp_path)
     visible = texto_visible(html)
     assert "Eje de mayor merma en la cuenca" in visible and "93 grados" in visible
-    assert "El modelo de costo no supera a la media fuera de muestra (R² -0,15 contra 0,00)" in visible
+    assert "El modelo de costo no supera a la media del área fuera de muestra (R² -0,15 contra -0,03)" in visible
     assert 'id="reproducir"' in html and not re.search("[–—]", visible)
 
 
