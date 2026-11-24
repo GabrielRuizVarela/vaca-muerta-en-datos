@@ -7,7 +7,7 @@ página en particular: lo que solo vale para una página va en su plantilla. La 
   css_fuentes()       las dos reglas `@font-face` (Archivo y Faustina, autoalojadas en site/fuentes/)
   css_tokens()        el bloque `:root` (claro) y su versión oscura (`prefers-color-scheme` y `data-theme`)
   CSS_BASE            escala tipográfica, espacios, enlaces, detalles y las marcas de veredicto
-  estilo_matplotlib() diccionario de rcParams con los colores v1 (TOKENS_FIGURAS), para `plt.rc_context`
+  estilo_matplotlib() diccionario de rcParams con los colores del sistema, para `plt.rc_context`
   contexto_matplotlib() lo mismo como administrador de contexto
 
 Las plantillas lo reciben por el marcador `/*__SISTEMA__*/` (ver `pipeline.report`).
@@ -39,17 +39,6 @@ SERIES: dict[str, tuple[str, str]] = {
     "s3": ("#C2592F", "#E0825E"),
     "s4": ("#B88A00", "#D9B23A"),
     "s5": ("#C0508A", "#DE7FB0"),
-}
-
-# Los colores v1 ("Estepa") quedan solo para las dos figuras PNG de "Ver los números", que no cambian hasta que el
-# dueño diga que sí a v2 (`pipeline.figuras_sitio`). Ninguna hoja de estilo los usa.
-TOKENS_FIGURAS: dict[str, tuple[str, str]] = {
-    "papel": ("#F2F4F1", "#16211F"),
-    "tinta": ("#17262B", "#E6EBE7"),
-    "jarilla": ("#5E6A66", "#93A19C"),
-    "medido": ("#0E6F6B", "#5CC9BC"),
-    "supuesto": ("#6A55B0", "#B3A2EE"),
-    "linea": ("#D5DBD6", "#2A3936"),
 }
 
 # Marcas de veredicto en texto (Markdown y copias de revisión); en la página son las clases .marca--*.
@@ -146,27 +135,27 @@ def estilo_matplotlib(modo: str = "claro") -> dict:
     Pensado para figuras de 350 px CSS de ancho dibujadas a 2x (dpi 192). `modo` es "claro" u "oscuro".
     """
     i = {"claro": 0, "oscuro": 1}[modo]
-    c = {nombre: valores[i] for nombre, valores in TOKENS_FIGURAS.items()}
+    c = {nombre: valores[i] for nombre, valores in (TOKENS | SERIES).items()}
     return {
         "figure.facecolor": "none", "axes.facecolor": "none", "savefig.facecolor": "none", "savefig.transparent": True,
         "figure.dpi": 192, "savefig.dpi": 192,
-        "font.family": "serif", "font.serif": ["Charter", "Georgia", "Noto Serif", "DejaVu Serif"],
+        "font.family": "sans-serif", "font.sans-serif": ["Archivo", "DejaVu Sans"],
         "font.size": 10.5, "axes.labelsize": 10.5, "xtick.labelsize": 10.5, "ytick.labelsize": 10.5,
         "text.color": c["tinta"], "axes.labelcolor": c["tinta"], "xtick.color": c["tinta"], "ytick.color": c["tinta"],
-        "axes.edgecolor": c["linea"], "axes.linewidth": 1.0, "axes.grid": False,
+        "axes.edgecolor": c["tinta"], "axes.linewidth": 1.0, "axes.grid": False,
         "axes.spines.top": False, "axes.spines.right": False, "axes.spines.left": False,
         "xtick.major.size": 0, "ytick.major.size": 0, "xtick.major.pad": 6, "ytick.major.pad": 4,
         "lines.linewidth": 2.0, "lines.solid_capstyle": "round", "lines.dash_capstyle": "butt",
         "legend.frameon": False, "axes.unicode_minus": False,  # el guion común, igual que en el texto de la página
-        "axes.prop_cycle": f"cycler('color', ['{c['medido']}', '{c['jarilla']}', '{c['supuesto']}'])",
+        "axes.prop_cycle": f"cycler('color', ['{c['s1']}', '{c['s3']}', '{c['jarilla']}'])",
         "svg.fonttype": "none",
     }
 
 
 def colores(modo: str = "claro") -> dict[str, str]:
-    """Los colores v1 de las figuras PNG en el modo pedido, para dibujar con ellos fuera de las rcParams."""
+    """Los colores del sistema (v2) en el modo pedido, para dibujar con ellos fuera de las rcParams."""
     i = {"claro": 0, "oscuro": 1}[modo]
-    return {nombre: valores[i] for nombre, valores in TOKENS_FIGURAS.items()}
+    return {nombre: valores[i] for nombre, valores in (TOKENS | SERIES).items()}
 
 
 @contextmanager

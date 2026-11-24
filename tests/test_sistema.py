@@ -20,8 +20,8 @@ def test_estilo_matplotlib_es_un_diccionario_sin_marco_ni_rejilla() -> None:
     for modo in ("claro", "oscuro"):
         e = sistema.estilo_matplotlib(modo)
         assert e["axes.grid"] is False and e["axes.spines.top"] is False and e["axes.spines.right"] is False
-        assert e["text.color"] == sistema.TOKENS_FIGURAS["tinta"][0 if modo == "claro" else 1]
-    assert sistema.colores("oscuro")["medido"] == sistema.TOKENS_FIGURAS["medido"][1]  # las PNG siguen en v1
+        assert e["text.color"] == sistema.TOKENS["tinta"][0 if modo == "claro" else 1]
+    assert sistema.colores("oscuro")["s1"] == sistema.SERIES["s1"][1]
 
 
 def test_la_portada_recibe_el_sistema_y_no_tiene_colores_sueltos() -> None:
@@ -46,7 +46,7 @@ def test_la_portada_es_una_tapa_seis_laminas_y_un_cierre() -> None:
     lista = arti[arti.index('<ol class="seis"'): arti.index("</ol>")]
     destinos = re.findall(r'<a href="#(\w+)">', lista)
     assert destinos == ["vecino", "artefacto", "diferido", "direccion", "anticipar", "fuera"]
-    assert re.findall(r'<section class="[^"]*lamina[^"]*" id="(\w+)"', arti) == ["inicio", *destinos, "creemos"]
+    assert re.findall(r'<section class="[^"]*lamina[^"]*" id="(\w+)"', arti) == ["inicio", "creemos", *destinos, "apuesta"]   # la tapa, la respuesta en tres columnas, las seis preguntas y la apuesta abierta
     for d in destinos:
         seccion = re.search(rf'<section class="pregunta lamina" id="{d}"[^>]*>.*?\n  </section>', arti, re.S).group(0)
         assert seccion.count("<h2") == 1 and 'class="primera' in seccion and 'class="prueba"' in seccion

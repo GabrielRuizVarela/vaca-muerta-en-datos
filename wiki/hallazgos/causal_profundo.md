@@ -76,7 +76,7 @@ Los cortes de los terciles salen de los 636 tratados de las celdas de D2 con el 
 
 Sin veredicto: el tercil de más agua da la suba más chica, al revés de una dosis; la regla no tiene veredicto para un gradiente al revés y el IC de la diferencia incluye el cero.
 
-Longitud de rama del hijo, sin veredicto: el tercil más largo menos el más corto da -7,1 puntos porcentuales (IC 95%: -17,9 a 6,3); tiene el dato el 94% de los tratados.
+Longitud de rama del hijo, sin veredicto: el tercil más largo menos el más corto da -6,2 puntos porcentuales (IC 95%: -16,9 a 8,2); tiene el dato el 94% de los tratados.
 
 ## D5: forma en el tiempo
 

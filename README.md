@@ -1,55 +1,65 @@
 # Vaca Muerta en datos
 
-Cuando se fractura un pozo nuevo junto a pozos que ya producían, ¿los que ya producían rinden menos? Se contesta con datos públicos de la Secretaría de Energía, en seis preguntas encadenadas: cada una nace de la duda que dejó la anterior. Esta es la versión corta; la larga, con la figura y un caso para recorrer, está en [`site/index.html`](site/index.html).
+**Abstract.** We measured the effect of a new hydraulic fracture on the wells near it, with only the monthly public data of Argentina in Vaca Muerta (2,094 events). One month after the fracture, parent wells within 1 km of the child well produce 19 to 23 percentage points less than control wells 2 to 5 km away. After six months, the difference is small, but it is not zero. With false fracture dates, the difference is not there. The result replicates in 1 of 2 basins. It is a measured effect, not a demonstrated cause. The rest of this repository is in Spanish.
 
-◐ **¿Le pega al vecino?** *Sostiene, con pretendencia.* Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control a 2 a 5 km de un pozo hijo (2.094 eventos). Hay una brecha previa a la fractura (por eso 23 es una cota superior y 19 a 20 el valor descontado).
+**Resumen.** Medimos qué les pasa a los pozos que ya producían cuando se fractura un pozo nuevo a menos de 1 km. Usamos solo el dato público mensual de la Secretaría de Energía en Vaca Muerta (2.094 eventos). Comparamos esos pozos padre con pozos de control a 2 a 5 km de un pozo hijo. Un mes después de la fractura, los pozos padre rinden entre 19 y 23 puntos menos. A los 6 meses la brecha es de menos de 5 puntos: la producción se atrasa, y no está probado que vuelva toda. Con fechas de fractura falsas, la brecha no aparece. El resultado se replica en 1 de 2 cuencas de Estados Unidos. Es una huella medida, no una causa demostrada: con datos mensuales, un cierre preventivo y un daño se ven iguales.
 
-◐ **¿O es un artefacto del método?** *Sostiene, con pretendencia.* Las fechas falsas y las permutaciones no reproducen la brecha, y una brecha plantada a propósito se recupera. Es una huella medida, no una causa demostrada.
+Siguen las seis preguntas en versión corta. La versión con figuras y un caso para recorrer está en [`site/index.html`](site/index.html).
 
-● **¿Se pierde o se atrasa?** *Sostiene.* A los 6 meses la brecha casi se cierra: es producción diferida, no perdida. Contra un control de la misma edad el diferido de los meses 0 a 6 va de 6,4 a 11,4 millones de barriles (sin duplicar y descontando la brecha previa hasta el total original).
+◐ **¿Los pozos vecinos rinden menos?** *Sostiene, con una brecha previa.* Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control a 2 a 5 km de un pozo hijo (2.094 eventos). Hay una brecha previa a la fractura (por eso 23 es una cota superior y 19 a 20 el valor descontado).
 
-◐ **¿Por dónde pasa?** *No firme.* El eje de mayor merma, que se publicó como hallazgo, no resistió una validación fuera de tiempo y se retiró como descripción de la muestra. Lo que sí se sostiene es el mecanismo por la geometría de las ramas.
+◐ **¿Puede salir sola, por cómo medimos?** *Sostiene, con una brecha previa.* Las fechas falsas y las permutaciones no reproducen la brecha, y una brecha plantada a propósito se recupera. Es una huella medida, no una causa demostrada.
 
-○ **¿Se puede anticipar o planificar?** *No predice* el costo, *no predice el riesgo* y los dos intentos de planificar quedaron *sin muestra*: pedían más datos de los que hay.
+● **¿Se pierde o se atrasa?** *Sostiene.* A los 6 meses la brecha casi se cierra: sería petróleo que llega tarde. No está probado que vuelva todo. Contra un control de la misma edad el diferido de los meses 0 a 6 va de 6,4 a 11,4 millones de barriles (sin duplicar y descontando la brecha previa hasta el total original).
 
-◐ **¿Pasa fuera de Vaca Muerta?** En otras cuencas, con los mismos estimadores y una regla fijada de antemano, la brecha del mes 1 se replica en 1 de 2 cuencas: en la cuenca DJ de Colorado sí y en Wyoming no (tabla de abajo).
+● **¿Por dónde pasa?** *Sostiene.* La dirección de mayor pérdida (este-oeste) se publicó como hallazgo y la retiramos. Al repetirla con datos nuevos no se separó de la dirección de los esfuerzos ni de cómo se disponen los pozos. Lo que sí se sostiene es una diferencia según la posición del padre respecto de la rama del hijo. El que queda al costado rinde menos que el que queda en la punta.
 
-**Qué no sabemos.** Si la huella es una propiedad de Vaca Muerta o de cómo se ve el dato público, y qué parte de la brecha previa es efecto anticipado. La prueba prospectiva quedó congelada el 2026-11-18 con los datos hasta 2026-09: hacen falta 100 eventos cercanos con el mes medido y hoy está pendiente.
+○ **¿Se puede anticipar o planificar?** *No predice* el costo ni el riesgo, y los dos intentos de planificar quedaron *sin muestra*: pedían más casos de los que hay.
 
-Contexto: con los datos a octubre de 2026, Vaca Muerta produce unos 709 kbbl/d de petróleo y YPF el 50,5%. En YPF la rama horizontal mediana pasó de unos 1.500 m (cohorte 2017) a 3.316 m (cohorte 2025), mientras el petróleo de 12 meses por metro de rama bajó de 83 a 79 bbl/m: una correlación, no una causa.
+◐ **¿Pasa fuera de Vaca Muerta?** *Se replica en 1 de 2 cuencas.* En otras cuencas, con los mismos estimadores y una regla fijada de antemano, la brecha del mes 1 aparece en la cuenca DJ de Colorado y no en Wyoming (tabla de abajo).
+
+**Qué no sabemos.** Si la huella es una propiedad de Vaca Muerta o de cómo se ve el dato público, y qué parte de la brecha previa es efecto anticipado. La prueba prospectiva se escribió el 2026-11-18 con los datos hasta 2026-09; con los datos hasta 2026-10 ya se puntuó y quedó sin muestra: hacen falta 100 eventos cercanos con el mes medido.
 
 Caso de estudio, con figuras y cada cifra verificada: [`docs/caso-interferencia.md`](docs/caso-interferencia.md).
 
-## Result
-
-One month after a new well is fracked, neighbouring wells within 1 km produce 19 to 23 percentage points less than same-age control wells 2 to 5 km away (2,094 events).
-By month 6 the gap has almost closed: the oil is deferred, not lost.
-In other basins, with the same estimators and a pre-registered rule, the gap one month after the frac replicates in 1 of 2 basins: yes in Colorado's DJ basin, no in Wyoming (table below).
-It is a measured footprint that passes placebo and permutation tests, not a demonstrated cause.
-The rest of this repository is in Spanish.
-
 ## Mirá esto primero
 
-- `docs/caso-interferencia.md`: el caso de estudio, con figuras y cada cifra con su verificación.
-- `site/index.html`: el tablero (estático, se abre directo en el navegador).
-- `site/replay.html`: la repetición mes a mes de pozos, fracturas y golpes de agua.
-- `site/mundo.html`: la cuenca en 3D para recorrer mes a mes. Cada pozo es un punto en su ubicación de superficie sobre una imagen satelital (Sentinel-2, con su fecha en pantalla). Desde el mapa se arma el estudio de eventos, se planta un pozo hijo hipotético y se hacen dos cuentas de física con supuestos propios. Cada elemento dice si es dato, medido o supuesto, y al abrir la página recalcula las respuestas del pipeline.
-- `site/globo.html`: el globo de las cuencas. Está oscuro salvo donde un regulador publica petróleo por pozo (lo oscuro es "no publica por pozo", no "no produce"); cada jurisdicción auditada se dibuja con la textura de su nivel. Cada cuenca medida (Vaca Muerta, Colorado, Wyoming) se abre en la misma repetición mes a mes que `mundo.html`, con su veredicto leído de los marts. Se arma con `pipeline/globo.py` y necesita los tres warehouses.
-- `site/informe.html`: el informe para un operador (curva del padre, distancia, edad, robustez por operador y área, cierre a 6 meses y calculadora de valor del diferido), armado desde los marts por `pipeline/informe.py`.
+- `docs/caso-interferencia.md`: el caso de estudio, para seguir el cálculo con figuras y ver cómo se verificó cada cifra.
+- `site/index.html`: el tablero, con la historia completa y la figura. Se abre directo en el navegador.
+- `site/replay.html`: la repetición mes a mes de pozos, fracturas y subidas del corte de agua.
+- `site/mundo.html`: Vaca Muerta en 3D, para recorrer la cuenca mes a mes. Desde el mapa se arma el estudio de eventos y se prueba un pozo hijo hipotético.
+- `site/globo.html`: el globo de las cuencas, para ver dónde un regulador publica petróleo por pozo. Lo oscuro es "no publica por pozo", no "no produce". Cada cuenca medida se abre mes a mes.
+- `site/informe.html`: el informe para un operador, con la curva del padre, la distancia, la edad, la robustez y una calculadora del valor del diferido.
 - `wiki/hallazgos/interferencia.md`: el hallazgo con su historial por versión de datos.
 - `docs/verificacion.md`: cinco preguntas y cómo verificarlas.
 
 ## Todos los resultados
 
+En resumen (el detalle y la bitácora de auditoría están plegados abajo):
+
+| Pregunta | Respuesta | Veredicto |
+| --- | --- | --- |
+| ¿Los pozos vecinos rinden menos un mes después de la fractura? | Sí, y una parte de la diferencia ya existía antes de la fractura. | Sostiene, con una brecha previa |
+| ¿Puede salir de cómo medimos? | Con fechas falsas y con permutaciones la diferencia no aparece. | Sostiene, con una brecha previa |
+| ¿Se pierde o se atrasa? | A los seis meses la diferencia casi se cierra; no está probado que vuelva todo. | Sostiene |
+| ¿Por dónde pasa? | Importa la posición del padre respecto de la rama del hijo; la dirección este-oeste se retiró. | Sostiene |
+| ¿Se puede anticipar el costo o el riesgo? | No con estos datos. | No predice |
+| ¿Se puede planificar el calendario? | Los dos intentos no tuvieron casos suficientes. | Sin muestra |
+| ¿Pasa fuera de Vaca Muerta? | En Colorado sí y en Wyoming no. | Se replica en una de dos cuencas |
+| ¿Se cumplió la prueba prospectiva? | Se escribió antes de que existieran los datos y todavía no se puede puntuar. | Pendiente |
+
+<details>
+<summary>Bitácora de auditoría: cada resultado con su cifra, intervalo y veredicto</summary>
+
 | Resultado | Cifra | Intervalo | Veredicto |
 | --- | --- | --- | --- |
-| Interferencia al mes 1 (padres a menos de 1 km contra controles) | 19 a 23 puntos menos | IC 95% por bloques de 5 km de la brecha de 23: 17 a 30 | sostiene, con pretendencia |
+| Interferencia al mes 1 (padres a menos de 1 km contra controles) | 19 a 23 puntos menos | IC 95% por bloques de 5 km de la brecha de -23,0: -30,0 a -17,0 | sostiene, con una brecha previa |
 | Eje de mayor merma (cuenca) | 93 grados (E-O) | 70 a 123 grados | regla de parada cumplida: es una descripción de la muestra y ya no se presenta como hallazgo; la dirección no se separa del SHmax publicado (67,5) ni de cómo se disponen pads y ramas (`wiki/hallazgos/eje_parada.md`) |
 | Validación del eje fuera de tiempo | 92 grados con datos viejos, 89 en los nuevos | no se separa del SHmax ni de ejes al azar | no firme |
 | Mecanismo por la geometría de las ramas (`wiki/hallazgos/mecanismo.md`) | el padre al costado de la rama del hijo contra el de su punta, al mes 1: un contraste de -28,0 puntos sobre 1.201 costados y 915 puntas | IC 95% por bloques de 5 km: -35,9 a -19,7; en el mes -1 da -5,6 puntos (IC -13,9 a 2,5), así que no se separa de cero | sostiene, con la regla fijada antes de correr (commit bddf1e0771): es una huella medida compatible con la geometría de las ramas, no una prueba de causa ni de esfuerzos, y un cierre preventivo del padre al costado da el mismo contraste; el placebo no descarta una diferencia previa de hasta 13,9 puntos (cota superior), y la banda de 0 a 300 m ya da -13,8 en el mes -1; la muestra es sobre todo de 2016 a 2023 |
 | Diseño causal con controles aún no tratados (`wiki/hallazgos/causal.md`) | la primera fractura de un hijo a menos de 1 km sube el corte de agua del padre 13,8 puntos porcentuales (447 tratados), pero sin los pozos de YPF no se separa de cero; el petróleo al mes 1 da -25,8 puntos (468 tratados) | IC 95% por bloques de 5 km del corte de agua: 9,5 a 19,9; un cierre de más de medio mes sin hijo cerca sube el corte 3,6 (IC 2,3 a 7,1); del petróleo: -33,9 a -17,9, pero padres nunca tratados con fechas sorteadas ya dan -8,0 (IC -15,2 a -0,5) | con la regla fijada antes de calcular (commit 8f52ff1): el corte de agua cumple la regla de comunicación física causal bajo tendencias paralelas; como es una proporción, también subiría si solo cayera el petróleo, y D3, fijado después ([`causal_profundo.md`](wiki/hallazgos/causal_profundo.md)), muestra que en los días que el padre produce entra agua: su agua por día producido sube 19,5 puntos del líquido de la base (IC 12,8 a 29,2) y su petróleo por día producido no se separa de cero; el volumen de agua del mes no alcanza a separarse de cero (4,8, IC -0,1 a 12,3), y no se midió si es porque el padre pierde días; la dosis, fijada también después, no da gradiente: la cercana menos la lejana da 3,2 puntos porcentuales (IC -3,7 a 10,8) y el tercil de más agua de fractura del hijo menos el de menos da -8,6 (IC -18,9 a 9,4); la suba no se cura en 12 meses (media de los meses 6 a 12, cada mes solo y no el mayor de dos como en D2: 10,9, IC 7,7 a 15,0) y depende de YPF: sin sus pozos da 7,1 con un IC que incluye cero (-0,6 a 18,1) sobre 129 tratados de 447, así que el dato no la muestra fuera de YPF; en Colorado, la cuenca DJ (D7, regla fijada después), el mismo diseño se repite: el corte sube 9,0 puntos porcentuales (IC 6,3 a 12,1, 1.247 tratados) y D3 da el mismo veredicto que en Vaca Muerta; el petróleo no sobrevive a su placebo (M* = 0,62), así que la brecha sigue siendo una huella y no se lee como efecto causal; la persistencia de los meses 7 a 24 queda sin muestra (43 tratados de 200) |
 | Modelo de costo de la interferencia | R2 fuera de muestra -0,18 (la media del área da -0,03) | solo el coeficiente de la distancia excluye cero, y por poco | no predice |
-| Placebo y permutación | fechas falsas de -2,4 a 0,5 puntos; permutadas de -8,1 a -4,9; real -23,0 | los intervalos de las fechas falsas incluyen cero | sostiene, con pretendencia |
+| Placebo y permutación | fechas falsas de -2,4 a 0,5 puntos; permutadas de -8,1 a -4,9; real -23,0 | los intervalos de las fechas falsas incluyen cero | sostiene, con una brecha previa |
 | Sincronía dentro del mes | la brecha del mes 0 cambia -2,1 puntos por cada 0,1 de fracción del mes posterior al inicio de la fractura | IC 95%: -3,3 a -0,8; el mes previo: -0,7 (IC -1,9 a 0,6) | sostiene |
 | Lado del hijo (rendimiento de 12 meses cerca de pozos depletados) | muy depletado contra virgen: -0,2 bbl por metro de rama (-0,2% del rendimiento virgen) | IC 95%: -12,6 a 12,2; el control negativo da 8,9 (IC 2,1 a 15,7) y no es nulo | no firme |
 | Replicación en Colorado (cuenca DJ) | -19,9 puntos al mes 1; previa de -6,9 en el mes -1 | IC 95% por bloques de 5 km: -27,5 a -14,8 | se replica, con la regla fijada antes de correr; por día producido la brecha es -8,1, cerca de 60% menor |
@@ -58,13 +68,15 @@ The rest of this repository is in Spanish.
 | Padre en la ventana de gas (padres gasíferos a menos de 1 km, `wiki/hallazgos/gas.md`) | el padre gasífero cercano da -12,6 puntos de gas al mes 1, pero ya va -7,2 puntos abajo en el mes -1, antes de la fractura | IC 95% por bloques de 5 km de la brecha de gas: -27,1 a -3,8; por día efectivo la brecha es -3,4 y su IC incluye cero | no firme, con la regla fijada antes de correr: no pasa la pretendencia |
 | Prueba prospectiva (`wiki/hallazgos/prospectiva.md`) | congelada el 2026-11-18 con los datos hasta 2026-09: brecha del mes 1 de -22,9 puntos (intervalo predicho -28,7 a -16,8) y cierre al mes 6, en eventos cuyos meses siguientes no estaban publicados | se puntúa con cada publicación nueva; hacen falta 100 eventos cercanos con el mes medido | se puntúa en cada publicación nueva; el veredicto y el mes de sus datos están en la página (al congelar, pendiente) |
 | Suba de la brecha en 2026 (`wiki/hallazgos/carga_anual.md`) | 2026 menos 2021 a 2024, con la misma antigüedad de carga de fracturas en todos los años: -15,1 puntos | IC 95% por bloques de 5 km: -43,5 a 10,9; 212 eventos cercanos de 2026 | no firme, con la regla fijada antes de correr: a los últimos años les faltan fracturas por cargar y el perfil por año no se lee como tendencia. Descriptivo, sin veredicto: con 2025 y 2026 juntos da -21,5 puntos (IC 95%: -40,7 a -5,4) |
-| Diferimiento | a los 6 meses la brecha casi se cierra | al mes 12 no hay más padres cercanos bajo el 90% de su trayectoria que controles | sostiene: diferido, no perdido |
+| Diferimiento | a los 6 meses la brecha casi se cierra | al mes 12 no hay más padres cercanos bajo el 90% de su trayectoria que controles | sostiene: casi se cierra; no está probado que vuelva todo |
 | Golpes en el mismo mes con el padre como su propio control (`wiki/hallazgos/golpes_mismo_padre.md`) | solo se puede identificar con padres que tuvieron dos meses de golpe aislados con distinta cantidad de hijos: 87 padres y 197 meses de golpe en Vaca Muerta y 19 padres y 38 meses en Colorado | no hay intervalo que valga con tan pocos pads del padre en el bootstrap | sin muestra, con la regla fijada antes de correr: pedía 150 padres y 400 meses de golpe, así que el dato no decide si agrupar hijos le cuesta menos al padre |
 | Calendario de golpes: matrices de costo, calendario óptimo y backtest ajustado en 2023 (`wiki/hallazgos/calendario_golpes.md`) | descriptivo, no una recomendación al operador: con el ajuste de 2023 el modelo de costo fijo más hijo predice peor que el aditivo, en la estimación puntual, en 344 eventos aislados de 2024 a 2026: D = -0,13 (habilidad del fijo menos la del aditivo; con el ajuste de 2023 el costo fijo se acota en cero) | IC 95% por pads del padre: -2,86 a 0,03; descriptivo, el arrepentimiento del calendario observado contra el óptimo, con el ajuste de toda la muestra y b acotado en cero, es una cota superior: 3.197 días de base (IC 95%: 0 a 8.034) | sin muestra, con la regla fijada antes de correr: pedía 100 eventos aislados en 2023 y hay 81, así que el dato no decide si conviene reagrupar el calendario |
 | Lado del hijo dentro del pad (hijos del mismo pad según las ramas a menos de 600 m, `wiki/hallazgos/hijo_pad.md`) | pendiente dentro del pad: 0,1 bbl por metro de rama por cada 100 bbl por metro de exposición previa, sobre 850 hijos de 234 pads, todos fracturados de 2016 a 2023, así que no habla de los hijos recientes | IC 95%: -0,8 a 1,1; cota superior de la pérdida: 0,9% del rendimiento virgen por cada 100 bbl por metro; el control negativo da 0,3 (IC 95%: -0,1 a 0,9) | no se ve degradación, con la regla fijada antes de correr; la exposición cuenta solo ramas medidas, así que la pendiente se atenúa hacia cero y no es que no haya degradación |
 | Alcance y dilución de la huella entre ramas (`wiki/hallazgos/alcance_rama.md`) | alcance medido hasta 1.000 m entre ramas: la brecha del mes 1 es de -50,3 puntos a menos de 300 m, -20,5 de 300 a 600 m, -9,0 de 600 a 1.000 m y -1,5 de 1.000 a 2.000 m, sobre 10.173 eventos con las dos ramas medidas | IC 95% por bloques de 5 km a menos de 300 m: -60,2 a -40,4; la dilución (A menos B) da -4,1 puntos (IC 95%: -11,7 a 2,7) | alcance medido; la distancia de superficie no se separa de la de ramas; el control de superficie está contaminado (los controles con la rama a menos de 1.000 m rinden 7,8 puntos menos); con la regla fijada antes de correr (commit `76d9831`). La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el 86% de esos hijos pero el 39% de los de 2024 y el 25% de los de 2025 |
 | Riesgo de golpe fuerte con un modelo logístico probado hacia adelante (`wiki/hallazgos/riesgo.md`) | en la prueba de 2023 y 2024, sobre 492 eventos cercanos, el AUC es 0,67 y la habilidad de Brier contra la tasa de entrenamiento por área es 0,09 | IC 95% por pads de hijo del AUC: 0,60 a 0,74; de la habilidad de Brier: -0,04 a 0,21 | no predice el riesgo, con la regla fijada antes de correr (commit `4b19b90`): el AUC pasa el umbral pero la habilidad de Brier no excluye cero. La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el 86% de esos hijos pero el 39% de los de 2024 y el 25% de los de 2025 |
 | Dosis con la geometría de las ramas, detrás de una puerta de potencia (`wiki/hallazgos/dosis_geometria.md`) | con los padres a menos de 600 m entre ramas (464 eventos de 134 pads hijo) el menor MDE80 con Holm es de 0,34 desvíos de la caída por desvío de la dosis, contra 0,22 de la muestra completa | el mayor MDE80 con Holm es de 0,52; la simulación de planta y recupera no valida la cuenta analítica, que resulta optimista en esa simulación (la causa no está medida) | la geometría no da más potencia, con la regla fijada antes de correr (commit `59b3a26`): no se corrió el modelo de dosis y no se publica ningún coeficiente; no dice que no haya dosis y respuesta. La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el 86% de esos hijos pero el 39% de los de 2024 y el 25% de los de 2025 |
+
+</details>
 
 ## Para un operador
 
@@ -115,14 +127,95 @@ Proyecto personal, no afiliado ni avalado por ninguna empresa.
 
 ## Cómo se hizo
 
-Ingesta con hash (raw inmutable por versión), modelo en DuckDB, 29 controles de calidad (los bloqueantes frenan la publicación) y linaje de cada tabla en `wiki/hallazgos/linaje.md`.
-Hecho con asistencia de IA; cada cifra de esta página se verifica contra el warehouse con `uv run python -m pipeline.claims` y hay 1241 tests.
-Preguntas en lenguaje natural sobre 16 operaciones tipadas de solo lectura (`agente/`, también como servidor MCP): exactitud 40/41 en desarrollo y 23/27 en reservadas, con la respuesta correcta calculada sobre el warehouse vigente.
+Ingesta con hash (raw inmutable por versión), modelo en DuckDB y linaje de cada tabla en `wiki/hallazgos/linaje.md`. Los controles de calidad bloqueantes frenan la publicación.
+Hecho con asistencia de IA. Cada cifra se verifica contra el dato antes de publicar (`uv run python -m pipeline.claims`) y hay más de mil doscientas pruebas automáticas.
+El agente (`agente/`, también como servidor MCP) responde preguntas en lenguaje natural con operaciones tipadas de solo lectura; cómo se midió su exactitud está en `docs/verificacion.md`.
+
+## Ingeniería y matemática
+
+Para quien quiera revisar cómo se llega a cada número. Primero cada idea en palabras y después el procedimiento o la fórmula; cada término se define una sola vez. Acá no hay cifras: las del estudio están en las secciones de arriba y `pipeline.claims` las verifica contra el warehouse. El flujo completo y sus decisiones de diseño están en [`docs/arquitectura.md`](docs/arquitectura.md), y qué se ejecuta para verificar cada respuesta, en [`docs/verificacion.md`](docs/verificacion.md).
+
+### El camino del dato
+
+```
+datos abiertos de la Secretaría de Energía
+  -> pipeline.ingest    raw inmutable (copia por fecha y hash) + data/manifest.json
+  -> pipeline.build     DuckDB: stg_ (la fuente, tipada) -> dim_ y fct_ (pozo, pozo-mes, evento)
+                        -> int_ (pares padre e hijo, bandas de distancia) -> mart_ (lo que leen las páginas)
+  -> pipeline.checks    los controles bloqueantes frenan el build; los avisos se miden y se publican
+  -> análisis           un módulo de Python por pregunta: lee int_ y mart_, escribe sus mart_ y su página de wiki/hallazgos/
+  -> publicación        figuras, wiki, informe, tablero, repetición, globo, recorrido en tres dimensiones
+  -> pipeline.claims    cada cifra de los textos contra el warehouse
+```
+
+- **Ingesta.** La descarga es condicional y guarda cada archivo con su fecha y su hash criptográfico; el manifiesto registra origen, tamaño y hora. Si la fuente no cambió no se guarda nada nuevo, y las copias viejas nunca se pisan: cualquier semana se puede reconstruir.
+- **Modelo.** Cada tabla se rehace entera desde el raw (`create or replace`), con un solo hilo y con la fecha de corte tomada del manifiesto y no del reloj. Por eso dos builds de los mismos archivos dan las mismas tablas bit a bit, y no hay estado incremental que se desincronice. El SQL define las tablas con grano fijo (un pozo, un pozo-mes, un par, un evento) y se lee de arriba abajo; la estadística vive en Python y no modifica esas tablas.
+- **Calidad en dos niveles.** Un control bloqueante guarda el modelo: grano único, volúmenes negativos o pozos sin dimensión después de limpiar, conciliación de filas y volúmenes entre el archivo crudo, el staging y los hechos, y deriva de esquema (una columna esperada que falta en el raw). Si falla uno, no se publica. Un aviso mide algo propio del dato público (filas rectificadas, meses con producción y cero días efectivos, fracturas con fecha futura, retraso de la última carga): no se corrige en silencio, se cuenta y se publica en `data/dq_report.json`.
+- **Linaje.** `wiki/hallazgos/linaje.md` se genera leyendo el SQL y el código de los módulos que escriben tablas: dice de qué archivo crudo (o de qué valor del manifiesto) sale cada una, y un test comprueba que no falte ninguna.
+
+### El estimador principal
+
+En palabras: se toma cada pozo nuevo (el hijo) en el mes en que se fractura y se mira a los pozos que ya producían (los padres). Los cercanos, a menos de un kilómetro, son los tratados; los de control están a entre dos y cinco kilómetros de un hijo. La brecha principal compara la mediana de todos los padres cercanos con la mediana de todos los controles, sin emparejar por edad; el diferido sí usa un control de la misma edad. Un evento es un padre y el mes de fractura de su hijo más cercano. Cada padre se compara consigo mismo, no con el volumen de otro:
+
+```
+índice(padre, mes) = petróleo por día calendario del mes / promedio de su base
+brecha(mes)        = mediana del índice de los cercanos − mediana del índice de sus controles
+```
+
+- **Base.** El promedio de los tres meses que anteceden a la fractura; así se comparan niveles relativos y no volúmenes, y un pozo grande no pesa más que uno chico. Se mide en puntos: un centésimo de índice es un punto. Una base más vieja, de seis a cuatro meses antes, sirve de control: si los cercanos ya estaban por debajo de los controles antes de la fractura, esa es la brecha previa, y por eso la brecha cruda es una cota superior y la que descuenta la previa es el otro extremo del rango.
+- **Mediana.** Se usa la mediana y no el promedio para que unos pocos pozos extremos no muevan el resultado; el estudio cuenta además cuánto de la brecha son días producidos y cuánto caudal por día.
+- **Diferido.** Es la brecha de volumen acumulada contra el control de la misma edad. Se suma de dos maneras y se publica el rango, sin punto medio: sumando cada evento por separado, o contando una sola vez cada mes de un padre y descontando la brecha previa.
+- **Intervalo por bloques de cinco kilómetros.** Dos pads vecinos (un pad es la locación de superficie de la que salen varios pozos) comparten geología, programa de fractura y padres, así que sus ruidos pueden estar correlacionados y un bootstrap por pads queda angosto. Se proyecta la coordenada de cada pad hijo a un plano (con los mismos kilómetros por grado en todo el pipeline), se corta en una grilla de bloques y cada evento hereda el bloque de su hijo. Después se remuestrean bloques enteros con reemplazo, se recalcula la brecha cada vez, con semilla fija, y el intervalo del noventa y cinco por ciento son los percentiles que dejan fuera el dos y medio por ciento de cada cola. La estimación puntual no cambia: cambia solo la unidad de remuestreo. También se publican el intervalo por pads y el de bloques de dos kilómetros, para ver cuánto depende de la grilla.
+
+### Pruebas que intentan romperlo
+
+- **Fechas falsas.** Se corre la fecha de fractura hacia atrás, a un momento en que no pasó nada, y se repite la medición: si el método inventa una brecha, la inventa ahí.
+- **Permutación.** Se reparten al azar las fechas entre hijos del mismo año y se mide la brecha; la real se compara con esa distribución. Su media no es cero, así que el valor p es un piso y no una probabilidad exacta.
+- **Efecto plantado.** Sobre datos reales con fechas falsas se resta un porcentaje conocido del caudal de los cercanos de una parte de los pads, con el estimador sin cambios, y se mira cuánto devuelve. Se repite sobre muchos mundos y se mide también la tasa de falsos positivos sin plantar nada. Dice algo del estimador y no de los pozos.
+- **Cuencas ajenas.** La misma regla, los mismos estimadores y las mismas semillas sobre los datos públicos de Colorado y de Wyoming, leídas por separado: cuenta cuántas replican y no promedia ninguna.
+- **Mecanismo.** Con las trayectorias publicadas, el mismo estimador mide el contraste entre el padre que queda al costado de la rama del hijo y el que queda en su punta, por banda de distancia entre ramas, y repite ese contraste en el mes previo como placebo.
+
+### Qué pide una lectura causal
+
+La brecha es una huella: los cercanos ya rendían menos antes de la fractura, y el control no comparte esa selección. Para acercarse a una causa, `docs/plan-causal.md` y `docs/plan-causal-profundo.md` fijan un diseño de diferencias en diferencias escalonadas: el control es un padre que también va a tener un hijo cerca, pero más tarde, así que comparte la zona de relleno; se estima el efecto por cohorte de mes y grupo de edad y se promedia ponderando por tratados, para evitar los pesos negativos del modelo de dos efectos fijos. Cada supuesto dice si se puede probar: tendencias paralelas (solo antes de la fractura, nunca después), sin anticipación más allá de los tres meses previos, sin derrame hacia los controles y fecha de fractura independiente del resultado, con un placebo de fecha falsa, uno de distancia falsa y uno de padres que nunca reciben un hijo cerca.
+
+Con la brecha previa se acota el sesgo, en una versión simplificada de la sensibilidad de Rambachan y Roth: se supone que esa brecha sigue entera después de la fractura y que cada uno de los dos pasos siguientes puede desviarse hasta M veces el mayor cambio previo observado (la brecha de tres meses antes, o el cambio de un mes previo al siguiente).
+
+```
+sesgo máximo B(M) = |brecha previa del último mes| + dos · M · (mayor cambio previo)
+intervalo robusto = [límite bajo − B(M), límite alto + B(M)]
+```
+
+M* es el mayor M con el intervalo robusto entero bajo cero. El corte de agua se separa del cierre preventivo así: `corte = agua / (agua + petróleo)` sube si entra agua o si el petróleo cae con el agua quieta, de modo que se mide el volumen de agua y el de petróleo por día calendario en la misma unidad (puntos del líquido de la base), y un placebo de meses con cierre sin hijo cerca prueba que un cierre solo no lo sube.
+
+### Reglas fijadas antes de calcular
+
+Cada módulo que da un veredicto lleva en su docstring la regla escrita antes de calcular: muestra, estadístico, umbrales y veredictos posibles (por ejemplo `sostiene`, `no firme`, `no sobrevive a su placebo`, `sin muestra`; cada regla fija los suyos), con su fecha y con lo que se había mirado antes de fijarla; en las ramas del diseño causal el primer commit es la regla, sin ninguna cifra calculada. Lo agregado después de ver un resultado queda marcado como tal. `sin muestra` y `no firme` son resultados terminados: la regla no se rediseña para evitarlos. `pipeline/hallazgos.py` guarda cada hipótesis como una consulta, una expectativa y un umbral fijo (o el veredicto de su propia regla), y `pipeline.wiki` las vuelve a evaluar en cada corrida, con las que no se sostienen incluidas.
+
+- **Puerta de potencia.** Antes de estimar un modelo de dosis sobre una muestra se calcula el efecto mínimo detectable con esa muestra, con potencia del ochenta por ciento y corrección de Holm (que endurece el umbral cuando se prueban varias variables a la vez), sin leer ningún coeficiente. Si ni la mejor variable pasa el nivel de referencia, el modelo no se corre.
+- **Predicción prospectiva.** Dos predicciones para meses que todavía no estaban publicados quedaron congeladas en `data/prospectiva_congelada.json` con su hash. Cada actualización las puntúa con los eventos nuevos; la puntuación se niega si el hash del archivo congelado no coincide con el que está al lado ni con el del código. Hasta reunir los mínimos de cercanos, controles y bloques el veredicto es `sin muestra`.
+
+### Tests y verificación de cifras
+
+- **`pipeline.claims`.** Una verificación fija una cifra escrita en un documento: el archivo, la frase que la contiene y la función que calcula el valor desde el warehouse, un reporte versionado o el código. Falla si el número cambió o si la frase ya no coincide con su patrón. Aparte, un test por documento principal (el README, los límites, el resumen para un operador y el caso de estudio) falla si aparece una cifra que ni una verificación fija ni una frase definicional (un parámetro del método, una fecha, un número de sección) explica.
+- **Sin warehouse se saltea, no se aprueba.** En GitHub Actions no está el warehouse completo: las verificaciones que lo necesitan salen como `SKIP`, y un patrón que dejó de encontrar su frase se nota recién en la próxima corrida completa. Por eso `./refresh.sh` corre `pipeline.claims` contra el warehouse completo.
+- **Tests de código.** Fixtures chicos y calculables a mano para cada estimador, pruebas de determinismo (dos corridas dan las mismas tablas y los mismos archivos, sin contar la marca de hora de las páginas) y una prueba que construye el warehouse y el tablero sobre una muestra pequeña. Un test congela las cifras del README y del sitio de antes de reescribir su prosa, para que reescribirla no cambie ni una.
+
+### Límites de cada método
+
+- **Índice y mediana.** Usa el caudal mensual que declara la operadora y la coordenada de superficie del pad, no la trayectoria de la rama ni el día: un cierre preventivo y una interferencia se ven igual, y una base de pocos meses es ruidosa.
+- **Bloques.** Suponen que los bloques son independientes entre sí; el intervalo depende de la grilla (por eso se publican dos tamaños) y de la cantidad de bloques con eventos.
+- **Placebos.** Pasarlos descarta una brecha que aparezca en cualquier fecha; no prueba causa ni separa un daño de un cierre.
+- **Efecto plantado.** Con pocos mundos por celda, la tasa de falsos positivos es compatible con un rango ancho.
+- **Diferencias en diferencias.** La tendencia paralela no se prueba después de la fractura, no existe un instrumento creíble y el corte de agua es una proporción; el mejor resultado posible es causa bajo supuestos nombrados, no un hecho físico medido. Lo que lo cerraría (presión de boca, producción diaria y motivo de cada parada, el cronograma de etapas) no es público.
+- **Puerta de potencia.** La cuenta analítica puede ser optimista frente a la simulación.
+- **Prospectiva.** Cada publicación vuelve a puntuar con más eventos, sin ajuste por esas miradas repetidas, y la carga de fracturas viene atrasada.
+- **Otras cuencas.** Son dos y no miden lo mismo (la fecha del hijo no es la misma variable en las dos): una lectura de dos no separa una huella propia de la cuenca de una medida con más o menos ruido.
 
 ## Decisiones de diseño
 
 - Raw inmutable y direccionado por hash: una corrida sin cambios no escribe nada y se puede reconstruir cualquier semana.
-- Reconstrucción completa en vez de incremental: son 436.308 filas y DuckDB las reconstruye en segundos, sin estado que se desincronice.
+- Reconstrucción completa en vez de incremental: son 436.309 filas y DuckDB las reconstruye en segundos, sin estado que se desincronice.
 - Controles en dos niveles: lo que rompe el modelo frena la publicación; lo propio del dato público se mide y se muestra.
 
 Más: `wiki/` (hallazgos, operadoras, áreas, pads y grafo, con el libro de 17 hipótesis con umbral fijo), `docs/arquitectura.md` (el flujo, las decisiones de diseño y qué impide que una cifra se aparte del dato), `docs/proceso/` (decisiones y planes) y `agente/` (operaciones, evaluación y servidor MCP).

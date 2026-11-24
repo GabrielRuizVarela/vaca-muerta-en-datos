@@ -67,10 +67,11 @@ Coordenadas de superficie (pads), no trayectoria de la rama. Un cierre o ahogo p
 
 - datos a 2026-09 (sha produccion 61cecc31c8dd): brecha mes 1 (todas las edades, mediana de eventos cercanos menos control) = -0,229; petróleo diferido total = 10.723.754 bbl
 - datos a 2026-10 (sha produccion b10e75214719): brecha mes 1 (todas las edades, mediana de eventos cercanos menos control) = -0,230; petróleo diferido total = 11.445.600 bbl
+- datos a 2026-10 (sha produccion e5d7ba35139b): brecha mes 1 (todas las edades, mediana de eventos cercanos menos control) = -0,230; petróleo diferido total = 11.445.600 bbl
 
 ## Fuentes
 
 Tablas consultadas: `mart_interferencia_brecha`, `mart_interferencia_anual`, `mart_interferencia_diferida`, `int_interferencia_mes`.
 
-- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.
+- produccion_no_convencional: sha256 `e5d7ba35139b`, cargado 2026-11-23T12:05:41+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-23T12:05:54+00:00.

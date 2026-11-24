@@ -18,7 +18,7 @@ de rango es un error, no un recorte silencioso.
 El rango del diferido se toma del warehouse: la cota inferior es la variante
 neto_previa de mart_diferido_rango (la que descuenta el diferido previo) y la cota
 superior es la variante original. La frase que resume la regla lo dice explicito:
-"cota superior, supuesto, no medicion".
+"el extremo alto es un maximo; supuesto, no medicion".
 
 Datos que usa replay.collect (mismo contrato que pipeline/replay.py):
 
@@ -108,7 +108,7 @@ def frase(lo_bbl: float, hi_bbl: float, precio: float, tasa_pct: float, meses: f
     b = _millones_redondeados(dinero(hi_bbl, precio, tasa_pct, meses))
     return (f"Con USD {numero_es(precio)} por barril, {numero_es(tasa_pct)}% anual y "
             f"{numero_es(meses)} meses de espera, esperar costó entre USD {numero_es(a)} y "
-            f"{numero_es(b)} millones: cota superior, supuesto, no medición.")
+            f"{numero_es(b)} millones. El extremo alto es un máximo; es un supuesto, no una medición.")
 
 
 def mes_indice(mes: str) -> int:
@@ -241,7 +241,7 @@ def banda_svg(curva) -> str:
     camino += f" L {x(ks[-1]):.2f},0 Z"
     return (
         '<svg viewBox="0 0 160 100" preserveAspectRatio="none" class="banda" role="img" '
-        'aria-label="brecha entre los vecinos y el control, mes a mes">'
+        'aria-label="brecha entre los pozos vecinos y el control, mes a mes">'
         f'<path d="{camino}" fill="var(--lutita)" stroke="var(--orilla)" stroke-width="1.5" '
         'vector-effect="non-scaling-stroke"></path></svg>'
     )

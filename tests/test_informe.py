@@ -84,10 +84,10 @@ def test_render_reemplaza_todo_y_embebe_los_datos(d):
 
 def test_la_ficha_del_mes_1_lleva_su_intervalo_y_el_pie_dice_de_cuando_es_el_dato(d):
     html = informe.render(d)
-    assert "contra el control (IC 95% por bloques de 5 km: -28,7 a -16,8)." in html
-    assert "hasta 2026-09 (copia verificada contra la fuente el 2026-11-15). La página se regenera con" in html
+    assert "contra el control (intervalo de 95%: -28,7 a -16,8)." in html
+    assert "hasta 2026-09 (copia verificada contra la fuente el 2026-11-15). Cada cifra se recalcula" in html
     d["verificado"] = None                                             # sin manifiesto la página no inventa una fecha
-    assert "hasta 2026-09. La página se regenera con" in informe.render(d)
+    assert "hasta 2026-09. Cada cifra se recalcula" in informe.render(d)
 
 
 def test_fecha_verificada_es_la_mas_vieja_de_las_fuentes_y_falta_si_falta_una():

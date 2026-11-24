@@ -221,7 +221,7 @@ def test_el_explorador_esta_debajo_del_mazo_con_las_cuatro_clases():
     assert 'id="explorador"' in tpl
     assert tpl.index('id="explorador"') > tpl.index('id="despues"')
     assert 'class="lamina" id="explorador"' not in tpl
-    for rotulo in ("Hijo a padre: salto de agua", "Cierre preventivo", "Ambos", "Sin efecto"):
+    for rotulo in ("Subida del corte de agua tras el hijo", "Cierre preventivo", "Ambos", "Sin efecto"):
         assert f"<span>{rotulo}</span>" in tpl, rotulo
     assert "Ver la cuenca en el tiempo" in tpl
 

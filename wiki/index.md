@@ -13,12 +13,13 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Descomposición de la brecha (días producidos contra caudal por día) y gradiente por distancia: [descomposicion.md](hallazgos/descomposicion.md).
 - Barriles diferidos como rango (sin duplicar y descontando la brecha previa) y cifra por evento: [diferido.md](hallazgos/diferido.md).
 - Sincronía dentro del mes (la brecha del mes 0 según la fracción posterior al inicio de la fractura): [sincronia.md](hallazgos/sincronia.md).
+- El día de inicio como dosis (la caída de los padres cercanos según la parte del mes que expone la fractura, sin pozos lejanos en la pendiente): [dia_inicio.md](hallazgos/dia_inicio.md).
 - Bloques espaciales (los intervalos principales remuestreando bloques de 2 y 5 km en vez de pads): [bloques.md](hallazgos/bloques.md).
 - Lado del hijo (rendimiento de 12 meses según el petróleo ya producido a menos de 1 km): [hijo.md](hallazgos/hijo.md).
 - Lado del hijo dentro de celdas de 2 km (hijos del mismo lugar fracturados antes y después de que sus vecinos produjeran): [hijo_celdas.md](hallazgos/hijo_celdas.md).
 - Mecanismo por la geometría de las ramas (padres al costado de la rama del hijo contra padres en su punta, con placebo previo a la fractura): [mecanismo.md](hallazgos/mecanismo.md).
 - Diseño causal (diferencias en diferencias escalonadas con controles aún no tratados; el corte de agua como canal físico, con placebo de cierre): [causal.md](hallazgos/causal.md).
-- Debajo del corte de agua: si entra agua o sale petróleo, y si crece cuanto más cerca o más grande es el hijo, con el mismo diseño y la regla fijada antes: [causal_profundo.md](hallazgos/causal_profundo.md).
+- Debajo del corte de agua: si entra agua o sale petróleo, con el mismo diseño y la regla fijada antes: [causal_profundo.md](hallazgos/causal_profundo.md).
 - El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).
 - Comparación con la literatura (las cifras de este trabajo al lado de las publicadas): [literatura.md](hallazgos/literatura.md).
 - Límites y robustez en detalle (lo que el dato público no deja afirmar, con cada cifra verificada): [limites.md](hallazgos/limites.md).
@@ -35,7 +36,7 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Robustez por operador y área (la brecha del mes 1 y el cierre del mes 6 sacando de a un operador y de a un área): [robustez_operador.md](hallazgos/robustez_operador.md).
 - Días que pierde un padre cuando fracturan a un hijo, por operador (si la diferencia entre operadores se mantiene y si más días compran mejor caudal después, con la prueba confirmatoria en Colorado): [dias_perdidos.md](hallazgos/dias_perdidos.md).
 - Golpes en el mismo mes: si a un padre le cuesta menos recibir varios hijos en un mes que los mismos hijos en meses separados (costo fijo del mes contra costo por hijo, la primera pieza del optimizador de calendario, con la prueba confirmatoria en Colorado): [golpes_mismo_mes.md](hallazgos/golpes_mismo_mes.md).
-- Golpes en el mismo mes con el padre como su propio control: la misma pregunta, comparando cada padre consigo mismo entre sus meses de golpe de distinta cantidad de hijos (segunda pieza del optimizador de calendario): [golpes_mismo_padre.md](hallazgos/golpes_mismo_padre.md).
+- Golpes en el mismo mes con el padre como su propio control: la misma pregunta, comparando cada padre consigo mismo entre sus meses de golpe de distinta cantidad de hijos (segunda pieza del optimizador de calendario, con la prueba confirmatoria en Colorado): [golpes_mismo_padre.md](hallazgos/golpes_mismo_padre.md).
 - Calendario de golpes: matrices de costo de los dos casos (aditivo y costo fijo más hijo), el calendario de fractura que menos pérdida tendría y un backtest ajustado en 2023 que predice 2024 a 2026, con la regla fijada antes de correr (tercera pieza del optimizador de calendario, solo el lado del padre): [calendario_golpes.md](hallazgos/calendario_golpes.md).
 - Trayectorias de pozo publicadas por la Secretaría de Energía: cuántos hijos y pares cubren y cuánto cambia la distancia al medirla entre ramas en lugar de entre bocas (descriptivo): [trayectorias.md](hallazgos/trayectorias.md).
 - Alcance y dilución de la huella del padre medidos entre ramas (distancia lateral a lateral) en lugar de entre bocas, con la regla fijada de antemano: [alcance_rama.md](hallazgos/alcance_rama.md).
@@ -587,5 +588,5 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 
 Tablas consultadas: `int_pozo_ubicacion`, `mart_vm_mensual`, `mart_interferencia_diferida`, `mart_interferencia_brecha`, `mart_interferencia_anual`.
 
-- produccion_no_convencional: sha256 `b10e75214719`, cargado 2026-11-20T16:50:17+00:00.
-- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-20T16:50:39+00:00.
+- produccion_no_convencional: sha256 `e5d7ba35139b`, cargado 2026-11-23T12:05:41+00:00.
+- fractura_adjunto_iv: sha256 `ff95734bf485`, cargado 2026-11-23T12:05:54+00:00.

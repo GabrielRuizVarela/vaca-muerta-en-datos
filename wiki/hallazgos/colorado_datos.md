@@ -8,8 +8,8 @@ Datos públicos de ECMC (producción mensual 2018 a 2024 y archivo de pozos) y d
 
 | Archivo | Bytes | sha256 |
 |---|---:|---|
-| `fracfocus_disclosure_list` | 61.767.888 | `90eb2b399c93` |
-| `pozos` | 15.768.899 | `ebf8feb587fb` |
+| `fracfocus_disclosure_list` | 61.854.162 | `4d3937ba834b` |
+| `pozos` | 15.765.543 | `afcdb853c7f2` |
 | `produccion_2018` | 11.783.526 | `34f2184149f3` |
 | `produccion_2019` | 11.597.497 | `14dae3c30fc7` |
 | `produccion_2020` | 10.898.454 | `3656df463515` |
@@ -36,16 +36,16 @@ Datos públicos de ECMC (producción mensual 2018 a 2024 y archivo de pozos) y d
 
 | Conjunto | Pozos |
 |---|---:|
-| Archivo de pozos de ECMC | 124.458 |
-| Archivo de pozos con coordenadas | 124.458 |
+| Archivo de pozos de ECMC | 124.462 |
+| Archivo de pozos con coordenadas | 124.462 |
 | Pozos con producción que están en el archivo | 59.421 |
 | Pozos con producción que no están en el archivo | 0 |
 | Pozos con producción y coordenadas | 59.421 |
-| Pozos con producción horizontales | 12.553 |
+| Pozos con producción horizontales | 12.557 |
 | Pozos con algún mes de petróleo | 37.547 |
 | Pozos con primer petróleo censurado (enero de 2018) | 23.938 |
 | Pads (ubicaciones a menos de 50 m) | 79.197 |
-| Pozos en pads de 3 o más | 46.438 |
+| Pozos en pads de 3 o más | 46.442 |
 
 Horizontal: profundidad vertical mayor que 1.000 ft y profundidad medida menos vertical mayor que 1.500 ft. Sin alguno de los dos datos, no es horizontal.
 
@@ -53,18 +53,18 @@ Horizontal: profundidad vertical mayor que 1.000 ft y profundidad medida menos v
 
 | Paso | Pozos |
 |---|---:|
-| Divulgaciones de FracFocus en Colorado | 22.337 |
+| Divulgaciones de FracFocus en Colorado | 22.346 |
 | Con clave de API inválida | 0 |
-| Pozos distintos | 21.434 |
-| Pozos que están en el archivo de pozos | 21.430 |
+| Pozos distintos | 21.443 |
+| Pozos que están en el archivo de pozos | 21.439 |
 | Pozos con producción | 20.342 |
-| Pozos con fecha de primera divulgación | 21.434 |
+| Pozos con fecha de primera divulgación | 21.443 |
 | Primera divulgación entre 2018-07 y 2024-06 | 5.990 |
 | En la ventana, en el archivo y con coordenadas | 5.987 |
-| De esos, horizontales | 4.797 |
+| De esos, horizontales | 4.798 |
 | De esos, con fecha dudosa (más de 30 días después del primer petróleo) | 9 |
-| En la ventana con coordenadas pero verticales o sin dato de profundidad | 1.190 |
-| Hijos (regla fijada) | 4.788 |
+| En la ventana con coordenadas pero verticales o sin dato de profundidad | 1.189 |
+| Hijos (regla fijada) | 4.789 |
 | Hijos sin producción | 12 |
 | Hijos con ubicación marcada como planificada | 2 |
 
@@ -75,14 +75,14 @@ Eventos = (padre, mes de fractura) con caudal base mayor que 1 m3/d. Cercano: a 
 | Conteo | Hijos | Eventos cercanos | Controles |
 |---|---:|---:|---:|
 | Estimación de la memoria | 4.817 | 3.866 | 58.139 |
-| Regla fijada, solo padres horizontales (corte principal) | 4.788 | 3.692 | 53.339 |
-| Regla fijada, todos los padres | 4.788 | 3.708 | 53.675 |
-| Método de la memoria, solo padres horizontales | 4.817 | 3.750 | 56.836 |
-| Método de la memoria, todos los padres | 4.817 | 3.766 | 57.190 |
+| Regla fijada, solo padres horizontales (corte principal) | 4.789 | 3.692 | 53.339 |
+| Regla fijada, todos los padres | 4.789 | 3.708 | 53.675 |
+| Método de la memoria, solo padres horizontales | 4.818 | 3.750 | 56.836 |
+| Método de la memoria, todos los padres | 4.818 | 3.766 | 57.190 |
 
-Diferencia de la regla fijada, todos los padres, frente a la estimación: -29 hijos, -158 eventos cercanos, -4.464 controles.
+Diferencia de la regla fijada, todos los padres, frente a la estimación: -28 hijos, -158 eventos cercanos, -4.464 controles.
 
-Eventos intermedios (de 1 a 2 km, fuera de la brecha), regla fijada: 7.990 con padres horizontales y 8.028 con todos. Hijos con al menos un padre cercano con base válida: 2.545 (padres horizontales) y 2.574 (todos).
+Eventos intermedios (de 1 a 2 km, fuera de la brecha), regla fijada: 7.990 con padres horizontales y 8.028 con todos. Hijos con al menos un padre cercano con base válida: 2.546 (padres horizontales) y 2.575 (todos).
 
 ## Por año de la fractura
 
@@ -100,7 +100,7 @@ Eventos por año del mes de fractura, regla fijada.
 
 ## Por qué difieren
 
-La memoria toma la divulgación más antigua dentro de la ventana; la regla fijada toma la primera de cada pozo de cualquier año, porque un refrac no es un hijo nuevo, y excluye los pozos con fecha dudosa (9 pozos horizontales en la ventana). Con el método de la memoria salen 4.817 hijos (la misma cifra de la estimación). Además, 6.019 pozos tienen divulgación en la ventana y coordenadas antes de pedir que sean horizontales. La diferencia restante con la estimación no se explica con estos datos.
+La memoria toma la divulgación más antigua dentro de la ventana; la regla fijada toma la primera de cada pozo de cualquier año, porque un refrac no es un hijo nuevo, y excluye los pozos con fecha dudosa (9 pozos horizontales en la ventana). Con el método de la memoria salen 4.818 hijos. Además, 6.019 pozos tienen divulgación en la ventana y coordenadas antes de pedir que sean horizontales. La diferencia restante con la estimación no se explica con estos datos.
 
 ## Límites
 

@@ -1,5 +1,5 @@
 {
-  "filas_origen_produccion": 436308,
+  "filas_origen_produccion": 436309,
   "bloqueantes_fallidos": 0,
   "checks": [
     {
@@ -369,7 +369,7 @@
     {
       "nombre": "Conciliación: filas del CSV de producción contra stg_produccion",
       "severidad": "bloqueante",
-      "detalle": "El CSV de produccion_no_convencional tiene 436.308 filas y stg_produccion 436.308. El staging conserva una fila por fila de origen: la diferencia explicada es cero.",
+      "detalle": "El CSV de produccion_no_convencional tiene 436.309 filas y stg_produccion 436.309. El staging conserva una fila por fila de origen: la diferencia explicada es cero.",
       "filas": 0,
       "ok": true,
       "muestra": []
@@ -385,7 +385,7 @@
     {
       "nombre": "Conciliación: filas de stg_produccion contra fct_produccion",
       "severidad": "bloqueante",
-      "detalle": "stg_produccion tiene 436.308 filas; 0 se descartan por pozo o mes inválido y fct_produccion debe tener 436.308 (tiene 436.308).",
+      "detalle": "stg_produccion tiene 436.309 filas; 0 se descartan por pozo o mes inválido y fct_produccion debe tener 436.309 (tiene 436.309).",
       "filas": 0,
       "ok": true,
       "muestra": []
@@ -433,7 +433,7 @@
     {
       "nombre": "Frescura: meses de atraso del último mes publicado",
       "severidad": "aviso",
-      "detalle": "Último mes con datos: 2026-10; al 2026-11-20 van 1 meses de atraso. Se avisa si pasan de 3 (la Secretaría publica con rezago).",
+      "detalle": "Último mes con datos: 2026-10; al 2026-11-23 van 1 meses de atraso. Se avisa si pasan de 3 (la Secretaría publica con rezago).",
       "filas": 0,
       "ok": true,
       "muestra": []
@@ -442,24 +442,24 @@
   "fuentes": {
     "produccion_no_convencional": {
       "url": "http://datos.energia.gob.ar/dataset/c846e79c-026c-4040-897f-1ad3543b407c/resource/b5b58cdc-9e07-41f9-b392-fb9ec68b0725/download/produccin-de-pozos-de-gas-y-petrleo-no-convencional.csv",
-      "sha256": "b10e752147193083908b3ec655816545e69a240e41be819c79e80c7ad6477f3c",
-      "bytes": 150669961,
-      "last_modified": "Fri, 20 Nov 2026 15:00:58 GMT",
-      "loaded_at": "2026-11-20T16:50:17+00:00"
+      "sha256": "e5d7ba35139bd113273e7e5feb24245dbfa4e3ac9d93dfea77e608226f08a941",
+      "bytes": 150670336,
+      "last_modified": "Sun, 22 Nov 2026 21:00:56 GMT",
+      "loaded_at": "2026-11-23T12:05:41+00:00"
     },
     "fractura_adjunto_iv": {
       "url": "http://datos.energia.gob.ar/dataset/71fa2e84-0316-4a1b-af68-7f35e41f58d7/resource/2280ad92-6ed3-403e-a095-50139863ab0d/download/datos-de-fractura-de-pozos-de-hidrocarburos-adjunto-iv-actualizacin-diaria.csv",
       "sha256": "ff95734bf485b1a27ecb75e3a44dda3035e5496805cf3970a28d19802bf03026",
       "bytes": 1271920,
-      "last_modified": "Fri, 20 Nov 2026 04:01:47 GMT",
-      "loaded_at": "2026-11-20T16:50:39+00:00"
+      "last_modified": "Mon, 23 Nov 2026 04:00:06 GMT",
+      "loaded_at": "2026-11-23T12:05:54+00:00"
     },
     "trayectorias_pozo": {
       "url": "http://datos.energia.gob.ar/dataset/f5c0b5a5-b402-44d7-8fe0-f9e4fcb78b8d/resource/94741ac7-4f46-4efe-b112-d3f82a4ef7c5/download/trayectorias-de-pozo-vaca-muerta.csv",
       "sha256": "83093dc4b7bad3b7ab54449bbfb074264f3b6cb17d675c9494a2336403db3034",
       "bytes": 40497312,
-      "last_modified": "Sun, 15 Nov 2026 05:00:16 GMT",
-      "loaded_at": "2026-11-20T16:50:40+00:00"
+      "last_modified": "Sun, 22 Nov 2026 05:01:34 GMT",
+      "loaded_at": "2026-11-23T12:05:55+00:00"
     }
   }
 }

@@ -17,7 +17,7 @@ Esta página la escribe `python -m pipeline.wiki` con `pipeline.trayectorias.pag
 
 | Conjunto | Organismo | Licencia | Publicado | Bajado | Huella sha256 |
 | --- | --- | --- | --- | --- | --- |
-| Trayectorias de Pozo Vaca Muerta | Secretaría de Energía (Subsecretaría de Eficiencia e Información Energética) | CC-BY-4.0 | Sun, 15 Nov 2026 05:00:16 GMT | 2026-11-20 | `83093dc4b7bad3b7ab54449bbfb074264f3b6cb17d675c9494a2336403db3034` |
+| Trayectorias de Pozo Vaca Muerta | Secretaría de Energía (Subsecretaría de Eficiencia e Información Energética) | CC-BY-4.0 | Sun, 22 Nov 2026 05:01:34 GMT | 2026-11-23 | `83093dc4b7bad3b7ab54449bbfb074264f3b6cb17d675c9494a2336403db3034` |
 
 Paquete: http://datos.energia.gob.ar/dataset/f5c0b5a5-b402-44d7-8fe0-f9e4fcb78b8d. Archivo: `http://datos.energia.gob.ar/dataset/f5c0b5a5-b402-44d7-8fe0-f9e4fcb78b8d/resource/94741ac7-4f46-4efe-b112-d3f82a4ef7c5/download/trayectorias-de-pozo-vaca-muerta.csv`. Diccionario de campos y códigos de unidad: Resolución 319/93, Planos Base, instructivo de carga de información geográfica, objeto 4.1.4.10. La copia cruda queda en data/raw y no se redistribuye: el repositorio publica solo las tablas derivadas de esta página, con la fuente citada.
 

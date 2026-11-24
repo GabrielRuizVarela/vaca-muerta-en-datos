@@ -555,8 +555,9 @@ def _mini():
 
 def test_textos_formats_published_numbers_in_spanish():
     t = mundo.textos(_mini())
-    assert (t["rango_bajo"], t["rango_alto"], t["ic5_bajo"], t["ic5_alto"]) == ("19", "23", "17", "29")
-    assert (t["cierre_min"], t["cierre_max"]) == ("2,1", "4,7")
+    assert (t["rango_bajo"], t["rango_alto"], t["ic5_bajo"], t["ic5_alto"]) == ("19", "23", "-28,7", "-16,8")
+    assert (t["cierre_min"], t["cierre_max"]) == ("-2,1", "-4,7")   # signo negativo, como en el informe y en el tablero
+    assert t["brecha1"] == "-22,9"
     assert (t["dif_bbl"], t["cota_bbl"], t["n_controles"]) == ("5.163", "1.337", "3")
 
 
@@ -805,7 +806,7 @@ def test_scene_events_are_functions_of_the_month_and_say_what_they_are_not():
 
 def test_tour_has_its_six_acts_in_order():
     app = _script(mundo.TEMPLATE.read_text(encoding="utf-8"), "app")
-    assert re.findall(r'\btitulo: "([^"]+)"', app) == ["La cuenca", "Un evento", "Del mapa al estimador", "El cierre",
+    assert re.findall(r'\btitulo: "([^"]+)"', app) == ["La cuenca", "Un evento", "De un caso a todos", "El cierre",
                                                         "Lo que no se ve", "Tu turno"]
     assert '"Acto " + (i + 1) + " de " + ACTOS.length' in app   # the step text follows the list
     # act 4 reads the closure table of the mart, act 5 turns medido and supuesto off and act 6 offers both tools

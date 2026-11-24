@@ -2,7 +2,7 @@
 
 > **Abstract (English).** Question: when a new well is fracked, do neighbouring producing wells yield less than similar wells farther away?
 > Data: public monthly production per well and frac data from Argentina's energy secretariat; no trajectories, daily production or declared shut-ins.
-> Method: an event study of 2,094 events, near parents against same-age controls, with placebo, permutation and out-of-time tests.
+> Method: an event study of 2,094 events, near parents against control wells 2 to 5 km from a child well, with placebo, permutation and out-of-time tests.
 > Result: one month after the frac the near parents yield 19 to 23 percentage points less (23 is a raw upper bound, 19 is net of the pre-trend); the deferral of months 0 to 6 ranges from 6.4 to 11.4 million barrels.
 > Limits: a measured footprint, not a demonstrated cause; there is a gap before the frac, the control is not a clean zero, and the effect is real on average but noisy per event.
 
@@ -14,7 +14,7 @@ Cuando se fractura un pozo nuevo, ¿los pozos vecinos que ya producían rinden m
 
 | Dato | Fuente y cobertura | Qué no se observa |
 | --- | --- | --- |
-| Producción | datos abiertos de la Secretaría de Energía: 436.308 filas de producción mensual por pozo no convencional | producción diaria; cierres declarados (un cierre preventivo se ve igual que un daño) |
+| Producción | datos abiertos de la Secretaría de Energía: 436.309 filas de producción mensual por pozo no convencional | producción diaria; cierres declarados (un cierre preventivo se ve igual que un daño) |
 | Fractura y ubicación | fecha de cada fractura y coordenadas de superficie del pad | trayectoria de la rama y espaciamiento real |
 | Causas | ninguna | por qué cambió el caudal de un pozo |
 

@@ -59,7 +59,7 @@ Medida por día producido la brecha del mes 1 es menor en valor absoluto que por
 
 | Concepto | Cantidad |
 | --- | ---: |
-| Hijos (regla de P5a) | 4.788 |
+| Hijos (regla de P5a) | 4.789 |
 | Pads hijo | 588 |
 | Bloques de 5 km con algún hijo | 197 |
 | Eventos cercanos (a menos de 1 km) | 3.692 |

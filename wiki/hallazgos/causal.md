@@ -88,7 +88,7 @@ Por posición del padre respecto de la rama del hijo de la cohorte (de `mart_par
 | Posición | D1: tratados | D1: ATT(1) (puntos) | IC 95% | D2: tratados | D2: ATT_W (pp) | IC 95% |
 | --- | ---: | ---: | --- | ---: | ---: | --- |
 | costado | 182 | -35,6 | -48,3 a -21,7 | 170 | 16,2 | 10,3 a 24,4 |
-| punta | 139 | -7,2 | -25,4 a 7,3 | 134 | 7,8 | 0,8 a 13,8 |
+| punta | 135 | -6,2 | -25,1 a 8,2 | 130 | 8,5 | 1,7 a 14,3 |
 
 Cotas de Lee del caudal por día producido en el mes 1 (meses con 0,9 del mes producido o más): de -47,1 a 12,8 puntos. Producen el mes entero 43% de los tratados y 82% de los controles; con esa diferencia el recorte es grande y la cota no separa un efecto sobre el caudal de los días que se dejan de producir. Supone monotonía: la fractura solo baja la chance de producir el mes entero.
 

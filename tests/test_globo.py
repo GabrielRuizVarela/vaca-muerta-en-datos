@@ -115,7 +115,7 @@ def test_textos_da_las_cifras_en_castellano_y_cubre_todos_los_marcadores():
 def test_el_texto_fijo_no_dice_que_se_replica_en_conjunto():
     """La regla del estudio: una lectura por cuenca, sin estimacion conjunta; y lo oscuro no es 'no produce'."""
     html = globo.TEMPLATE.read_text(encoding="utf-8")
-    assert "Sin estimación conjunta" in html
+    assert "No sumamos las cuencas en una sola cifra" in html
     assert re.search(r"no publica por pozo", html) and "no produce" in html
     assert "medida, sin registro en la auditoría" in (globo.ROTULO_COLORADO + html)
 

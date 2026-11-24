@@ -14,23 +14,23 @@ El ledger solo agrega filas: cuando cambia la regla de una hipótesis se registr
 
 | Hallazgo | Estado | Valor | Expectativa | Datos |
 |---|---|---|---|---|
-| `brecha_mes1` | confirmado | -0,230 | < -0,100 | 2026-10 (b83ec7525506) |
-| `recuperacion_mes6` | confirmado | -0,021 | abs< 0,050 | 2026-10 (b83ec7525506) |
-| `salto_agua` | confirmado | 0,187 | > 0,100 | 2026-10 (b83ec7525506) |
-| `parado_declarado` | confirmado | 0,070 | > 0,030 | 2026-10 (b83ec7525506) |
-| `asimetria_de_superficie` | no firme | -0,248 | < -0,100 | 2026-10 (b83ec7525506) |
-| `sincronia_mes0` | confirmado | -0,077 | < -0,020 | 2026-10 (b83ec7525506) |
-| `brecha_mes1_bloques` | confirmado | -0,170 | < -0,100 | 2026-10 (b83ec7525506) |
-| `sincronia_mes0_bloques` | confirmado | -0,083 | < -0,020 | 2026-10 (b83ec7525506) |
-| `hijo_depletado` | no firme | s/d | < 0,000 | 2026-10 (b83ec7525506) |
-| `inyeccion_r1` | confirmado | 0,505 | abs< 5,000 | 2026-10 (b83ec7525506) |
-| `inyeccion_r2` | confirmado | 1,033 | > 0,800 | 2026-10 (b83ec7525506) |
-| `inyeccion_r3` | confirmado | 1,000 | > 0,800 | 2026-10 (b83ec7525506) |
-| `inyeccion_r4a` | confirmado | 0,067 | < 0,100 | 2026-10 (b83ec7525506) |
-| `inyeccion_r4b` | confirmado | 0,484 | < 2,000 | 2026-10 (b83ec7525506) |
-| `replicacion_colorado` | preregistrada | s/d | < 0,000 | 2026-10 (b83ec7525506) |
-| `anio_2026_carga` | no firme | 0,109 | < 0,000 | 2026-10 (b83ec7525506) |
-| `replicacion_wyoming` | preregistrada | s/d | < 0,000 | 2026-10 (b83ec7525506) |
+| `brecha_mes1` | confirmado | -0,230 | < -0,100 | 2026-10 (17969d22ea8a) |
+| `recuperacion_mes6` | confirmado | -0,021 | abs< 0,050 | 2026-10 (17969d22ea8a) |
+| `salto_agua` | confirmado | 0,187 | > 0,100 | 2026-10 (17969d22ea8a) |
+| `parado_declarado` | confirmado | 0,070 | > 0,030 | 2026-10 (17969d22ea8a) |
+| `asimetria_de_superficie` | no firme | -0,248 | < -0,100 | 2026-10 (17969d22ea8a) |
+| `sincronia_mes0` | confirmado | -0,077 | < -0,020 | 2026-10 (17969d22ea8a) |
+| `brecha_mes1_bloques` | confirmado | -0,170 | < -0,100 | 2026-10 (17969d22ea8a) |
+| `sincronia_mes0_bloques` | confirmado | -0,083 | < -0,020 | 2026-10 (17969d22ea8a) |
+| `hijo_depletado` | no firme | s/d | < 0,000 | 2026-10 (17969d22ea8a) |
+| `inyeccion_r1` | confirmado | 0,505 | abs< 5,000 | 2026-10 (17969d22ea8a) |
+| `inyeccion_r2` | confirmado | 1,033 | > 0,800 | 2026-10 (17969d22ea8a) |
+| `inyeccion_r3` | confirmado | 1,000 | > 0,800 | 2026-10 (17969d22ea8a) |
+| `inyeccion_r4a` | confirmado | 0,067 | < 0,100 | 2026-10 (17969d22ea8a) |
+| `inyeccion_r4b` | confirmado | 0,484 | < 2,000 | 2026-10 (17969d22ea8a) |
+| `replicacion_colorado` | preregistrada | s/d | < 0,000 | 2026-10 (17969d22ea8a) |
+| `anio_2026_carga` | no firme | 0,109 | < 0,000 | 2026-10 (17969d22ea8a) |
+| `replicacion_wyoming` | preregistrada | s/d | < 0,000 | 2026-10 (17969d22ea8a) |
 
 ## brecha_mes1
 
@@ -42,6 +42,7 @@ Expectativa: valor < -0,100 (índice).
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | -0,229 | confirmado |
 | 2026-10 | b83ec7525506 | -0,230 | confirmado |
+| 2026-10 | 17969d22ea8a | -0,230 | confirmado |
 
 ## recuperacion_mes6
 
@@ -53,6 +54,7 @@ Expectativa: valor abs< 0,050 (índice).
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | -0,021 | confirmado |
 | 2026-10 | b83ec7525506 | -0,021 | confirmado |
+| 2026-10 | 17969d22ea8a | -0,021 | confirmado |
 
 ## salto_agua
 
@@ -64,6 +66,7 @@ Expectativa: valor > 0,100 (proporción).
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | 0,188 | confirmado |
 | 2026-10 | b83ec7525506 | 0,187 | confirmado |
+| 2026-10 | 17969d22ea8a | 0,187 | confirmado |
 
 ## parado_declarado
 
@@ -75,6 +78,7 @@ Expectativa: valor > 0,030 (proporción).
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | 0,070 | confirmado |
 | 2026-10 | b83ec7525506 | 0,070 | confirmado |
+| 2026-10 | 17969d22ea8a | 0,070 | confirmado |
 
 ## asimetria_de_superficie
 
@@ -88,6 +92,7 @@ Expectativa: valor < -0,100 (índice).
 | 2026-09 | 1f07aee9b988 | -0,260 | no firme |
 | 2026-09 | 1f07aee9b988 | -0,260 | no firme |
 | 2026-10 | b83ec7525506 | -0,248 | no firme |
+| 2026-10 | 17969d22ea8a | -0,248 | no firme |
 
 ## sincronia_mes0
 
@@ -100,6 +105,7 @@ Expectativa: valor < -0,020 (índice por unidad de fracción).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | -0,097 | confirmado |
 | 2026-10 | b83ec7525506 | -0,077 | confirmado |
+| 2026-10 | 17969d22ea8a | -0,077 | confirmado |
 
 ## brecha_mes1_bloques
 
@@ -112,6 +118,7 @@ Expectativa: valor < -0,100 (índice).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | -0,168 | confirmado |
 | 2026-10 | b83ec7525506 | -0,170 | confirmado |
+| 2026-10 | 17969d22ea8a | -0,170 | confirmado |
 
 ## sincronia_mes0_bloques
 
@@ -124,6 +131,7 @@ Expectativa: valor < -0,020 (índice por unidad de fracción).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | -0,080 | confirmado |
 | 2026-10 | b83ec7525506 | -0,083 | confirmado |
+| 2026-10 | 17969d22ea8a | -0,083 | confirmado |
 
 ## hijo_depletado
 
@@ -137,6 +145,7 @@ Expectativa: valor < 0,000 (bbl por metro).
 | 2026-09 | 1f07aee9b988 | 12,388 | refutado |
 | 2026-09 | 1f07aee9b988 | s/d | no firme |
 | 2026-10 | b83ec7525506 | s/d | no firme |
+| 2026-10 | 17969d22ea8a | s/d | no firme |
 
 ## inyeccion_r1
 
@@ -149,6 +158,7 @@ Expectativa: valor abs< 5,000 (puntos).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | 0,367 | confirmado |
 | 2026-10 | b83ec7525506 | 0,505 | confirmado |
+| 2026-10 | 17969d22ea8a | 0,505 | confirmado |
 
 ## inyeccion_r2
 
@@ -161,6 +171,7 @@ Expectativa: valor > 0,800 (proporción).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | 1,035 | confirmado |
 | 2026-10 | b83ec7525506 | 1,033 | confirmado |
+| 2026-10 | 17969d22ea8a | 1,033 | confirmado |
 
 ## inyeccion_r3
 
@@ -173,6 +184,7 @@ Expectativa: valor > 0,800 (proporción de mundos).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | 0,933 | confirmado |
 | 2026-10 | b83ec7525506 | 1,000 | confirmado |
+| 2026-10 | 17969d22ea8a | 1,000 | confirmado |
 
 ## inyeccion_r4a
 
@@ -185,6 +197,7 @@ Expectativa: valor < 0,100 (proporción de mundos).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | 0,100 | debilitado |
 | 2026-10 | b83ec7525506 | 0,067 | confirmado |
+| 2026-10 | 17969d22ea8a | 0,067 | confirmado |
 
 ## inyeccion_r4b
 
@@ -197,6 +210,7 @@ Expectativa: valor < 2,000 (puntos).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | 0,504 | confirmado |
 | 2026-10 | b83ec7525506 | 0,484 | confirmado |
+| 2026-10 | 17969d22ea8a | 0,484 | confirmado |
 
 ## replicacion_colorado
 
@@ -210,6 +224,7 @@ Expectativa: valor < 0,000 (índice).
 | 2026-09 | 1f07aee9b988 | s/d | preregistrada |
 | 2026-09 | 1f07aee9b988 | -0,130 | confirmado |
 | 2026-10 | b83ec7525506 | s/d | preregistrada |
+| 2026-10 | 17969d22ea8a | s/d | preregistrada |
 
 ## anio_2026_carga
 
@@ -221,6 +236,7 @@ Expectativa: valor < 0,000 (índice).
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | 0,127 | no firme |
 | 2026-10 | b83ec7525506 | 0,109 | no firme |
+| 2026-10 | 17969d22ea8a | 0,109 | no firme |
 
 ## replicacion_wyoming
 
@@ -232,5 +248,6 @@ Expectativa: valor < 0,000 (índice).
 |---|---|---|---|
 | 2026-09 | 1f07aee9b988 | 0,095 | refutado |
 | 2026-10 | b83ec7525506 | s/d | preregistrada |
+| 2026-10 | 17969d22ea8a | s/d | preregistrada |
 
 Ver también [Interferencia entre fracturas](interferencia.md).

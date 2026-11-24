@@ -4,9 +4,9 @@ Qué dataset crudo alimenta cada tabla del warehouse. Se genera leyendo `pipelin
 
 Capas: crudo (CSV inmutable en `data/raw`), staging (`stg_`), intermedia (`int_`), hecho (`fct_`), dimensión (`dim_`) y mart (`mart_`). Los marts que escribe un módulo de Python se alimentan de las tablas que ese módulo lee en su código y en las funciones y el SQL de otros módulos de pipeline que importa y usa. El grano es el módulo: todos los marts de un módulo muestran los mismos orígenes, sin separar cuál de ellos usa cada mart. Un origen `manifiesto:` es un valor que `pipeline.build` lee de `data/manifest.json` y le pasa al SQL (la fecha de extracción del archivo de fracturas).
 
-Queda fuera la réplica en el warehouse de Colorado (`pipeline.replicacion`), que escribe con nombres tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*`, `mart_golpes_mismo_padre_colorado*` y `mart_causal_profundo_d7` sí están: se guardan en este warehouse, pero se calculan desde el de Colorado, que tiene tablas con los mismos nombres.
+Queda fuera la réplica en el warehouse de Colorado (`pipeline.replicacion`), que escribe con nombres tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*`, `mart_golpes_mismo_padre_colorado*`, `mart_dia_inicio_colorado*` y `mart_causal_profundo_d7` sí están: se guardan en este warehouse, pero se calculan desde el de Colorado, que tiene tablas con los mismos nombres.
 
-Hay 168 tablas con 929 relaciones de origen.
+Hay 174 tablas con 959 relaciones de origen.
 
 ## Árbol
 
@@ -506,6 +506,12 @@ raw:fractura_adjunto_iv
         mart_decision_edad (ver arriba)
         mart_decision_perdida (ver arriba)
       mart_descomposicion_k
+      mart_dia_inicio
+      mart_dia_inicio_colorado
+      mart_dia_inicio_colorado_operador
+      mart_dia_inicio_colorado_veredicto
+      mart_dia_inicio_operador
+      mart_dia_inicio_veredicto
       mart_dias_perdidos
       mart_dias_perdidos_colorado
       mart_dias_perdidos_colorado_mitades
@@ -592,6 +598,12 @@ raw:fractura_adjunto_iv
     mart_carga_curva (ver arriba)
     mart_carga_fracturas (ver arriba)
     mart_carga_operador (ver arriba)
+    mart_dia_inicio (ver arriba)
+    mart_dia_inicio_colorado (ver arriba)
+    mart_dia_inicio_colorado_operador (ver arriba)
+    mart_dia_inicio_colorado_veredicto (ver arriba)
+    mart_dia_inicio_operador (ver arriba)
+    mart_dia_inicio_veredicto (ver arriba)
     mart_dosis_geometria_modelo (ver arriba)
     mart_dosis_geometria_muestra (ver arriba)
     mart_dosis_geometria_orden (ver arriba)
@@ -674,6 +686,12 @@ raw:produccion_no_convencional
               mart_descomposicion_cierres (ver arriba)
               mart_descomposicion_distancia (ver arriba)
               mart_descomposicion_k (ver arriba)
+              mart_dia_inicio (ver arriba)
+              mart_dia_inicio_colorado (ver arriba)
+              mart_dia_inicio_colorado_operador (ver arriba)
+              mart_dia_inicio_colorado_veredicto (ver arriba)
+              mart_dia_inicio_operador (ver arriba)
+              mart_dia_inicio_veredicto (ver arriba)
               mart_dias_perdidos (ver arriba)
               mart_dias_perdidos_colorado (ver arriba)
               mart_dias_perdidos_colorado_mitades (ver arriba)
@@ -796,6 +814,12 @@ raw:produccion_no_convencional
       mart_causal_profundo_d6 (ver arriba)
       mart_causal_profundo_d7 (ver arriba)
       mart_causal_profundo_veredicto (ver arriba)
+      mart_dia_inicio (ver arriba)
+      mart_dia_inicio_colorado (ver arriba)
+      mart_dia_inicio_colorado_operador (ver arriba)
+      mart_dia_inicio_colorado_veredicto (ver arriba)
+      mart_dia_inicio_operador (ver arriba)
+      mart_dia_inicio_veredicto (ver arriba)
       mart_dias_perdidos (ver arriba)
       mart_dias_perdidos_colorado (ver arriba)
       mart_dias_perdidos_colorado_mitades (ver arriba)
@@ -865,6 +889,12 @@ raw:produccion_no_convencional
       mart_descomposicion_cierres (ver arriba)
       mart_descomposicion_distancia (ver arriba)
       mart_descomposicion_k (ver arriba)
+      mart_dia_inicio (ver arriba)
+      mart_dia_inicio_colorado (ver arriba)
+      mart_dia_inicio_colorado_operador (ver arriba)
+      mart_dia_inicio_colorado_veredicto (ver arriba)
+      mart_dia_inicio_operador (ver arriba)
+      mart_dia_inicio_veredicto (ver arriba)
       mart_dias_perdidos (ver arriba)
       mart_dias_perdidos_colorado (ver arriba)
       mart_dias_perdidos_colorado_mitades (ver arriba)
@@ -1240,6 +1270,36 @@ seed:operadores
 | mart_descomposicion_k | mart | fct_produccion | pipeline.descomposicion |
 | mart_descomposicion_k | mart | int_frac_hijo | pipeline.descomposicion |
 | mart_descomposicion_k | mart | int_pozo_ubicacion | pipeline.descomposicion |
+| mart_dia_inicio | mart | dim_pozo | pipeline.dia_inicio |
+| mart_dia_inicio | mart | fct_produccion | pipeline.dia_inicio |
+| mart_dia_inicio | mart | int_frac_hijo | pipeline.dia_inicio |
+| mart_dia_inicio | mart | int_pozo_ubicacion | pipeline.dia_inicio |
+| mart_dia_inicio | mart | stg_fractura | pipeline.dia_inicio |
+| mart_dia_inicio_colorado | mart | dim_pozo | pipeline.dia_inicio |
+| mart_dia_inicio_colorado | mart | fct_produccion | pipeline.dia_inicio |
+| mart_dia_inicio_colorado | mart | int_frac_hijo | pipeline.dia_inicio |
+| mart_dia_inicio_colorado | mart | int_pozo_ubicacion | pipeline.dia_inicio |
+| mart_dia_inicio_colorado | mart | stg_fractura | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_operador | mart | dim_pozo | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_operador | mart | fct_produccion | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_operador | mart | int_frac_hijo | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_operador | mart | int_pozo_ubicacion | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_operador | mart | stg_fractura | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_veredicto | mart | dim_pozo | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_veredicto | mart | fct_produccion | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_veredicto | mart | int_frac_hijo | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_veredicto | mart | int_pozo_ubicacion | pipeline.dia_inicio |
+| mart_dia_inicio_colorado_veredicto | mart | stg_fractura | pipeline.dia_inicio |
+| mart_dia_inicio_operador | mart | dim_pozo | pipeline.dia_inicio |
+| mart_dia_inicio_operador | mart | fct_produccion | pipeline.dia_inicio |
+| mart_dia_inicio_operador | mart | int_frac_hijo | pipeline.dia_inicio |
+| mart_dia_inicio_operador | mart | int_pozo_ubicacion | pipeline.dia_inicio |
+| mart_dia_inicio_operador | mart | stg_fractura | pipeline.dia_inicio |
+| mart_dia_inicio_veredicto | mart | dim_pozo | pipeline.dia_inicio |
+| mart_dia_inicio_veredicto | mart | fct_produccion | pipeline.dia_inicio |
+| mart_dia_inicio_veredicto | mart | int_frac_hijo | pipeline.dia_inicio |
+| mart_dia_inicio_veredicto | mart | int_pozo_ubicacion | pipeline.dia_inicio |
+| mart_dia_inicio_veredicto | mart | stg_fractura | pipeline.dia_inicio |
 | mart_dias_perdidos | mart | dim_pozo | pipeline.dias_perdidos |
 | mart_dias_perdidos | mart | fct_produccion | pipeline.dias_perdidos |
 | mart_dias_perdidos | mart | int_frac_hijo | pipeline.dias_perdidos |

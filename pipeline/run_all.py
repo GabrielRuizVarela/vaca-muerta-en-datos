@@ -1,8 +1,8 @@
 """One command for the whole chain, with timings.
 
-  uv run python -m pipeline.run_all                  # build, carga, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, carga_anual, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, potencia_dosis, robustez_operador, dias_perdidos, golpes_mismo_mes, golpes_mismo_padre, calendario_golpes, anillo, inyeccion, hijo, hijo_celdas, gas, decision, trayectorias, alcance_rama, riesgo, dosis_geometria, mecanismo, hijo_pad, figuras, wiki, informe, report, replay, mundo, [globo], claims
+  uv run python -m pipeline.run_all                  # build, carga, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, dia_inicio, carga_anual, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, potencia_dosis, robustez_operador, dias_perdidos, golpes_mismo_mes, golpes_mismo_padre, calendario_golpes, anillo, inyeccion, hijo, hijo_celdas, gas, decision, trayectorias, alcance_rama, riesgo, dosis_geometria, mecanismo, hijo_pad, figuras, wiki, informe, report, replay, mundo, [globo], claims
   uv run python -m pipeline.run_all --with-ingest    # also download first (needs the Secretaria server)
-  uv run python -m pipeline.run_all --with-colorado  # also download and build the Colorado (DJ basin) warehouse and run its replication, dias_perdidos, golpes_mismo_mes and golpes_mismo_padre there; opt-in, needs the network
+  uv run python -m pipeline.run_all --with-colorado  # also download and build the Colorado (DJ basin) warehouse and run its replication, dia_inicio, dias_perdidos, golpes_mismo_mes and golpes_mismo_padre there; opt-in, needs the network
   uv run python -m pipeline.run_all --only build,wiki
   uv run python -m pipeline.run_all --skip report,replay
   uv run python -m pipeline.run_all --list
@@ -47,6 +47,7 @@ PASOS: list[Paso] = [
     Paso("diferido", "pipeline.diferido"),
     Paso("sincronia", "pipeline.sincronia"),
     Paso("bloques", "pipeline.bloques"),
+    Paso("dia_inicio", "pipeline.dia_inicio"),
     Paso("carga_anual", "pipeline.carga_anual"),
     Paso("potencia", "pipeline.potencia"),
     Paso("eje_controles", "pipeline.eje_controles"),
@@ -76,6 +77,7 @@ PASOS: list[Paso] = [
     Paso("colorado_ingest", "pipeline.colorado.ingest", solo_con_colorado=True),
     Paso("colorado_build", "pipeline.colorado.build", solo_con_colorado=True),
     Paso("replicacion", "pipeline.replicacion", solo_con_colorado=True),
+    Paso("dia_inicio_colorado", "pipeline.dia_inicio", solo_con_colorado=True, args=("--cuenca", "colorado")),
     Paso("dias_perdidos_colorado", "pipeline.dias_perdidos", solo_con_colorado=True, args=("--cuenca", "colorado")),
     Paso("golpes_mismo_mes_colorado", "pipeline.golpes_mismo_mes", solo_con_colorado=True, args=("--cuenca", "colorado")),
     Paso("golpes_mismo_padre_colorado", "pipeline.golpes_mismo_padre", solo_con_colorado=True, args=("--cuenca", "colorado")),

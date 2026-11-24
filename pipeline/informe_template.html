@@ -103,38 +103,38 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
 <header>
   <div class="ojo">Vaca Muerta · interferencia padre-hijo · dato público mensual hasta {{mes_dato}}</div>
   <h1>Qué le pasa a un pozo padre cuando fracturás un hijo al lado</h1>
-  <p class="bajada">Un estudio de {{eventos}} eventos en los que un padre en producción tuvo un hijo fracturado a menos de 1 km ({{padres_distintos}} padres distintos), contra padres de la misma cuenca con el hijo más cercano a 2 a 5 km. La caída del primer mes es grande y no depende de un operador ni de un área. A los 6 meses casi se cierra, pero no del todo.</p>
+  <p class="bajada">Estudiamos {{eventos}} eventos. En cada uno se fracturó un pozo nuevo (hijo) a menos de 1 km de un pozo que ya producía (padre). Comparamos esos padres con padres cuyo hijo más cercano quedó a 2 a 5 km. La caída de petróleo del primer mes es grande y no depende de un operador ni de un área. A los 6 meses casi se cierra, pero no del todo.</p>
 </header>
 
 <div class="ficha" role="list">
   <div class="cifra clave" role="listitem">
     <div class="ojo">Mes 1</div>
     <div class="v num">{{gap1}}<small>puntos</small></div>
-    <div class="d">del caudal propio del padre, contra el control (IC 95% por bloques de 5 km: {{gap1_ic_bajo}} a {{gap1_ic_alto}}). Entre {{edad_menos}} y {{edad_mas}} según la edad del padre.</div>
-    <div class="d">Cota superior; sin la brecha previa a la fractura, 19 puntos menos.</div>
-    <div class="f">{{eventos}} eventos · {{pads_hijo}} pads hijo</div>
+    <div class="d">del caudal propio del padre, contra el control (intervalo de 95%: {{gap1_ic_bajo}} a {{gap1_ic_alto}}). Entre {{edad_menos}} y {{edad_mas}} según la edad del padre.</div>
+    <div class="d">Es el extremo más grande: sin la brecha previa a la fractura, 19 puntos menos.</div>
+    <div class="f">{{eventos}} eventos · {{padres_distintos}} padres distintos · {{pads_hijo}} pads hijo (plataformas del hijo) · intervalo por bloques de 5 km</div>
   </div>
   <div class="cifra" role="listitem">
     <div class="ojo">Mes 6</div>
     <div class="v num">{{gap6}}<small>puntos</small></div>
-    <div class="d">con el control principal; hasta {{cierre_peor}} con el control más exigente de cuatro. Dentro de 5 puntos, no en cero.</div>
+    <div class="d">con el control principal; hasta {{cierre_peor}} con el control más exigente de cuatro. Queda a menos de 5 puntos del control, pero no en cero.</div>
     <div class="f">4 definiciones de control</div>
   </div>
   <div class="cifra" role="listitem">
     <div class="ojo">Diferido</div>
-    <div class="v num">{{dif_m3}}<small>m³</small></div>
-    <div class="d">de petróleo por padre que falta contra el control en los meses 0 a 6 (IC 95%: {{dif_bajo_m3}} a {{dif_alto_m3}}).</div>
-    <div class="f">{{dif_bbl}} bbl por padre</div>
+    <div class="v num">{{dif_bbl}}<small>bbl</small></div>
+    <div class="d">de petróleo por padre que falta contra el control en los meses 0 a 6 ({{dif_m3}} m³; intervalo de 95%: {{dif_bajo_m3}} a {{dif_alto_m3}} m³).</div>
+    <div class="f">por padre</div>
   </div>
   <div class="cifra" role="listitem">
-    <div class="ojo">Cota de pérdida</div>
+    <div class="ojo">Lo máximo que podría no volver</div>
     <div class="v num">{{cota_bbl}}<small>bbl</small></div>
-    <div class="d">por evento: cota superior de lo que podría no volver a 24 meses ({{cota_m3}} m³). Es un techo, no una estimación.</div>
-    <div class="f">límite alto del IC 95% del acumulado</div>
+    <div class="d">por evento, a 24 meses ({{cota_m3}} m³). Es un techo según el dato, no una estimación.</div>
+    <div class="f">límite alto del intervalo de 95% del acumulado</div>
   </div>
 </div>
 
-<p style="color: var(--ink-2)">Los padres cercanos ya rendían algo menos que los controles antes de la fractura: es la pretendencia, y por eso el mes 1 es un rango y no un valor. El valor de arriba es la cota superior; sin esa brecha previa son 19 puntos menos. Es una huella medida contra un control, no una causa demostrada.</p>
+<p style="color: var(--ink-2)">Los padres cercanos ya rendían algo menos que los controles antes de la fractura. Es la brecha previa a la fractura, y por eso el mes 1 es un rango y no un valor. El valor de arriba es el extremo más grande; sin esa brecha previa son 19 puntos menos. Es una huella medida contra un control, no una causa demostrada.</p>
 
 <section id="curva">
   <div class="texto">
@@ -154,7 +154,7 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
   </div>
   <figure>
     <div class="lienzo"><svg id="g-distancia" viewBox="0 0 960 300" role="img" aria-label="Brecha del mes 1 por banda de distancia al hijo, con intervalo del 95%"></svg></div>
-    <figcaption>Brecha del mes 1 en puntos con intervalo del 95% (bootstrap por pads hijo). Base de los meses -6 a -4 y control de 5 a 10 km: no es la misma base que la ficha de arriba, por eso las cifras no se comparan una a una.</figcaption>
+    <figcaption>Brecha del mes 1 en puntos con intervalo del 95% (bootstrap por pads hijo). Esta figura usa la base de los meses -6 a -4 y compara contra pozos a 5 a 10 km. La ficha de arriba usa otra base, por eso las cifras no coinciden.</figcaption>
   </figure>
 </section>
 
@@ -172,7 +172,7 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
 <section id="robustez">
   <div class="texto">
     <h2>No es un operador ni un área</h2>
-    <p>Sacando de a un operador ({{op_n}} con al menos 50 eventos cercanos) la brecha del mes 1 queda entre {{op_min}} y {{op_max}} puntos; sacando de a un área ({{ar_n}}), entre {{ar_min}} y {{ar_max}}. El intervalo del 95% nunca toca el cero: su límite alto más alto es {{ic_alto_max}}. En el mes 6, en todas las salidas, la brecha queda entre {{seis_min}} y {{seis_max}}. La regla para decir esto se fijó antes de correrlo.</p>
+    <p>Sacando de a un operador ({{op_n}} con al menos 50 eventos cercanos) la brecha del mes 1 queda entre {{op_min}} y {{op_max}} puntos; sacando de a un área ({{ar_n}}), entre {{ar_min}} y {{ar_max}}. El intervalo del 95% nunca toca el cero: su límite alto más alto es {{ic_alto_max}}. En el mes 6, en todas las salidas, la brecha queda entre {{seis_min}} y {{seis_max}}. Escribimos la regla antes de ver el resultado, para no elegir la que nos convenga.</p>
   </div>
   <figure>
     <div class="dos">
@@ -186,20 +186,23 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
 <section id="cierre">
   <div class="texto">
     <h2>A los 6 meses: cerca, no en cero</h2>
-    <p>Los padres cercanos son siempre los mismos; lo que cambia es contra quién se los mide. Con cualquiera de los cuatro controles, lo que queda en el mes 6 está entre {{gap6}} y {{cierre_peor}} puntos. A 24 meses, el intervalo del 95% del acumulado por evento va de {{media24_bajo_bbl}} a {{media24_alto_bbl}} bbl: no se distingue de cero, y su límite alto es la cota de la ficha.</p>
+    <p>Los padres cercanos son siempre los mismos; lo que cambia es contra quién se los mide. Con cuatro controles distintos, a los 6 meses quedan entre {{gap6}} y {{cierre_peor}} puntos.</p>
   </div>
+  <details><summary>Ver los números</summary>
+  <p>A 24 meses, el intervalo de 95% del acumulado por evento va de {{media24_bajo_bbl}} a {{media24_alto_bbl}} bbl. No se distingue de cero. Su límite alto es el techo de la ficha.</p>
   <div class="tabla">
     <table>
       <thead><tr><th>Control</th><th class="n">Mes 1</th><th class="n">Mes 6</th><th class="n">Parte que se cierra</th></tr></thead>
       <tbody id="t-cierre"></tbody>
     </table>
   </div>
+  </details>
 </section>
 
 <section id="valor">
   <div class="texto">
     <h2>Cuánto vale con tu precio y tu tasa</h2>
-    <p>El diferido es volumen que llega tarde, si llega. Su costo es el valor tiempo de cobrarlo más tarde. La cota, en cambio, es lo más que podría no volver según el dato: valuarla sin descontar da un techo. El precio, la tasa y el rezago los ponés vos; los de arranque son un ejemplo.</p>
+    <p>El diferido es petróleo que llega tarde, si llega. Cobrarlo más tarde tiene un costo: el valor del tiempo. El techo es lo máximo que podría no volver. El precio, la tasa y el rezago los ponés vos; los de arranque son un ejemplo.</p>
     <p>Para hacer la misma cuenta con los padres reales alrededor de un punto del mapa, plantá un pozo hijo en <a href="mundo.html#libre&amp;hoja=plantar">Vaca Muerta en 3D</a>.</p>
   </div>
   <div class="calc">
@@ -247,16 +250,17 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
   <div class="texto"><h2>Lo que este dato no dice</h2></div>
   <div class="limites">
     <div>
+      <h3>Lo que pasa bajo tierra</h3>
+      <p>No hay espaciamiento real entre ramas, presión de monitoreo del padre durante la fractura ni registros de cierre. Son las tres cosas que más achicarían la duda, y un operador las tiene.</p>
+    </div>
+    <div>
       <h3>Si lo diferido vuelve</h3>
       <p>A 24 meses el acumulado no se distingue de cero, pero eso no prueba que el volumen se recupere. Tampoco se sabe si el padre se cerró de forma preventiva o se dañó: el dato mensual no lo separa.</p>
     </div>
     <div>
       <h3>Si la dosis explica la caída</h3>
-      <p>Con este dato no se ve que la dosis (arena por etapa o por metro del hijo, presión de tratamiento, depleción del padre) agrande la caída. La potencia no alcanza para descartarlo: el efecto mínimo detectable con 80% de potencia es de {{mde}} desvíos, y uno de 0,2 puede pasar inadvertido.</p>
-    </div>
-    <div>
-      <h3>Lo que pasa bajo tierra</h3>
-      <p>No hay espaciamiento real entre ramas, presión de monitoreo del padre durante la fractura ni registros de cierre. Son las tres cosas que más achicarían la duda, y un operador las tiene.</p>
+      <p>Con este dato no se ve que la dosis (arena por etapa o por metro del hijo, presión de tratamiento, depleción del padre) agrande la caída. Con estos casos, un efecto chico de la dosis pasaría inadvertido.</p>
+      <details><summary>Ver los números</summary><p>El efecto mínimo detectable con 80% de potencia es de {{mde}} desvíos, y uno de 0,2 puede pasar inadvertido.</p></details>
     </div>
   </div>
 </section>
@@ -264,14 +268,16 @@ footer { border-top: 1px solid var(--rule); padding-top: 16px; font-size: 13px; 
 <section id="tus-pozos">
   <div class="texto">
     <h2>Corré el mismo estudio con tus pozos</h2>
-    <p>El repositorio trae un modo con datos propios: el mismo estudio de eventos y de dosis sobre CSV del operador, en tu máquina y sin subir nada. Se niega a leer o escribir en rutas del repositorio que git versionaría, para que tus datos no terminen en un commit por error.</p>
+    <p>El repositorio trae un modo con datos propios: el mismo estudio de eventos y de dosis sobre CSV del operador, en tu máquina y sin subir nada.</p>
+    <details><summary>El comando</summary>
     <code class="comando">uv run python -m pipeline.local --wells /ruta/fuera/del/repo/pozos.csv --monthly /ruta/fuera/del/repo/mensual.csv --out /ruta/fuera/del/repo/salida/</code>
+    </details>
     <p>Las columnas que espera están en <code>docs/operador-datos-propios.md</code>. Con la presión de monitoreo y las fechas de cierre a mano se puede separar un cierre preventivo de un daño, algo que el dato público no permite.</p>
   </div>
 </section>
 
 <footer>
-  <div>Fuente: producción de pozos no convencionales y datos de fractura (Adjunto IV) de la Secretaría de Energía de la Nación, datos abiertos, hasta {{mes_dato}}{{frase_verificado}}. La página se regenera con <code>uv run python -m pipeline.run_all</code>; cada cifra se lee de los marts del warehouse y se verifica con <code>uv run python -m pipeline.claims</code>.</div>
+  <div>Fuente: producción de pozos no convencionales y datos de fractura (Adjunto IV) de la Secretaría de Energía de la Nación, datos abiertos, hasta {{mes_dato}}{{frase_verificado}}. Cada cifra se recalcula desde el dato público y se compara con el estudio antes de publicar la página.<details><summary>Cómo se regenera</summary><p>La página se regenera con <code>uv run python -m pipeline.run_all</code>; cada cifra se lee de los marts del warehouse y se verifica con <code>uv run python -m pipeline.claims</code>.</p></details></div>
   <div>Describe asociaciones en pozos de varios operadores. No es una recomendación de operación.</div>
 </footer>
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vaca Muerta en datos</title>
-<meta name="description" content="Si fracturar un pozo nuevo le quita producción a los vecinos: qué se probó con datos públicos de Vaca Muerta, qué falló, qué se sostiene y qué sigue abierto.">
+<meta name="description" content="Si fracturar un pozo nuevo le quita producción a los pozos vecinos: qué se probó con datos públicos de Vaca Muerta, qué falló, qué se sostiene y qué sigue abierto.">
 <style>
 /*__SISTEMA__*/
 /* Solo para esta página. Los alias dejan que el tablero de abajo siga usando sus nombres; los colores son los del sistema. */
@@ -84,10 +84,11 @@
 .par { display: grid; grid-template-columns: 1fr; gap: 56px; background: var(--estepa); }
 .par .escenario { margin-bottom: 0; }
 @media (min-width: 760px) { .par { grid-template-columns: 1fr 1fr; gap: 0 24px; background: var(--cielo); } }
-/* la dirección de 93 grados: una línea a rayas que cruza el cielo y queda como un anillo, no firme */
+/* una línea a rayas que cruza el cielo, como un anillo; lleva la cifra de la posición del padre (costado contra punta) */
 .rumbo { position: absolute; left: 0; right: 0; bottom: 4px; height: 0; border-top: 1.5px dashed var(--tinta); transform: rotate(3deg); transform-origin: 0 0; opacity: .45; pointer-events: none; }
 .campo-cielo { position: relative; }
 .rumbo span { position: absolute; right: 56px; top: -24px; font: 600 14px/1 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); }
+.cierre { min-height: 0; }
 .cierre .campo-cielo { padding-top: 48px; }
 .cierre .campo-estepa h2 { font-size: 27px; margin: 32px 0 8px; }
 .cierre .campo-estepa h2:first-child { margin-top: 0; }
@@ -95,14 +96,57 @@
 .cierre li { margin: 0 0 8px; }
 .cierre p { max-width: 34em; }
 
+/* la tapa: la pregunta, una respuesta, tres cifras, las cinco palabras y dos botones, todo en la primera pantalla */
+.respuesta { font-size: 17px; line-height: 1.5; max-width: 34em; margin: 0 0 16px; font-weight: 600; }
+@media (min-width: 900px) { .respuesta { font-size: 19px; } }
+.tres-cifras { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 36rem; }
+.tres-cifras li { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tres-cifras .v { font-family: "Archivo", "Arial Narrow", system-ui, sans-serif; font-stretch: 68%; font-weight: 800; font-size: clamp(30px, 8vw, 44px); line-height: 1; font-variant-numeric: tabular-nums lining-nums; }
+.tres-cifras .l { font: 400 14px/1.35 "Archivo", "Arial Narrow", system-ui, sans-serif; }
+@media (max-width: 520px) { .tres-cifras { grid-template-columns: 1fr; gap: 14px; } }
+.botones { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 20px; }
+.boton { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; font: 600 16px/1.2 "Archivo", "Arial Narrow", system-ui, sans-serif; text-decoration: none; background: var(--tinta); color: var(--cielo); border: 2px solid var(--tinta); }
+.boton--sec { background: transparent; color: var(--tinta); }
+.campo-estepa a.boton { text-decoration: none; }
+.boton:hover, .boton:focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; }
+.evento-3d { margin: 16px 0 8px; max-width: 34em; }
+.evento-3d .poster { display: block; }
+.evento-3d img { display: block; width: 100%; height: auto; aspect-ratio: 740 / 320; background: var(--lutita); }
+.evento-3d figcaption { margin-top: 12px; }
+.evento-3d .nota, .evento-3d .sin-3d { display: block; margin-top: 8px; font: 400 14px/1.4 "Archivo", "Arial Narrow", system-ui, sans-serif; }
+.evento-3d [hidden] { display: none; }
+.como-leer { margin-top: 20px; }
+.como-leer .leyenda-sellos { margin: 8px 0 0; }
+.tapa .campo-estepa { padding-bottom: 28px; }
+/* "Qué creemos, no sabemos y cambiaría": tres columnas a 900 px o más, una en el teléfono */
+.resumen { min-height: 0; }
+.resumen .col-ancha { width: min(72rem, 100% - 2 * var(--margen)); }
+.resumen .tres { display: grid; grid-template-columns: 1fr; gap: 8px 40px; }
+@media (min-width: 900px) { .resumen .tres { grid-template-columns: repeat(3, 1fr); } }
+.resumen h2 { font-size: 27px; margin: 24px 0 8px; }
+.resumen ul { margin: 0 0 8px; padding-left: 20px; }
+.resumen li { margin: 0 0 8px; }
+.resumen p { margin: 0 0 8px; }
+.resumen .campo-estepa { padding-top: 16px; }
+/* el tablero: cuatro bloques que se abren de a uno */
+details.bloque { margin: 40px 0 0; padding-top: 8px; border-top: 1px solid var(--linea); }
+details.bloque > summary { font-size: 22px; }
+
 /* la tapa: la foto Sentinel del núcleo en dos tonos, con el pozo nuevo en naranja */
-.tapa-foto { position: relative; overflow: hidden; aspect-ratio: 4 / 5; background: var(--lutita); flex: 0 0 auto; }
+.tapa-foto { position: relative; overflow: hidden; aspect-ratio: 4 / 3; background: var(--lutita); flex: 0 0 auto; }
 .tapa-foto img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; will-change: transform; }
-@media (min-width: 900px) { .tapa-foto { aspect-ratio: auto; height: 64vh; height: 64svh; } .tapa-foto img { object-position: 35% 24%; } }
+@media (min-width: 900px) { .tapa-foto { aspect-ratio: auto; height: 36vh; height: 36svh; } .tapa-foto img { object-position: 35% 24%; } }
 .tapa h1 { font-size: 40px; font-stretch: 100%; margin: 8px 0 16px; }
 @media (min-width: 900px) { .tapa h1 { font-size: 56px; } }
 .apertura { font-size: 17px; line-height: 1.55; max-width: 34em; }
 @media (min-width: 900px) { .apertura { font-size: 19px; } }
+.leyenda-sellos { font: 400 14px/1.4 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); max-width: 34em; margin: 8px 0 0; }
+.cinco-palabras { font: 400 14px/1.4 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); max-width: 34em; margin: 12px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; }
+.cinco-palabras dt { font-weight: 600; }
+.cinco-palabras dd { margin: 0; }
+.intentos h3 { font-size: 20px; margin: 28px 0 8px; }
+.intentos ul { margin: 0 0 12px; padding-left: 20px; max-width: 34em; }
+.intentos li { margin: 0 0 8px; }
 .credito { margin: auto 0 0; padding-top: 24px; font: 400 14px/1.4 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); }
 
 /* las seis marcas a la derecha: la única navegación de la historia; queda pegada mientras dura el artículo */
@@ -140,13 +184,6 @@ main { max-width: 1040px; margin: 0 auto; padding: 40px 20px 64px; }
 .contexto .sub { margin: 0; }
 section.caso { margin: 40px 0 8px; }
 .caso > h2 { font-size: 27px; margin: 0 0 16px; }
-.hallazgo .frase { font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Charter, Georgia, serif; font-size: 27px; line-height: 1.2; font-weight: 600; margin: 0 0 16px; max-width: 28em; }
-.hallazgo .apoyo { color: var(--jarilla); margin: 0 0 16px; max-width: 34em; }
-.limites { margin: 0 0 24px; max-width: 34em; }
-.limites h3 { font-size: 17px; margin: 0 8px 0 0; display: inline; }
-.limites .nota-datos { display: inline; margin: 0; font-size: 14px; color: var(--jarilla); }
-.limites ul { margin: 8px 0 0; padding: 0; list-style: none; font-size: 14px; line-height: 1.45; color: var(--jarilla); }
-.limites li { margin: 0 0 8px; }
 .grid-caso { display: grid; grid-template-columns: 3fr 2fr; gap: 40px; }
 @media (max-width: 760px) { .grid-caso { grid-template-columns: 1fr; gap: 24px; } }
 .panel { min-width: 0; }
@@ -156,7 +193,6 @@ section.caso { margin: 40px 0 8px; }
 .chart.chart-caso { height: 300px; }
 .chart.chart-previa { height: 240px; }
 .fila-previa { margin-top: 24px; align-items: start; }
-.fila-previa .resultado { margin: 0; }
 .leyenda-anual { font-size: 14px; color: var(--jarilla); margin: 8px 0 0; }
 .leyenda-anual .rayado::before { content: ""; display: inline-block; width: 12px; height: 10px; margin-right: 8px; vertical-align: -1px; border: 1px solid var(--s2); background: repeating-linear-gradient(135deg, var(--s2) 0 2px, transparent 2px 4px); }
 .caso .kpis { margin: 24px 0; }
@@ -170,17 +206,6 @@ section.caso { margin: 40px 0 8px; }
 .titulares .l { font-size: 14px; line-height: 1.3; }
 .titulares .d { font-size: 14px; color: var(--jarilla); line-height: 1.35; }
 @media (max-width: 900px) { .titulares { grid-template-columns: repeat(2, 1fr); } .titulares li:last-child { grid-column: 1 / -1; } }
-.resultado { margin: 16px 0 0; max-width: 34em; }
-.resultado p { margin: 0 0 8px; }
-.resultado .nota { color: var(--jarilla); font-size: 14px; margin: 4px 0 8px; }
-.eje-barra { display: block; width: 100%; max-width: 420px; height: auto; }
-.eje-barra .base { stroke: var(--linea); stroke-width: 2; }
-.eje-barra .ic { fill: var(--medido); opacity: .45; }
-.eje-barra .pt { fill: var(--tinta); stroke: var(--papel); stroke-width: 2; }
-.eje-barra .shmax { stroke: var(--supuesto); stroke-width: 2; stroke-dasharray: 3 2; }
-.eje-barra .shmax-t { fill: var(--supuesto); }
-.eje-barra .tick { stroke: var(--jarilla); stroke-width: 1; }
-.eje-barra text { fill: var(--jarilla); font-size: 14px; font-variant-numeric: tabular-nums; }
 pre.cmd { margin: 8px 0 16px; padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 pre.cmd .c { color: var(--jarilla); }
 @media (max-width: 600px) {
@@ -226,10 +251,10 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
 <body>
 <article class="historia" id="historia">
   <ol class="seis" aria-label="Las seis preguntas">
-    <li><a href="#vecino"><i class="marca marca--medio" aria-hidden="true"></i><span class="rotulo">¿Le pega al vecino?</span></a></li>
-    <li><a href="#artefacto"><i class="marca marca--pleno" aria-hidden="true"></i><span class="rotulo">¿O es un artefacto del método?</span></a></li>
+    <li><a href="#vecino"><i class="marca marca--medio" aria-hidden="true"></i><span class="rotulo">¿Los pozos vecinos rinden menos?</span></a></li>
+    <li><a href="#artefacto"><i class="marca marca--pleno" aria-hidden="true"></i><span class="rotulo">¿Puede salir sola, por cómo medimos?</span></a></li>
     <li><a href="#diferido"><i class="marca marca--pleno" aria-hidden="true"></i><span class="rotulo">¿Se pierde o se atrasa?</span></a></li>
-    <li><a href="#direccion"><i class="marca marca--medio" aria-hidden="true"></i><span class="rotulo">¿Por dónde pasa?</span></a></li>
+    <li><a href="#direccion"><i class="marca marca--pleno" aria-hidden="true"></i><span class="rotulo">¿Por dónde pasa?</span></a></li>
     <li><a href="#anticipar"><i class="marca marca--vacio" aria-hidden="true"></i><span class="rotulo">¿Se puede anticipar o planificar?</span></a></li>
     <li><a href="#fuera"><i class="marca marca--medio" aria-hidden="true"></i><span class="rotulo">¿Pasa fuera de Vaca Muerta?</span></a></li>
   </ol>
@@ -248,14 +273,50 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
     </div>
     <div class="campo-estepa"><div class="col">
       <h1>Vaca Muerta en datos</h1>
-      <p class="apertura">Cuando se fractura un pozo nuevo junto a pozos que ya producían, ¿los que ya producían rinden menos? Al pozo nuevo lo llamamos hijo y a sus vecinos, padres. Se contesta solo con datos públicos de la Secretaría de Energía: 436.308 filas de producción mensual por pozo no convencional y la fecha de cada fractura. No hay producción diaria ni cierres declarados. Lo que sigue son seis preguntas, cada una nacida de la duda que dejó la anterior.</p>
+      <p class="apertura">Cuando se fractura un pozo nuevo junto a pozos que ya producían, ¿los que ya producían rinden menos?</p>
+      <p class="respuesta">Sí: un mes después rinden menos, a los 6 meses casi se cierra, y no probamos que la causa sea la fractura.</p>
+      <ul class="tres-cifras" aria-label="Tres cifras">
+        <li><span class="v">19 a 23</span><span class="l">puntos menos al mes 1, contra pozos de control</span></li>
+        <li><span class="v">6 meses</span><span class="l">después, la brecha casi se cierra</span></li>
+        <li><span class="v">Sin causa</span><span class="l">probada: es una huella medida</span></li>
+      </ul>
+      <p class="botones"><a class="boton" href="mundo.html#acto=2">Ver un caso en 3D</a><a class="boton boton--sec" href="informe.html">Leer el informe para un operador</a></p>
+      <dl class="cinco-palabras" aria-label="Cinco palabras">
+        <dt>Hijo</dt><dd>el pozo nuevo que se fractura.</dd>
+        <dt>Padre (pozo vecino)</dt><dd>un pozo que ya producía a menos de 1 km del hijo.</dd>
+        <dt>Pozo de control</dt><dd>un pozo a 2 a 5 km de un pozo hijo, para comparar.</dd>
+        <dt>Puntos</dt><dd>puntos porcentuales del caudal del propio pozo antes de la fractura: de 100 a 80 es una caída de 20 puntos.</dd>
+        <dt>Diferido</dt><dd>producción que el pozo entrega más tarde; no es producción perdida.</dd>
+      </dl>
+      <details class="como-leer"><summary>Cómo leer esta página</summary>
+        <p>Se contesta solo con datos públicos de la Secretaría de Energía: la producción de cada pozo no convencional y la fecha de cada fractura. Solo hay producción por mes, no por día, y no hay cierres declarados. Lo que sigue son seis preguntas. Cada pregunta sale de la duda que deja la anterior.</p>
+        <p class="leyenda-sellos">Cada pregunta lleva uno o más sellos. Sostiene: el dato lo muestra. No firme: el dato no alcanza para decidir. No predice: lo probamos y no funcionó. Sin muestra: faltaron casos. Se replica: el resultado aparece también en otra cuenca.</p>
+      </details>
       <p class="credito">Contains modified Copernicus Sentinel data 2025</p>
+    </div></div>
+  </section>
+  <section class="resumen lamina" id="creemos" data-alto="0">
+    <div class="campo-estepa"><div class="col col-ancha">
+      <div class="tres">
+        <div><h2>Qué creemos</h2>
+      <p>Que fracturar un pozo nuevo deja una huella en los padres a menos de 1 km: un mes de menos producción que a los 6 meses casi se cierra, con una forma compatible con la geometría de las ramas. Con un diseño causal, una sola cosa: el corte de agua del padre sube 13,8 puntos porcentuales; depende de los pozos de YPF, y sin ellos el dato no la separa de cero.</p></div>
+        <div><h2>Qué no sabemos</h2>
+      <p>Si la caída de petróleo es una causa. Es una huella medida contra un control (la diferencia que medimos), no una causa demostrada: con datos mensuales y declarados por las operadoras, un cierre preventivo (el operador frena el pozo padre antes de la fractura para protegerlo) se ve igual que un daño por interferencia. Tampoco sabemos si sirve para anticipar un pozo en particular, ni si vale fuera de Vaca Muerta más allá de Colorado.</p></div>
+        <div><h2>Qué lo cambiaría</h2>
+      <ul class="cambiaria">
+      <li>Producción diaria, que separaría un cierre de un golpe dentro del mes.</li>
+      <li>Cierres declarados por las operadoras, que permitirían descartar los preventivos.</li>
+      <li>Trayectorias de los hijos recientes, que hoy cubren el 39% de los de 2024 y el 25% de los de 2025.</li>
+      <li>Presión de fondo y de reservorio, y el nivel al que aterriza cada pozo: el dato público no los trae.</li>
+      <li>Distinguir un nivel de un efecto anticipado: el rango de 19 a 23 quedaría en un solo número.</li>
+      </ul></div>
+      </div>
     </div></div>
   </section>
   <section class="pregunta lamina" id="vecino" data-alto="23.1">
     <div class="campo-cielo"><div class="col">
-      <h2>¿Le pega al vecino?</h2>
-      <p class="veredicto entra"><span><i class="marca marca--medio" aria-hidden="true"></i>sostiene, con pretendencia</span></p>
+      <h2>¿Los pozos vecinos rinden menos?</h2>
+      <p class="veredicto entra"><span><i class="marca marca--medio" aria-hidden="true"></i>sostiene, con una brecha previa</span></p>
     </div></div>
     <figure class="escenario" style="--alto: 24" role="img" aria-label="La brecha mes a mes, de 3 meses antes a 6 meses después de la fractura del hijo: se abre a -23,0 en el mes 1 y casi se cierra al mes 6.">
       <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path class="banda barrido" data-alto="23.1" d="__PERFIL_AREA__"/></svg>
@@ -264,23 +325,33 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
     </figure>
     <div class="campo-estepa"><div class="col">
       <p class="primera entra">Sí. Un mes después de fracturar el hijo, los padres a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control a 2 a 5 km de un pozo hijo.</p>
+      <p>Es un rango porque los padres ya rendían un poco menos que los controles antes de la fractura. El 23 es el máximo y el 19 es lo que queda al descontar esa diferencia previa.</p>
+      <figure class="evento-3d">
+        <a class="poster" href="mundo.html#acto=2"><img src="img/evento_3d.webp" width="740" height="320" loading="lazy" alt="Un evento en 3D: un pozo hijo, el círculo de 1 km a su alrededor y sus padres cercanos, cada uno con una barra de caudal."></a>
+        <figcaption>
+          <a class="boton" href="mundo.html#acto=2">Mirá este evento en 3D</a>
+          <span class="nota">Abre la página en 3D (7 MB) en el acto de un solo evento: un pozo hijo y sus padres a menos de 1 km. Arrastrás para girar y movés la línea de tiempo.</span>
+          <span class="sin-3d" hidden>Tu navegador no ofrece WebGL2, así que el 3D no se puede dibujar. La <a href="replay.html">repetición en 2D</a> funciona sin WebGL.</span>
+        </figcaption>
+      </figure>
       <details class="numeros"><summary>Ver los números</summary>
       <figure>
         <picture><source media="(prefers-color-scheme: dark)" srcset="img/vecino_brecha_oscuro.png"><img src="img/vecino_brecha.png" alt="Brecha de petróleo por mes desde la fractura del hijo, en puntos del índice de caudal: cae a -23,0 en el mes 1, ya era negativa antes de la fractura y casi se cierra a los 6 meses." width="350" height="250" loading="lazy"></picture>
         <picture><source media="(prefers-color-scheme: dark)" srcset="img/vecino_reparto_oscuro.png"><img src="img/vecino_reparto.png" alt="Cómo se reparte esa brecha del volumen, en puntos logarítmicos: los días producidos y el caudal por día producido caen a la vez y se recuperan a los 6 meses." width="350" height="250" loading="lazy"></picture>
         <figcaption>Brecha de petróleo por mes desde la fractura del hijo, con la descomposición en días y caudal por día.</figcaption>
       </figure>
-      <p>Mirá un caso: <a href="replay.html">la repetición mes a mes</a> o <a href="mundo.html">Vaca Muerta en 3D</a>.</p>
+      <p>Mirá un caso en <a href="replay.html">La cuenca mes a mes</a> o en <a href="mundo.html">Vaca Muerta en 3D</a>.</p>
       <p>Un punto es un punto porcentual del caudal previo de cada pozo: pasar de 100 a 80 es una caída de 20 puntos. Son 2.094 eventos.</p>
-      <p>La cifra es un rango por la pretendencia: antes de la fractura ya había una brecha de -2,5, -3,6 y -6,3 puntos en los meses -3, -2 y -1. Con datos mensuales no se separa un nivel distinto de los padres cercanos de un efecto anticipado, así que 23 es una cota superior y 19 el valor descontado. El intervalo de 95% por bloques de 5 km (145 bloques) de la brecha de 23,0 va de -30,0 a -17,0.</p>
+      <p>La brecha previa: antes de la fractura ya había una brecha de -2,5, -3,6 y -6,3 puntos en los meses -3, -2 y -1. Con datos mensuales no se separa una diferencia de nivel de los padres cercanos de un efecto anticipado, así que 23 es una cota superior (el máximo) y 19 el valor descontado.</p>
+      <p>El intervalo de 95% es el rango de valores que el dato deja abierto. Se calcula por bloques de 5 km (145 bloques). Para la brecha de -23,0 va de -30,0 a -17,0.</p>
       <p class="prueba"><a href="../docs/caso-interferencia.md">La prueba completa: el caso de estudio</a></p>
     </details>
-      <p class="duda">Con una brecha que ya estaba antes de la fractura, queda la sospecha de que el método fabrique diferencias entre padres y controles aunque no pase nada.</p>
+      <p class="duda">Con una brecha que ya estaba antes de la fractura, queda la sospecha de que el método invente diferencias entre padres y controles aunque no pase nada.</p>
     </div></div>
   </section>
   <section class="pregunta lamina" id="artefacto" data-alto="2.9">
     <div class="campo-cielo"><div class="col">
-      <h2>¿O es un artefacto del método?</h2>
+      <h2>¿Puede salir sola, por cómo medimos?</h2>
       <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene</span></p>
     </div></div>
     <figure class="escenario" style="--alto: 24" role="img" aria-label="Con fechas de fractura falsas la brecha queda en una grieta, de -2,4 a 0,5; con las fechas permutadas, de -8,1 a -4,9; queda el contorno de la brecha real de -23,0.">
@@ -295,9 +366,11 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
     </figure>
     <div class="campo-estepa"><div class="col">
       <p class="primera entra">Intentamos romperlo. Con fechas de fractura falsas, corridas medio año y un año, la brecha del mes 1 va de -2,4 a 0,5 puntos y los intervalos incluyen el cero.</p>
+      <p>Con las fechas mezcladas entre pozos la brecha llega a -8,1 como máximo, contra -23,0 la real. Si plantamos a propósito una caída de -17,4 puntos en datos reales, el método la encuentra (-19,5).</p>
       <details class="numeros"><summary>Ver los números</summary>
-      <p>Con las fechas permutadas entre hijos del mismo año va de -8,1 a -4,9, contra -23,0 la real. Plantamos una caída de unos -17,4 puntos sobre datos reales y el estimador la devuelve como -19,5, con la brecha residual de -2,2 del mundo nulo; se cumplen 5 de las 5 reglas fijadas de antemano, y la de falsos positivos da 2 de 30 mundos (7%).</p>
-      <p>Y dentro del mes, la brecha del mes 0 cambia -2,1 puntos por cada 0,1 de fracción del mes posterior al inicio de la fractura (IC 95%: -3,3 a -0,8). Con estas pruebas la brecha no sale con cualquier fecha de fractura.</p>
+      <p>Con las fechas permutadas entre hijos del mismo año va de -8,1 a -4,9, contra -23,0 la real. Plantamos una caída de unos -17,4 puntos sobre datos reales y el estimador la devuelve como -19,5, con la brecha residual de -2,2 del mundo nulo; se cumplen 5 de las 5 reglas escritas antes de correr, y la de falsos positivos da 2 de 30 mundos (7%).</p>
+      <p>Dentro del mes, la brecha es mayor cuanto más temprano empieza la fractura: la brecha del mes 0 cambia -2,1 puntos por cada 0,1 de fracción del mes posterior al inicio de la fractura (IC 95%: -3,3 a -0,8).</p>
+      <p>Con estas pruebas la brecha no sale con cualquier fecha de fractura.</p>
       <p class="prueba"><a href="../wiki/hallazgos/placebo.md">La prueba completa: placebo y permutación</a></p>
     </details>
       <p class="duda">Que la brecha sea real no dice cuánto cuesta: esa producción puede perderse o llegar más tarde.</p>
@@ -306,7 +379,7 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
   <section class="pregunta lamina" id="diferido" data-alto="23.1">
     <div class="campo-cielo"><div class="col">
       <h2>¿Se pierde o se atrasa?</h2>
-      <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene: diferido, no perdido</span></p>
+      <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene: casi se cierra; no está probado que vuelva todo</span></p>
     </div></div>
     <figure class="escenario" style="--alto: 24" role="img" aria-label="La brecha se cierra hasta -2,1 en el mes 6; lo que se atrasa en los meses 0 a 6 va de 6,4 a 11,4 millones de barriles.">
       <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path class="banda" data-alto="23.1" d="__PERFIL_AREA__"/></svg>
@@ -316,19 +389,21 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
     </figure>
     <div class="campo-estepa"><div class="col">
       <p class="primera entra">Se atrasa. A los 6 meses la brecha casi se cierra: -2,1 puntos en el mes 6 (“casi” es menos de 5 puntos, no cero).</p>
-      <p class="caso-real"><a href="espera.html">Mirá la espera de un caso real</a><span>Cuánto produce menos un pozo vecino, cuándo lo recupera y cuánto vale esperar, con un precio que elegís vos.</span></p>
+      <p>Lo que se atrasa va de 6,4 a 11,4 millones de barriles. El rango depende de cómo se cuentan los eventos que se superponen y de si se descuenta la brecha previa.</p>
+      <p class="caso-real"><a href="espera.html">Barriles que llegan tarde: mirá un caso real</a><span>Cuánto produce menos un pozo vecino, cuándo lo recupera y cuánto cuesta esperarlo, con el precio que elegís vos.</span></p>
       <details class="numeros"><summary>Ver los números</summary>
       <p>El diferido de los meses 0 a 6, la producción que se atrasa y no se pierde, va de 6,4 a 11,4 millones de barriles contra un control de la misma edad. El rango depende de cómo se cuente: el extremo alto suma cada evento por separado y el bajo cuenta cada mes de un padre una sola vez.</p>
-      <p>Por evento, a 24 meses, la mediana es -954 barriles y su intervalo de 95% incluye el cero: el padre típico no acumula diferido en esa ventana.</p>
+      <!--__DIFERIDO_CUENTA__-->
+      <p>A los 24 meses, el padre típico no muestra pérdida acumulada: el dato no la distingue de cero. Eso no prueba que todo vuelva. Por evento, la mediana es -954 barriles y su intervalo de 95% incluye el cero.</p>
       <p class="prueba"><a href="../wiki/hallazgos/diferido.md">La prueba completa: el diferido</a></p>
     </details>
       <p class="duda">Un promedio no dice a qué padres les toca: ¿hay una posición respecto del hijo que explique quién pierde más?</p>
     </div></div>
   </section>
   <section class="pregunta lamina" id="direccion" data-alto="50.3">
-    <div class="campo-cielo"><div class="rumbo" aria-hidden="true"><span>93 grados</span></div><div class="col">
+    <div class="campo-cielo"><div class="rumbo" aria-hidden="true"><span>-28,0 puntos</span></div><div class="col">
       <h2>¿Por dónde pasa?</h2>
-      <p class="veredicto entra"><span><i class="marca marca--vacio" aria-hidden="true"></i>no firme</span><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene</span></p>
+      <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene</span></p>
     </div></div>
     <figure class="escenario" style="--alto: 52" role="img" aria-label="Al mes 1 los padres al costado de la rama del hijo quedan -28,0 puntos por debajo de los de la punta; a menos de 300 m entre ramas la brecha es de -50,3.">
       <svg viewBox="0 0 100 52" preserveAspectRatio="none" aria-hidden="true">
@@ -343,10 +418,11 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       <span class="rotulo-suelo" style="--x: 78">a menos de 300 m</span>
     </figure>
     <div class="campo-estepa"><div class="col">
-      <p class="primera entra">La primera respuesta fue una dirección.</p>
+      <p class="primera entra">La primera respuesta fue una dirección. La retiramos: la historia está en “Lo que intentamos y no funcionó”, en la pregunta siguiente.</p>
+      <p>Hoy medimos otra cosa. Con las trayectorias publicadas de las ramas, comparamos dos posiciones del padre: al costado de la rama del hijo o en su punta. Al mes 1, el del costado queda a -28,0 puntos del de la punta.</p>
       <details class="numeros"><summary>Ver los números</summary>
-      <p>Con las coordenadas de superficie de los pads (las plataformas desde las que se perforan varios pozos), el eje de mayor merma de la cuenca da 93 grados, este-oeste (IC de 70 a 123). Lo publicamos como confirmado. No resistió: no se separa del SHmax publicado, de 67,5 grados, ni de cómo se disponen los pads y las ramas, y el eje de los eventos viejos (92 grados) no predice mejor a los nuevos (89) que uno al azar. Se cumplió la regla de parada fijada de antemano: es una descripción de la muestra y no un hallazgo.</p>
-      <p>Con las trayectorias publicadas de las ramas, una pregunta más concreta: ¿rinde distinto el padre al costado de la rama del hijo que el que queda en su punta? Al mes 1 el contraste es de -28,0 puntos, sobre 1.201 costados y 915 puntas (IC 95% por bloques de 5 km: -35,9 a -19,7). La huella además tiene alcance: la brecha del mes 1 es de -50,3 puntos a menos de 300 m entre ramas y de -1,5 de 1.000 a 2.000 m, sobre 10.173 eventos. La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el 86% de esos hijos, pero el 39% de los de 2024 y el 25% de los de 2025.</p>
+      <p>El contraste de -28,0 puntos sale de 1.201 costados y 915 puntas (IC 95% por bloques de 5 km: -35,9 a -19,7). La huella además tiene alcance: la brecha del mes 1 es de -50,3 puntos a menos de 300 m entre ramas y de -1,5 de 1.000 a 2.000 m, sobre 10.173 eventos.</p>
+      <p>La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el 86% de esos hijos, pero el 39% de los de 2024 y el 25% de los de 2025.</p>
       <p class="prueba"><a href="../wiki/hallazgos/mecanismo.md">La prueba completa: el mecanismo por la geometría de las ramas</a></p>
     </details>
       <p class="duda">Una huella con forma y alcance parece algo que se puede usar: ¿se puede anticipar qué pozo la va a sufrir, o planificar las fracturas para evitarla?</p>
@@ -362,8 +438,20 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
     </figure>
     <div class="campo-estepa"><div class="col">
       <p class="primera entra">La huella es real en promedio y ruidosa en cada evento, y por eso nada de lo que probamos alcanza para decidir sobre un pozo.</p>
+      <div class="intentos">
+      <h3>Lo que intentamos y no funcionó</h3>
+      <ul>
+      <li>Una dirección única de la caída, este-oeste: retirada. La publicamos como hallazgo y no resistió. No se distingue de la dirección del esfuerzo de la roca ni de cómo se ubican los pozos. Hoy es una descripción de los pozos, no un resultado.</li>
+      <li>Predecir el costo de cada evento: el modelo anda peor que usar el promedio de la zona.</li>
+      <li>Predecir qué pozo recibe un golpe de fractura fuerte: acierta algo mejor que el azar, pero no mejora de forma segura a la tasa histórica de la zona.</li>
+      <li>Ver si un trabajo más grande en el hijo (más arena o más presión) agranda la caída: con estos casos, un efecto chico pasaría inadvertido.</li>
+      <li>Ver si un hijo rinde menos junto a pozos ya agotados: la prueba de control dio un efecto donde no debía, así que no se puede leer.</li>
+      <li>Planificar el calendario de fracturas o agrupar hijos con un mismo padre: pedíamos 100 y 150 casos, y hay 81 y 87.</li>
+      </ul>
+      </div>
       <details class="numeros"><summary>Ver los números</summary>
-      <p>El modelo de costo predice peor que la media del área (R2 fuera de muestra de -0,18 contra -0,03). El modelo del riesgo de un golpe fuerte (la caída de un vecino mientras se fractura el nuevo), probado hacia adelante sobre 492 eventos, tiene un AUC de 0,67 que pasa el umbral, pero su habilidad de Brier de 0,09 tiene un intervalo de -0,04 a 0,21 que incluye el cero. Con la geometría de las ramas, el menor efecto de dosis detectable es de 0,34 desvíos, contra 0,22 de la muestra completa: no da más potencia. El lado del hijo da -0,2 bbl por metro de rama (IC -12,6 a 12,2), pero su control negativo da 8,9 y no es nulo, así que no se lee. Y los dos intentos de planificar pedían más datos de los que hay: el calendario de golpes, 100 eventos aislados y hay 81; agrupar hijos con un mismo padre, 150 padres y 400 meses de golpe y hay 87 y 197.</p>
+      <p>Eje de mayor merma: 93 grados, este-oeste (IC de 70 a 123). No se separa del SHmax publicado (la dirección del esfuerzo máximo de la roca), de 67,5 grados, ni de cómo se ubican los pads y las ramas. El eje de los eventos viejos (92 grados) no predice mejor a los nuevos (89) que uno al azar.</p>
+      <p>El modelo de costo predice peor que la media del área (R2 fuera de muestra de -0,18 contra -0,03). El modelo del riesgo de un golpe de fractura fuerte (la caída de un pozo vecino mientras se fractura el nuevo), probado hacia adelante sobre 492 eventos, tiene un AUC de 0,67 que pasa el umbral, pero su habilidad de Brier de 0,09 tiene un intervalo de -0,04 a 0,21 que incluye el cero. Con la geometría de las ramas, el menor efecto de dosis detectable es de 0,34 desvíos, contra 0,22 de la muestra completa: no da más potencia. El lado del hijo da -0,2 bbl por metro de rama (IC -12,6 a 12,2), pero su control negativo da 8,9 y no es nulo, así que no se lee. Y los dos intentos de planificar pedían más datos de los que hay: el calendario de golpes, 100 eventos aislados y hay 81; agrupar hijos con un mismo padre, 150 padres y 400 meses de golpe y hay 87 y 197.</p>
       <p class="prueba"><a href="../wiki/hallazgos/libro.md">La prueba completa: el libro de hipótesis</a></p>
     </details>
       <p class="duda">Todo esto es en una sola cuenca: ¿la huella es una propiedad de Vaca Muerta o de cómo se ve el dato de acá?</p>
@@ -387,16 +475,18 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       </figure>
     </div>
     <div class="campo-estepa"><div class="col">
-      <p class="primera entra">Corrimos los mismos estimadores en otras dos cuencas, con una regla fijada antes de correr (en Wyoming, antes de bajar sus datos).</p>
+      <p class="primera entra">Corrimos los mismos estimadores en otras dos cuencas, con una regla escrita antes de correr el cálculo.</p>
       <details class="numeros"><summary>Ver los números</summary>
-      <p>En la cuenca DJ de Colorado se replica: -19,9 puntos al mes 1 (IC 95% por bloques de 5 km: -27,5 a -14,8), con una brecha previa de -6,9 en el mes -1. Ahí, al mes 6, la brecha no se cierra del todo (-5,9). En Wyoming no: -2,5 puntos (IC -5,5 a 2,2), y su brecha previa, de -11,9, es mayor que la del mes 1. Se publican las dos. Con dos cuencas no hay estimación conjunta: no se separa una huella que depende de la cuenca de un ruido distinto en cada una.</p>
+      <p>En la cuenca DJ de Colorado se replica: -19,9 puntos al mes 1 (IC 95% por bloques de 5 km: -27,5 a -14,8), con una brecha previa de -6,9 en el mes -1. Ahí, al mes 6, la brecha no se cierra del todo (-5,9). En Wyoming no: -2,5 puntos (IC -5,5 a 2,2), y su brecha previa, de -11,9, es mayor que la del mes 1. Se publican las dos. En Wyoming la regla se escribió antes de bajar sus datos. Con dos cuencas no podemos decir si la diferencia es propia de cada cuenca o si es ruido del dato: no hay estimación conjunta.</p>
       <p class="prueba"><a href="../wiki/hallazgos/replicacion_cuencas.md">La prueba completa: la replicación por cuenca</a></p>
     </details>
       
     </div></div>
   </section>
-  <section class="cierre lamina" id="creemos" data-alto="11.9">
-    <div class="campo-cielo"><div class="col"></div></div>
+  <section class="cierre lamina" id="apuesta" data-alto="11.9">
+    <div class="campo-cielo"><div class="col">
+      <h2>La apuesta que sigue abierta</h2>
+    </div></div>
     <figure class="escenario" style="--alto: 31" role="img" aria-label="La apuesta abierta: un intervalo predicho de -28,7 a -16,8 con -22,9 en el medio, congelado el 2026-11-18 y todavía sin puntuar.">
       <svg viewBox="0 0 100 31" preserveAspectRatio="none" aria-hidden="true">
         <rect class="corchete banda" data-alto="11.9" x="0.3" y="2.3" width="99.4" height="11.9"/>
@@ -408,18 +498,7 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       <span class="rotulo-suelo izquierda" style="--x: 3">2026-11-18</span>
     </figure>
     <div class="campo-estepa"><div class="col">
-      <h2>Qué creemos</h2>
-      <p>Que fracturar un pozo nuevo deja una huella en los padres a menos de 1 km: un mes de menos producción que a los 6 meses casi se cierra, con una forma compatible con la geometría de las ramas. Con un diseño causal, una sola cosa: el corte de agua del padre sube 13,8 puntos porcentuales; depende de los pozos de YPF, y sin ellos el dato no la separa de cero.</p>
-      <h2>Qué no sabemos</h2>
-      <p>Si la caída de petróleo es una causa. Es una huella medida contra un control, no una causa demostrada: con datos mensuales y declarados por las operadoras, un cierre preventivo se ve igual que un daño por interferencia. Tampoco sabemos si sirve para anticipar un pozo en particular, ni si vale fuera de Vaca Muerta más allá de Colorado.</p>
-      <h2>Qué lo cambiaría</h2>
-      <ul class="cambiaria">
-      <li>Producción diaria, que separaría un cierre de un golpe dentro del mes.</li>
-      <li>Cierres declarados por las operadoras, que permitirían descartar los preventivos.</li>
-      <li>Trayectorias de los hijos recientes, que hoy cubren el 39% de los de 2024 y el 25% de los de 2025.</li>
-      <li>Distinguir un nivel de un efecto anticipado: el rango de 19 a 23 quedaría en un solo número.</li>
-      </ul>
-      <p>Queda una apuesta abierta. La prueba prospectiva se congeló el 2026-11-18 con los datos hasta 2026-09: una brecha del mes 1 de -22,9 puntos (intervalo predicho -28,7 a -16,8) y el cierre al mes 6, en eventos cuyos meses siguientes todavía no estaban publicados. Se puntúa con cada publicación nueva, hacen falta 100 eventos cercanos con el mes medido y hoy está pendiente.</p>
+      <!--__PRUEBA_ABIERTA__-->
       <p class="prueba"><a href="../wiki/hallazgos/prospectiva.md">La prueba completa: la prueba prospectiva</a></p>
     </div></div>
   </section>
@@ -432,10 +511,11 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
   <div class="meta" id="meta"></div>
 </div>
 
+<details class="bloque" name="tablero" id="caso" open>
+<summary>El caso</summary>
+<p class="sub">Cuánto produce menos un padre cuando se fractura el hijo, año por año, y qué diferencia ya había antes.</p>
 <section class="caso" id="interferencia">
   <h2>El caso: interferencia entre pozos</h2>
-  <!--__HALLAZGO__-->
-  <!--__NO_SE_MIDE__-->
   <div class="grid-caso">
     <div class="panel">
       <p class="cap">Caudal del padre, mediana (100 = antes de la fractura)</p>
@@ -450,24 +530,22 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       <!--__LEYENDA_ANUAL__-->
     </div>
   </div>
-  <div class="grid2 fila-previa">
+  <div class="fila-previa">
     <div class="panel" id="panel-previa">
       <p class="cap">Brecha previa, con intervalo de confianza 95% por bootstrap (puntos)</p>
       <p class="sub">Cercano menos control, meses -3 a 3 en la base limpia. La zona sombreada es la brecha previa a la fractura.</p>
       <div class="chart chart-previa"><canvas id="c-previa" aria-label="Brecha entre padres cercanos y control con su intervalo de confianza"></canvas></div>
     </div>
-    <div><!--__EJE__--></div>
   </div>
   <!--__KPIS_INTERF__-->
-  <!--__FINDING_INTERF__-->
-  <details><summary>Ver tabla</summary><div class="scroll"><table id="t-interf"></table></div></details>
+  <details><summary>Ver tabla</summary><!--__FINDING_INTERF__--><div class="scroll"><table id="t-interf"></table></div></details>
   <!--__GLOSARIO__-->
 </section>
+</details>
 
-<div class="contexto" id="contexto">
-  <h2>Contexto de la cuenca</h2>
-  <p class="sub">Producción por operador, curvas tipo y diseño de terminación.</p>
-</div>
+<details class="cuenca-cifras bloque" name="tablero" id="contexto">
+  <summary>La cuenca en cifras</summary>
+  <p class="sub">Producción por operador, curvas tipo y diseño de terminación. Es contexto: no responde a ninguna de las seis preguntas.</p>
 
 <!--__TITULARES__-->
 
@@ -498,39 +576,45 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
   <details><summary>Ver tabla</summary><div class="scroll"><table id="t-diseno"></table></div></details>
 </section>
 
-<section id="calidad">
-  <h2>Calidad de datos</h2>
-  <p class="sub">Los controles <em>bloqueantes</em> protegen el modelo (grano, nulos, valores imposibles): si uno falla, no se publica. Los <em>avisos</em> miden anomalías del dato público; se cuentan y se publican.</p>
-  <div class="scroll"><table id="t-dq"></table></div>
-</section>
+</details>
 
+<details class="bloque" name="tablero" id="calidad">
+<summary>Calidad de datos</summary>
+  <p class="sub">Antes de publicar, el pipeline revisa el dato público (duplicados, vacíos, valores imposibles). Si falla una revisión grave, no se publica nada. Las anomalías que no frenan la publicación se cuentan y se publican.</p>
+  <details><summary>Ver los controles</summary><div class="scroll"><table id="t-dq"></table></div></details>
+</details>
+
+<details class="como-se-hizo bloque" name="tablero" id="como-se-hizo">
+  <summary>Cómo lo medimos y cómo repetirlo</summary>
+  <p class="sub">Todo se reconstruye desde el dato público y cada paso se puede repetir. La ingeniería y la matemática, de punta a punta: <a href="../README.md#ingeniería-y-matemática">Ingeniería y matemática</a> en el README.</p>
 <section id="reproducir">
-  <h2>Cómo reproducir</h2>
+  <h3>Cómo reproducir</h3>
   <p class="sub">Con <a href="https://docs.astral.sh/uv/">uv</a> instalado, desde la raíz del repositorio. Cada paso es idempotente: una corrida sin cambios en el origen no modifica nada.</p>
 <pre class="cmd"><span class="c"># dependencias</span>
 uv sync
-<span class="c"># toda la cadena con tiempos: build, costo, robustez, wiki, este tablero, repetición y verificación de cifras</span>
+<span class="c"># toda la cadena, con tiempos</span>
 uv run python -m pipeline.run_all
 <span class="c"># agrega la descarga desde la Secretaría (hace falta salida a su servidor)</span>
 uv run python -m pipeline.run_all --with-ingest
 <span class="c"># tests, incluida la reproducibilidad de este archivo</span>
 uv run pytest -q</pre>
-  <p class="sub">Para recorrer los resultados sin correr nada: <a href="mundo.html">Vaca Muerta en 3D</a> (la cuenca mes a mes, el estudio de eventos armado desde el mapa y un pozo hijo para plantar), <a href="replay.html">repetición temporal</a> (mapa de pozos mes a mes) y <a href="../wiki/index.md">wiki de hallazgos</a> (<code>wiki/index.md</code>, con el libro de hallazgos y la interferencia).</p>
+  <p class="sub">Para recorrer los resultados sin correr nada: <a href="mundo.html">Vaca Muerta en 3D</a> (la cuenca mes a mes, el estudio de eventos armado desde el mapa y un pozo hijo para plantar), <a href="replay.html">La cuenca mes a mes</a> (mapa de pozos mes a mes) y <a href="../wiki/index.md">wiki de hallazgos</a> (<code>wiki/index.md</code>, con el libro de hallazgos y la interferencia).</p>
 </section>
 
-<section id="como-se-hizo">
-  <h2>Cómo se hizo</h2>
+<section>
+  <h3>Cómo se hizo</h3>
   <p class="sub">Pipeline reproducible sobre los datos abiertos de la Secretaría de Energía: producción mensual por pozo y datos de fractura (Adjunto IV), ingesta con hash, modelo en DuckDB y controles de calidad que se publican junto a los resultados.</p>
   <ol class="flow">
     <li><strong>Ingesta</strong> (<code>pipeline/ingest.py</code>): GET condicional (ETag / Last-Modified), hash SHA-256 y capa raw inmutable con un archivo por versión. Una corrida sin cambios no escribe nada.</li>
     <li><strong>Modelo</strong> (<code>pipeline/sql/</code>, DuckDB): staging tipado, normalización de razones sociales (<code>seeds/operadores.csv</code>), hechos con grano (pozo, mes), dimensiones de pozo y fractura, marts para el reporte. Todo se reconstruye desde raw: idempotente.</li>
     <li><strong>Calidad</strong> (<code>pipeline/checks.py</code>): controles bloqueantes y avisos con conteo y muestra; el reporte JSON queda versionado.</li>
-    <li><strong>Interferencia</strong> (<code>pipeline/sql/04_interferencia.sql</code>): pads por coordenadas de superficie, pares padre/hijo a menos de 5 km, estudio de eventos con control de igual edad.</li>
+    <li><strong>Interferencia</strong> (<code>pipeline/sql/04_interferencia.sql</code>): pads por coordenadas de superficie, pares padre/hijo a menos de 5 km, estudio de eventos con pozos de control a 2 a 5 km de un pozo hijo.</li>
     <li><strong>Preguntas en lenguaje natural</strong> (<code>agente/</code>): un modelo de lenguaje (local por defecto) elige una de 16 operaciones tipadas y completa sus argumentos; nunca escribe SQL ni números. Las mismas operaciones se exponen como servidor MCP de solo lectura. <span id="eval-txt"></span></li>
-    <li><strong>Publicación</strong>: <code>./refresh.sh</code> (semanal, desde una máquina en Argentina) corre tests, ingesta, build y este sitio. GitHub Actions corre los tests en cada push.</li>
+    <li><strong>Publicación</strong>: GitHub Actions corre los tests en cada push.</li>
   </ol>
   <div class="scroll"><table id="t-fuentes"></table></div>
 </section>
+</details>
 
 <footer>
   <nav class="pie-sitio" aria-label="Más páginas del sitio">
@@ -538,7 +622,7 @@ uv run pytest -q</pre>
     <a href="#como-se-hizo">Cómo se hizo</a>
     <a href="mundo.html">Vaca Muerta en 3D</a>
     <a href="globo.html">El globo</a>
-    <a href="replay.html">Repetición temporal</a>
+    <a href="replay.html">La cuenca mes a mes</a>
     <a href="../docs/caso-interferencia.md">Caso de estudio</a>
   </nav>
   <p>Proyecto personal de Gabriel Ruiz Varela con datos públicos (<a href="http://datos.energia.gob.ar/">datos.energia.gob.ar</a>). No está afiliado ni avalado por ninguna empresa. Conversiones: 1 m³ = 6,2898 bbl; caudales por día calendario.</p>
@@ -840,6 +924,13 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
     if (e.target.closest("a, button, summary, details, input, label") || String(getSelection()).length) return;
     if (e.clientY > innerHeight * 2 / 3 && i < laminas.length - 1) ir(i + 1);
   }));
+
+  // sin WebGL2 el botón del 3D no lleva a ningún lado: se cambia por el texto de reserva
+  try {
+    const c = document.createElement("canvas"), gl = c.getContext("webgl2");
+    if (gl) { const x = gl.getExtension("WEBGL_lose_context"); if (x) x.loseContext(); }
+    else document.querySelectorAll(".evento-3d").forEach((f) => { f.querySelectorAll(".poster, .boton, .nota").forEach((e) => { e.hidden = true; }); f.querySelector(".sin-3d").hidden = false; });
+  } catch (e) { /* sin detección: queda el botón */ }
 
   // la tapa: al bajar, la foto baja con la página hasta que su borde inferior es el horizonte de la primera pregunta
   const foto = document.querySelector(".tapa-foto img");

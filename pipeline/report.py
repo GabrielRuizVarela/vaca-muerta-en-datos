@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -218,50 +219,21 @@ def pts(indice, signo: int = 1) -> str:
 
 
 def kpis_interferencia(data: dict) -> str:
-    """KPI de la sección de interferencia, en HTML estático. El diferido por operador va por evento, no como parte del
-    total: YPF tiene la mayoría de los eventos, así que su parte del total no dice qué operador pierde más."""
+    """KPI de la sección de interferencia, en HTML estático. El diferido, con sus tres bases, se explica aparte
+    (`diferido_cuenta`)."""
     r = data["interferencia"]["resumen"]
     bruta, neta = r["brecha_mes_1"], r["brecha_mes_1_neta"]
     rango = f"{pts(neta)} a {pts(bruta)}" if neta is not None else pts(bruta)
     detalle = ("padre cercano contra control; el primero descuenta la brecha previa a la fractura, el segundo es la brecha bruta"
                if neta is not None else "padre cercano contra control")
-    total, e_ypf = r["diferido_bbl"] or 0, r["eventos_ypf"] or 0
-    e_otros = r["eventos"] - e_ypf
-    por_ypf = (r["diferido_ypf_bbl"] or 0) / e_ypf if e_ypf else 0
-    por_otros = (total - (r["diferido_ypf_bbl"] or 0)) / e_otros if e_otros else 0
     celdas = [
         (rango, "puntos al mes 1", detalle),
         (pts(r["brecha_mes_6"]), "puntos al mes 6", "la brecha casi se cierra"),
-        (fmt(por_ypf), "bbl diferidos por evento en YPF",
-         f"{fmt(e_ypf)} eventos; en los demás operadores {fmt(por_otros)} por evento ({fmt(e_otros)} eventos)"),
     ]
     items = "".join(f'<div class="kpi"><div class="v">{v}</div><div class="l">{l}</div><div class="d">{d}</div></div>'
                     for v, l, d in celdas)
     return f'<div class="kpis" id="kpis-interf">{items}</div>'
 
-
-def hallazgo(data: dict) -> str:
-    """El resultado de la página, en HTML estático: la frase del README (Resultado) con las cifras del warehouse."""
-    r = data["interferencia"]["resumen"]
-    bruta, neta = r["brecha_mes_1"], r["brecha_mes_1_neta"]
-    brecha = f"{pts(bruta, -1)} puntos menos" if neta is None else f"entre {pts(neta, -1)} y {pts(bruta, -1)} puntos menos"
-    return ('<div class="hallazgo" id="hallazgo">'
-            '<p class="frase">Un mes después de fracturar un pozo nuevo, los pozos vecinos a menos de 1 km rinden '
-            f'{brecha} que pozos de control a 2 a 5 km de un pozo hijo ({fmt(r["eventos"])} eventos).</p>'
-            '<p class="apoyo">A los 6 meses la brecha casi se cierra: es producción diferida, no perdida.</p></div>')
-
-
-NO_SE_MIDE = (
-    '<aside class="limites" id="no-se-mide" aria-label="Qué no se mide">'
-    '<h3>Qué no se mide</h3>'
-    '<p class="nota-datos">Las posiciones son coordenadas de superficie y la producción es mensual.</p>'
-    '<ul>'
-    '<li><strong>Trayectorias de la rama y espaciamiento real:</strong> solo hay cabezas de pozo.</li>'
-    '<li><strong>Zona de aterrizaje:</strong> no se sabe el nivel de cada pozo.</li>'
-    '<li><strong>Presiones:</strong> no hay presión de fondo ni de reservorio.</li>'
-    '<li><strong>Datos diarios:</strong> el golpe dura días y se ve promediado en el mes.</li>'
-    '<li><strong>Cierres no declarados:</strong> un cierre preventivo se ve como un daño.</li>'
-    '</ul></aside>')
 
 GLOSARIO = (
     '<details class="glosario" id="glosario"><summary>Glosario</summary><dl>'
@@ -271,6 +243,12 @@ GLOSARIO = (
     '<dt>Puntos</dt><dd>Puntos porcentuales del caudal previo del padre: pasar de 100 a 80 es una caída de 20 puntos.</dd>'
     '<dt>Diferido</dt><dd>Producción que se atrasa y no se pierde: el pozo la entrega más tarde.</dd>'
     '<dt>Pad</dt><dd>Plataforma de superficie desde la que se perforan varios pozos.</dd>'
+    '<dt>Pozo de control</dt><dd>Pozo que produce a 2 a 5 km de un pozo hijo; sirve de comparación.</dd>'
+    '<dt>Brecha</dt><dd>El caudal de los padres menos el de los pozos de control, en puntos.</dd>'
+    '<dt>Huella medida</dt><dd>Una diferencia medida contra un control; no prueba una causa.</dd>'
+    '<dt>Cierre preventivo</dt><dd>El operador frena el pozo padre antes de la fractura para protegerlo; en el dato mensual se ve igual que un daño por interferencia.</dd>'
+    '<dt>Intervalo de 95%</dt><dd>El rango en el que cae la cifra con 95% de confianza. Si incluye el cero, el dato no la distingue de cero.</dd>'
+    '<dt>Cota superior</dt><dd>El valor más alto que permite el dato; el efecto real puede ser menor.</dd>'
     '</dl></details>')
 
 
@@ -281,6 +259,24 @@ def leyenda_anual(data: dict) -> str:
     marca = (f'<span class="rayado">{anual[-1]["anio"]}: año en curso, con datos hasta {data["ultimo_mes"]}</span>'
              if en_curso else "")
     return f'<p class="leyenda-anual">Bajo cada año, n = eventos con padre a menos de 1 km. {marca}</p>'
+
+
+def diferido_cuenta(data: dict) -> str:
+    """Cómo se cuenta el diferido: por evento, por padre y en total de la cuenca. Son tres bases distintas; sin esta frase
+    tres cifras parecen contradecirse. El diferido por operador va por evento, no como parte del total: YPF tiene la mayoría
+    de los eventos, así que su parte del total no dice qué operador pierde más."""
+    r = data["interferencia"]["resumen"]
+    total, e_ypf = r["diferido_bbl"] or 0, r["eventos_ypf"] or 0
+    e_otros = r["eventos"] - e_ypf
+    por_ypf = (r["diferido_ypf_bbl"] or 0) / e_ypf if e_ypf else 0
+    por_otros = (total - (r["diferido_ypf_bbl"] or 0)) / e_otros if e_otros else 0
+    return ('<div class="diferido-cuenta" id="diferido-cuenta"><h3>Cómo se cuenta el diferido</h3><ul>'
+            f'<li><strong>Por evento:</strong> en YPF, {fmt(por_ypf)} barriles por fractura ({fmt(e_ypf)} eventos); en los demás operadores, '
+            f'{fmt(por_otros)} por fractura ({fmt(e_otros)} eventos). Es un promedio por fractura, no la parte de cada operador '
+            'en el total: YPF tiene la mayoría de los eventos, y esa parte no dice qué operador pierde más.</li>'
+            '<li><strong>Por padre:</strong> cada padre se cuenta una sola vez, aunque tenga varios eventos; la cifra de un padre típico '
+            'está en <a href="informe.html">el informe</a>.</li>'
+            '<li><strong>Total de la cuenca:</strong> el rango de arriba, de los meses 0 a 6.</li></ul></div>')
 
 
 def lectura_anual(data: dict) -> str:
@@ -300,14 +296,8 @@ def lectura_anual(data: dict) -> str:
 
 
 def lectura_interferencia(data: dict) -> str:
-    i = data["interferencia"]
-    r = i["resumen"]
-    return ('<p class="finding" id="finding-interf"><strong>Lectura:</strong> un mes después de fracturar un pozo nuevo, '
-            f'los padres a menos de 1 km rinden {pts(r["brecha_mes_1"], -1)} puntos menos que los padres de control a 2-5 km; '
-            f'a los 6 meses la brecha casi se cierra ({pts(r["brecha_mes_6"], -1)} puntos). '
-            f'{lectura_anual(data)} '
-            f'Contra un control de la misma edad, suma {diferido_texto(r, "entre")} millones de barriles diferidos '
-            f'en los meses 0 a 6 ({"sin duplicar y descontando la brecha previa hasta el total original" if r.get("diferido_rango") else "cota superior"}).</p>')
+    """Lo que la tabla del caso no dice sola: el perfil por año. El resultado del mes 1 y el diferido ya los cuenta la historia."""
+    return f'<p class="finding" id="finding-interf">{lectura_anual(data)}</p>'
 
 
 def lectura_diseno(data: dict) -> str:
@@ -326,61 +316,43 @@ def lectura_diseno(data: dict) -> str:
             'hipótesis a validar con datos internos.</p>')
 
 
-def barra_eje(eje: dict) -> str:
-    """Intervalo de confianza del eje sobre una escala de 0 a 180 grados (el eje es módulo 180), con el SHmax publicado."""
-    def x(g):
-        return 12 + g / 180 * 336
-    lo, hi, pt = eje["ic_bajo"] % 180, eje["ic_alto"] % 180, eje["eje_grados"] % 180
-    sh = eje.get("shmax")
-    tramos = [(lo, hi)] if lo <= hi else [(lo, 180), (0, hi)]
-    bandas = "".join(f'<rect class="ic" x="{x(a):.1f}" y="22" width="{x(b) - x(a):.1f}" height="10" rx="2"/>' for a, b in tramos)
-    marcas = "".join(f'<line class="tick" x1="{x(g):.1f}" x2="{x(g):.1f}" y1="38" y2="43"/>'
-                     f'<text x="{x(g):.1f}" y="56" text-anchor="middle">{g}</text>' for g in (0, 45, 90, 135, 180))
-    desc = (f'Eje {fmt(eje["eje_grados"])} grados, intervalo de confianza de {fmt(eje["ic_bajo"])} '
-            f'a {fmt(eje["ic_alto"])} grados sobre una escala de 0 a 180')
-    marca_sh = ""
-    if sh is not None:
-        desc += f'; SHmax publicado en {fmt(sh, 1)} grados'
-        marca_sh = (f'<line class="shmax" x1="{x(sh):.1f}" x2="{x(sh):.1f}" y1="14" y2="36"/>'
-                    f'<text class="shmax-t" x="{x(sh):.1f}" y="10" text-anchor="middle">SHmax {fmt(sh, 1)}</text>')
-    return (f'<svg class="eje-barra" viewBox="0 0 360 62" role="img" aria-label="{desc}"><title>{desc}</title>'
-            f'<line class="base" x1="12" x2="348" y1="27" y2="27"/>{bandas}{marca_sh}'
-            f'<circle class="pt" cx="{x(pt):.1f}" cy="27" r="5"/>{marcas}</svg>')
+PAGINA_PROSPECTIVA = ROOT / "wiki" / "hallazgos" / "prospectiva.md"
 
 
-def bloque_eje(data: dict) -> str:
-    """Resultado del eje de mayor merma y del modelo de costo, con su incertidumbre. Vacío si faltan los marts."""
-    eje = data.get("eje")
-    if not eje:
-        return ""
-    sentido = "consistente con E-O" if abs(eje["eje_grados"] % 180 - 90) <= 30 else "fuera de la dirección E-O"
-    c = eje.get("cortes")
-    if c and c["sin_evidencia"] == 0:
-        firmeza = "firme en los cortes de robustez"
-    elif c:
-        firmeza = (f"no firme: en {c['sin_evidencia']} de {c['total']} cortes de robustez "
-                   "el eje no está definido o no hay evidencia")
+def estado_prospectiva(pagina: Path = PAGINA_PROSPECTIVA) -> dict | None:
+    """Estado de la prueba prospectiva según su página (la escribe `pipeline.prospectiva`): {"estado": "pendiente"} o
+    {"estado": "puntuado", "mes", "p1", "p2"} con los veredictos. None si la página no está o no se entiende."""
+    if not pagina.exists():
+        return None
+    txt = pagina.read_text(encoding="utf-8")
+    if "- **Pendiente.**" in txt:
+        return {"estado": "pendiente"}
+    mes = re.search(r"Puntuado con los datos hasta (\d{4}-\d{2})", txt)
+    v1 = re.search(r"- \*\*P1, brecha del mes 1: ([^.*]+)\.\*\*", txt)
+    v2 = re.search(r"- \*\*P2, cierre al mes 6: ([^.*]+)\.\*\*", txt)
+    if not (mes and v1 and v2):
+        return None
+    return {"estado": "puntuado", "mes": mes.group(1), "p1": v1.group(1), "p2": v2.group(1)}
+
+
+def prueba_abierta(est: dict | None) -> str:
+    """El párrafo de la prueba prospectiva en 'Qué lo cambiaría'. El estado sale de la página de la prueba, no de un texto fijo:
+    cuando se puntúe con muestra suficiente, la frase de 'hoy falta' cambia sola en vez de quedar equivocada."""
+    base = ("Una prueba sigue abierta. El 2026-11-18, con datos hasta 2026-09, escribimos una predicción: una brecha de -22,9 "
+            "puntos al mes 1 (rango -28,7 a -16,8) y el cierre al mes 6, en eventos cuyos meses siguientes todavía no estaban "
+            "publicados. Cada publicación nueva la puntúa de nuevo. Para decidir hacen falta 100 eventos cercanos y 100 controles "
+            "con el mes medido.")
+    if est is None:
+        return f"<p>{base}</p>"
+    if est["estado"] == "pendiente":
+        return f"<p>{base} Hoy falta.</p>"
+    if est["p1"] == est["p2"] == "sin muestra":
+        cierre = (f"Con los datos hasta {est['mes']} se puntuó y quedó sin muestra: los casos con el mes medido todavía "
+                  "no llegan a los mínimos.")
     else:
-        firmeza = "sin cortes de robustez para juzgar su firmeza"
-    if data.get("eje_parada"):
-        linea = (f"Eje de mayor merma: retirado (regla de parada). En la muestra da <strong>{fmt(eje['eje_grados'])} grados</strong> "
-                 f"(IC 95% de {fmt(eje['ic_bajo'])} a {fmt(eje['ic_alto'])}), {firmeza}.")
-    else:
-        linea = (f"Eje de mayor merma en la cuenca: <strong>{fmt(eje['eje_grados'])} grados</strong> "
-                 f"(IC 95% de {fmt(eje['ic_bajo'])} a {fmt(eje['ic_alto'])}, p de permutación {fmt(eje['p_perm'], 3)}); "
-                 f"{sentido}, {firmeza}.")
-    if data.get("eje_parada"):
-        linea += (" La regla de parada fijada antes de correr se cumplió: la dirección no se separa del SHmax publicado ni de la "
-                  "forma en que se disponen los pads (la geometría de las ramas se probó con otra prueba, costado contra punta, en mecanismo.md), y no se presenta como hallazgo sobre esfuerzos ni sobre la fractura.")
-    cv = data.get("costo_cv")
-    costo = ""
-    if cv:
-        verbo = "no supera" if cv["completo"] <= cv["media"] else "supera"
-        costo = (f"<p>El modelo de costo {verbo} a la media del área fuera de muestra "
-                 f"(R² {fmt(round(float(cv['completo']), 2) + 0.0, 2)} contra {fmt(round(float(cv['media']), 2) + 0.0, 2)}).</p>")
-    return (f'<div class="resultado" id="eje"><p>{linea}</p>{barra_eje(eje)}'
-            f'<p class="nota">Escala en grados desde el norte (0 a 180: un eje no tiene sentido). Barra: IC 95% por bootstrap; '
-            f'punto: estimación; línea punteada: SHmax publicado ({fmt(eje["shmax"], 1) if eje.get("shmax") is not None else "s/d"} grados). n = {fmt(eje["n"])} eventos.</p>{costo}</div>')
+        cierre = (f"Con los datos hasta {est['mes']} se puntuó: la brecha del mes 1 dio «{est['p1']}» y el cierre al mes 6, "
+                  f"«{est['p2']}».")
+    return f"<p>{base} {cierre}</p>"
 
 
 PERFIL_ALTO = 24  # alto del escenario de las láminas con eje de tiempo, en puntos de brecha
@@ -431,13 +403,12 @@ def render(data: dict, out: Path, banner: bool = False) -> None:
             .replace("__PERFIL_AREA__", area)
             .replace("__PERFIL_LINEA__", linea)
             .replace("<!--__TITULARES__-->", titulares(data))
-            .replace("<!--__HALLAZGO__-->", hallazgo(data))
-            .replace("<!--__NO_SE_MIDE__-->", NO_SE_MIDE)
             .replace("<!--__GLOSARIO__-->", GLOSARIO)
             .replace("<!--__LEYENDA_ANUAL__-->", leyenda_anual(data))
-            .replace("<!--__EJE__-->", bloque_eje(data))
             .replace("<!--__KPIS_INTERF__-->", kpis_interferencia(data))
             .replace("<!--__FINDING_INTERF__-->", lectura_interferencia(data))
+            .replace("<!--__DIFERIDO_CUENTA__-->", diferido_cuenta(data))
+            .replace("<!--__PRUEBA_ABIERTA__-->", prueba_abierta(estado_prospectiva()))
             .replace("<!--__FINDING_DISENO__-->", lectura_diseno(data))
             .replace("/*__SISTEMA__*/", sistema_css())
             .replace("/*__CHARTJS__*/", CHARTJS.read_text())

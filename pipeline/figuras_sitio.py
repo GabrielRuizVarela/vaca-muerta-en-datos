@@ -30,7 +30,8 @@ def _lienzo(plt, modo: str, ks: list[int]):
     fig = plt.figure(figsize=(ANCHO_CSS / 96, ALTO_CSS / 96))
     ax = fig.add_axes([0.12, 0.13, 0.62, 0.74])
     ax.set_xlim(min(ks) - 0.5, max(ks) + 0.5)
-    ax.spines["bottom"].set_color(c["linea"])
+    ax.spines["bottom"].set_color(c["tinta"])
+    ax.spines["bottom"].set_alpha(0.35)
     ax.set_xticks([k for k in ks if k % 3 == 0])
     return fig, ax, c
 
@@ -43,10 +44,10 @@ def _fin(ax, serie, color, texto, dy=0.0, negrita=False, tamano=None):
 
 
 def _marcas_evento(ax, c, ymin, ymax, banda=True):
-    ax.axvline(0, color=c["linea"], lw=1.0, zorder=1)
+    ax.axvline(0, color=c["tinta"], alpha=0.35, lw=1.0, zorder=1)
     ax.text(0.35, ymax, "fractura", color=c["jarilla"], ha="left", va="top")
     if banda:
-        ax.axvspan(-3.5, -0.5, color=c["linea"], alpha=0.55, lw=0, zorder=0)
+        ax.axvspan(-3.5, -0.5, color=c["s4"], alpha=0.25, lw=0, zorder=0)
         ax.text(-2, ymin, "pretendencia", color=c["jarilla"], ha="center", va="bottom")
 
 
@@ -58,16 +59,16 @@ def figura_brecha(plt, d: dict, modo: str):
     ymin, ymax = min(vals) - 7, 6
     ax.set_ylim(ymin, ymax)
     _marcas_evento(ax, c, ymin, ymax)
-    ax.axhline(0, color=c["linea"], lw=1.0, zorder=1)
+    ax.axhline(0, color=c["tinta"], alpha=0.35, lw=1.0, zorder=1)
     lim = sorted(d["limpia"])
     ori = sorted(d["original"])
     ax.plot(*zip(*lim), color=c["jarilla"], lw=1.5, ls=(0, (5, 3)), zorder=2)
-    ax.plot(*zip(*ori), color=c["medido"], lw=2.0, zorder=3)
+    ax.plot(*zip(*ori), color=c["s1"], lw=2.0, zorder=3)
     k1 = dict(ori).get(1)
     if k1 is not None:
-        ax.plot([1], [k1], "o", ms=6, mfc="none", mec=c["medido"], mew=1.5, zorder=4)
-        ax.annotate(_coma(k1), (1, k1), xytext=(9, -7), textcoords="offset points", ha="left", va="center", color=c["medido"], fontweight="bold")
-    _fin(ax, ori, c["medido"], "base -3 a -1", dy=4)
+        ax.plot([1], [k1], "o", ms=6, mfc="none", mec=c["s1"], mew=1.5, zorder=4)
+        ax.annotate(_coma(k1), (1, k1), xytext=(9, -7), textcoords="offset points", ha="left", va="center", color=c["tinta"], fontweight="bold")
+    _fin(ax, ori, c["tinta"], "base -3 a -1", dy=4)
     _fin(ax, lim, c["jarilla"], "base -6 a -4", dy=-8)
     ax.set_yticks([t for t in (0, -10, -20, -30) if ymin <= t <= ymax])
     ax.set_title("puntos", loc="left", fontsize=10.5, color=c["jarilla"], pad=6, x=-0.14)
@@ -83,11 +84,11 @@ def figura_reparto(plt, d: dict, modo: str):
     ymin, ymax = min(vals) - 6, 16
     ax.set_ylim(ymin, ymax)
     _marcas_evento(ax, c, ymin, ymax, banda=False)
-    ax.axhline(0, color=c["linea"], lw=1.0, zorder=1)
+    ax.axhline(0, color=c["tinta"], alpha=0.35, lw=1.0, zorder=1)
     ax.plot(*zip(*sorted(s["dias"])), color=c["jarilla"], lw=1.5, ls=(0, (5, 3)), zorder=2)
-    ax.plot(*zip(*sorted(s["tasa"])), color=c["medido"], lw=2.0, ls=(0, (1, 2.5)), zorder=3)
+    ax.plot(*zip(*sorted(s["tasa"])), color=c["s1"], lw=2.0, ls=(0, (1, 2.5)), zorder=3)
     ax.plot(*zip(*sorted(s["total"])), color=c["tinta"], lw=2.0, zorder=4)
-    etiqueta = {"total": ("volumen", c["tinta"], 0), "dias": ("días", c["jarilla"], 15), "tasa": ("caudal\npor día", c["medido"], -26)}
+    etiqueta = {"total": ("volumen", c["tinta"], 0), "dias": ("días", c["jarilla"], 15), "tasa": ("caudal\npor día", c["tinta"], -26)}
     for n, (texto, color, dy) in etiqueta.items():
         _fin(ax, s[n], color, texto, dy=dy)
     ax.set_yticks([t for t in (0, -20, -40, -60) if ymin <= t <= ymax])

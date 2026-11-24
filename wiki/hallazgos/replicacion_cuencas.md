@@ -12,7 +12,7 @@ k cuenta las cuencas que se replican y n todas las de la familia, las que no se 
 
 | Cuenca | Hijos | Eventos cercanos | Controles | Brecha del mes 1 (puntos) | IC 95% por bloques de 5 km | Brecha previa, mes -1 (puntos) | Valor de la hipótesis | Lectura |
 | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |
-| Colorado | 4.788 | 3.691 | 53.326 | -19,9 | -27,5 a -14,8 | -6,9 | -0,130 | se replica |
+| Colorado | 4.789 | 3.691 | 53.326 | -19,9 | -27,5 a -14,8 | -6,9 | -0,130 | se replica |
 | Wyoming | 1.163 | 353 | 2.286 | -2,5 | -5,5 a 2,2 | -11,9 | 0,095 | no se replica |
 
 Cada fila es la de la página de la cuenca: [Colorado](replicacion.md), [Wyoming](replicacion_wyoming.md). El valor es el mayor entre el límite superior del IC y la diferencia de valores absolutos (previa menos mes 1); la cuenca se replica si es menor que cero.

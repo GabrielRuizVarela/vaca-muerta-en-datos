@@ -17,6 +17,7 @@ Salidas dentro de ``out_dir``:
     hallazgos/descomposicion.md  dias producidos contra caudal por dia y gradiente por distancia (si corrio pipeline.descomposicion)
     hallazgos/diferido.md      rango de barriles diferidos y cifra por evento (si corrio pipeline.diferido)
     hallazgos/sincronia.md     la brecha del mes 0 segun la fraccion del mes posterior al inicio de la fractura (si corrio pipeline.sincronia)
+    hallazgos/dia_inicio.md    el dia del mes en que empieza la fractura como dosis, solo entre padres cercanos, con su veredicto (si corrio pipeline.dia_inicio)
     hallazgos/eje_parada.md    regla de parada del eje de merma; potencia.md, eje_controles.md y eje_exposicion.md son sus tres pruebas
     hallazgos/bloques.md       los intervalos principales con bootstrap por bloques espaciales de 2 y 5 km (si corrio pipeline.bloques)
     hallazgos/hijo.md          el rendimiento de 12 meses del hijo segun el petroleo ya producido a menos de 1 km (si corrio pipeline.hijo)
@@ -62,7 +63,7 @@ from pathlib import Path
 
 import duckdb
 
-from pipeline import alcance_rama, anillo, bloques, calendario_golpes, causal, causal_profundo, costo, decision, descomposicion, dias_perdidos, diferido, dosis, dosis_geometria, golpes_mismo_mes, golpes_mismo_padre, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, gas, hijo_pad, potencia, potencia_dosis, hijo, hijo_celdas, inyeccion, linaje, mapa, mecanismo, placebo, riesgo, robustez, robustez_operador, sincronia, trayectorias, validacion
+from pipeline import alcance_rama, anillo, bloques, calendario_golpes, causal, causal_profundo, costo, decision, descomposicion, dias_perdidos, dia_inicio, diferido, dosis, dosis_geometria, golpes_mismo_mes, golpes_mismo_padre, dosis_meses, dosis_pad, eje_controles, eje_exposicion, eje_parada, gas, hijo_pad, potencia, potencia_dosis, hijo, hijo_celdas, inyeccion, linaje, mapa, mecanismo, placebo, riesgo, robustez, robustez_operador, sincronia, trayectorias, validacion
 from pipeline import hallazgos as hz
 from pipeline.ingest import DATA, ROOT, load_manifest
 
@@ -593,6 +594,8 @@ def build_wiki(con, manifest, out_dir) -> dict:
         ("dif", "mart_diferido_rango", "diferido.md", diferido.pagina_diferido),
         # sincronia dentro del mes (necesita pipeline.sincronia corrido despues de pipeline.diferido)
         ("sinc", "mart_sincronia_pendiente", "sincronia.md", sincronia.pagina_sincronia),
+        # el dia de inicio como dosis, solo entre padres cercanos (necesita pipeline.dia_inicio; no depende de los marts de sincronia)
+        ("dia_inicio", "mart_dia_inicio_veredicto", "dia_inicio.md", dia_inicio.pagina_dia_inicio),
         # bloques espaciales (necesita pipeline.bloques corrido despues de pipeline.sincronia)
         ("bloq", "mart_bloques", "bloques.md", bloques.pagina_bloques),
         # lado del hijo (necesita pipeline.hijo corrido despues de pipeline.sincronia)
@@ -657,6 +660,7 @@ def build_wiki(con, manifest, out_dir) -> dict:
     hay_desc = hay["desc"]
     hay_dif = hay["dif"]
     hay_sinc = hay["sinc"]
+    hay_dia_inicio = hay["dia_inicio"]
     hay_bloq = hay["bloq"]
     hay_hijo = hay["hijo"]
     hay_iny = hay["iny"]
@@ -733,6 +737,8 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Barriles diferidos como rango (sin duplicar y descontando la brecha previa) y cifra por evento: [diferido.md](hallazgos/diferido.md).")
     if hay_sinc:
         L.append("- Sincronía dentro del mes (la brecha del mes 0 según la fracción posterior al inicio de la fractura): [sincronia.md](hallazgos/sincronia.md).")
+    if hay_dia_inicio:
+        L.append("- El día de inicio como dosis (la caída de los padres cercanos según la parte del mes que expone la fractura, sin pozos lejanos en la pendiente): [dia_inicio.md](hallazgos/dia_inicio.md).")
     if hay_bloq:
         L.append("- Bloques espaciales (los intervalos principales remuestreando bloques de 2 y 5 km en vez de pads): [bloques.md](hallazgos/bloques.md).")
     if hay_hijo:

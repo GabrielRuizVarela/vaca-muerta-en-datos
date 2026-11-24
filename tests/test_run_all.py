@@ -77,7 +77,8 @@ def test_registro_real_tiene_el_orden_documentado():
     nombres = [p.nombre for p in run_all.PASOS]
     assert nombres[:5] == ["ingest", "build", "carga", "costo", "robustez"]
     assert nombres[-5:] == ["report", "replay", "mundo", "globo", "claims"]
-    assert nombres[nombres.index("bloques") + 1] == "carga_anual"
+    assert nombres[nombres.index("bloques") + 1] == "dia_inicio"
+    assert nombres[nombres.index("dia_inicio") + 1] == "carga_anual"
     assert next(p for p in run_all.PASOS if p.nombre == "ingest").solo_con_flag
     assert nombres.index("trayectorias") < nombres.index("hijo_pad") < nombres.index("wiki")
     assert nombres.index("golpes_mismo_padre") < nombres.index("calendario_golpes") < nombres.index("wiki")
@@ -85,12 +86,13 @@ def test_registro_real_tiene_el_orden_documentado():
 
 def test_pasos_de_colorado_son_opcionales_y_estan_en_la_lista(capsys):
     co = [p for p in run_all.PASOS if p.solo_con_colorado]
-    assert [p.nombre for p in co] == ["colorado_ingest", "colorado_build", "replicacion", "dias_perdidos_colorado", "golpes_mismo_mes_colorado",
+    assert [p.nombre for p in co] == ["colorado_ingest", "colorado_build", "replicacion", "dia_inicio_colorado", "dias_perdidos_colorado", "golpes_mismo_mes_colorado",
                                      "golpes_mismo_padre_colorado", "globo"]
     por_defecto = [p.nombre for p in run_all.seleccionar(run_all.PASOS)]
     assert not {p.nombre for p in co} & set(por_defecto)
     con_flag = [p.nombre for p in run_all.seleccionar(run_all.PASOS, con_colorado=True)]
     assert con_flag.index("colorado_ingest") < con_flag.index("colorado_build") < con_flag.index("replicacion") < con_flag.index("wiki")
+    assert con_flag.index("dia_inicio") < con_flag.index("dia_inicio_colorado") < con_flag.index("wiki")
     assert con_flag.index("dias_perdidos") < con_flag.index("dias_perdidos_colorado") < con_flag.index("wiki")
     assert con_flag.index("golpes_mismo_mes") < con_flag.index("golpes_mismo_mes_colorado") < con_flag.index("wiki")
     assert con_flag.index("golpes_mismo_mes") < con_flag.index("golpes_mismo_padre") < con_flag.index("wiki")
@@ -102,5 +104,5 @@ def test_pasos_de_colorado_son_opcionales_y_estan_en_la_lista(capsys):
     assert run_all.main(["--list"]) == 0
     assert "con --with-colorado" in capsys.readouterr().out
     corren, omitidos = run_all.pasos_muestra()
-    assert not {"colorado_ingest", "colorado_build", "replicacion", "dias_perdidos_colorado", "golpes_mismo_mes_colorado",
+    assert not {"colorado_ingest", "colorado_build", "replicacion", "dia_inicio_colorado", "dias_perdidos_colorado", "golpes_mismo_mes_colorado",
                  "golpes_mismo_padre_colorado", "globo"} & (set(omitidos) | {p.nombre for p in corren})

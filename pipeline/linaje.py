@@ -273,7 +273,7 @@ def pagina_linaje(sql_dir: Path = SQL_DIR, pipeline_dir: Path = PIPELINE_DIR) ->
          "cuál de ellos usa cada mart. Un origen `manifiesto:` es un valor que `pipeline.build` "
          "lee de `data/manifest.json` y le pasa al SQL (la fecha de extracción del archivo de fracturas).", "",
          "Queda fuera la réplica en el warehouse de Colorado (`pipeline.replicacion`), que escribe con nombres "
-         "tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*`, `mart_golpes_mismo_padre_colorado*` y `mart_causal_profundo_d7` sí están: "
+         "tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*`, `mart_golpes_mismo_padre_colorado*`, `mart_dia_inicio_colorado*` y `mart_causal_profundo_d7` sí están: "
          "se guardan en este warehouse, pero se calculan desde el de Colorado, que tiene tablas con los mismos nombres.", "",
          f"Hay {len(destinos)} tablas con {len(filas)} relaciones de origen.", "",
          "## Árbol", "", "```"]

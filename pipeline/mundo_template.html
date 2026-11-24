@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vaca Muerta en 3D</title>
-<meta name="description" content="La cuenca shale de Vaca Muerta mes a mes, con cada elemento rotulado como dato público, medición del estudio o supuesto de quien lee.">
+<meta name="description" content="La cuenca no convencional de Vaca Muerta mes a mes, con cada elemento rotulado como dato público, medición del estudio o supuesto de quien lee.">
 <style>
 /*__SISTEMA__*/
 :root {
@@ -453,15 +453,15 @@ dialog.planilla::backdrop { background: color-mix(in srgb, var(--lutita) 62%, tr
 <body>
 <main class="resumen" id="resumen">
   <h1>Vaca Muerta en 3D</h1>
-  <p class="bajada">La cuenca shale mes a mes. Cada cosa que se muestra dice qué es: un dato público, una medición de este estudio o un supuesto que ponés vos.</p>
+  <p class="bajada">La cuenca mes a mes. Cada cosa que se muestra dice qué es: un dato público, una medición de este estudio o un supuesto que ponés vos.</p>
   <ul>
-    <li><span class="marca dato">dato</span><b>{{n_pozos}} pozos shale con ubicación de superficie</b>, su caudal mensual de petróleo y sus fracturas, publicados por la Secretaría de Energía hasta {{mes_datos}}. El dato público no trae trayectorias de las ramas, presiones ni decisiones de cierre.</li>
-    <li><span class="marca dato">dato</span>Debajo de los pozos está el lugar: el relieve de la misión SRTM, los ríos, lagos, límites y localidades del Instituto Geográfico Nacional y las concesiones de explotación de la Secretaría de Energía. El eje vertical se lee de dos maneras: como tiempo, donde cada pozo es una columna que brilla según el petróleo que dio cada mes, o como profundidad, que es un esquema y está rotulada como supuesto.</li>
-    <li><span class="marca medido">medido</span>Un mes después de fracturar un pozo hijo, los padres a menos de 1 km rinden <b>entre {{rango_bajo}} y {{rango_alto}} puntos menos</b> que pozos de control a 2 a 5 km de un pozo hijo ({{n_cercanos}} eventos cercanos y {{n_controles}} de control). IC 95% por bloques de 5 km de la brecha de {{brecha1}} puntos: {{ic5_bajo}} a {{ic5_alto}} ({{bloques_5km}} bloques).</li>
+    <li><span class="marca dato">dato</span><b>{{n_pozos}} pozos no convencionales con ubicación de superficie</b>, su caudal mensual de petróleo y sus fracturas, publicados por la Secretaría de Energía hasta {{mes_datos}}. El dato público no trae trayectorias de las ramas, presiones ni decisiones de cierre.</li>
+    <li><span class="marca dato">dato</span>Debajo de los pozos está el lugar: relieve, ríos y concesiones.<details><summary>Qué hay debajo de los pozos</summary>Son el relieve de la misión SRTM y los ríos, lagos, límites y localidades del Instituto Geográfico Nacional. También las concesiones de explotación de la Secretaría de Energía. El eje vertical se lee de dos maneras: como tiempo, donde cada pozo es una columna que brilla según el petróleo que dio cada mes, o como profundidad, que es un esquema y está rotulada como supuesto.</details></li>
+    <li><span class="marca medido">medido</span>Un mes después de fracturar un pozo hijo (el pozo nuevo), los padres (pozos que ya producían) a menos de 1 km rinden <b>entre {{rango_bajo}} y {{rango_alto}} puntos menos</b> que pozos de control a 2 a 5 km de un pozo hijo ({{n_cercanos}} eventos cercanos y {{n_controles}} de control). Intervalo de 95% (por bloques de 5 km) de la brecha de {{brecha1}} puntos: {{ic5_bajo}} a {{ic5_alto}} ({{bloques_5km}} bloques).</li>
     <li><span class="marca medido">medido</span>A los 6 meses la brecha queda <b>entre {{cierre_min}} y {{cierre_max}} puntos</b> según el control que se use: casi se cierra.</li>
-    <li><span class="marca medido">medido</span>Diferido medio por padre en los meses 0 a 6: <b>{{dif_bbl}} bbl</b> (IC 95%: {{dif_ic_bajo_bbl}} a {{dif_ic_alto_bbl}}). Cota superior de lo que podría no volver: {{cota_bbl}} bbl por evento; es un techo, no una estimación de la pérdida.</li>
+    <li><span class="marca medido">medido</span>Diferido medio por padre en los meses 0 a 6: <b>{{dif_bbl}} bbl</b> (intervalo de 95%: {{dif_ic_bajo_bbl}} a {{dif_ic_alto_bbl}}). Lo máximo que podría no volver: {{cota_bbl}} bbl por evento; es un techo según el dato, no una estimación de la pérdida.</li>
     <li><span class="marca supuesto">supuesto</span>El precio, la tasa y los parámetros de roca los ponés vos. Con ellos la página hace cuentas de libro; ninguna es un pronóstico ni algo que el dato mensual haya visto.</li>
-    <li>El evento que se muestra de cerca se elige con una regla fija, no a ojo: {{regla_acto2}}.</li>
+    <li>Elegimos el evento que se muestra de cerca con una regla escrita antes: el típico, no el más llamativo.<details><summary>Cómo elegimos el caso</summary>La regla: {{regla_acto2}}.</details></li>
   </ul>
   <p class="enlaces">Seguí con <a href="informe.html">el informe para un operador</a> o con <a href="replay.html">la repetición mes a mes en 2D</a>.</p>
 </main>
@@ -627,11 +627,11 @@ dialog.planilla::backdrop { background: color-mix(in srgb, var(--lutita) 62%, tr
           <p id="pl-techo"></p>
           <p class="formula">costo = barriles × precio × (1 − (1 + tasa)^(−rezago/12)); techo = padres × cota superior × precio. Es la cuenta del informe para un operador.</p>
         </div>
-        <p class="formula">La regla: padres a menos de 1 km del hijo, con 6 meses o más de producción y una base mayor a 1 m³/d. A cada uno se le aplica la brecha medida para su edad en los meses 0 a 6, sobre su base (el promedio de sus tres meses previos).</p>
+        <p class="formula">La regla: padres a menos de 1 km del hijo, con 6 meses o más de producción y una base mayor a 1 m³/d. La base es el promedio de sus tres meses previos. A cada uno se le aplica la brecha medida para su edad en los meses 0 a 6.</p>
       </div>
     </div>
     <div class="hoja" role="tabpanel" id="panel-fisica" aria-labelledby="tab-fisica" hidden>
-      <p class="lema"><span class="marca supuesto">supuesto</span>física de libro con tus parámetros; nada de esto lo vio el dato mensual</p>
+      <p class="lema"><span class="marca supuesto">supuesto</span>dos cuentas de libro: hasta dónde llega la presión de un pozo y cuánto drena. No son resultados del estudio ni los vio el dato mensual</p>
       <p id="fi-pozo"></p>
       <details class="calc" id="fi-radio" name="fisica" open>
         <summary>Radio de investigación</summary>
@@ -652,7 +652,7 @@ dialog.planilla::backdrop { background: color-mix(in srgb, var(--lutita) 62%, tr
           <label class="campo"><span>Compresibilidad total</span><output id="fi-ct-o"></output>
             <input type="range" id="fi-ct" min="3" max="40" step="0.5" value="15" aria-label="Compresibilidad total en millonésimas por psi"></label>
         </details>
-        <p class="formula">Radio contra tiempo, las dos escalas logarítmicas. Punteada: tu frente. Grises: la misma cuenta con otra permeabilidad. Sombreado: el primer mes, que el dato mensual junta en un solo punto. Rayas de la derecha: la distancia a cada pad vecino.</p>
+        <p class="formula">Radio contra tiempo, las dos escalas logarítmicas. Punteada: tu frente. Grises: la misma cuenta con otra permeabilidad. Sombreado: el primer mes, que el dato mensual junta en un solo punto. Rayas de la derecha: la distancia a cada pad vecino (pad: la plataforma de la que salen varios pozos).</p>
         <p id="fi-cuenta"></p>
         <p class="vec-cab" id="fi-cab" hidden><span><span class="marca dato">dato</span>la distancia entre bocas</span><span><span class="marca supuesto">supuesto</span>cuándo pasa el frente</span></p>
         <ol class="llegadas" id="fi-llegadas"></ol>
@@ -720,9 +720,9 @@ dialog.planilla::backdrop { background: color-mix(in srgb, var(--lutita) 62%, tr
     </div>
   </div>
 </div>
-<div class="aviso" id="aviso" role="alert" hidden><p>La autoverificación encontró diferencias entre esta página y el pipeline que la generó. No uses estos números hasta regenerarla.</p></div>
+<div class="aviso" id="aviso" role="alert" hidden><p>La comprobación de cifras encontró diferencias entre esta página y el estudio que la generó. No uses estos números hasta regenerarla.</p></div>
 <footer class="pie">
-  <span id="autov">autoverificación: sin correr</span>
+  <span id="autov">comprobación de cifras: sin correr</span>
   <span>datos a {{mes_datos}}</span>
   <span id="hash"></span>
   <span id="generado"></span>
@@ -2438,7 +2438,7 @@ void main() { gl_Position = u_vp * vec4(a_p.x, a_p.y + u_dy, a_p.z, 1.); float a
   function autotest() {
     resultado = Nucleo.autotest(M, DATA.autotest);
     const el = $("autov"), bien = resultado.ok === resultado.total;
-    el.textContent = "autoverificación " + resultado.ok + "/" + resultado.total;
+    el.textContent = "cifras comprobadas " + resultado.ok + "/" + resultado.total;
     el.className = bien ? "ok" : "mal";
     $("aviso").hidden = bien;
     return resultado;
@@ -2958,7 +2958,7 @@ void main() { gl_Position = u_vp * vec4(a_p.x, a_p.y + u_dy, a_p.z, 1.); float a
     {
       /* Con imagen del suelo el recorrido abre sobre el lugar real; sin ella, sobre las columnas de tiempo. */
       titulo: "La cuenca", seg: 20, get lect() { return conFoto ? 2 : 1; },
-      get frase() { return conFoto ? "Esto es Vaca Muerta desde el satélite. Cada punto es la boca de un pozo shale: aparece cuando el pozo empieza y crece con el petróleo que da cada mes." : "Cada columna es un pozo shale de Vaca Muerta. Crece con los meses y brilla según el petróleo que dio en cada uno."; },
+      get frase() { return conFoto ? "Esto es Vaca Muerta desde el satélite. Cada punto es la boca de un pozo no convencional: aparece cuando el pozo empieza y crece con el petróleo que da cada mes." : "Cada columna es un pozo no convencional de Vaca Muerta. Crece con los meses y brilla según el petróleo que dio en cada uno."; },
       marca: "dato",
       get nota() { return "Ubicación de superficie y caudal mensual publicados por la Secretaría de Energía. " + (conFoto ? "La imagen del suelo es de " + fotoTxt(true) + ": es contexto, no mide nada." : "Acá la altura es el tiempo, no la profundidad."); },
       entrar() { est.anillos = []; tramo("foco", est, "foco", 0, .6); tramo("morph", est, "morph", 0, 1); ponerCam(encajar(conFoto ? V.sueloAlta : V.altaT, R_CUENCA)); est.ve = 8; ponerMes(0); volar(conFoto ? vistaSuelo() : vistaT(), 17); animar("mes", 16, u => ponerMes(u * ULTIMO)); },
@@ -2983,17 +2983,17 @@ void main() { gl_Position = u_vp * vec4(a_p.x, a_p.y + u_dy, a_p.z, 1.); float a
       },
     },
     {
-      titulo: "Del mapa al estimador", seg: 24,
-      frase: "Ahora lo mismo con todos: cada línea es un padre, antes y después de que fracturen a un vecino.",
-      marca: "medido", nota: fmt(pub.n_cercanos, 0) + " eventos cercanos y " + fmt(M.ne - pub.n_cercanos, 0) + " de control. IC 95% por bloques de 5 km de la brecha de " + fmt(-100 * pub.brecha_mes1, 0) + " puntos: " + fmt(-100 * pub.ic5_alto, 0) + " a " + fmt(-100 * pub.ic5_bajo, 0) + ".",
+      titulo: "De un caso a todos", seg: 24,
+      frase: "Ahora lo mismo con todos: cada línea es un padre, antes y después de que fracturen un pozo nuevo cerca.",
+      marca: "medido", nota: fmt(pub.n_cercanos, 0) + " eventos cercanos y " + fmt(M.ne - pub.n_cercanos, 0) + " de control. Intervalo de 95% (por bloques de 5 km) de la brecha de " + fmt(100 * pub.brecha_mes1, 1) + " puntos: " + fmt(100 * pub.ic5_bajo, 1) + " a " + fmt(100 * pub.ic5_alto, 1) + ".",
       entrar() { limpiarRotulos("ev"); est.anillos = []; tramo("foco", est, "foco", 0, 2); volar(vistaGrafico(), 7); animar("morph", 2.5, () => {}, () => tramo("morph", est, "morph", 1, 11)); rotulosGrafico(); },
       fin() { limpiarRotulos("ev"); est.anillos = []; est.foco = 0; est.morph = 1; ponerCam(vistaGrafico()); est.ve = 8; ponerMes(ULTIMO); rotulosGrafico(); },
       cifra: () => "Un mes después, los padres cercanos rinden entre " + fmt(-100 * pub.brecha_mes1_descontada, 0) + " y " + fmt(-100 * pub.brecha_mes1, 0) + " puntos menos que sus controles",
     },
     {
       titulo: "El cierre", seg: 20,
-      frase: "Del mes 2 al 6 se cierra entre el " + fmt(100 * Math.min(...pub.cierre.map(c => c.parte)), 0) + "% y el " + fmt(100 * Math.max(...pub.cierre.map(c => c.parte)), 0) + "% de la brecha: petróleo diferido más que perdido.",
-      marca: "medido", nota: "Diferido medio por padre en los meses 0 a 6: " + fmt(pub.dif_bbl, 0) + " bbl (IC 95%: " + fmt(pub.dif_ic_bajo_bbl, 0) + " a " + fmt(pub.dif_ic_alto_bbl, 0) + "). Que vuelva todo no está probado: la cota superior de lo que podría no volver es " + fmt(pub.cota_bbl, 0) + " bbl por evento.",
+      frase: "Del mes 2 al 6 se cierra entre el " + fmt(100 * Math.min(...pub.cierre.map(c => c.parte)), 0) + "% y el " + fmt(100 * Math.max(...pub.cierre.map(c => c.parte)), 0) + "% de la brecha: sería petróleo que llega tarde. No está probado que vuelva todo.",
+      marca: "medido", nota: "Diferido medio por padre en los meses 0 a 6: " + fmt(pub.dif_bbl, 0) + " bbl (intervalo de 95%: " + fmt(pub.dif_ic_bajo_bbl, 0) + " a " + fmt(pub.dif_ic_alto_bbl, 0) + "). Que vuelva todo no está probado: lo máximo que podría no volver es " + fmt(pub.cota_bbl, 0) + " bbl por evento.",
       tabla: () => ({ pie: "Brecha en puntos, según qué padres hacen de control", cab: ["Controles a", "mes 1", "mes 6", "se cierra"], filas: pub.cierre.map(c => [c.control, fmt(100 * c.brecha1, 1), fmt(100 * c.brecha6, 1), fmt(100 * c.parte, 0) + "%"]) }),
       entrar() { tramo("foco", est, "foco", 0, 1); const yaEsta = est.morph > .95; tramo("morph", est, "morph", 1, yaEsta ? 0 : 4); rotulosGrafico(); rotulosCierre(); volar(vistaCierre(), 5); animar("cierre", yaEsta ? 2 : 5, () => {}, () => tramo("cierre", est, "cierre", N_CIERRE, 8)); },
       fin() { est.foco = 0; est.morph = 1; est.cierre = N_CIERRE; ponerCam(vistaCierre()); est.ve = 8; ponerMes(ULTIMO); rotulosGrafico(); rotulosCierre(); },
@@ -3015,7 +3015,7 @@ void main() { gl_Position = u_vp * vec4(a_p.x, a_p.y + u_dy, a_p.z, 1.); float a
       marca: "supuesto", nota: "Lo que elijas queda rotulado como supuesto. La respuesta de los padres es la medida en la cuenca, no un pronóstico.",
       entrar() { tramo("foco", est, "foco", 0, 1.5); tramo("morph", est, "morph", 0, 2, () => limpiarRotulos("graf")); volar(conFoto ? vistaSuelo() : vistaT(), 6); const m0 = T.mes; animar("mes", 4, u => ponerMes(m0 + (ULTIMO - m0) * u)); },
       fin() { est.foco = 0; est.morph = 0; limpiarRotulos("graf"); ponerCam(conFoto ? vistaSuelo() : vistaT()); est.ve = 8; ponerMes(ULTIMO); },
-      cifra: () => (resultado ? "Antes de mostrarte nada, esta página recalculó " + fmt(resultado.ok, 0) + " de " + fmt(resultado.total, 0) + " respuestas del pipeline" : ""),
+      cifra: () => (resultado ? "Antes de mostrarte nada, esta página volvió a calcular " + fmt(resultado.ok, 0) + " de " + fmt(resultado.total, 0) + " cifras en tu navegador y las comparó con el estudio" : ""),
     },
   ];
   const N_CIERRE = M.meta.k_max - 1;
@@ -3457,7 +3457,7 @@ void main() { gl_Position = u_vp * vec4(a_p.x, a_p.y + u_dy, a_p.z, 1.); float a
       d.append(nodo("b", "", fmt(v, 0)), barra, "mes " + k); meses.append(d);
     });
     $("pl-total").textContent = "Diferido esperado en los meses 0 a 6: " + fmt(r.diferido_bbl, 0) + " bbl";
-    $("pl-ref").textContent = "Son " + fmt(r.por_padre_bbl, 0) + " bbl por padre. En la cuenca, la media medida es de " + fmt(pub.dif_bbl, 0) + " bbl por padre (IC 95%: " + fmt(pub.dif_ic_bajo_bbl, 0) + " a " + fmt(pub.dif_ic_alto_bbl, 0) + "). Esta cuenta no tiene intervalo propio.";
+    $("pl-ref").textContent = "Son " + fmt(r.por_padre_bbl, 0) + " bbl por padre. En la cuenca, la media medida es de " + fmt(pub.dif_bbl, 0) + " bbl por padre (intervalo de 95%: " + fmt(pub.dif_ic_bajo_bbl, 0) + " a " + fmt(pub.dif_ic_alto_bbl, 0) + "). Esta cuenta no tiene intervalo propio.";
     pintarValor();
   }
   function pintarValor() {
@@ -3550,7 +3550,7 @@ void main() { gl_Position = u_vp * vec4(a_p.x, a_p.y + u_dy, a_p.z, 1.); float a
       fila("a", "ancho drenado equivalente, " + distTxt(w), w);
       fila("v", "distancia a " + P.sigla[v.q] + ", " + distTxt(v.km * 1000), v.km * 1000);
     }
-    $("fi-vecino").textContent = v ? "El vecino es el pozo más cercano de otro pad, medido entre bocas de pozo. El dato público no trae la separación entre ramas: la comparación es de escala, no de solape." : "";
+    $("fi-vecino").textContent = v ? "El pozo más cercano de otro pad se mide entre bocas de pozo. El dato público no trae la separación entre ramas: la comparación es de escala, no de solape." : "";
     if (FI.rAncho && w !== null) FI.rAncho.el.textContent = "ancho drenado equivalente, " + distTxt(w) + " de lado a lado, sin orientación";
   }
   /* La lista: los pads bajo cuya boca pasa el frente antes de los 30 años, del primero al último. Con permeabilidad
@@ -3688,7 +3688,7 @@ void main() { gl_Position = u_vp * vec4(a_p.x, a_p.y + u_dy, a_p.z, 1.); float a
       if (FI.vec) {
         const [vx, vz] = motor.pos(FI.vec.q);
         est.anillos.push({ de: "fi", capa: 0, x: (x + vx) / 2, z: (z + vz) / 2, r: Math.hypot(vx - x, vz - z) / 2, color: [.93, .9, .83, .6], grosor: 1.2 }, boca(vx, vz));
-        add("vecino", P.sigla[FI.vec.q] + ", el vecino de otro pad, a " + distTxt(FI.vec.km * 1000), [vx, 0, vz], 0);
+        add("vecino", P.sigla[FI.vec.q] + ", el pozo más cercano de otro pad, a " + distTxt(FI.vec.km * 1000), [vx, 0, vz], 0);
         roles.push([FI.vec.q, 3, 0]);
       }
     }

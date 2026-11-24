@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Barriles que llegan tarde</title>
-<meta name="description" content="Un caso real de Vaca Muerta: se fractura un pozo nuevo cerca de uno que ya producía, el vecino rinde menos durante unos meses y vuelve. Cuánto cuesta esa espera, con tus supuestos.">
+<meta name="description" content="Un caso real de Vaca Muerta: se fractura un pozo nuevo cerca de uno que ya producía, el pozo vecino rinde menos durante unos meses y vuelve. Cuánto cuesta esa espera, con tus supuestos.">
 <style>
 /*__SISTEMA__*/
 
@@ -131,7 +131,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
 
 <nav class="riel" aria-label="Láminas">
   <a class="riel-enlace marca--vacio" href="#caso"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">El caso</span></a>
-  <a class="riel-enlace marca--vacio" href="#vecino"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">El vecino</span></a>
+  <a class="riel-enlace marca--vacio" href="#vecino"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">El pozo vecino</span></a>
   <a class="riel-enlace marca--vacio" href="#cuenca"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">En toda la cuenca</span></a>
   <a class="riel-enlace marca--vacio" href="#diferidos"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">Diferidos</span></a>
   <a class="riel-enlace marca--vacio" href="#cajon"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">¿Cuánto cuesta esperarlos?</span></a>
@@ -158,9 +158,9 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
 
 <section class="lamina" id="vecino">
   <div class="dentro entra">
-    <h2>El vecino</h2>
+    <h2>El pozo vecino</h2>
     <p class="cap" id="cap2">En los seis meses siguientes, ese pozo vecino produjo 914 barriles menos que pozos de control a 2 a 5 km de un pozo nuevo.</p>
-    <p class="cap suave">Es una huella medida contra un control, no una causa probada.</p>
+    <p class="cap suave">Es una huella medida: la diferencia contra un control, no una causa probada.</p>
 
     <div class="meses">
       <div class="mes-cab">
@@ -169,7 +169,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
       </div>
       <input id="mes" type="range" min="-3" max="12" step="1" value="1" aria-label="meses desde la fractura">
       <canvas class="chispa" id="chispa"></canvas>
-      <p class="chispa-nota">caudal del vecino, índice 100 = su promedio de los tres meses previos</p>
+      <p class="chispa-nota">caudal del pozo vecino, índice 100 = su promedio de los tres meses previos</p>
     </div>
 
     <div class="acciones">
@@ -178,7 +178,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
     </div>
     <details>
       <summary>Ver los números</summary>
-      <p class="nota">El caso típico es la mediana de los casos con dos años de datos, elegida con una regla fijada antes de mirarla.</p>
+      <p class="nota">Elegimos el caso típico con una regla escrita antes de mirar los casos: el del medio entre los que tienen dos años de datos.</p>
     </details>
   </div>
 </section>
@@ -193,7 +193,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
       <figure class="grafico">
         <canvas id="curva"></canvas>
       </figure>
-      <p class="leyenda">Índice de caudal por mes desde la fractura. 100 es la paridad con el control.</p>
+      <p class="leyenda">Índice de caudal por mes desde la fractura. 100 es el promedio de los tres meses previos de cada pozo.</p>
     </details>
 
     <div class="banda-caja">
@@ -205,7 +205,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
 <section class="lamina" id="diferidos">
   <div class="dentro entra">
     <h2>Diferidos</h2>
-    <p class="texto">Sumados los meses 0 a 6, quedan diferidos entre <span class="cifra" id="rango">6,4 y 11,4</span> millones de barriles. El rango depende de cómo se cuenten los casos que se pisan; no se da un punto medio.</p>
+    <p class="texto">Sumados los meses 0 a 6, quedan diferidos entre <span class="cifra" id="rango">6,4 y 11,4</span> millones de barriles. El rango depende de cómo se cuentan los casos que se superponen. No damos un punto medio.</p>
 
     <div class="banda-caja">
       <!--__BANDA__-->
@@ -233,7 +233,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
         </div>
       </div>
       <p class="frase" id="frase" aria-live="polite"></p>
-      <p class="suave">No es lo que vale ese petróleo, que igual llega: es lo que cuesta cobrarlo más tarde. Es una cota superior porque los barriles son una huella medida contra un control, sin causa atribuida.</p>
+      <p class="suave">No es lo que vale ese petróleo, que igual llega: es lo que cuesta cobrarlo más tarde. Usa el rango de barriles de arriba y supone que todos llegan más tarde. Los barriles son una huella medida contra un control; no probamos su causa.</p>
     </section>
   </div>
 </section>
@@ -241,10 +241,10 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
 <section class="lamina" id="despues">
   <div class="dentro entra">
     <h2>¿Y después?</h2>
-    <p class="texto">A los 24 meses, la mediana por caso es de <span class="cifra" id="med24">-954</span> barriles y su intervalo incluye el cero: el vecino típico no acumula diferido contra su control.</p>
+    <p class="texto">A los 24 meses, el pozo vecino típico no muestra pérdida acumulada: el dato no la distingue de cero. Eso no prueba que todo vuelva. La mediana por caso es de <span class="cifra" id="med24">-954</span> barriles y su intervalo incluye el cero.</p>
     <nav class="pie-sitio">
       <a href="index.html">La historia completa</a>
-      <a href="replay.html">Mes a mes</a>
+      <a href="replay.html">La cuenca mes a mes</a>
       <a href="mundo.html">Vaca Muerta en 3D</a>
     </nav>
   </div>
@@ -263,13 +263,14 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; cl
         </div>
       </div>
       <div class="ex-mandos">
+        <p class="ex-nota">Cada punto marca qué pasó en el pozo vecino.</p>
         <fieldset class="ex-clases">
-          <label><input type="checkbox" data-clase="golpe" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle class="lleno" cx="8" cy="8" r="5.25"></circle></svg><span>Hijo a padre: salto de agua</span></label>
+          <label><input type="checkbox" data-clase="golpe" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle class="lleno" cx="8" cy="8" r="5.25"></circle></svg><span>Subida del corte de agua tras el hijo</span></label>
           <label><input type="checkbox" data-clase="cierre_preventivo" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.25"></circle><path class="lleno" d="M8 2.75A5.25 5.25 0 0 0 8 13.25Z"></path></svg><span>Cierre preventivo</span></label>
           <label><input type="checkbox" data-clase="ambos" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle class="lleno" cx="8" cy="8" r="3.5"></circle><circle cx="8" cy="8" r="6.25"></circle></svg><span>Ambos</span></label>
           <label><input type="checkbox" data-clase="sin_efecto" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle class="vacio" cx="8" cy="8" r="5.25"></circle></svg><span>Sin efecto</span></label>
         </fieldset>
-        <p class="ex-nota">Los anillos muestran cuánto rinden menos los vecinos al mes 1 según la distancia, contra pozos a 5 a 10 km. Más oscuro, más brecha.</p>
+        <p class="ex-nota">Los anillos muestran cuánto rinden menos los pozos vecinos al mes 1, según su distancia al pozo nuevo. Más oscuro, más brecha. Aquí el control son pozos de 5 a 10 km, más lejos que el control del resto de la página.</p>
         <div class="ex-cerca" id="ex-cerca" role="img" aria-label="Acercamiento al pozo elegido con anillos de 1, 2 y 5 km">
           <canvas id="ex-cerca-foto"></canvas>
           <canvas id="ex-cerca-capa"></canvas>
@@ -308,7 +309,7 @@ function frase(lo, hi, p, t, m) {
   var b = millones(dinero(hi, p, t, m));
   return "Con USD " + numeroEs(p) + " por barril, " + numeroEs(t) + "% anual y " + numeroEs(m) +
     " meses de espera, esperar costó entre USD " + numeroEs(a) + " y " + numeroEs(b) +
-    " millones: cota superior, supuesto, no medición.";
+    " millones. El extremo alto es un máximo; es un supuesto, no una medición.";
 }
 // regla:fin
 
@@ -814,7 +815,9 @@ function frase(lo, hi, p, t, m) {
     c.font = "14px " + FUENTE_ARCHIVO; c.textAlign = "left"; c.textBaseline = "middle";
     var arriba = cerc[k1] >= ctrl[k1] ? -1 : 1;
     c.fillStyle = C.tinta;
-    c.fillText("vecinos", x(k1) + 8, y(cerc[k1]) + arriba * 8);
+    var yv = y(cerc[k1]) + arriba * 8;   // dos renglones: el margen derecho no alcanza para "pozos vecinos" en uno
+    c.fillText("pozos", x(k1) + 8, yv - (arriba < 0 ? 14 : 0));
+    c.fillText("vecinos", x(k1) + 8, yv + (arriba > 0 ? 14 : 0));
     c.fillStyle = C.jarilla;
     c.fillText("control", x(k1) + 8, y(ctrl[k1]) - arriba * 8);
     // el texto de los ejes: a lo mas cuatro marcas por eje

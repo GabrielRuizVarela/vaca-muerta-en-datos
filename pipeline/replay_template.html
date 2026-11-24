@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vaca Muerta, mes a mes</title>
-<meta name="description" content="Repetición temporal de Vaca Muerta: cada pozo shale desde 2011, sus fracturas, los golpes de agua en pozos vecinos y el avance de las operadoras.">
+<title>La cuenca mes a mes</title>
+<meta name="description" content="La cuenca mes a mes: cada pozo no convencional de Vaca Muerta desde 2011, sus fracturas, las subidas del corte de agua en pozos vecinos y el avance de las operadoras.">
 <style>
 /*__SISTEMA__*/
 /* El chrome de la página (fondo, tinta, líneas y letras) lo trae el sistema; lo que queda aquí es la familia: los colores
@@ -154,7 +154,7 @@ select { background: var(--fondo); border: 1px solid var(--linea); border-radius
 <body>
 <div class="app">
   <header class="top">
-    <h1>Vaca Muerta, mes a mes</h1>
+    <h1>La cuenca mes a mes</h1>
     <nav class="salidas" aria-label="Otras vistas de la cuenca">
       <a id="a-mundo" href="mundo.html#libre">Ver este mes en 3D</a>
       <a class="back" href="index.html">Volver al tablero</a>
@@ -170,7 +170,7 @@ select { background: var(--fondo); border: 1px solid var(--linea); border-radius
   </header>
 
   <section class="mapwrap" id="mapwrap" aria-label="Mapa de pozos">
-    <canvas id="map" role="img" aria-label="Mapa de los pozos de Vaca Muerta shale en el mes elegido"></canvas>
+    <canvas id="map" role="img" aria-label="Mapa de los pozos no convencionales de Vaca Muerta en el mes elegido"></canvas>
     <div class="clock" aria-live="off">
       <div class="mes" id="mes">&nbsp;</div>
       <div class="stats">
@@ -189,7 +189,7 @@ select { background: var(--fondo); border: 1px solid var(--linea); border-radius
       <canvas id="c-q" aria-label="Caudal de petróleo en el tiempo"></canvas>
       <canvas id="c-w" aria-label="Corte de agua en el tiempo"></canvas>
       <p class="cl" id="c-l"></p>
-      <div class="row"><span id="c-links"></span><div class="seg" id="c-mode" role="group" aria-label="Alcance"><button type="button" data-v="pozo" aria-pressed="true">Pozo</button><button type="button" data-v="pad" aria-pressed="false">Pad</button></div></div>
+      <div class="row"><span id="c-links"></span><div class="seg" id="c-mode" role="group" aria-label="Alcance"><button type="button" data-v="pozo" aria-pressed="true">Pozo</button><button type="button" data-v="pad" aria-pressed="false" title="pad: la plataforma de la que salen varios pozos">Pad</button></div></div>
     </div>
   </section>
   <div class="legend m" id="legend-m"></div>
@@ -209,17 +209,17 @@ select { background: var(--fondo); border: 1px solid var(--linea); border-radius
       <button type="button" role="tab" id="tab-e" aria-selected="false" aria-controls="pane-e">Eventos</button>
     </div>
     <div class="pane" id="pane-h" role="tabpanel" aria-labelledby="tab-h">
-      <p class="lead"><span class="marca dato">dato</span>Cada punto es un pozo de Vaca Muerta shale en su ubicación de superficie y su tamaño sigue el caudal de petróleo. Reproducí la historia desde 2011 y mirá tres cosas.</p>
+      <p class="lead"><span class="marca dato">dato</span>Cada punto es un pozo no convencional de Vaca Muerta en su ubicación de superficie y su tamaño sigue el caudal de petróleo. Reproducí la historia desde 2011 y mirá tres cosas.</p>
       <div class="find">
-        <h2>Tras la fractura del hijo, sube el corte de agua del padre</h2>
-        <p id="cifra-agua" hidden><span class="marca medido">medido</span>Tras la fractura de un hijo a menos de 1 km, el corte de agua mediano del padre pasa de <span id="wc-antes"></span> en el mes anterior a <span id="wc-mes2"></span> en el mes 2. En los controles (2 a 5 km) queda en <span id="wc-control"></span>.</p>
+        <h2>Tras la fractura del hijo, el corte de agua del padre sube, pero eso depende de los pozos de YPF</h2>
+        <p id="cifra-agua" hidden><span class="marca medido">medido</span>Tras la fractura de un hijo a menos de 1 km, el corte de agua mediano del padre pasa de <span id="wc-antes"></span> en el mes anterior a <span id="wc-mes2"></span> en el mes 2. En los controles (2 a 5 km) queda en <span id="wc-control"></span>. Sin los pozos de YPF, el dato no separa la suba de cero.</p>
         <div class="seg" id="band" role="group" aria-label="Distancia al hijo"><button type="button" data-v="0.3" aria-pressed="true">0,3 a 1 km</button><button type="button" data-v="1" aria-pressed="false">1 a 2 km</button></div>
         <canvas id="rose" aria-label="Rosa de rumbos de la interferencia" style="aspect-ratio: 1.12"></canvas>
         <p class="live" id="rose-live"></p>
       </div>
       <div class="find">
         <h2>Los padres cercanos se recuperan</h2>
-        <p id="cifra-brecha" hidden><span class="marca medido">medido</span>Frente a los controles, el caudal del padre cercano cae <span id="br-1"></span> en el mes 1 y la brecha es <span id="br-6"></span> en el mes 6. Es petróleo diferido, no perdido.</p>
+        <p id="cifra-brecha" hidden><span class="marca medido">medido</span>Frente a los controles, el caudal del padre cercano cae <span id="br-1"></span> en el mes 1 y la brecha es <span id="br-6"></span> en el mes 6. Casi se cierra: sería petróleo que llega tarde. No está probado que vuelva todo.</p>
         <canvas id="curva" aria-label="Caudal indexado del padre cercano y de los controles" style="aspect-ratio: 2.2"></canvas>
         <p class="live"><span class="big" id="dif">0</span> <span id="dif-u">bbl diferidos en este mes</span></p>
       </div>
@@ -739,7 +739,7 @@ function drawTimelineBase() {
   row(fracCount, mf, TL.barsTop, h1, C.ink3); row(hitCount, mh2, TL.barsTop + h1 + 4, h1, C.golpe);
   ctx.textAlign = "left"; ctx.fillStyle = C.ink3; ctx.textBaseline = "top";
   ctx.fillText("fracturas por mes", L + 4, TL.barsTop - 1);
-  ctx.fillStyle = C.golpe; ctx.fillText("golpes de agua por mes", L + 4, TL.barsTop + h1 + 3);
+  ctx.fillStyle = C.golpe; ctx.fillText("subidas del corte de agua por mes", L + 4, TL.barsTop + h1 + 3);
   // year axis
   ctx.fillStyle = C.ink3; ctx.textAlign = "center"; ctx.textBaseline = "top";
   const step = tlw < 520 ? 4 : 2;
@@ -794,13 +794,13 @@ function drawRose() {
   ctx.font = F(13); ctx.textBaseline = "middle";
   ctx.setLineDash([4, 3]); ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.moveTo(2, 9); ctx.lineTo(22, 9); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = C.ink2; ctx.textAlign = "left"; ctx.fillText("SHmax publicado (RAGA 2024)", 28, 9);
-  ctx.fillStyle = C.ink3; ctx.globalAlpha = 0.6; ctx.fillRect(w - 132, 4, 10, 10); ctx.globalAlpha = 1; ctx.fillStyle = C.ink2; ctx.fillText("padres alcanzados", w - 116, 9);
-  ctx.fillStyle = C.golpe; ctx.fillRect(w - 132, 23, 10, 10); ctx.fillStyle = C.ink2; ctx.fillText("con salto de agua", w - 116, 28);
+  const fila = (y, col, a, t) => { const tw = ctx.measureText(t).width; ctx.fillStyle = col; ctx.globalAlpha = a; ctx.fillRect(w - 2 - tw - 16, y - 5, 10, 10); ctx.globalAlpha = 1; ctx.fillStyle = C.ink2; ctx.textAlign = "right"; ctx.fillText(t, w - 2, y); ctx.textAlign = "left"; };
+  fila(9, C.ink3, 0.6, "padres alcanzados"); fila(28, C.golpe, 1, "con subida del corte de agua");
   const g = (s) => ({ n: tot[s], h: hit[s], p: tot[s] ? hit[s] / tot[s] : 0 });
   const ene = g(3), ns = g(0), t = tot.reduce((a, b) => a + b, 0);
   const el = $("#rose-live");
   if (t < 8) el.innerHTML = "Todavía hay pocos eventos para este mes.";
-  else el.innerHTML = `<b>${fmt(t)}</b> padres alcanzados hasta ${monthLabel(mNow)}. Con salto de agua: <b>${pct(ene.p)}</b> sobre el eje ENE-OSO, sector de 67,5° a 90° (n=${ene.n}), y <b>${pct(ns.p)}</b> sobre el eje N-S, de 0° a 22,5° (n=${ns.n}).`;
+  else el.innerHTML = `<b>${fmt(t)}</b> padres alcanzados hasta ${monthLabel(mNow)}. Con subida del corte de agua: <b>${pct(ene.p)}</b> sobre el eje ENE-OSO, sector de 67,5° a 90° (n=${ene.n}), y <b>${pct(ns.p)}</b> sobre el eje N-S, de 0° a 22,5° (n=${ns.n}).`;
   roseDirty = false;
 }
 /* Las cifras de los dos hallazgos: del payload a la frase. Si falta un valor, la frase no se muestra. */
@@ -884,7 +884,7 @@ function drawCard() {
   let mq = 1; d.q.forEach((v) => { if (v > mq) mq = v; });
   chart("#c-q", d.q, mq * 1.05, opIdx[S.sel] === NOP - 1 ? C.ink2 : C.opc[opIdx[S.sel]], "Petróleo, bbl/d", (v) => fmt(v) + " bbl/d");
   chart("#c-w", d.wc, 1, C.ink2, "Corte de agua", (v) => pct(v));
-  $("#c-l").textContent = "Líneas verticales: fractura propia (llena), golpe de agua (a rayas, salmón) y cierre preventivo (a rayas, ámbar) cuando el pozo fue padre de una fractura vecina.";
+  $("#c-l").textContent = "Líneas verticales: fractura propia (llena), subida del corte de agua (a rayas, salmón) y cierre preventivo (a rayas, ámbar) cuando el pozo fue padre de un hijo fracturado cerca.";
   const pad = "pad-" + slug(w.pad).replace(/^-+/, "");
   $("#c-links").innerHTML = (w.wiki ? `<a href="../wiki/pad/${pad}.md">Pad en el wiki</a> · ` : "") + `<a href="../wiki/area/${slug(w.area)}.md">Área en el wiki</a>`;
 }
@@ -998,7 +998,7 @@ function buildLegend() {
   const sw = (c, dash) => `<svg viewBox="0 0 22 10"><path d="M1 8 Q11 -2 21 8" fill="none" stroke="${c}" stroke-width="2" ${dash ? 'stroke-dasharray="3 2"' : ""}/></svg>`;
   const rows = (S.mode === "estado" ? `<div><svg viewBox="0 0 22 10"><circle cx="11" cy="5" r="4" fill="${C.prod}"/></svg>Produciendo</div><div><svg viewBox="0 0 22 10"><circle cx="11" cy="5" r="4" fill="${C.parado}"/></svg>Parado transitoriamente</div><div><svg viewBox="0 0 22 10"><circle cx="11" cy="5" r="2" fill="${C.sin}"/></svg>Sin producción</div><div class="sep"></div>` : "")
     + `<div><svg viewBox="0 0 22 10"><circle cx="11" cy="5" r="4" fill="none" stroke="${C.ink}" stroke-width="1.5"/></svg>Fractura de un pozo</div>`
-    + `<div>${sw(C.golpe)}Hijo a padre: salto de agua</div><div>${sw(C.cierre, true)}Cierre preventivo</div><div>${sw(C.ambos)}Ambos</div><div>${sw(C.sin)}Sin efecto</div>`;
+    + `<div>${sw(C.golpe)}Subida del corte de agua tras el hijo</div><div>${sw(C.cierre, true)}Cierre preventivo</div><div>${sw(C.ambos)}Ambos</div><div>${sw(C.sin)}Sin efecto</div>`;
   $("#legend").innerHTML = rows; $("#legend-m").innerHTML = rows;
   if (fitView) medirTapas();
 }
@@ -1069,7 +1069,7 @@ function hover(e) {
 
 // ---- boot -----------------------------------------------------------------------------------------
 readHash(); readColors(); applyFilters(); buildChips(); buildLegend(); bind();
-$("#foot").textContent = `Datos de la Secretaría de Energía hasta ${monthLabel(M - 1)}. ${fmt(N)} pozos shale con coordenadas. Clasificación del golpe de agua: salto de más de 15 puntos de corte de agua en los meses 0 y 1 del hijo. Generado ${META.generado}.`;
+$("#foot").textContent = `Datos de la Secretaría de Energía hasta ${monthLabel(M - 1)}. ${fmt(N)} pozos no convencionales con coordenadas. Clasificación de la subida del corte de agua (el corte de agua es el porcentaje de agua en el líquido que produce el pozo): más de 15 puntos de corte de agua en los meses 0 y 1 del hijo. Generado ${META.generado}.`;
 if (D.base) {
   /* Fuentes y licencias, tal como las fija el exportador: una línea por organismo y licencia. */
   const CAPA = { relieve: "relieve", rios: "ríos", agua: "lagos, embalses y cauces anchos", limites: "límites provinciales", localidades: "localidades", bloques: "concesiones de explotación" };

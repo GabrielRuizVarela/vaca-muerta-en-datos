@@ -311,7 +311,7 @@ def test_the_lineage_covers_every_table_of_the_warehouse():
         con.close()
     destinos = {d for d, _, _, _ in linaje.filas_linaje()}
     solo_con_colorado = {d for d in destinos if d.startswith(("mart_dias_perdidos_colorado", "mart_golpes_mismo_mes_colorado", "mart_golpes_mismo_padre_colorado",
-                                                                    "mart_causal_profundo_d7"))}  # run_all --with-colorado o causal_profundo --cuenca colorado
+                                                                    "mart_causal_profundo_d7", "mart_dia_inicio_colorado"))}  # run_all --with-colorado o causal_profundo --cuenca colorado
     # el paso 2 de dosis_geometria solo escribe sus tablas si la puerta de potencia pasa
     solo_si_pasa_la_puerta = {d for d in destinos if d.startswith("mart_dosis_geometria_") and not d.endswith(("_muestra", "_potencia", "_sim", "_puerta"))}
     assert not tablas - destinos and not destinos - tablas - solo_con_colorado - solo_si_pasa_la_puerta, (sorted(tablas - destinos), sorted(destinos - tablas))

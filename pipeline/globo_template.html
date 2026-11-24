@@ -163,14 +163,14 @@ body.volando .titulo, body.volando .pie { opacity: 0; }
 <body>
 <main class="resumen" id="resumen">
   <h1>Dónde se puede medir pozo por pozo</h1>
-  <p class="bajada">De {{n_auditadas}} jurisdicciones auditadas, {{n_con_fractura}} publican petróleo por pozo con fecha de fractura o terminación y {{n_entran}} entran al estudio. Lo oscuro no publica por pozo, o no pudimos verificarlo: no dice que no produce.</p>
+  <p class="bajada">Revisamos {{n_auditadas}} lugares (países, provincias o estados). Solo {{n_con_fractura}} publican el petróleo de cada pozo con fecha de fractura o terminación, y {{n_entran}} de esos cumplen nuestras condiciones de acceso y licencia. Lo oscuro no publica por pozo, o no pudimos verificarlo: no dice que no produce.</p>
   <ul>
     <li><span class="marca medido">medido</span><b>Vaca Muerta, medición original.</b> Un mes después de fracturar un pozo hijo, los padres a menos de 1 km rinden <b>entre {{vm_rango_bajo}} y {{vm_rango_alto}} puntos menos</b> que pozos de control a 2 a 5 km de un pozo hijo.</li>
-    <li data-cuenca="colorado" data-se-replica="{{co_replica}}"><span class="marca medido">medido</span><b>Colorado, {{co_lectura}}.</b> Brecha al mes 1 de <b>{{co_brecha}} puntos</b> (IC 95% por bloques de 5 km: {{co_ic_bajo}} a {{co_ic_alto}}). Al mes 6 la brecha no se cierra del todo (-5,9). Colorado se midió antes de la auditoría y no tiene registro en ella.</li>
-    <li data-cuenca="wyoming" data-se-replica="{{wy_replica}}" data-incluye-cero="{{wy_cero_n}}"><span class="marca medido">medido</span><b>Wyoming, {{wy_lectura}}.</b> Brecha al mes 1 de <b>{{wy_brecha}} puntos</b> (IC 95% por bloques de 5 km: {{wy_ic_bajo}} a {{wy_ic_alto}}), {{wy_cero}}. El mes 0 es la primera fecha de terminación, no la fractura.</li>
+    <li data-cuenca="colorado" data-se-replica="{{co_replica}}"><span class="marca medido">medido</span><b>Colorado, {{co_lectura}}.</b> Brecha al mes 1 de <b>{{co_brecha}} puntos</b> (intervalo de 95% por bloques de 5 km: {{co_ic_bajo}} a {{co_ic_alto}}). Al mes 6 la brecha no se cierra del todo (-5,9). Colorado no está entre esos lugares: lo medimos antes.</li>
+    <li data-cuenca="wyoming" data-se-replica="{{wy_replica}}" data-incluye-cero="{{wy_cero_n}}"><span class="marca medido">medido</span><b>Wyoming, {{wy_lectura}}.</b> Brecha al mes 1 de <b>{{wy_brecha}} puntos</b> (intervalo de 95% por bloques de 5 km: {{wy_ic_bajo}} a {{wy_ic_alto}}), {{wy_cero}}. El mes 0 es la primera fecha de terminación, no la fractura.</li>
   </ul>
-  <p class="lectura-final">Se replica en {{replican}} de {{de}} cuencas. Sin estimación conjunta.</p>
-  <p class="enlaces">La misma repetición mes a mes, por cuenca, está en <a href="mundo.html">el mundo</a>. La auditoría de fuentes, jurisdicción por jurisdicción, está en la <a href="../wiki/hallazgos/fuentes_mundo.md">página de fuentes</a>.</p>
+  <p class="lectura-final">Se replica en {{replican}} de {{de}} cuencas. No sumamos las cuencas en una sola cifra.</p>
+  <p class="enlaces">La misma repetición mes a mes, por cuenca, está en <a href="mundo.html">Vaca Muerta en 3D</a>. La auditoría de fuentes, jurisdicción por jurisdicción, está en la <a href="../wiki/hallazgos/fuentes_mundo.md">página de fuentes</a>.</p>
 </main>
 <div class="sin-webgl" id="sin-webgl" hidden><p>Este navegador no abre WebGL2: el globo se ve, pero la repetición mes a mes de cada cuenca no. Las cifras de cada cuenca están en el resumen de arriba.</p></div>
 
@@ -194,9 +194,9 @@ body.volando .titulo, body.volando .pie { opacity: 0; }
   <button id="volver" class="solo-cuenca" hidden aria-label="Volver al globo"><canvas id="mini" width="112" height="112"></canvas><span>Volver al globo</span></button>
   <p id="exageracion"></p>
 </div>
-<div class="aviso" id="aviso" role="alert" hidden><p>La autoverificación encontró diferencias entre esta página y el pipeline que la generó. No uses estos números hasta regenerarla.</p></div>
+<div class="aviso" id="aviso" role="alert" hidden><p>Las cifras de esta página no coinciden con el estudio. No las usés hasta regenerarla.</p></div>
 <footer class="pie">
-  <span id="autov">autoverificación: sin correr</span>
+  <span id="autov">verificando las cifras...</span>
   <span>datos a {{mes_vm}} (Vaca Muerta), {{mes_co}} (Colorado), {{mes_wy}} (Wyoming)</span>
   <span id="hash"></span>
   <span id="generado"></span>
@@ -581,7 +581,7 @@ const DATA = /*__DATA__*/null;
   const ESC = { lo: -30, hi: 10 };
   function construirRegla() {
     const el = $("regla"); el.textContent = "";
-    el.append(nodo("h3", "", "Una sola regla, fijada antes de ver los datos"));
+    el.append(nodo("h3", "", "La misma regla en todas las cuencas. La escribimos antes de ver el resultado."));
     el.append(nodo("p", "sub", "Brecha al mes 1, en puntos: lo que rinden de menos los padres a menos de 1 km de un hijo recién fracturado, frente a controles de 2 a 5 km."));
     const ancho = 270, x = v => 6 + (v - ESC.lo) / (ESC.hi - ESC.lo) * (ancho - 12);
     const eje = svg("svg", { class: "escala", viewBox: "0 0 " + (ancho + 92) + " 22", "aria-hidden": "true" });
@@ -610,15 +610,15 @@ const DATA = /*__DATA__*/null;
       } else s.append(svg("circle", { cx: x(100 * v.brecha), cy: y, r: 4.5, fill: HUESO }));
       fila.append(s);
       const cifra = nodo("span", "cifra", id === "vaca_muerta"
-        ? "dos estimaciones: " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) + " (IC 95%: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")"
-        : pts(v.brecha) + " (IC 95%: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")" + (v.ic_bajo_bloque < 0 && v.ic_alto_bloque > 0 ? ", incluye el cero" : ""));
+        ? "dos estimaciones: " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) + " (intervalo de 95%: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")"
+        : pts(v.brecha) + " (intervalo de 95%: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")" + (v.ic_bajo_bloque < 0 && v.ic_alto_bloque > 0 ? ", incluye el cero" : ""));
       fila.append(cifra);
       fila.onclick = () => ir(id);
       fila.onmouseenter = () => resaltar(id); fila.onmouseleave = () => resaltar(null); fila.onfocus = () => resaltar(id); fila.onblur = () => resaltar(null);
       filas[id] = fila; el.append(fila);
     }
     const L = D.lectura;
-    el.append(nodo("p", "lectura", "Se replica en " + L.replican + " de " + L.de + " cuencas. Sin estimación conjunta."));
+    el.append(nodo("p", "lectura", "Se replica en " + L.replican + " de " + L.de + " cuencas. No sumamos las cuencas en una sola cifra."));
     el.append(nodo("p", "nota", "Cada cuenca se mide con las fuentes que su regulador publica. Tocá una fila o un aro del globo para verla mes a mes."));
   }
   function resaltar(id) {
@@ -631,7 +631,7 @@ const DATA = /*__DATA__*/null;
   function construirBanda() {
     const el = $("banda"); el.textContent = "";
     const total = D.meta.n_auditadas;
-    el.append(nodo("h3", "", "La auditoría de fuentes: " + total + " jurisdicciones, más Colorado, que se midió antes. Cada textura es lo que el regulador publica; tocá una para ver cuáles son."));
+    el.append(nodo("h3", "", "Cada textura es lo que publica el regulador: tocá una para ver cuál es."));
     const g = nodo("div", "grupos");
     const cuenta = {};
     for (const j of D.jur) cuenta[j.nivel] = (cuenta[j.nivel] || 0) + 1;
@@ -650,7 +650,7 @@ const DATA = /*__DATA__*/null;
   function cerrarBoton() { const b = nodo("button", "cerrar", "Cerrar"); b.setAttribute("aria-label", "Cerrar"); b.textContent = "×"; b.onclick = () => { S.sel = null; S.nivel = null; for (const k in grupos) grupos[k].b.setAttribute("aria-pressed", "false"); fichaVacia(); sucio = true; }; return b; }
   function textoNivel(j) {
     if (j.nivel === "por_pozo_con_fractura" || j.nivel === "por_pozo_sin_fractura") return "Publica petróleo por pozo.";
-    if (j.nivel === "medida_sin_auditar") return "Medida por este estudio con petróleo por pozo. Se midió antes de la auditoría y no tiene registro en ella.";
+    if (j.nivel === "medida_sin_auditar") return "Medida por este estudio con petróleo por pozo. La medimos antes de revisar las fuentes.";
     if (j.nivel === "por_lease_o_campo") return "No publica petróleo por pozo: lo publica por lease, campo o instalación. No dice que no produce.";
     if (j.nivel === "solo_totales") return "No publica petróleo por pozo: solo totales. No dice que no produce.";
     if (j.nivel === "nada_publico") return "No publica petróleo por pozo en abierto (nada público o de pago). No dice que no produce.";
@@ -669,7 +669,7 @@ const DATA = /*__DATA__*/null;
     f.append(nodo("p", "sub", textoNivel(j)));
     const dl = nodo("dl");
     dl.append(nodo("dt", "", "Por qué"), nodo("dd", "", j.motivo));
-    dl.append(nodo("dt", "", j.auditada ? "Auditada" : "Auditoría"), nodo("dd", "", j.auditada ? "el " + j.fecha_verificada + ", con pedidos reales a la fuente" : "sin registro: se midió antes de la auditoría"));
+    dl.append(nodo("dt", "", j.auditada ? "Revisada" : "Revisión"), nodo("dd", "", j.auditada ? "el " + j.fecha_verificada + ", con pedidos reales a la fuente" : "sin registro: la medimos antes de revisar las fuentes"));
     f.append(dl);
     if (j.medida) { const a = nodo("button", "principal abrir", "Ver " + B[j.medida].c.nombre.replace(/ \(.*\)/, "") + " mes a mes"); a.onclick = () => ir(j.medida); f.append(a); }
   }
@@ -846,11 +846,11 @@ const DATA = /*__DATA__*/null;
     el.append(nodo("p", "rol", nombre + ", " + rol));
     el.append(nodo("h3", "", sr));
     const l1 = nodo("p", "linea"); l1.append(nodo("span", "marca medido", "medido"));
-    if (c.tipo === "caso") l1.append("Brecha al mes 1: entre " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) + " puntos, según la base que se use. IC 95% por bloques de 5 km de la segunda: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ".");
-    else l1.append("Brecha al mes 1: " + pts(v.brecha) + " puntos. IC 95% por bloques de 5 km: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + (v.ic_bajo_bloque < 0 && v.ic_alto_bloque > 0 ? ". El intervalo incluye el cero." : "."));
+    if (c.tipo === "caso") l1.append("Brecha al mes 1: entre " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) + " puntos, según la base que se use. Intervalo de 95% por bloques de 5 km de la segunda: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ".");
+    else l1.append("Brecha al mes 1: " + pts(v.brecha) + " puntos. Intervalo de 95% por bloques de 5 km: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + (v.ic_bajo_bloque < 0 && v.ic_alto_bloque > 0 ? ". El intervalo incluye el cero." : "."));
     el.append(l1);
     const l2 = nodo("p", "linea aparte"); l2.append(nodo("span", "marca dato", "dato"));
-    l2.append(fmt(v.n_cercanos, 0) + " eventos cercanos y " + fmt(v.n_controles, 0) + " de control. Regla fijada antes de ver estos datos.");
+    l2.append(fmt(v.n_cercanos, 0) + " eventos cercanos y " + fmt(v.n_controles, 0) + " de control. Regla escrita antes de ver el resultado.");
     el.append(l2);
     if (c.tipo !== "caso" && v.mes0_es) {
       const l3 = nodo("p", "linea aparte"); l3.append(nodo("span", "marca supuesto", "supuesto"));
@@ -868,7 +868,7 @@ const DATA = /*__DATA__*/null;
     el.append(ot);
     $("titulo-h").textContent = nombre;
     $("titulo-p").textContent = "Un hilo por pozo, mes a mes. Arrastrá para girar, rueda para acercar.";
-    $("nota-suma").textContent = c.id === "vaca_muerta" ? "Suma de los " + fmt(b.M.n, 0) + " pozos shale con ubicación." : "Suma de los " + fmt(b.M.n, 0) + " pozos que entran al estudio (los padres y los hijos de sus eventos): no es toda la producción del estado.";
+    $("nota-suma").textContent = c.id === "vaca_muerta" ? "Suma de los " + fmt(b.M.n, 0) + " pozos no convencionales con ubicación." : "Suma de los " + fmt(b.M.n, 0) + " pozos que entran al estudio (los padres y los hijos de sus eventos): no es toda la producción del estado.";
     $("cursor").max = b.ult;
   }
 
@@ -943,7 +943,7 @@ const DATA = /*__DATA__*/null;
     f.append(cerrarBoton());
     f.append(nodo("h3", "", b.c.nombre));
     const v = b.c.veredicto;
-    f.append(nodo("p", "sub", "Este navegador no abre WebGL2, así que no hay repetición mes a mes. Brecha al mes 1: " + (b.c.tipo === "caso" ? "entre " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) : pts(v.brecha)) + " puntos (IC 95% por bloques de 5 km: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")."));
+    f.append(nodo("p", "sub", "Este navegador no abre WebGL2, así que no hay repetición mes a mes. Brecha al mes 1: " + (b.c.tipo === "caso" ? "entre " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) : pts(v.brecha)) + " puntos (intervalo de 95% por bloques de 5 km: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")."));
   }
   $("volver").onclick = () => salir();
   window.addEventListener("keydown", e => {
@@ -1029,13 +1029,13 @@ const DATA = /*__DATA__*/null;
   window.addEventListener("resize", () => { medir(); for (const k in grupos) muestra(grupos[k].c, k); });
 
   S.promesa = (async () => {
-    if (typeof DecompressionStream === "undefined") { $("autov").textContent = "autoverificación: este navegador no abre los datos comprimidos"; S.webgl = false; $("sin-webgl").hidden = false; return; }
+    if (typeof DecompressionStream === "undefined") { $("autov").textContent = "verificación de cifras: este navegador no abre los datos comprimidos"; S.webgl = false; $("sin-webgl").hidden = false; return; }
     for (const id of IDS) await abrirCuenca(B[id]);
     S.listo = true; sucio = true;
     const r = autoverificar();
     window.__globo.autoverificacion = r;
     const el = $("autov"), bien = r.ok === r.total;
-    el.textContent = "autoverificación " + r.ok + "/" + r.total; el.className = bien ? "ok" : "mal";
+    el.textContent = "cifras comprobadas " + r.ok + "/" + r.total; el.className = bien ? "ok" : "mal";
     $("aviso").hidden = bien;
   })();
   S.promesa.then(() => {
@@ -1044,7 +1044,7 @@ const DATA = /*__DATA__*/null;
     const hs = /jur=([a-z_]+)/.exec(location.hash);
     if (hs && JUR.has(hs[1])) seleccionar(hs[1], true);
   });
-  S.promesa.catch(e => { console.error(e); $("autov").textContent = "autoverificación: error al abrir los datos"; });
+  S.promesa.catch(e => { console.error(e); $("autov").textContent = "verificación de cifras: error al abrir los datos"; });
   let miniT = 0;
   const cuadroMini = () => { if (S.cuenca && S.v >= 1 && ++miniT % 30 === 1) ponerMini(); requestAnimationFrame(cuadroMini); };
   requestAnimationFrame(cuadroMini);

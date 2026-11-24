@@ -36,6 +36,8 @@ El contrato:
    barra de tiempo) pasa a los tokens del sistema Horizonte, y una frase del titular corrige qué son los controles de
    la comparación. Cambia solo el chrome (el bloque `<style>`) y esa frase; el texto visible conserva sus cifras, los
    datos no cambian, y la huella del archivo de esa página se rehízo solo por eso.
+   Página nueva (estudio-dia-inicio): `wiki/hallazgos/dia_inicio.md` entró a la foto con sus cifras (el día de inicio como dosis, pipeline/dia_inicio.py).
+   `wiki/hallazgos/linaje.md` se rehízo en la foto solo porque suma las seis tablas de ese módulo (de 168 a 174 tablas, de 929 a 959 relaciones).
    Página nueva (espera): `site/espera.html` entró a la foto con sus cifras; las nuevas son los supuestos de la regla de plata (pipeline/espera.py).
    Otra excepción declarada (espera-claims): el control de `site/espera.html` se describe por la distancia ("a 2 a 5 km de
    un pozo nuevo") y no por la edad (revisión independiente, F1); entran el 2 y el 5 de esa distancia, que ya están en el
@@ -43,10 +45,21 @@ El contrato:
    Página del globo sobre el sistema v2 (`ui/globo-horizonte`): `site/globo.html` recibe la hoja de estilo del sistema, así que cambian
    los números que están dentro del archivo (tamaños de letra y colores de la base) y su huella se rehízo solo por eso. El texto visible
    y sus cifras no cambian.
+   Otra excepción declarada (copy/auditoria-lenguaje): `site/mundo.html` y el README escriben con signo negativo el intervalo del mes 1
+   ("-30,0 a -17,0" de la brecha de -23,0) y el cierre del mes 6 ("-2,1 y -4,8"), como el informe y el tablero (auditoría de la
+   historia, ítem 9). Cada cifra pasa de su valor sin signo a su valor con signo; no entra ninguna cifra nueva en el repositorio. La clave
+   de `site/mundo.html` se rehízo solo por eso.
    Otra excepción declarada (copy/auditoria-honestidad): `site/informe.html` suma la cota superior y la brecha previa a la fractura
    bajo el -23,0 de la ficha ("19 puntos menos" sin ella, y el mes 1 de la nota); `site/globo.html` suma que la brecha de Colorado al
    mes 6 no se cierra del todo (-5,9, que ya está en wiki/hallazgos/replicacion.md). Entran un "1" y dos "19" en informe, y un "-5,9" y un "6" en globo; ninguna es una cifra
    nueva en el repositorio. La clave de cada página se rehízo solo por eso.
+   Otra excepción declarada (copy/claridad-1-terminos): un término por cosa en todo el sitio ("pozos vecinos", "subida del corte de agua",
+   "La cuenca mes a mes", "Vaca Muerta en 3D"). `site/globo.html` llama "Vaca Muerta en 3D" a la página que antes llamaba "el mundo":
+   entra un "3" en el texto visible, que ya está en el repositorio (nombre de esa página). En `site/replay.html` la leyenda del gráfico
+   de rosas alinea a la derecha el texto "con subida del corte de agua", más largo que "con salto de agua": salen los desplazamientos
+   de la leyenda vieja y entran los de la nueva, solo en el guion; el texto visible conserva sus cifras. En `site/espera.html` la etiqueta
+   del gráfico "pozos vecinos" va en dos renglones (el margen derecho del gráfico no alcanza para uno): entran las posiciones del segundo
+   renglón, solo en el guion. La clave de cada página se rehízo solo por eso.
 
 Para rehacer la foto (solo si cambia la base): `python tests/test_deslop_numeros.py --congelar <ref-git>`.
 """
@@ -132,9 +145,9 @@ def datos_de(html: str) -> str:
 
 
 def historia_de(ruta: str, texto: str) -> str:
-    """Lo que la historia cuenta: el artículo de apertura del sitio o lo que va antes del bloque en inglés del README."""
+    """Lo que la historia cuenta: el artículo de apertura del sitio o lo que va antes de "Mirá esto primero" en el README (el abstract en inglés, el Resumen y las seis preguntas)."""
     if ruta == "README.md":
-        return texto[: texto.index("## Result\n")]
+        return texto[: texto.index("## Mirá esto primero")]
     return visible(texto[texto.index('<article class="historia"') : texto.index('<div class="tablero"')])
 
 

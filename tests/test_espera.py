@@ -72,7 +72,7 @@ def test_dinero_fuera_de_rango(args):
 
 def test_frase_texto_exacto():
     esperada = ("Con USD 60 por barril, 10% anual y 12 meses de espera, esperar costó entre USD 35 y 62 "
-                "millones: cota superior, supuesto, no medición.")
+                "millones. El extremo alto es un máximo; es un supuesto, no una medición.")
     assert espera.frase(6374450.54, 11445599.76, 60, 10, 12) == esperada
 
 
@@ -139,7 +139,7 @@ def test_banda_svg_cierra_y_no_sale_del_cuadro():
     for _, y in puntos:
         assert 0 <= float(y) <= 60
     assert 'class="banda"' in svg and 'role="img"' in svg
-    assert 'aria-label="brecha entre los vecinos y el control, mes a mes"' in svg
+    assert 'aria-label="brecha entre los pozos vecinos y el control, mes a mes"' in svg
     assert 'fill="var(--lutita)"' in svg and 'stroke="var(--orilla)"' in svg
     assert 'vector-effect="non-scaling-stroke"' in svg
     assert espera.banda_svg([]) == ""

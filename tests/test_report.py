@@ -47,16 +47,9 @@ def test_titulares_eje_y_reproduccion(copia, tmp_path):
     assert report.fmt(r["eventos"]) in cab
     assert report.fmt(r["diferido_bbl"] / 1e6, 1) + " M" in cab
     assert f"{len(dq['checks'])}</span>" in cab and f"{dq['bloqueantes_fallidos']} bloqueantes fallidos" in cab
-    # el eje sale de mart_anisotropia_area, fila Cuenca
-    e = datos["eje"]
-    assert e is not None
-    assert f"{report.fmt(e['eje_grados'])} grados" in html
-    assert f"IC 95% de {report.fmt(e['ic_bajo'])} a {report.fmt(e['ic_alto'])}" in html
-    if datos.get("eje_parada"):  # regla de parada cumplida: el eje se ve como retirado, sin p ni lectura E-O
-        assert "Eje de mayor merma: retirado (regla de parada)" in html
-        assert "p de permutación" not in html and "consistente con E-O" not in html
-    else:
-        assert f"p de permutación {report.fmt(e['p_perm'], 3)}" in html
+    # el eje retirado ya no tiene tarjeta propia: sus cifras viven en "Ver los números" de la historia (texto de la plantilla)
+    assert datos["eje"] is not None
+    assert 'id="eje"' not in html and 'class="eje-barra"' not in html and "p de permutación" not in html
     # reproducir
     assert 'id="reproducir"' in html and "Cómo reproducir" in html
     assert "uv sync" in html and "pipeline.run_all" in html and "uv run pytest" in html
@@ -68,26 +61,6 @@ def test_titulares_eje_y_reproduccion(copia, tmp_path):
     assert not re.search("[–—]", open(report.__file__).read())
     # sin red: Chart.js va dentro del archivo
     assert "cdnjs" not in html and "<script src=" not in html
-
-
-@needs_wh
-def test_modelo_de_costo_frente_a_la_media_solo_si_existe_el_mart(copia, tmp_path):
-    con = duckdb.connect(str(copia))
-    try:
-        con.execute("drop table if exists mart_costo_cv")
-        _, sin = pagina(con, tmp_path, "sin.html")
-        con.execute("create or replace table mart_costo_cv as select * from (values "
-                    "('modelo', -0.03), ('media_entrenamiento', 0.0), ('media_area', -0.03), ('sin_angulo', -0.04)) t(modelo, r2)")
-        _, peor = pagina(con, tmp_path, "peor.html")
-        con.execute("create or replace table mart_costo_cv as select * from (values "
-                    "('modelo', 0.12), ('media_entrenamiento', 0.0), ('media_area', -0.03), ('sin_angulo', 0.1)) t(modelo, r2)")
-        _, mejor = pagina(con, tmp_path, "mejor.html")
-        con.execute("drop table mart_costo_cv")
-    finally:
-        con.close()
-    assert "modelo de costo" not in texto_visible(sin).split('id="eje"')[1].split("</div>")[0]
-    assert "El modelo de costo no supera a la media del área fuera de muestra (R² -0,03 contra -0,03)" in peor
-    assert "El modelo de costo supera a la media del área fuera de muestra (R² 0,12 contra -0,03)" in mejor
 
 
 @needs_wh
@@ -113,24 +86,8 @@ def test_pagina_con_marts_a_mano_sobre_warehouse_chico(warehouse, tmp_path):  # 
                 "('media_area', -0.03), ('sin_angulo', -0.16)) t(modelo, r2)")
     datos, html = pagina(con, tmp_path)
     visible = texto_visible(html)
-    assert "Eje de mayor merma en la cuenca" in visible and "93 grados" in visible
-    assert "El modelo de costo no supera a la media del área fuera de muestra (R² -0,15 contra -0,03)" in visible
+    assert 'id="eje"' not in html and "p de permutación" not in visible   # sin tarjeta propia del eje
     assert 'id="reproducir"' in html and not re.search("[–—]", visible)
-
-
-def test_barra_eje_marca_el_shmax_publicado():
-    eje = {"eje_grados": 93.0, "ic_bajo": 70.0, "ic_alto": 122.0, "shmax": 67.5}
-    svg = report.barra_eje(eje)
-    assert 'class="shmax"' in svg and "SHmax 67,5" in svg
-    assert 'class="shmax"' not in report.barra_eje(dict(eje, shmax=None))
-    # con la regla de parada cumplida el eje se lee retirado, sin p ni lectura este-oeste
-    eje_p = {"eje_grados": 93.0, "ic_bajo": 70.0, "ic_alto": 123.0, "p_perm": 0.036, "shmax": 67.5, "n": 1751,
-             "cortes": {"sin_evidencia": 6, "total": 13}}
-    con_parada = report.bloque_eje({"eje": eje_p, "eje_parada": {"cumplida": True}})
-    assert "Eje de mayor merma: retirado (regla de parada)" in con_parada
-    assert "93 grados" in con_parada and "p de permutación" not in con_parada and "consistente con E-O" not in con_parada
-    sin_parada = report.bloque_eje({"eje": eje_p})
-    assert "p de permutación 0,036" in sin_parada and "consistente con E-O" in sin_parada
 
 
 def test_kpis_interferencia_diferido_por_evento_y_rango_del_mes_1():
@@ -138,6 +95,43 @@ def test_kpis_interferencia_diferido_por_evento_y_rango_del_mes_1():
         "eventos": 10, "diferido_bbl": 1000.0, "diferido_ypf_bbl": 800.0, "eventos_ypf": 6,
         "brecha_mes_1": -0.229, "brecha_mes_1_neta": -0.192, "brecha_mes_6": -0.02}}}
     html = report.kpis_interferencia(datos)
-    assert "-19 a -23" in html
-    assert "133" in html and "50 por evento (4 eventos)" in html   # 800/6 y 200/4, no la parte del total
+    assert "-19 a -23" in html and "bbl diferidos" not in html
+    cuenta = report.diferido_cuenta(datos)
+    assert "133 barriles por fractura (6 eventos)" in cuenta and "50 por fractura (4 eventos)" in cuenta   # 800/6 y 200/4, no la parte del total
+    assert "Por evento" in cuenta and "Por padre" in cuenta and "Total de la cuenca" in cuenta
 
+
+
+def test_prueba_abierta_sigue_el_estado_de_la_pagina_prospectiva(tmp_path):
+    pagina_p = tmp_path / "prospectiva.md"
+    pagina_p.write_text("## Estado\n\n- **Pendiente.** El warehouse llega a 2026-09.\n", encoding="utf-8")
+    assert report.estado_prospectiva(pagina_p) == {"estado": "pendiente"}
+    assert "Hoy falta." in report.prueba_abierta(report.estado_prospectiva(pagina_p))
+    pagina_p.write_text("## Estado\n\nPuntuado con los datos hasta 2026-11.\n\n- **P1, brecha del mes 1: sostiene.** x.\n"
+                        "- **P2, cierre al mes 6: no firme.** y.\n", encoding="utf-8")
+    est = report.estado_prospectiva(pagina_p)
+    assert est == {"estado": "puntuado", "mes": "2026-11", "p1": "sostiene", "p2": "no firme"}
+    texto = report.prueba_abierta(est)
+    assert "Hoy falta" not in texto and "«sostiene»" in texto and "«no firme»" in texto and "2026-11" in texto
+    assert report.estado_prospectiva(tmp_path / "no-existe.md") is None
+    assert "Hoy falta" not in report.prueba_abierta(None)
+
+
+def test_sitio_y_readme_dicen_el_estado_de_la_prueba_prospectiva():
+    """El estado de la prueba sale de su página: el índice del sitio lo repite tal cual y el README lo dice a mano,
+    así que si la página cambia de estado (se puntúa con muestra, o vuelve a pendiente) estos textos tienen que cambiar."""
+    est = report.estado_prospectiva()
+    assert est is not None
+    sitio = (report.ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    assert report.prueba_abierta(est) in sitio
+    plantilla = report.TEMPLATE.read_text(encoding="utf-8")
+    assert "Hoy falta" not in plantilla and "<!--__PRUEBA_ABIERTA__-->" in plantilla
+    readme = (report.ROOT / "README.md").read_text(encoding="utf-8")
+    if est["estado"] == "pendiente":
+        assert "hoy está pendiente" in readme
+    else:
+        assert "hoy está pendiente" not in readme and f"con los datos hasta {est['mes']} ya se puntuó" in readme
+        if est["p1"] == est["p2"] == "sin muestra":
+            assert f"con los datos hasta {est['mes']} ya se puntuó y quedó sin muestra" in readme
+        else:  # con otro veredicto el README tiene que dejar de decir 'sin muestra' a mano
+            assert "ya se puntuó y quedó sin muestra" not in readme

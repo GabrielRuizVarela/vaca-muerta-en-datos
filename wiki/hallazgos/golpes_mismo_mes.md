@@ -6,11 +6,11 @@ Cuando se fracturan varios hijos a menos de 1 km de un padre en el mismo mes, ¿
 
 - Vaca Muerta (regla informada): **sin pérdida medible**. La pérdida de un mes de golpe con un solo hijo no se distingue de cero, así que no hay nada medible que ahorrar agrupando: el dato no decide. Un mes con un solo hijo, a + b = 12,2 días de producción de base (IC 95% -16,6 a 45,8); 728 meses de golpe aislados, de 163 pads hijo; φ = 1,14 (IC 95% 0,41 a 1,42).
 - Por qué no decide: la pérdida de un mes de golpe varía mucho de un evento a otro. En la muestra principal de Vaca Muerta el desvío es de 98,7 días contra una media de 7,2 y una mediana de 26,2.
-- Colorado (confirmatoria, misma regla): **sin pérdida medible**. La pérdida de un mes de golpe con un solo hijo no se distingue de cero, así que no hay nada medible que ahorrar agrupando: el dato no decide. Un mes con un solo hijo, a + b = 31,3 días de producción de base (IC 95% -12,7 a 69,0); 630 meses de golpe aislados, de 83 pads hijo; φ = 1,08 (IC 95% -0,74 a 1,18).
-- Las sensibilidades no cambian el veredicto. Las variantes en las que un mes con un solo hijo sí tiene una pérdida distinta de cero: Vaca Muerta, S1 (volumen): φ = 1,05 (IC 95% 0,04 a 1,20); Colorado, S1 (volumen): φ = 1,04 (IC 95% 0,87 a 1,10); Colorado, S2 (sin aislamiento): φ = 0,93 (IC 95% 0,65 a 1,03).
+- Colorado (confirmatoria, misma regla): **sin pérdida medible**. La pérdida de un mes de golpe con un solo hijo no se distingue de cero, así que no hay nada medible que ahorrar agrupando: el dato no decide. Un mes con un solo hijo, a + b = 29,4 días de producción de base (IC 95% -12,7 a 67,4); 630 meses de golpe aislados, de 83 pads hijo; φ = 1,07 (IC 95% -1,94 a 1,18).
+- Las sensibilidades no cambian el veredicto. Las variantes en las que un mes con un solo hijo sí tiene una pérdida distinta de cero: Vaca Muerta, S1 (volumen): φ = 1,05 (IC 95% 0,04 a 1,20); Colorado, S1 (volumen): φ = 1,03 (IC 95% 0,86 a 1,10); Colorado, S2 (sin aislamiento): φ = 0,93 (IC 95% 0,64 a 1,02).
 - La estimación puntual de φ va de 0,93 a 1,14 en las 6 variantes (principal, S1 y S2 de las dos cuencas): si hay una pérdida, el punto la pone casi toda en el mes de golpe y no en cada hijo. Es una estimación puntual, no un veredicto.
 - Para la unidad siguiente (matrices de costo, optimizador de calendario y backtest): con este veredicto el optimizador corre los dos casos y publica el arrepentimiento con cada uno, costo aditivo por hijo y costo fijo más costo por hijo con la estimación puntual (a = 13,9 y b = -1,7 días de base). La estimación puntual de b es negativa y su IC incluye el cero: un hijo de más no puede restarle pérdida al padre, así que esa unidad tiene que decir cómo acota b antes de usarla.
-- Agregado después de ver, sin cambiar el veredicto: contra la media de los controles en lugar de su mediana, a + b sería 28,8 días (IC 95% -0,4 a 64,5) en Vaca Muerta y 35,4 días (IC 95% -9,0 a 72,5) en Colorado. La sección «Diagnóstico» dice por qué se publica.
+- Agregado después de ver, sin cambiar el veredicto: contra la media de los controles en lugar de su mediana, a + b sería 28,8 días (IC 95% -0,4 a 64,5) en Vaca Muerta y 33,5 días (IC 95% -9,1 a 70,8) en Colorado. La sección «Diagnóstico» dice por qué se publica.
 
 ## El modelo: costo fijo del mes y costo por hijo
 
@@ -18,24 +18,24 @@ Mínimos cuadrados de la pérdida del mes de golpe P (días de producción de ba
 
 | Prueba | Estadístico | Vaca Muerta | IC 95% | Colorado | IC 95% |
 | --- | --- | ---: | ---: | ---: | ---: |
-| Principal | a: costo fijo del mes (días de base) | 13,9 | -21,1 a 58,2 | 33,8 | -17,2 a 77,8 |
-| Principal | b: costo de cada hijo (días de base) | -1,7 | -11,4 a 6,4 | -2,5 | -9,3 a 5,1 |
-| Principal | a + b: un mes con un solo hijo (días de base) | 12,2 | -16,6 a 45,8 | 31,3 | -12,7 a 69,0 |
-| Principal | φ = a / (a + b) | 1,14 | 0,41 a 1,42 | 1,08 | -0,74 a 1,18 |
-| Principal | ρ con 2 hijos (juntos sobre separados) | 0,43 | 0,29 a 0,80 | 0,46 | 0,41 a 1,37 |
-| Principal | ρ con 3 hijos (juntos sobre separados) | 0,24 | 0,05 a 0,73 | 0,28 | 0,21 a 1,49 |
-| Principal | ρ con 4 hijos (juntos sobre separados) | 0,15 | -0,07 a 0,69 | 0,19 | 0,11 a 1,55 |
-| Principal | ρ con 6 hijos (juntos sobre separados) | 0,05 | -0,19 a 0,66 | 0,10 | 0,01 a 1,61 |
-| S1, volumen | a (m3) | 2.794 | -279 a 6.314 | 931 | 357 a 1.293 |
-| S1, volumen | b (m3) | -139 | -961 a 573 | -32 | -105 a 70 |
-| S1, volumen | a + b (m3) | 2.655 | 200 a 5.354 | 899 | 399 a 1.225 |
-| S1, volumen | φ en volumen | 1,05 | 0,04 a 1,20 | 1,04 | 0,87 a 1,10 |
-| S2, sin aislamiento | a (días de base) | 8,6 | -5,5 a 23,5 | 18,1 | 5,8 a 29,3 |
-| S2, sin aislamiento | b (días de base) | 0,0 | -3,8 a 3,7 | 1,3 | -0,7 a 3,5 |
-| S2, sin aislamiento | a + b (días de base) | 8,6 | -3,2 a 20,0 | 19,4 | 9,3 a 29,6 |
-| S2, sin aislamiento | φ | 1,00 | -0,77 a 1,30 | 0,93 | 0,65 a 1,03 |
+| Principal | a: costo fijo del mes (días de base) | 13,9 | -21,1 a 58,2 | 31,6 | -18,6 a 74,3 |
+| Principal | b: costo de cada hijo (días de base) | -1,7 | -11,4 a 6,4 | -2,2 | -8,9 a 5,2 |
+| Principal | a + b: un mes con un solo hijo (días de base) | 12,2 | -16,6 a 45,8 | 29,4 | -12,7 a 67,4 |
+| Principal | φ = a / (a + b) | 1,14 | 0,41 a 1,42 | 1,07 | -1,94 a 1,18 |
+| Principal | ρ con 2 hijos (juntos sobre separados) | 0,43 | 0,29 a 0,80 | 0,46 | 0,41 a 1,97 |
+| Principal | ρ con 3 hijos (juntos sobre separados) | 0,24 | 0,05 a 0,73 | 0,28 | 0,21 a 2,29 |
+| Principal | ρ con 4 hijos (juntos sobre separados) | 0,15 | -0,07 a 0,69 | 0,20 | 0,11 a 2,45 |
+| Principal | ρ con 6 hijos (juntos sobre separados) | 0,05 | -0,19 a 0,66 | 0,11 | 0,02 a 2,62 |
+| S1, volumen | a (m3) | 2.794 | -279 a 6.314 | 918 | 345 a 1.290 |
+| S1, volumen | b (m3) | -139 | -961 a 573 | -30 | -104 a 74 |
+| S1, volumen | a + b (m3) | 2.655 | 200 a 5.354 | 889 | 381 a 1.213 |
+| S1, volumen | φ en volumen | 1,05 | 0,04 a 1,20 | 1,03 | 0,86 a 1,10 |
+| S2, sin aislamiento | a (días de base) | 8,6 | -5,5 a 23,5 | 17,6 | 5,3 a 28,3 |
+| S2, sin aislamiento | b (días de base) | 0,0 | -3,8 a 3,7 | 1,4 | -0,5 a 3,6 |
+| S2, sin aislamiento | a + b (días de base) | 8,6 | -3,2 a 20,0 | 19,0 | 8,9 a 28,6 |
+| S2, sin aislamiento | φ | 1,00 | -0,77 a 1,30 | 0,93 | 0,64 a 1,02 |
 
-Los IC son de percentiles por pads hijo (400 repeticiones). Para φ y ρ se descartan las repeticiones con a + b de cero o menos: 61 en Vaca Muerta y 50 en Colorado. Error de φ (desvío de las repeticiones) en Vaca Muerta: 0,47. S1 mide lo mismo en volumen (P por el caudal de base). S2 suma los cercanos que no están aislados y controla por los hijos a menos de 2 km de los 6 meses de antes y de después.
+Los IC son de percentiles por pads hijo (400 repeticiones). Para φ y ρ se descartan las repeticiones con a + b de cero o menos: 61 en Vaca Muerta y 52 en Colorado. Error de φ (desvío de las repeticiones) en Vaca Muerta: 0,47. S1 mide lo mismo en volumen (P por el caudal de base). S2 suma los cercanos que no están aislados y controla por los hijos a menos de 2 km de los 6 meses de antes y de después.
 
 ## Pérdida por cantidad de hijos en el mes
 
@@ -69,22 +69,22 @@ El veredicto de Vaca Muerta no es «agrupar ahorra», así que no hay ahorro que
 
 ## Diagnóstico (agregado después de ver; no cambia el veredicto)
 
-La regla mide la pérdida contra la mediana del índice de los controles, mes a mes. La pérdida de los propios controles contra esa mediana tiene media -16,6 días (IC 95% -19,6 a -13,5) en Vaca Muerta y -4,1 días (IC 95% -6,5 a -1,7) en Colorado, con mediana cerca de cero: algunos controles suben mucho y la media de los controles queda por encima de su mediana. Contra esa media, a + b sería 28,8 días (IC 95% -0,4 a 64,5) en Vaca Muerta y 35,4 días (IC 95% -9,0 a 72,5) en Colorado (el IC resta, repetición a repetición, dos remuestras independientes por pads). Se publica para que se vea cuánto pesa esa elección. Elegir la referencia después de ver sería aflojar la regla, así que el veredicto queda como está.
+La regla mide la pérdida contra la mediana del índice de los controles, mes a mes. La pérdida de los propios controles contra esa mediana tiene media -16,6 días (IC 95% -19,6 a -13,5) en Vaca Muerta y -4,1 días (IC 95% -6,5 a -1,7) en Colorado, con mediana cerca de cero: algunos controles suben mucho y la media de los controles queda por encima de su mediana. Contra esa media, a + b sería 28,8 días (IC 95% -0,4 a 64,5) en Vaca Muerta y 33,5 días (IC 95% -9,1 a 70,8) en Colorado (el IC resta, repetición a repetición, dos remuestras independientes por pads). Se publica para que se vea cuánto pesa esa elección. Elegir la referencia después de ver sería aflojar la regla, así que el veredicto queda como está.
 
 ## Colorado (confirmatoria)
 
 La misma regla, con las adaptaciones de pipeline.dias_perdidos a Colorado (padres horizontales, hijos con la fecha de inicio de FracFocus, el operador del último mes informado y un grupo de edad propio para los padres con el primer petróleo censurado). En Colorado no se había mirado ninguna pérdida con varios hijos en el mes antes de fijar la regla.
 
-- Veredicto: **sin pérdida medible**. La pérdida de un mes de golpe con un solo hijo no se distingue de cero, así que no hay nada medible que ahorrar agrupando: el dato no decide. Un mes con un solo hijo, a + b = 31,3 días de producción de base (IC 95% -12,7 a 69,0); 630 meses de golpe aislados, de 83 pads hijo; φ = 1,08 (IC 95% -0,74 a 1,18).
+- Veredicto: **sin pérdida medible**. La pérdida de un mes de golpe con un solo hijo no se distingue de cero, así que no hay nada medible que ahorrar agrupando: el dato no decide. Un mes con un solo hijo, a + b = 29,4 días de producción de base (IC 95% -12,7 a 67,4); 630 meses de golpe aislados, de 83 pads hijo; φ = 1,07 (IC 95% -1,94 a 1,18).
 
 | Hijos a menos de 1 km en el mes | Eventos | Pads hijo | k media | Pérdida del mes (días de base) | IC 95% | Por hijo | IC 95% por hijo | Recta a + b k |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 64 | 15 | 1,0 | 14,3 | -25,7 a 68,2 | 14,3 | -25,7 a 68,2 | 31,3 |
-| 2 | 37 | 11 | 2,0 | 43,9 | -43,6 a 108,1 | 22,0 | -21,8 a 54,1 | 28,7 |
-| 3 | 52 | 11 | 3,0 | 20,7 | -22,1 a 55,0 | 6,9 | -7,4 a 18,3 | 26,2 |
-| 4 | 83 | 17 | 4,0 | 44,8 | -28,1 a 95,1 | 11,2 | -7,0 a 23,8 | 23,7 |
-| 5 a 6 | 159 | 19 | 5,5 | 8,9 | -23,4 a 34,3 | 1,6 | -4,3 a 6,3 | 20,0 |
-| 7 o más | 235 | 28 | 10,1 | 11,9 | -17,4 a 51,8 | 1,2 | -1,7 a 5,1 | 8,4 |
+| 1 | 64 | 15 | 1,0 | 13,9 | -29,1 a 72,5 | 13,9 | -29,1 a 72,5 | 29,4 |
+| 2 | 37 | 11 | 2,0 | 46,2 | -41,9 a 108,9 | 23,1 | -20,9 a 54,4 | 27,3 |
+| 3 | 52 | 11 | 3,0 | 19,3 | -32,0 a 61,0 | 6,4 | -10,7 a 20,3 | 25,1 |
+| 4 | 65 | 16 | 4,0 | 6,3 | -34,7 a 47,9 | 1,6 | -8,7 a 12,0 | 23,0 |
+| 5 a 6 | 177 | 20 | 5,4 | 26,0 | -19,5 a 69,4 | 4,8 | -3,6 a 12,8 | 19,9 |
+| 7 o más | 235 | 28 | 10,1 | 12,5 | -16,4 a 51,7 | 1,2 | -1,6 a 5,1 | 9,9 |
 
 ## Regla fijada antes de correr
 
