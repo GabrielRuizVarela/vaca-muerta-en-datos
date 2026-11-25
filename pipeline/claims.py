@@ -33,7 +33,8 @@ EPS = 1e-9
 
 _PALABRAS = {"un": 1, "uno": 1, "una": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
              "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13, "catorce": 14,
-             "quince": 15, "dieciséis": 16, "dieciseis": 16, "veinte": 20}
+             "quince": 15, "dieciséis": 16, "dieciseis": 16, "veinte": 20,
+             "mitad": 50, "half": 50}  # "mitad" y "half": la mitad de una parte, en por ciento
 
 
 @dataclass(frozen=True)
@@ -404,9 +405,9 @@ def _desc_anillo_abs(con) -> float:
     return abs(_desc_anillo("brecha")(con))
 
 
-def _desc_adit(col: str, variante: str = "con_cerrados") -> Callable:
-    """Share (percent) from the additive decomposition at month 1."""
-    return lambda con: 100 * con.execute(f"select {col} from mart_descomposicion_aditiva where variante = ? and k = 1", [variante]).fetchone()[0]
+def _desc_adit(col: str, variante: str = "con_cerrados", k: int = 1) -> Callable:
+    """Share (percent) from the additive decomposition at month k (1 unless stated)."""
+    return lambda con: 100 * con.execute(f"select {col} from mart_descomposicion_aditiva where variante = ? and k = ?", [variante, k]).fetchone()[0]
 
 
 def _desc_cierres(col: str) -> Callable:
@@ -966,8 +967,6 @@ def _claims_familia() -> list[Claim]:
             _c("fam_readme_n_es@familia", R, r"[Ss]e replica en \d+ de " + N + r" cuencas", n_de, 0, almacen="familia"),
             _c("readme_q6_k@familia", R, r"Pasa fuera de Vaca Muerta\?\*\* \*Se replica en " + N + r" de \d+ cuencas", k_de, 0, almacen="familia"),
             _c("readme_q6_n@familia", R, r"Pasa fuera de Vaca Muerta\?\*\* \*Se replica en \d+ de " + N + r" cuencas", n_de, 0, almacen="familia"),
-            _c("fam_readme_k_en@familia", R, r"replicates in " + N + r" of \d+ basins", k_de, 0, almacen="familia"),
-            _c("fam_readme_n_en@familia", R, r"replicates in \d+ of " + N + r" basins", n_de, 0, almacen="familia"),
             _c("fam_readme_fila_k@familia", R, r"Replicación por cuenca \([^)]*\) \| se replica en " + N + r" de \d+ cuencas", k_de, 0, almacen="familia"),
             _c("fam_readme_fila_n@familia", R, r"Replicación por cuenca \([^)]*\) \| se replica en \d+ de " + N + r" cuencas", n_de, 0, almacen="familia")]
     V = f"from {WYOMING.tabla_veredicto} where k = 1"
@@ -2222,6 +2221,77 @@ def _claims_resumen_operador() -> list[Claim]:
         _c("resumen_mde@doc", W_RESUMEN, r"con 80% de potencia, de " + DEC + r" desvíos",
            _q("select max(mde80_holm_desvios) from mart_potencia_dosis where resultado = 'A' and modelo = 'conjunto'"), 0.006, "{:.2f}"),
     ]
+
+
+def _claims_entrada() -> list[Claim]:
+    """Las cifras de la entrada nueva (README, site/index.html, docs/resumen-operador.md y el abstract en ingles): los dias y el
+    caudal de la descomposicion (79 a 88%, cerca de la mitad) y la suba del corte de agua (13,8; 10,9; Colorado 9,0; sin YPF 7,1).
+    Mismos marts y mismas guardas de veredicto que las de descomposicion.md y causal_profundo.md."""
+    T5, T6, T7, TV = ("mart_causal_profundo_d5", "mart_causal_profundo_d6", "mart_causal_profundo_d7",
+                      "mart_causal_profundo_veredicto")
+
+    def veredicto(con, dis: str) -> str:
+        return con.execute(f"select veredicto from {TV} where diseno = '{dis}'").fetchone()[0]
+
+    def d2(con) -> float:  # D2 es la fila "todos" de D6: el mayor de los meses 0 y 1, regla fijada antes
+        return con.execute(f"select valor from {T6} where corte = 'todos' and grupo = 'todos'").fetchone()[0]
+
+    def d5(con) -> float:  # media de los meses 6 a 12; nan si D5 ya no dice "persiste"
+        return con.execute(f"select valor from {TV} where diseno = 'D5'").fetchone()[0] if veredicto(con, "D5") == "persiste" else float("nan")
+
+    def d6_sin_ypf(con) -> float:  # nan si D6 ya no dice que depende de YPF y solo de YPF
+        if veredicto(con, "D6") != "depende de un operador":
+            return float("nan")
+        malos = [r[0] for r in con.execute(f"select grupo from {T6} where corte = 'sin_operador' and not coalesce(ic_bajo > 0, false)").fetchall()]
+        return con.execute(f"select valor from {T6} where corte = 'sin_operador' and grupo = 'YPF'").fetchone()[0] if malos == ["YPF"] else float("nan")
+
+    def d7_colorado(con) -> float:  # nan si D7 ya no dice "se repite"
+        v = con.execute(f"select veredicto from {T7} where resultado = 'D7'").fetchone()[0]
+        return con.execute(f"select valor from {T7} where resultado = 'dW'").fetchone()[0] if v == "se repite" else float("nan")
+
+    def mitad(con) -> float:
+        """50 cuando los dias son entre 40 y 55% de la brecha del volumen al mes 1 en las dos variantes (cerca de la mitad); si no, la parte que se sale."""
+        partes = [_desc_adit("parte_dias", v)(con) for v in ("con_cerrados", "sin_cerrados")]
+        fuera = [p for p in partes if not 40 <= p <= 55]
+        return 50.0 if not fuera else fuera[0]
+
+    cl: list[Claim] = []
+    ES = r"entre {} y {}% de la caída"
+    # los dias del mes de la fractura: 79 (sin los meses cerrados enteros) a 88% (con ellos); un pedazo de texto por superficie
+    for sup, fichero, ant in (("readme_resumen", R, r"el mes de la fractura, "), ("readme_q1", R, r"El mes de la fractura el padre pierde días de producción: "),
+                              ("site_resumen", S, r"el mes de la fractura, "), ("site_vecino", S, r"Sí\. El mes de la fractura el padre pierde días de producción: "),
+                              ("resumen_operador", W_RESUMEN, r"El mes de la fractura, ")):
+        for lado, var, grupo in (("bajo", "sin_cerrados", ("(\\d+)", "\\d+")), ("alto", "con_cerrados", ("\\d+", "(\\d+)"))):
+            cl.append(_c(f"entrada_dias_{lado}_{sup}", fichero, ant + ES.format(*grupo), _desc_adit("parte_dias", var, 0), 0.5))
+    cl.append(_c("entrada_dias_bajo_readme_en", R, r"In the frac month, (\d+) to \d+% of the parent", _desc_adit("parte_dias", "sin_cerrados", 0), 0.5))
+    cl.append(_c("entrada_dias_alto_readme_en", R, r"In the frac month, \d+ to (\d+)% of the parent", _desc_adit("parte_dias", "con_cerrados", 0), 0.5))
+    # "cerca de la mitad" del volumen ya es caudal por dia al mes 1 (42 a 52%, las dos variantes)
+    for sup, fichero, pat in (("readme_resumen", R, r"Cerca de la (mitad) de la caída del volumen ya es menos petróleo por día"),
+                              ("site_resumen", S, r"Cerca de la (mitad) de la caída del volumen ya es menos petróleo por día"),
+                              ("resumen_operador", W_RESUMEN, r"cerca de la (mitad) ya es menos petróleo por día"),
+                              ("readme_en", R, r"about (half) of the volume drop is now lower oil per producing day"),
+                              ("caso_en", CASO, r"about (half) of the volume drop is now lower oil per producing day")):
+        cl.append(_c(f"entrada_mitad_{sup}", fichero, pat, mitad, 0))
+    # los eventos de la entrada
+    cl.append(_c("entrada_eventos_readme", R, r"en toda la cuenca: " + N + r" eventos", _eventos_cercanos))
+    cl.append(_c("entrada_eventos_site", S, r"en toda la cuenca: " + N + r" eventos", _eventos_cercanos))
+    # el corte de agua: D2 13,8 (regla fijada antes), D5 10,9 (meses 6 a 12), D6 7,1 (sin YPF), D7 9,0 (Colorado, fijado despues)
+    for sup, fichero, pat in (("readme_resumen", R, r"sube " + DEC + r" puntos porcentuales y sigue arriba en los meses 6 a 12"),
+                              ("readme_q3", R, r"el corte de agua del padre sube " + DEC + r" puntos porcentuales y en los meses 6 a 12"),
+                              ("site_resumen", S, r"sube " + DEC + r" puntos porcentuales y sigue arriba en los meses 6 a 12"),
+                              ("site_diferido", S, r"El corte de agua del padre sube " + DEC + r" puntos porcentuales y en los meses 6 a 12"),
+                              ("resumen_operador", W_RESUMEN, r"El corte de agua del padre sube " + DEC + r" puntos porcentuales y en los meses 6 a 12")):
+        cl.append(_c(f"entrada_agua_d2_{sup}", fichero, pat, d2, 0.05, "{:.1f}", tabla=T6))
+    for sup, fichero in (("readme_q3", R), ("site_diferido", S), ("resumen_operador", W_RESUMEN)):
+        cl.append(_c(f"entrada_agua_d5_{sup}", fichero, r"en los meses 6 a 12 sigue " + DEC + r" puntos arriba", d5, 0.05, "{:.1f}", tabla=T5))
+    for sup, fichero in (("readme_q3", R), ("resumen_operador", W_RESUMEN)):
+        cl.append(_c(f"entrada_agua_d6_{sup}", fichero, r"sin sus pozos da " + DEC, d6_sin_ypf, 0.05, "{:.1f}", tabla=T6))
+    cl.append(_c("entrada_agua_d7_readme_q3", R, r"Se repite en Colorado \(" + DEC + r", regla fijada después\)", d7_colorado, 0.05, "{:.1f}", tabla=T7))
+    # el abstract en ingles redondea 13,8 y 10,9 a enteros
+    for sup, fichero in (("readme_en", R), ("caso_en", CASO)):
+        cl.append(_c(f"entrada_agua_d2_{sup}", fichero, r"water cut rises about (\d+) percentage points", d2, 0.5, "{:.0f}", tabla=T6))
+        cl.append(_c(f"entrada_agua_d5_{sup}", fichero, r"stays about (\d+) points up in months 6 to 12", d5, 0.5, "{:.0f}", tabla=T5))
+    return cl
 
 
 W_MUNDO = "site/mundo.html"
@@ -3785,9 +3855,9 @@ CLAIMS: list[Claim] = [
     _c("brecha_descontada@readme", R, r"entre (\d+) y \d+ puntos menos", _pretrend_descontada("mart_placebo_pretrend")),
     _c("brecha_descontada_bis@readme", R, r"Interferencia al mes 1[^|]*\| (\d+) a \d+ puntos menos", _pretrend_descontada("mart_placebo_pretrend")),
     # La misma cifra dicha dos veces en el README (el Resumen y la primera pregunta): la primera coincidencia fija la del Resumen, estas fijan la de la pregunta.
-    _c("eventos_cercanos_q1@readme", R, r"de control a 2 a 5 km de un pozo hijo \(" + N + r" eventos\)", _eventos_cercanos),
-    _c("brecha_mes1_q1@readme", R, r"a menos de 1 km rinden entre \d+ y (\d+) puntos menos que pozos de control", _brecha_mes1),
-    _c("brecha_descontada_q1@readme", R, r"a menos de 1 km rinden entre (\d+) y \d+ puntos menos que pozos de control",
+    _c("eventos_cercanos_q1@readme", R, r"de control a 2 a 5 km \(" + N + r" eventos\)", _eventos_cercanos),
+    _c("brecha_mes1_q1@readme", R, r"Un mes después rinde entre \d+ y (\d+) puntos menos que pozos de control", _brecha_mes1),
+    _c("brecha_descontada_q1@readme", R, r"Un mes después rinde entre (\d+) y \d+ puntos menos que pozos de control",
        _pretrend_descontada("mart_placebo_pretrend")),
     _c("brecha_descontada_valor@readme", R, r"(\d+) a \d+ el valor descontado", _pretrend_descontada("mart_placebo_pretrend")),
     _c("brecha_descontada_sin_previos@readme", R, r"\d+ a (\d+) el valor descontado",
@@ -3859,6 +3929,7 @@ CLAIMS: list[Claim] = [
     *_claims_riesgo(),
     *_claims_dosis_geometria(),
     *_claims_resumen_operador(),
+    *_claims_entrada(),
     *_claims_espera(),
     *_claims_informe(),
     *_claims_mundo(),
@@ -3957,10 +4028,10 @@ CLAIMS: list[Claim] = [
     # case study (docs/caso-interferencia.md): every number of the body; the English abstract writes 2,077 and 5.8 with the
     # English separators, so those are compared as thousandths / tenths
     _c("abstract_eventos@caso", CASO, r"event study of (\d,\d+) events", lambda con: _eventos_cercanos(con) / 1000, 0.0005, "{:.3f}"),
-    _c("abstract_brecha_descontada@caso", CASO, r"yield (\d+) to \d+ percentage points less", _pretrend_descontada("mart_placebo_pretrend")),
+    _c("abstract_brecha_descontada@caso", CASO, r"(?:yield|produce) (\d+) to \d+ percentage points less", _pretrend_descontada("mart_placebo_pretrend")),
     _c("abstract_brecha_descontada_neta@caso", CASO, r"(\d+) is net of the pre-trend", _pretrend_descontada("mart_placebo_pretrend")),
-    _c("abstract_brecha_bruta@caso", CASO, r"yield \d+ to (\d+) percentage points less", _brecha_mes1),
-    _c("abstract_brecha_bruta_parentesis@caso", CASO, r"\((\d+) is a raw upper bound", _brecha_mes1),
+    _c("abstract_brecha_bruta@caso", CASO, r"(?:yield|produce) \d+ to (\d+) percentage points less", _brecha_mes1),
+    _c("abstract_brecha_bruta_parentesis@caso", CASO, r"(\d+) is a raw upper bound", _brecha_mes1),
     _c("abstract_diferido_inferior@caso", CASO, r"ranges from (\d+\.\d+) to \d+\.\d+ million barrels",
        lambda con: 10 * _rango_bbl("neto_previa", "original")(con) / 1e6, 0.5, "{:.1f}"),
     _c("abstract_diferido_superior@caso", CASO, r"ranges from \d+\.\d+ to (\d+\.\d+) million barrels",
@@ -4038,6 +4109,9 @@ CLAIMS: list[Claim] = [
 
 # Numeros de README.md que son parte de una definicion y no un resultado: cada uno es una frase, no un numero suelto.
 README_DEFINICIONALES: tuple[str, ...] = (
+    r"less than 1 km away",  # el abstract en ingles: la definicion del padre
+    r"under 5 points",
+    r"months 6 to 12",
     r"con los datos hasta 2026-10 ya se puntuó y quedó sin muestra",  # tests/test_report.py lo ata al estado de la página de la prueba
     r"ajustado en 2023",
     r"con el ajuste de 2023",
@@ -4142,6 +4216,8 @@ RESUMEN_DEFINICIONALES: tuple[str, ...] = (
     r"intervalo del 95%",
     r"A los 6 meses",
     r"en los meses 0 a 6",
+    r"En el mes 1, cerca de la mitad",
+    r"en los meses 6 a 12",
     r"con 80% de potencia",
     r"Un efecto de 0,2",
     r"m3 de petróleo",
@@ -4150,6 +4226,9 @@ RESUMEN_DEFINICIONALES: tuple[str, ...] = (
 CASO_DEFINICIONALES: tuple[str, ...] = (
     r"2 to 5 km from a child well",
     r"deferral of months 0 to 6",
+    r"2 to 5 km away",
+    r"under 5 points",
+    r"months 6 to 12",
     r"## 1\. La pregunta",
     r"## 2\. Los datos",
     r"## 3\. El método",

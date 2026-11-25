@@ -95,15 +95,13 @@
 .cierre ul { margin: 0 0 16px; padding-left: 20px; max-width: 34em; }
 .cierre li { margin: 0 0 8px; }
 .cierre p { max-width: 34em; }
+.cierre h3 { font-size: 20px; margin: 28px 0 8px; }
 
 /* la tapa: la pregunta, una respuesta, tres cifras, las cinco palabras y dos botones, todo en la primera pantalla */
 .respuesta { font-size: 17px; line-height: 1.5; max-width: 34em; margin: 0 0 16px; font-weight: 600; }
+.respuesta--resumen { font-size: 16px; font-weight: 400; }
+.respuesta--resumen b { font-weight: 800; }
 @media (min-width: 900px) { .respuesta { font-size: 19px; } }
-.tres-cifras { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 36rem; }
-.tres-cifras li { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.tres-cifras .v { font-family: "Archivo", "Arial Narrow", system-ui, sans-serif; font-stretch: 68%; font-weight: 800; font-size: clamp(30px, 8vw, 44px); line-height: 1; font-variant-numeric: tabular-nums lining-nums; }
-.tres-cifras .l { font: 400 14px/1.35 "Archivo", "Arial Narrow", system-ui, sans-serif; }
-@media (max-width: 520px) { .tres-cifras { grid-template-columns: 1fr; gap: 14px; } }
 .botones { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 20px; }
 .boton { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; font: 600 16px/1.2 "Archivo", "Arial Narrow", system-ui, sans-serif; text-decoration: none; background: var(--tinta); color: var(--cielo); border: 2px solid var(--tinta); }
 .boton--sec { background: transparent; color: var(--tinta); }
@@ -118,11 +116,8 @@
 .como-leer { margin-top: 20px; }
 .como-leer .leyenda-sellos { margin: 8px 0 0; }
 .tapa .campo-estepa { padding-bottom: 28px; }
-/* "Qué creemos, no sabemos y cambiaría": tres columnas a 900 px o más, una en el teléfono */
+/* "Limitaciones": una columna de lectura, entre la última pregunta y "Qué sigue" */
 .resumen { min-height: 0; }
-.resumen .col-ancha { width: min(72rem, 100% - 2 * var(--margen)); }
-.resumen .tres { display: grid; grid-template-columns: 1fr; gap: 8px 40px; }
-@media (min-width: 900px) { .resumen .tres { grid-template-columns: repeat(3, 1fr); } }
 .resumen h2 { font-size: 27px; margin: 24px 0 8px; }
 .resumen ul { margin: 0 0 8px; padding-left: 20px; }
 .resumen li { margin: 0 0 8px; }
@@ -274,13 +269,9 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
     <div class="campo-estepa"><div class="col">
       <h1>Vaca Muerta en datos</h1>
       <p class="apertura">Cuando se fractura un pozo nuevo junto a pozos que ya producían, ¿los que ya producían rinden menos?</p>
-      <p class="respuesta">Sí: un mes después rinden menos, a los 6 meses casi se cierra, y no probamos que la causa sea la fractura.</p>
-      <ul class="tres-cifras" aria-label="Tres cifras">
-        <li><span class="v">19 a 23</span><span class="l">puntos menos al mes 1, contra pozos de control</span></li>
-        <li><span class="v">6 meses</span><span class="l">después, la brecha casi se cierra</span></li>
-        <li><span class="v">Sin causa</span><span class="l">probada: es una huella medida</span></li>
-      </ul>
+      <p class="respuesta respuesta--resumen"><b>Resumen.</b> Medimos qué les pasa a los pozos que ya producían (los padres) cuando se fractura un pozo nuevo (el hijo) a menos de 1 km. Usamos solo el dato público mensual de la Secretaría de Energía, en toda la cuenca: 2.094 eventos. Primero, el padre deja de producir días: el mes de la fractura, entre 79 y 88% de la caída son días sin producir. Así se vería un cierre preventivo del operador. Después rinde menos por día. Un mes después de la fractura, los padres rinden entre 19 y 23 puntos menos que pozos de control a 2 a 5 km. Cerca de la mitad de la caída del volumen ya es menos petróleo por día producido. El petróleo se atrasa: a los 6 meses la brecha es de menos de 5 puntos. El agua se queda: el corte de agua del padre sube 13,8 puntos porcentuales y sigue arriba en los meses 6 a 12. La caída del petróleo es una huella medida, no una causa demostrada. La suba del agua es causal con supuestos nombrados, se repite en Colorado y en Vaca Muerta depende de los pozos de YPF. El dato mensual no separa un cierre preventivo de un daño; los datos diarios y los registros de cierres de un operador sí, y el mismo estudio corre sobre ellos en su máquina.</p>
       <p class="botones"><a class="boton" href="mundo.html#acto=2">Ver un caso en 3D</a><a class="boton boton--sec" href="informe.html">Leer el informe para un operador</a></p>
+      <p class="paper-pdf">Paper en PDF (formato de paper): <a href="../docs/paper/vaca-muerta-paper.pdf">vaca-muerta-paper.pdf</a></p>
       <dl class="cinco-palabras" aria-label="Cinco palabras">
         <dt>Hijo</dt><dd>el pozo nuevo que se fractura.</dd>
         <dt>Padre (pozo vecino)</dt><dd>un pozo que ya producía a menos de 1 km del hijo.</dd>
@@ -288,29 +279,12 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
         <dt>Puntos</dt><dd>puntos porcentuales del caudal del propio pozo antes de la fractura: de 100 a 80 es una caída de 20 puntos.</dd>
         <dt>Diferido</dt><dd>producción que el pozo entrega más tarde; no es producción perdida.</dd>
       </dl>
-      <details class="como-leer"><summary>Cómo leer esta página</summary>
-        <p>Se contesta solo con datos públicos de la Secretaría de Energía: la producción de cada pozo no convencional y la fecha de cada fractura. Solo hay producción por mes, no por día, y no hay cierres declarados. Lo que sigue son seis preguntas. Cada pregunta sale de la duda que deja la anterior.</p>
-        <p class="leyenda-sellos">Cada pregunta lleva uno o más sellos. Sostiene: el dato lo muestra. No firme: el dato no alcanza para decidir. No predice: lo probamos y no funcionó. Sin muestra: faltaron casos. Se replica: el resultado aparece también en otra cuenca.</p>
+      <details class="como-leer"><summary>Datos, método y sellos</summary>
+        <p><b>Datos.</b> Usamos solo datos públicos de la Secretaría de Energía: la producción mensual de cada pozo no convencional, la fecha de cada fractura y las coordenadas de superficie. No hay producción diaria ni cierres declarados. Un evento es un pozo padre y el mes de fractura de su pozo hijo más cercano.</p>
+        <p><b>Método.</b> Seguimos el caudal de cada pozo padre como fracción de su promedio de los 3 meses previos. Restamos la mediana de los pozos de control a la de los pozos padre, mes a mes. El intervalo de 95% se calcula por bloques de 5 km. Para las pruebas de robustez y las de otras cuencas, la regla de decisión se escribió antes del cálculo. Siguen seis preguntas: cada una sale de la duda que deja la anterior.</p>
+        <p class="leyenda-sellos">Cada pregunta lleva uno o más sellos. Sostiene: el dato lo muestra. Sostiene, con una brecha previa: los pozos padre ya rendían menos antes de la fractura, por eso damos un rango. No firme: el dato no alcanza para decidir. No predice: lo probamos y no funcionó. Sin muestra: faltaron casos. Se replica: el resultado aparece también en otra cuenca. Retirado: lo publicamos y no se confirmó. Pendiente: la prueba todavía no se puede evaluar.</p>
       </details>
       <p class="credito">Contains modified Copernicus Sentinel data 2025</p>
-    </div></div>
-  </section>
-  <section class="resumen lamina" id="creemos" data-alto="0">
-    <div class="campo-estepa"><div class="col col-ancha">
-      <div class="tres">
-        <div><h2>Qué creemos</h2>
-      <p>Que fracturar un pozo nuevo deja una huella en los padres a menos de 1 km: un mes de menos producción que a los 6 meses casi se cierra, con una forma compatible con la geometría de las ramas. Con un diseño causal, una sola cosa: el corte de agua del padre sube 13,8 puntos porcentuales; depende de los pozos de YPF, y sin ellos el dato no la separa de cero.</p></div>
-        <div><h2>Qué no sabemos</h2>
-      <p>Si la caída de petróleo es una causa. Es una huella medida contra un control (la diferencia que medimos), no una causa demostrada: con datos mensuales y declarados por las operadoras, un cierre preventivo (el operador frena el pozo padre antes de la fractura para protegerlo) se ve igual que un daño por interferencia. Tampoco sabemos si sirve para anticipar un pozo en particular, ni si vale fuera de Vaca Muerta más allá de Colorado.</p></div>
-        <div><h2>Qué lo cambiaría</h2>
-      <ul class="cambiaria">
-      <li>Producción diaria, que separaría un cierre de un golpe dentro del mes.</li>
-      <li>Cierres declarados por las operadoras, que permitirían descartar los preventivos.</li>
-      <li>Trayectorias de los hijos recientes, que hoy cubren el 39% de los de 2024 y el 25% de los de 2025.</li>
-      <li>Presión de fondo y de reservorio, y el nivel al que aterriza cada pozo: el dato público no los trae.</li>
-      <li>Distinguir un nivel de un efecto anticipado: el rango de 19 a 23 quedaría en un solo número.</li>
-      </ul></div>
-      </div>
     </div></div>
   </section>
   <section class="pregunta lamina" id="vecino" data-alto="23.1">
@@ -318,13 +292,13 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       <h2>¿Los pozos vecinos rinden menos?</h2>
       <p class="veredicto entra"><span><i class="marca marca--medio" aria-hidden="true"></i>sostiene, con una brecha previa</span></p>
     </div></div>
-    <figure class="escenario" style="--alto: 24" role="img" aria-label="La brecha mes a mes, de 3 meses antes a 6 meses después de la fractura del hijo: se abre a -23,0 en el mes 1 y casi se cierra al mes 6.">
+    <figure class="escenario" style="--alto: 24" role="img" aria-label="La brecha mes a mes, de 3 meses antes a 6 meses después de la fractura del hijo: se abre a -23,0 en el mes 1 y a los 6 meses queda en menos de 5 puntos.">
       <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path class="banda barrido" data-alto="23.1" d="__PERFIL_AREA__"/></svg>
       <span class="rotulo-suelo" style="--x: 33.33">fractura</span>
       <span class="numero n-pico" style="--x: 44.44; --y: 1.8" data-cuenta>-23,0</span>
     </figure>
     <div class="campo-estepa"><div class="col">
-      <p class="primera entra">Sí. Un mes después de fracturar el hijo, los padres a menos de 1 km rinden entre 19 y 23 puntos menos que pozos de control a 2 a 5 km de un pozo hijo.</p>
+      <p class="primera entra">Sí. El mes de la fractura el padre pierde días de producción: entre 79 y 88% de la caída son días sin producir. Un mes después rinde entre 19 y 23 puntos menos que pozos de control a 2 a 5 km. Cerca de la mitad de la caída del volumen ya es menos petróleo por día producido.</p>
       <p>Es un rango porque los padres ya rendían un poco menos que los controles antes de la fractura. El 23 es el máximo y el 19 es lo que queda al descontar esa diferencia previa.</p>
       <figure class="evento-3d">
         <a class="poster" href="mundo.html#acto=2"><img src="img/evento_3d.webp" width="740" height="320" loading="lazy" alt="Un evento en 3D: un pozo hijo, el círculo de 1 km a su alrededor y sus padres cercanos, cada uno con una barra de caudal."></a>
@@ -336,7 +310,7 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       </figure>
       <details class="numeros"><summary>Ver los números</summary>
       <figure>
-        <picture><source media="(prefers-color-scheme: dark)" srcset="img/vecino_brecha_oscuro.png"><img src="img/vecino_brecha.png" alt="Brecha de petróleo por mes desde la fractura del hijo, en puntos del índice de caudal: cae a -23,0 en el mes 1, ya era negativa antes de la fractura y casi se cierra a los 6 meses." width="350" height="250" loading="lazy"></picture>
+        <picture><source media="(prefers-color-scheme: dark)" srcset="img/vecino_brecha_oscuro.png"><img src="img/vecino_brecha.png" alt="Brecha de petróleo por mes desde la fractura del hijo, en puntos del índice de caudal: cae a -23,0 en el mes 1, ya era negativa antes de la fractura y a los 6 meses queda en menos de 5 puntos." width="350" height="250" loading="lazy"></picture>
         <picture><source media="(prefers-color-scheme: dark)" srcset="img/vecino_reparto_oscuro.png"><img src="img/vecino_reparto.png" alt="Cómo se reparte esa brecha del volumen, en puntos logarítmicos: los días producidos y el caudal por día producido caen a la vez y se recuperan a los 6 meses." width="350" height="250" loading="lazy"></picture>
         <figcaption>Brecha de petróleo por mes desde la fractura del hijo, con la descomposición en días y caudal por día.</figcaption>
       </figure>
@@ -365,12 +339,12 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       <span class="numero n-grieta recorte" style="--x: 3; --y: 9.6" data-cuenta>-2,4 a 0,5</span>
     </figure>
     <div class="campo-estepa"><div class="col">
-      <p class="primera entra">Intentamos romperlo. Con fechas de fractura falsas, corridas medio año y un año, la brecha del mes 1 va de -2,4 a 0,5 puntos y los intervalos incluyen el cero.</p>
+      <p class="primera entra">Probamos si el método produce una brecha sin causa. Con fechas de fractura falsas, corridas medio año y un año, la brecha del mes 1 va de -2,4 a 0,5 puntos y los intervalos incluyen el cero.</p>
       <p>Con las fechas mezcladas entre pozos la brecha llega a -8,1 como máximo, contra -23,0 la real. Si plantamos a propósito una caída de -17,4 puntos en datos reales, el método la encuentra (-19,5).</p>
       <details class="numeros"><summary>Ver los números</summary>
       <p>Con las fechas permutadas entre hijos del mismo año va de -8,1 a -4,9, contra -23,0 la real. Plantamos una caída de unos -17,4 puntos sobre datos reales y el estimador la devuelve como -19,5, con la brecha residual de -2,2 del mundo nulo; se cumplen 5 de las 5 reglas escritas antes de correr, y la de falsos positivos da 2 de 30 mundos (7%).</p>
-      <p>Dentro del mes, la brecha es mayor cuanto más temprano empieza la fractura: la brecha del mes 0 cambia -2,1 puntos por cada 0,1 de fracción del mes posterior al inicio de la fractura (IC 95%: -3,3 a -0,8).</p>
-      <p>Con estas pruebas la brecha no sale con cualquier fecha de fractura.</p>
+      <p>Dentro del mes, la brecha del mes 0 cambia -2,1 puntos por cada 0,1 de fracción del mes posterior al inicio de la fractura (IC 95%: -3,3 a -0,8). Esa pendiente no sobrevive a su placebo en la prueba del día de inicio, que se fijó antes de correr: pozos de control, una fecha falsa y los días sorteados la rompen, así que no la leemos como dosis.</p>
+      <p>Con fechas falsas de fractura, la brecha no se reproduce de forma consistente: una da cero y otra tiene el signo contrario.</p>
       <p class="prueba"><a href="../wiki/hallazgos/placebo.md">La prueba completa: placebo y permutación</a></p>
     </details>
       <p class="duda">Que la brecha sea real no dice cuánto cuesta: esa producción puede perderse o llegar más tarde.</p>
@@ -379,7 +353,7 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
   <section class="pregunta lamina" id="diferido" data-alto="23.1">
     <div class="campo-cielo"><div class="col">
       <h2>¿Se pierde o se atrasa?</h2>
-      <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene: casi se cierra; no está probado que vuelva todo</span></p>
+      <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene</span></p>
     </div></div>
     <figure class="escenario" style="--alto: 24" role="img" aria-label="La brecha se cierra hasta -2,1 en el mes 6; lo que se atrasa en los meses 0 a 6 va de 6,4 a 11,4 millones de barriles.">
       <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path class="banda" data-alto="23.1" d="__PERFIL_AREA__"/></svg>
@@ -388,7 +362,8 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       <span class="rotulo-suelo" style="--x: 33.33">fractura</span>
     </figure>
     <div class="campo-estepa"><div class="col">
-      <p class="primera entra">Se atrasa. A los 6 meses la brecha casi se cierra: -2,1 puntos en el mes 6 (“casi” es menos de 5 puntos, no cero).</p>
+      <p class="primera entra">Se atrasa. En el mes 6 la brecha es de -2,1 puntos: menos de 5 puntos, pero no cero. No está probado que vuelva todo.</p>
+      <p>El agua no se atrasa. El corte de agua del padre sube 13,8 puntos porcentuales y en los meses 6 a 12 sigue 10,9 puntos arriba. Es la única afirmación causal, con supuestos nombrados; en Vaca Muerta depende de los pozos de YPF.</p>
       <p>Lo que se atrasa va de 6,4 a 11,4 millones de barriles. El rango depende de cómo se cuentan los eventos que se superponen y de si se descuenta la brecha previa.</p>
       <p class="caso-real"><a href="espera.html">Barriles que llegan tarde: mirá un caso real</a><span>Cuánto produce menos un pozo vecino, cuándo lo recupera y cuánto cuesta esperarlo, con el precio que elegís vos.</span></p>
       <details class="numeros"><summary>Ver los números</summary>
@@ -418,8 +393,8 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       <span class="rotulo-suelo" style="--x: 78">a menos de 300 m</span>
     </figure>
     <div class="campo-estepa"><div class="col">
-      <p class="primera entra">La primera respuesta fue una dirección. La retiramos: la historia está en “Lo que intentamos y no funcionó”, en la pregunta siguiente.</p>
-      <p>Hoy medimos otra cosa. Con las trayectorias publicadas de las ramas, comparamos dos posiciones del padre: al costado de la rama del hijo o en su punta. Al mes 1, el del costado queda a -28,0 puntos del de la punta.</p>
+      <p class="primera entra">Con las trayectorias publicadas de las ramas, comparamos dos posiciones del pozo padre: al costado de la rama del pozo hijo o en su punta. Al mes 1, la brecha del costado contra la punta es de -28,0 puntos.</p>
+      <p>Una primera respuesta, una dirección este-oeste, se retiró: está en la pregunta siguiente.</p>
       <details class="numeros"><summary>Ver los números</summary>
       <p>El contraste de -28,0 puntos sale de 1.201 costados y 915 puntas (IC 95% por bloques de 5 km: -35,9 a -19,7). La huella además tiene alcance: la brecha del mes 1 es de -50,3 puntos a menos de 300 m entre ramas y de -1,5 de 1.000 a 2.000 m, sobre 10.173 eventos.</p>
       <p>La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el 86% de esos hijos, pero el 39% de los de 2024 y el 25% de los de 2025.</p>
@@ -439,9 +414,9 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
     <div class="campo-estepa"><div class="col">
       <p class="primera entra">La huella es real en promedio y ruidosa en cada evento, y por eso nada de lo que probamos alcanza para decidir sobre un pozo.</p>
       <div class="intentos">
-      <h3>Lo que intentamos y no funcionó</h3>
+      <h3>Resultados negativos y uno retirado</h3>
       <ul>
-      <li>Una dirección única de la caída, este-oeste: retirada. La publicamos como hallazgo y no resistió. No se distingue de la dirección del esfuerzo de la roca ni de cómo se ubican los pozos. Hoy es una descripción de los pozos, no un resultado.</li>
+      <li>Una dirección única de la caída, este-oeste: retirado. La publicamos como hallazgo y la retiramos. No se distingue de la dirección del esfuerzo de la roca ni de cómo se ubican los pozos. Hoy es una descripción de los pozos, no un resultado.</li>
       <li>Predecir el costo de cada evento: el modelo anda peor que usar el promedio de la zona.</li>
       <li>Predecir qué pozo recibe un golpe de fractura fuerte: acierta algo mejor que el azar, pero no mejora de forma segura a la tasa histórica de la zona.</li>
       <li>Ver si un trabajo más grande en el hijo (más arena o más presión) agranda la caída: con estos casos, un efecto chico pasaría inadvertido.</li>
@@ -483,11 +458,18 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       
     </div></div>
   </section>
-  <section class="cierre lamina" id="apuesta" data-alto="11.9">
-    <div class="campo-cielo"><div class="col">
-      <h2>La apuesta que sigue abierta</h2>
+  <section class="resumen lamina" id="limitaciones" data-alto="0">
+    <div class="campo-estepa"><div class="col">
+      <h2>Limitaciones</h2>
+      <p>Con un diseño causal, bajo tendencias paralelas, hay un solo resultado: el corte de agua del pozo padre sube 13,8 puntos porcentuales. Depende de los pozos de YPF; sin ellos, el dato no lo separa de cero.</p>
+      <p>No sabemos si la caída de petróleo es una causa. Es una huella medida contra un control (la diferencia que medimos), no una causa demostrada: con datos mensuales y declarados por las operadoras, un cierre preventivo (el operador frena el pozo padre antes de la fractura para protegerlo) se ve igual que un daño por interferencia. Tampoco sabemos si sirve para anticipar un pozo en particular, ni si vale fuera de Vaca Muerta más allá de Colorado.</p>
     </div></div>
-    <figure class="escenario" style="--alto: 31" role="img" aria-label="La apuesta abierta: un intervalo predicho de -28,7 a -16,8 con -22,9 en el medio, congelado el 2026-11-18 y todavía sin puntuar.">
+  </section>
+  <section class="cierre lamina" id="sigue" data-alto="11.9">
+    <div class="campo-cielo"><div class="col">
+      <h2>Qué sigue</h2>
+    </div></div>
+    <figure class="escenario" style="--alto: 31" role="img" aria-label="La prueba prospectiva: un intervalo predicho de -28,7 a -16,8 con -22,9 en el medio, congelado el 2026-11-18 y todavía sin puntuar.">
       <svg viewBox="0 0 100 31" preserveAspectRatio="none" aria-hidden="true">
         <rect class="corchete banda" data-alto="11.9" x="0.3" y="2.3" width="99.4" height="11.9"/>
         <line class="marca-prevista" x1="40" x2="100" y1="8.1" y2="8.1"/>
@@ -498,8 +480,17 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       <span class="rotulo-suelo izquierda" style="--x: 3">2026-11-18</span>
     </figure>
     <div class="campo-estepa"><div class="col">
+      <h3>Prueba prospectiva: <!--__PRUEBA_ESTADO__--></h3>
       <!--__PRUEBA_ABIERTA__-->
       <p class="prueba"><a href="../wiki/hallazgos/prospectiva.md">La prueba completa: la prueba prospectiva</a></p>
+      <h3>Qué lo resolvería</h3>
+      <ul class="cambiaria">
+      <li>Producción diaria, que separaría un cierre de un golpe dentro del mes.</li>
+      <li>Cierres declarados por las operadoras, que permitirían descartar los preventivos.</li>
+      <li>Trayectorias de los hijos recientes, que hoy cubren el 39% de los de 2024 y el 25% de los de 2025.</li>
+      <li>Presión de fondo y de reservorio, y el nivel al que aterriza cada pozo: el dato público no los trae.</li>
+      <li>Distinguir un nivel de un efecto anticipado: el rango de 19 a 23 quedaría en un solo número.</li>
+      </ul>
     </div></div>
   </section>
 </article>
@@ -588,8 +579,8 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
   <summary>Cómo lo medimos y cómo repetirlo</summary>
   <p class="sub">Todo se reconstruye desde el dato público y cada paso se puede repetir. La ingeniería y la matemática, de punta a punta: <a href="../README.md#ingeniería-y-matemática">Ingeniería y matemática</a> en el README.</p>
 <section id="reproducir">
-  <h3>Cómo reproducir</h3>
-  <p class="sub">Con <a href="https://docs.astral.sh/uv/">uv</a> instalado, desde la raíz del repositorio. Cada paso es idempotente: una corrida sin cambios en el origen no modifica nada.</p>
+  <h3>Código a pedido</h3>
+  <p class="sub">El repositorio es privado: el código se comparte a pedido. Con él, desde su raíz y con <a href="https://docs.astral.sh/uv/">uv</a> instalado, cada paso es idempotente: una corrida sin cambios en el origen no modifica nada.</p>
 <pre class="cmd"><span class="c"># dependencias</span>
 uv sync
 <span class="c"># toda la cadena, con tiempos</span>
@@ -625,7 +616,7 @@ uv run pytest -q</pre>
     <a href="replay.html">La cuenca mes a mes</a>
     <a href="../docs/caso-interferencia.md">Caso de estudio</a>
   </nav>
-  <p>Proyecto personal de Gabriel Ruiz Varela con datos públicos (<a href="http://datos.energia.gob.ar/">datos.energia.gob.ar</a>). No está afiliado ni avalado por ninguna empresa. Conversiones: 1 m³ = 6,2898 bbl; caudales por día calendario.</p>
+  <p>Proyecto personal de Gabriel Ruiz Varela con datos públicos (<a href="http://datos.energia.gob.ar/">datos.energia.gob.ar</a>). No está afiliado ni avalado por ninguna empresa. Conversiones: 1 m³ = 6,2898 bbl; caudales por día calendario. Fuentes y licencias de cada dato: <a href="../ATRIBUCION.md">ATRIBUCION.md</a>.</p>
 </footer>
 </main>
 

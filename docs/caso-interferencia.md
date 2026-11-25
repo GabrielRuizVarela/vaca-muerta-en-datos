@@ -3,7 +3,7 @@
 > **Abstract (English).** Question: when a new well is fracked, do neighbouring producing wells yield less than similar wells farther away?
 > Data: public monthly production per well and frac data from Argentina's energy secretariat; no trajectories, daily production or declared shut-ins.
 > Method: an event study of 2,094 events, near parents against control wells 2 to 5 km from a child well, with placebo, permutation and out-of-time tests.
-> Result: one month after the frac the near parents yield 19 to 23 percentage points less (23 is a raw upper bound, 19 is net of the pre-trend); the deferral of months 0 to 6 ranges from 6.4 to 11.4 million barrels.
+> Result: one month after the frac, parents produce 19 to 23 percentage points less than control wells 2 to 5 km away, and about half of the volume drop is now lower oil per producing day. After six months the oil gap is under 5 points, but the parent's water cut rises about 14 percentage points and stays about 11 points up in months 6 to 12. The oil drop is a measured footprint, not a proven cause. The 23 is a raw upper bound and the 19 is net of the pre-trend; the deferral of months 0 to 6 ranges from 6.4 to 11.4 million barrels.
 > Limits: a measured footprint, not a demonstrated cause; there is a gap before the frac, the control is not a clean zero, and the effect is real on average but noisy per event.
 
 ## 1. La pregunta

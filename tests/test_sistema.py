@@ -46,7 +46,7 @@ def test_la_portada_es_una_tapa_seis_laminas_y_un_cierre() -> None:
     lista = arti[arti.index('<ol class="seis"'): arti.index("</ol>")]
     destinos = re.findall(r'<a href="#(\w+)">', lista)
     assert destinos == ["vecino", "artefacto", "diferido", "direccion", "anticipar", "fuera"]
-    assert re.findall(r'<section class="[^"]*lamina[^"]*" id="(\w+)"', arti) == ["inicio", "creemos", *destinos, "apuesta"]   # la tapa, la respuesta en tres columnas, las seis preguntas y la apuesta abierta
+    assert re.findall(r'<section class="[^"]*lamina[^"]*" id="(\w+)"', arti) == ["inicio", *destinos, "limitaciones", "sigue"]   # la tapa, las seis preguntas, las limitaciones y qué sigue
     for d in destinos:
         seccion = re.search(rf'<section class="pregunta lamina" id="{d}"[^>]*>.*?\n  </section>', arti, re.S).group(0)
         assert seccion.count("<h2") == 1 and 'class="primera' in seccion and 'class="prueba"' in seccion

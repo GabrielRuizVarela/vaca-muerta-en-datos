@@ -18,10 +18,10 @@ def test_pagina_abre_con_la_historia_y_sigue_el_caso(warehouse, tmp_path):  # no
                 "('Cuenca', 92.9, 69.9, 122.5, 52.6, 0.022, 1734)) t(area, eje_grados, ic_bajo, ic_alto, ancho_ic, p_perm, n)")
     _, html = pagina(con, tmp_path)
     visible = texto_visible(html)
-    assert primer_h2(html) == "Qué creemos"   # la respuesta en tres columnas va arriba, antes de las seis preguntas
-    assert visible.index("Qué creemos") < visible.index("<h2>¿Los pozos vecinos rinden menos?</h2>")
+    assert primer_h2(html) == "¿Los pozos vecinos rinden menos?"   # la tapa trae el resumen; las seis preguntas siguen
+    assert "Qué creemos" not in visible
     assert visible.index("¿Los pozos vecinos rinden menos?") < visible.index("<h2>El caso: interferencia entre pozos</h2>")
-    assert visible.index("Qué lo cambiaría") < visible.index("<summary>La cuenca en cifras</summary>") < visible.index("Producción de petróleo de Vaca Muerta por operador")
+    assert visible.index("<h2>Limitaciones</h2>") < visible.index("<h2>Qué sigue</h2>") < visible.index("Qué lo resolvería") < visible.index("<summary>La cuenca en cifras</summary>") < visible.index("Producción de petróleo de Vaca Muerta por operador")
     assert re.search(r"<details class=\"glosario\"[^>]*><summary>Glosario</summary>", visible)
     assert "año en curso" in html and "67,5" in html
     # números en es-AR: formateador explícito, sin separador de miles en inglés
@@ -40,12 +40,12 @@ def test_la_historia_va_primero_y_el_caso_con_las_cifras_del_warehouse(copia, tm
         con.close()
     r = datos["interferencia"]["resumen"]
     visible = texto_visible(html)
-    assert primer_h2(html) == "Qué creemos"   # la respuesta en tres columnas va arriba, antes de las seis preguntas
-    assert visible.index("Qué creemos") < visible.index("<h2>¿Los pozos vecinos rinden menos?</h2>")
+    assert primer_h2(html) == "¿Los pozos vecinos rinden menos?"   # la tapa trae el resumen; las seis preguntas siguen
+    assert "Qué creemos" not in visible
     assert visible.index("¿Los pozos vecinos rinden menos?") < visible.index("<h2>El caso: interferencia entre pozos</h2>")
     assert f"entre {report.pts(r['brecha_mes_1_neta'], -1)} y {report.pts(r['brecha_mes_1'], -1)} puntos menos" in visible
     assert f"Son {report.fmt(r['eventos'])} eventos" in visible
-    assert "Qué lo cambiaría" in visible and "año en curso" in visible and "Glosario" in visible and "67,5" in visible
+    assert "Qué lo resolvería" in visible and "año en curso" in visible and "Glosario" in visible and "67,5" in visible
     assert "Qué no se mide" not in visible and 'id="hallazgo"' not in html and "Cómo se cuenta el diferido" in visible
     assert len(datos["interferencia"]["pretrend"]) == 7
 

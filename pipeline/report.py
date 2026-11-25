@@ -228,7 +228,7 @@ def kpis_interferencia(data: dict) -> str:
                if neta is not None else "padre cercano contra control")
     celdas = [
         (rango, "puntos al mes 1", detalle),
-        (pts(r["brecha_mes_6"]), "puntos al mes 6", "la brecha casi se cierra"),
+        (pts(r["brecha_mes_6"]), "puntos al mes 6", "la brecha es menor a 5 puntos"),
     ]
     items = "".join(f'<div class="kpi"><div class="v">{v}</div><div class="l">{l}</div><div class="d">{d}</div></div>'
                     for v, l, d in celdas)
@@ -335,11 +335,20 @@ def estado_prospectiva(pagina: Path = PAGINA_PROSPECTIVA) -> dict | None:
     return {"estado": "puntuado", "mes": mes.group(1), "p1": v1.group(1), "p2": v2.group(1)}
 
 
+def estado_palabra(est: dict | None) -> str:
+    """La palabra del título 'Prueba prospectiva: ...': sale del mismo estado que el párrafo, nunca de un texto fijo."""
+    if est is None or est["estado"] == "pendiente":
+        return "pendiente"
+    if est["p1"] == est["p2"] == "sin muestra":
+        return "sin muestra"
+    return "puntuada"
+
+
 def prueba_abierta(est: dict | None) -> str:
-    """El párrafo de la prueba prospectiva en 'Qué lo cambiaría'. El estado sale de la página de la prueba, no de un texto fijo:
+    """El párrafo de la prueba prospectiva en 'Qué sigue'. El estado sale de la página de la prueba, no de un texto fijo:
     cuando se puntúe con muestra suficiente, la frase de 'hoy falta' cambia sola en vez de quedar equivocada."""
     base = ("Una prueba sigue abierta. El 2026-11-18, con datos hasta 2026-09, escribimos una predicción: una brecha de -22,9 "
-            "puntos al mes 1 (rango -28,7 a -16,8) y el cierre al mes 6, en eventos cuyos meses siguientes todavía no estaban "
+            "puntos al mes 1 (intervalo predicho: -28,7 a -16,8) y el cierre al mes 6, en eventos cuyos meses siguientes todavía no estaban "
             "publicados. Cada publicación nueva la puntúa de nuevo. Para decidir hacen falta 100 eventos cercanos y 100 controles "
             "con el mes medido.")
     if est is None:
@@ -408,6 +417,7 @@ def render(data: dict, out: Path, banner: bool = False) -> None:
             .replace("<!--__KPIS_INTERF__-->", kpis_interferencia(data))
             .replace("<!--__FINDING_INTERF__-->", lectura_interferencia(data))
             .replace("<!--__DIFERIDO_CUENTA__-->", diferido_cuenta(data))
+            .replace("<!--__PRUEBA_ESTADO__-->", estado_palabra(estado_prospectiva()))
             .replace("<!--__PRUEBA_ABIERTA__-->", prueba_abierta(estado_prospectiva()))
             .replace("<!--__FINDING_DISENO__-->", lectura_diseno(data))
             .replace("/*__SISTEMA__*/", sistema_css())

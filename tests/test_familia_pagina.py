@@ -72,7 +72,7 @@ def test_main_sale_con_2_si_falta_un_almacen(monkeypatch, tmp_path, capsys):
 
 def test_los_claims_de_la_familia_encuentran_su_cifra_en_las_paginas_publicadas():
     fam = [c for c in claims.CLAIMS if c.id.startswith("fam_") or c.id.startswith("wy_readme_")]
-    assert len(fam) == 29
+    assert len(fam) == 27
     assert len({c.id for c in fam}) == len(fam)
     assert {c.almacen for c in fam} == {"colorado", "wyoming", "familia"}
     for c in fam:

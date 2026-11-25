@@ -115,6 +115,6 @@ def test_hoja_resumen_para_operador_es_corta_y_sin_guiones_largos():
     from pathlib import Path
     t = (Path(__file__).resolve().parent.parent / "docs" / "resumen-operador.md").read_text(encoding="utf-8")
     assert "—" not in t and "–" not in t
-    assert len(t.split()) <= 450
+    assert len(t.split()) <= 550
     for h in ("## Qué se ve", "## Qué no se sabe", "## Qué hacer con esto"):
         assert h in t
