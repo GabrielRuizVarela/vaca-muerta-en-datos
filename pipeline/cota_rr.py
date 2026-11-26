@@ -1,5 +1,9 @@
 """Cota de Rambachan y Roth (2023), magnitudes relativas, sobre una serie de eventos (porcion F).
 
+Las reglas de este modulo se citan tal como se escribieron: "este commit" es el commit en que se fijo cada una (857d434
+para la regla de abajo), y el plan que nombran (docs/plan-siguiente-nivel.md) no se publica. El SHA, la fecha y el texto
+de cada regla estan en docs/reglas-fijadas.md.
+
 REGLA FIJADA ANTES DE CALCULAR (2026-11-26, porcion F de docs/plan-siguiente-nivel.md). Este commit trae la regla, las
 constantes, el conjunto identificado, el intervalo y el veredicto. No se calculo ninguna cifra con esta cota antes de
 fijarla. Si algo resulta ambiguo al calcular, se corrige en un commit nuevo que lo diga, nunca despues de ver una cifra.

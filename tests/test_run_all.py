@@ -88,6 +88,11 @@ def test_registro_real_tiene_el_orden_documentado():
     assert nombres.index("causal_profundo") < nombres.index("causal_exposicion") < nombres.index("apilado") < nombres.index("cota_rr")
     assert nombres.index("causal_profundo_colorado") < nombres.index("causal_profundo_wyoming") < nombres.index("inferencia") < nombres.index("wiki")
     assert next(p for p in run_all.PASOS if p.nombre == "causal_profundo_wyoming").requiere == "data/wyoming/warehouse.duckdb"
+    # the basin family (inferencia), the replication pages (wiki) and the globe read mart_replicacion_wyoming: build it before them
+    assert nombres.index("causal_profundo_wyoming") < nombres.index("replicacion_wyoming") < nombres.index("inferencia")
+    wy = next(p for p in run_all.PASOS if p.nombre == "replicacion_wyoming")
+    assert (wy.modulo, wy.args, wy.requiere) == ("pipeline.replicacion", ("--cuenca", "wyoming"), "data/wyoming/warehouse.duckdb")
+    assert next(p for p in run_all.PASOS if p.nombre == "globo").requiere == "data/wyoming/warehouse.duckdb"
 
 
 def test_pasos_de_colorado_son_opcionales_y_estan_en_la_lista(capsys, tmp_path, monkeypatch):
@@ -102,7 +107,13 @@ def test_pasos_de_colorado_son_opcionales_y_estan_en_la_lista(capsys, tmp_path, 
     for n in ("replicacion", "dia_inicio_colorado", "dias_perdidos_colorado", "golpes_mismo_mes_colorado", "golpes_mismo_padre_colorado"):
         p = next(p for p in run_all.PASOS if p.nombre == n)
         assert not p.solo_con_colorado and p.requiere == "data/colorado/warehouse.duckdb"
-    con_flag = [p.nombre for p in run_all.seleccionar(run_all.PASOS, con_colorado=True)]
+    # the globe reads both basins: without Wyoming's warehouse it is left out instead of crashing at the end of the chain
+    fuera: dict[str, str] = {}
+    assert "globo" not in [p.nombre for p in run_all.seleccionar(run_all.PASOS, con_colorado=True, fuera=fuera)]
+    assert fuera["globo"] == "falta data/wyoming/warehouse.duckdb"
+    (tmp_path / "data" / "wyoming").mkdir(parents=True)
+    (tmp_path / "data" / "wyoming" / "warehouse.duckdb").write_text("")
+    con_flag =[p.nombre for p in run_all.seleccionar(run_all.PASOS, con_colorado=True)]
     assert con_flag.index("colorado_ingest") < con_flag.index("colorado_build") < con_flag.index("causal_profundo_colorado") < con_flag.index("replicacion") < con_flag.index("wiki")
     assert con_flag.index("colorado_build") < con_flag.index("dia_inicio_colorado") < con_flag.index("globo")
     assert con_flag.index("dia_inicio") < con_flag.index("dia_inicio_colorado") < con_flag.index("wiki")

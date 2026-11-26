@@ -63,7 +63,8 @@ def test_publicar_sitio_builds_tree(tmp_path):
     assert list(out.rglob("revision-independiente.*")) == []
     for internal in ("plan-nueva-entrada.*", "plan-siguiente-nivel.*", "fable-base-2026-11-26.*",
                      "fable-factual-verificacion-2026-11-26.*", "auditoria-P-2026-11-26.*", "fable-P-2026-11-26.*",
-                     "ronda1-2026-11-26.*", "fable-R1-2026-11-26.*", "ronda2-2026-11-26.*", "fable-R2-2026-11-26.*"):
+                     "ronda1-2026-11-26.*", "fable-R1-2026-11-26.*", "ronda2-2026-11-26.*", "fable-R2-2026-11-26.*",
+                     "fable-final-2026-11-26.*"):
         assert list(out.rglob(internal)) == [], internal
     bad = []
     for p in sorted(out.rglob("*.html")):

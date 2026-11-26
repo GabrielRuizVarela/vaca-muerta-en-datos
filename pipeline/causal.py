@@ -1171,7 +1171,7 @@ def pagina_causal(con) -> str:
           "sobre cero (su IC lo excluye); D2 no mide si su propia suba persiste.",
           "- Qué es nuevo: que el padre responda a la fractura de un hijo cercano ya lo trata como señal de interferencia la "
           "literatura de golpes de fractura (frac hits) de Vaca Muerta y de cuencas de Estados Unidos (referencias en "
-          "`docs/revision-independiente.md`). Min y coautores, \"Data-driven Analysis for Causality of Parent-child "
+          "[literatura.md](literatura.md)). Min y coautores, \"Data-driven Analysis for Causality of Parent-child "
           "Interactions in the Bakken\" (URTeC), tienen causalidad en el título; de ese trabajo leímos el resumen y una nota "
           "de JPT, que no describen el diseño ([literatura.md](literatura.md)). Lo que agrega este trabajo, hasta donde "
           "leímos, es el diseño sobre dato mensual público de toda la cuenca, no el hecho físico.",

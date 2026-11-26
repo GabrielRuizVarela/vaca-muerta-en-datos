@@ -2,10 +2,12 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PAPER_MD="$ROOT/docs/paper/paper.md"
+# The page sits next to paper.md so its relative links resolve; it is an intermediate and is removed on exit.
 PAGE_HTML="$ROOT/docs/paper/vaca-muerta-paper.html"
-OUT_PDF="$ROOT/docs/paper/vaca-muerta-paper.pdf"
+# Optional first argument: where to write the PDF (the tests write to a temporary folder, not over the tracked PDF).
+OUT_PDF="${1:-$ROOT/docs/paper/vaca-muerta-paper.pdf}"
 BODY_HTML="$(mktemp)"
-trap 'rm -f "$BODY_HTML"' EXIT
+trap 'rm -f "$BODY_HTML" "$PAGE_HTML"' EXIT
 if ! command -v npx >/dev/null 2>&1; then
   echo "build_paper_pdf: npx no encontrado. Instale Node para continuar." >&2
   exit 2
@@ -16,7 +18,7 @@ if ! command -v google-chrome >/dev/null 2>&1; then
 fi
 npx -y marked@15.0.12 -i "$PAPER_MD" -o "$BODY_HTML"
 BODY_INNER="$(mktemp)"
-trap 'rm -f "$BODY_HTML" "$BODY_INNER"' EXIT
+trap 'rm -f "$BODY_HTML" "$BODY_INNER" "$PAGE_HTML"' EXIT
 if grep -qi "<body" "$BODY_HTML"; then
   sed -n '/<body[^>]*>/,/<\/body>/p' "$BODY_HTML" | sed '1s/.*<body[^>]*>//; $s|</body>.*||' > "$BODY_INNER"
 else

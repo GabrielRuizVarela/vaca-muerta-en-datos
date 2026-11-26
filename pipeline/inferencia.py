@@ -2,6 +2,10 @@
 
 Se corre al final de los pasos causales:  uv run python -m pipeline.inferencia
 
+Las reglas de este modulo se citan tal como se escribieron: "este commit" es el commit en que se fijo cada una (857d434
+para la regla de abajo), y el plan que nombran (docs/plan-siguiente-nivel.md) no se publica. El SHA, la fecha y el texto
+de cada regla estan en docs/reglas-fijadas.md.
+
 REGLA FIJADA ANTES DE CALCULAR (2026-11-26, porcion I de docs/plan-siguiente-nivel.md). Este commit trae la regla, las
 constantes, la familia, Holm y los veredictos; no se calculo ninguna cifra con otra escala de bloque, ninguna permutacion y
 ningun p. Si algo resulta ambiguo al construirlo, se corrige en un commit nuevo que lo diga, nunca despues de ver una cifra.
@@ -228,6 +232,8 @@ from pipeline.ingest import DATA, ROOT
 
 COMMIT_REGLA = "857d434"
 COMMIT_REGLA_DOCSTRING = "f72c10c"
+COMMIT_ACLARACION_1 = "88a9168"    # puntos abiertos de la regla, antes de calcular ninguna cifra
+COMMIT_ACLARACION_2 = "eb1c51b"    # D11c entra en Holm (k = 16), despues de la primera corrida
 COMMIT_ACLARACION_4 = "052ee98"    # I5 (permutacion por pad padre): regla antes de calcular
 COMMIT_ACLARACION_3 = "19415b3"    # I4 y la fila de D3 en Holm: regla antes de calcular
 PAGINA = ROOT / "wiki" / "hallazgos" / "inferencia.md"
@@ -554,8 +560,9 @@ def pagina(con) -> str:
     desc = con.execute("select count(*), sum(excluye_cero::int), sum(rechaza::int) from mart_inferencia_holm "
                        "where familia = 'descomposicion'").fetchone()
     L = ["# Inferencia: escala de los bloques, permutación de D2 y Holm", "",
-         f"Regla fijada en el commit {COMMIT_REGLA} (y {COMMIT_REGLA_DOCSTRING}, que solo cambia el docstring); las aclaraciones "
-         "que hubo están en un commit aparte (\"Regla I: aclaración antes de calcular\"), hecho antes de calcular ninguna cifra. "
+         f"Regla fijada en el commit {COMMIT_REGLA} (y {COMMIT_REGLA_DOCSTRING}, que solo cambia el docstring). La primera "
+         f"aclaración se fijó en {COMMIT_ACLARACION_1}, antes de calcular ninguna cifra; la segunda, que suma la fila D11c a la familia "
+         f"de Holm, en {COMMIT_ACLARACION_2}, después de la primera corrida y cuando ya se conocían las cifras de D11. "
          f"La permutación dentro de las celdas (I4) y la fila de D3 en la familia de Holm se fijaron en {COMMIT_ACLARACION_3}, antes de "
          "calcular ninguna cifra de I4, y después de ver las de I2; la fila de D3 se fijó después de ver el p de D3 con el volumen "
          "de agua del mes, cuando el valor y el IC de dA_pd ya eran cifras publicadas del veredicto de D3. "

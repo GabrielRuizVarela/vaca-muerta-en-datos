@@ -1,6 +1,6 @@
 """One command for the whole chain, with timings.
 
-  uv run python -m pipeline.run_all                  # build, carga, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, dia_inicio, carga_anual, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, potencia_dosis, robustez_operador, dias_perdidos, golpes_mismo_mes, golpes_mismo_padre, calendario_golpes, anillo, inyeccion, hijo, hijo_celdas, gas, decision, trayectorias, alcance_rama, riesgo, dosis_geometria, mecanismo, hijo_pad, causal, causal_profundo, causal_exposicion, apilado, cota_rr, [causal_profundo_colorado], [causal_profundo_wyoming], inferencia, figuras, wiki, informe, report, replay, mundo, [globo], claims
+  uv run python -m pipeline.run_all                  # build, carga, costo, robustez, [validacion], placebo, descomposicion, diferido, sincronia, bloques, dia_inicio, carga_anual, potencia, eje_controles, eje_exposicion, eje_parada, dosis, dosis_meses, dosis_pad, potencia_dosis, robustez_operador, dias_perdidos, golpes_mismo_mes, golpes_mismo_padre, calendario_golpes, anillo, inyeccion, hijo, hijo_celdas, gas, decision, trayectorias, alcance_rama, riesgo, dosis_geometria, mecanismo, hijo_pad, causal, causal_profundo, causal_exposicion, apilado, cota_rr, [causal_profundo_colorado], [causal_profundo_wyoming], [replicacion_wyoming], inferencia, figuras, wiki, informe, report, replay, mundo, [globo], claims
   uv run python -m pipeline.run_all --with-ingest    # also download first (needs the Secretaria server)
   uv run python -m pipeline.run_all --with-colorado  # also download and build the Colorado (DJ basin) warehouse and run its replication, dia_inicio, dias_perdidos, golpes_mismo_mes and golpes_mismo_padre there; opt-in, needs the network
   uv run python -m pipeline.run_all --only build,wiki
@@ -89,8 +89,11 @@ PASOS: list[Paso] = [
     Paso("colorado_build", "pipeline.colorado.build", solo_con_colorado=True),
     Paso("causal_profundo_colorado", "pipeline.causal_profundo", args=("--cuenca", "colorado"),
          requiere="data/colorado/warehouse.duckdb"),
-    # D9: the Wyoming warehouse is not built by this chain (pipeline.wyoming.build, data/wyoming/raw); without it D9 is left out
+    # Wyoming: its warehouse is not built by this chain (pipeline.wyoming.ingest and .build, data/wyoming/raw); without it D9,
+    # its replication and the globe are left out. The replication mart is read by inferencia (the basin family), wiki and globo.
     Paso("causal_profundo_wyoming", "pipeline.causal_profundo", args=("--cuenca", "wyoming"),
+         requiere="data/wyoming/warehouse.duckdb"),
+    Paso("replicacion_wyoming", "pipeline.replicacion", args=("--cuenca", "wyoming"),
          requiere="data/wyoming/warehouse.duckdb"),
     Paso("replicacion", "pipeline.replicacion", requiere="data/colorado/warehouse.duckdb"),
     Paso("dia_inicio_colorado", "pipeline.dia_inicio", args=("--cuenca", "colorado"),
@@ -109,7 +112,8 @@ PASOS: list[Paso] = [
     Paso("report", "pipeline.report"),
     Paso("replay", "pipeline.replay"),
     Paso("mundo", "pipeline.mundo"),
-    Paso("globo", "pipeline.globo", solo_con_colorado=True),   # needs the Colorado and Wyoming warehouses too
+    Paso("globo", "pipeline.globo", solo_con_colorado=True,   # needs the Colorado warehouse too, built earlier with --with-colorado
+         requiere="data/wyoming/warehouse.duckdb"),
     Paso("claims", "pipeline.claims"),
 ]
 

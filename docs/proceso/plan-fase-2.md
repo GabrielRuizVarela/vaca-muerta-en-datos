@@ -1,6 +1,7 @@
 # Fase 2: eventos, memoria que se acumula, repetición temporal y costo de interferencia
 
 Plan escrito el 2026-11-15 a partir de la fase de investigación. Lo ejecuta un orquestador que delega cada tramo.
+Es un plan histórico: describe cómo se trabajaba el 2026-11-15. El código es público desde el 2026-11-26, así que la regla «Repo privado» de abajo ya no vale.
 Datos a 2026-09. Todas las cifras de "Evidencia" salen de consultas de solo lectura sobre `data/warehouse.duckdb`
 y sobre el CSV crudo de producción; cada tramo debe reproducirlas (con tolerancia) en sus tests o en su informe.
 

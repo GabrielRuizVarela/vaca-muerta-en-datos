@@ -15,3 +15,5 @@ data/raw
 .pytest_cache/
 data/colorado/
 data/wyoming/
+# intermediate page of scripts/build_paper_pdf.sh
+docs/paper/vaca-muerta-paper.html

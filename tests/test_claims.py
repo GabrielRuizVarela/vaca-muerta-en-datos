@@ -63,6 +63,15 @@ def test_skip_sin_la_tabla_de_un_paso_opcional(tmp_path):
     assert verificar([c], raiz=tmp_path, wh=wh)[0].estado == "PASS"
 
 
+def test_skip_si_el_dato_de_otra_cuenca_no_se_armo(tmp_path):
+    _doc(tmp_path, "n = 5")
+
+    def falta(con):
+        raise claims.SinDato("sin Colorado")
+    r = verificar([Claim("s", "doc.md", r"n = (\d+)", falta, requiere_wh=False)], raiz=tmp_path)[0]
+    assert r.estado == "SKIP" and "Colorado" in r.detalle
+
+
 def test_lento_se_omite_con_rapido(tmp_path):
     _doc(tmp_path, "n = 5")
     c = Claim("l", "doc.md", r"n = (\d+)", lambda con: 5.0, requiere_wh=False, lento=True)

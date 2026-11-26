@@ -2,7 +2,7 @@
 
 Este repositorio es una copia de un solo commit: el historial de trabajo no se publica. Las cifras y los textos citan, sin embargo, el commit en que se fijó cada regla. Este archivo conserva, para cada commit citado, su fecha en UTC, su asunto, los archivos que tocó y el texto que agregó, de modo que se pueda leer la regla tal como se escribió y comprobar el orden de las fechas sin el historial. El historial completo se comparte a pedido.
 
-Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código (37 commits), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») el texto agregado se recorta a 60 líneas por archivo y 3 archivos (120 líneas para el commit de las reglas de D a J); los demás commits citados solo listan fecha, asunto y archivos, y se omiten los archivos generados (datos, wiki, sitio, PDF). La columna «primer commit posterior que toca los mismos archivos» marca un orden de fechas, no prueba cuándo se calculó cada cifra.
+Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (40 commits; 31 se citan en esta copia y 9 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF); el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea.
 
 ## `94580fd` · 2026-11-15 07:30 UTC
 
@@ -10,7 +10,7 @@ Cómo se armó: `git log` y `git show` de cada commit citado en el README, los d
 
 **Archivos:** `pipeline/checks.py`, `pipeline/sql/01_staging.sql`, `pipeline/sql/02_core.sql`, `pipeline/sql/04_interferencia.sql`, `pipeline/sql/05_eventos.sql`, `pipeline/wiki.py`, `tests/test_pipeline.py`, `tests/test_wiki.py`
 
-**Primer commit posterior que toca los mismos archivos:** `5a89cb1` · 2026-11-15 09:07 UTC · Merge pull request #2 from GabrielRuizVarela/fase2-costo
+**Primer commit posterior que toca los mismos archivos:** `04625c6` · 2026-11-15 07:47 UTC · Fase 2: atiende la revision (historial del grafo, clave del libro, avisos, TEF meses 0-1, enlaces de pad, escape)
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -20,7 +20,7 @@ Cómo se armó: `git log` y `git show` de cada commit citado en el README, los d
 
 **Archivos:** `README.md`, `docs/caso-interferencia.md`, `docs/verificacion.md`, `pipeline/hijo.py`, `wiki/hallazgos/ledger.csv`
 
-**Primer commit posterior que toca los mismos archivos:** `bd05e14` · 2026-11-15 22:18 UTC · Merge pull request #34 from GabrielRuizVarela/fase4-p5a-colorado
+**Primer commit posterior que toca los mismos archivos:** `3c81d21` · 2026-11-15 21:33 UTC · P2 hijo: modulo, marts, pagina, hipotesis, claims y pruebas
 
 Texto agregado en `README.md`:
 
@@ -46,7 +46,7 @@ Texto agregado en `docs/verificacion.md`:
 
 **Archivos:** `README.md`, `pipeline/familia.py`, `pipeline/wyoming/__init__.py`, `tests/test_familia.py`
 
-**Primer commit posterior que toca los mismos archivos:** `c832e67` · 2026-11-19 12:40 UTC · Merge pull request #65 from GabrielRuizVarela/t3/cuencas
+**Primer commit posterior que toca los mismos archivos:** `d6a6ae8` · 2026-11-19 12:29 UTC · Replicacion: main de otra cuenca escribe la pagina de esa cuenca y no la de Colorado
 
 Texto agregado en `README.md`:
 
@@ -177,7 +177,7 @@ Que NO es: WOGCC y Vaca Muerta difieren en convencion de reporte (una fila por p
 
 **Archivos:** `pipeline/mecanismo.py`
 
-**Primer commit posterior que toca los mismos archivos:** `6401c0b` · 2026-11-20 19:59 UTC · Merge pull request #88 from GabrielRuizVarela/t3/fase4-mecanismo
+**Primer commit posterior que toca los mismos archivos:** `8452211` · 2026-11-20 18:41 UTC · Mecanismo por geometría: cálculo, marts y tests de la regla fijada en bddf1e0
 
 Texto agregado en `pipeline/mecanismo.py` (primeras 60 de 135 líneas):
 
@@ -250,7 +250,7 @@ Veredicto (se aplica en este orden):
 
 **Archivos:** `pipeline/alcance_rama.py`
 
-**Primer commit posterior que toca los mismos archivos:** `9c9ede5` · 2026-11-20 20:26 UTC · Merge pull request #89 from GabrielRuizVarela/t3/fase4-alcance
+**Primer commit posterior que toca los mismos archivos:** `b582559` · 2026-11-20 18:54 UTC · Alcance y dilución entre ramas: la corrida, los marts y las pruebas
 
 Texto agregado en `pipeline/alcance_rama.py` (primeras 60 de 140 líneas):
 
@@ -323,7 +323,7 @@ H-R2, dilucion de la huella por la distancia de superficie. Sobre los mismos eve
 
 **Archivos:** `pipeline/calendario_golpes.py`
 
-**Primer commit posterior que toca los mismos archivos:** `3a14b21` · 2026-11-20 21:40 UTC · Merge pull request #90 from GabrielRuizVarela/t3/fase4-optimizador
+**Primer commit posterior que toca los mismos archivos:** `a663620` · 2026-11-20 19:48 UTC · Calendario de golpes: calculo del backtest, el optimizador y las matrices de costo, con pruebas sobre funciones puras y un panel sintetico
 
 Texto agregado en `pipeline/calendario_golpes.py` (primeras 60 de 179 líneas):
 
@@ -396,6 +396,8 @@ entrenamiento y los dos se acotan antes de usarlos)
 
 **Archivos:** `pipeline/dosis_geometria.py`
 
+**Primer commit posterior que toca los mismos archivos:** `e0d4007` · 2026-11-20 20:56 UTC · Dosis con geometría de ramas: la puerta de potencia, sus marts, la página, claims y tests
+
 Texto agregado en `pipeline/dosis_geometria.py` (primeras 60 de 114 líneas):
 
 ~~~
@@ -467,7 +469,7 @@ Paso 1, la puerta de potencia (no se lee ni se publica ningun coeficiente; solo 
 
 **Archivos:** `pipeline/riesgo.py`
 
-**Primer commit posterior que toca los mismos archivos:** `6a4e194` · 2026-11-20 22:18 UTC · Merge pull request #92 from GabrielRuizVarela/t3/fase4-riesgo
+**Primer commit posterior que toca los mismos archivos:** `b8f718f` · 2026-11-20 20:53 UTC · Riesgo de golpe fuerte: la corrida, los marts y las pruebas (la regla sigue en 4b19b90)
 
 Texto agregado en `pipeline/riesgo.py` (primeras 60 de 151 líneas):
 
@@ -540,7 +542,7 @@ Variables (columnas fijas; para el modelo principal son todas estas)
 
 **Archivos:** `README.md`, `pipeline/claims.py`, `pipeline/riesgo.py`, `pipeline/run_all.py`, `pipeline/wiki.py`, `tests/test_riesgo.py`, `tests/test_run_all.py`, `wiki/hallazgos/linaje.md`, `wiki/hallazgos/riesgo.md`, `wiki/index.md`
 
-**Primer commit posterior que toca los mismos archivos:** `7c54683` · 2026-11-21 19:39 UTC · Merge pull request #93 from GabrielRuizVarela/deslop/prosa
+**Primer commit posterior que toca los mismos archivos:** `6f2ff73` · 2026-11-21 19:06 UTC · Deslop de la prosa: quita repeticiones y relleno, congela las cifras con un test
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -558,7 +560,7 @@ Variables (columnas fijas; para el modelo principal son todas estas)
 
 **Archivos:** `docs/plan-causal.md`, `pipeline/causal.py`
 
-**Primer commit posterior que toca los mismos archivos:** `f75db62` · 2026-11-22 03:56 UTC · Merge pull request #98 from GabrielRuizVarela/t3/causal-diseno
+**Primer commit posterior que toca los mismos archivos:** `e19a93f` · 2026-11-22 02:09 UTC · Calcula D1, D1b y D2 segun la regla fijada en 8f52ff1
 
 Texto agregado en `docs/plan-causal.md` (primeras 60 de 162 líneas):
 
@@ -696,7 +698,7 @@ D1. Primera fractura a menos de 1 km y caudal del padre (principal).
 
 **Archivos:** `README.md`, `pipeline/causal.py`, `pipeline/claims.py`, `tests/fixtures/deslop_numeros_antes.json`, `wiki/hallazgos/causal.md`
 
-**Primer commit posterior que toca los mismos archivos:** `f75db62` · 2026-11-22 03:56 UTC · Merge pull request #98 from GabrielRuizVarela/t3/causal-diseno
+**Primer commit posterior que toca los mismos archivos:** `3447714` · 2026-11-22 03:52 UTC · Claims de causal profundo: 74 cifras de la pagina D3 contra sus marts; el veredicto impreso va pegado a la primera cifra
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -706,7 +708,7 @@ D1. Primera fractura a menos de 1 km y caudal del padre (principal).
 
 **Archivos:** `docs/plan-causal-profundo.md`, `pipeline/causal_profundo.py`, `tests/test_causal_profundo.py`
 
-**Primer commit posterior que toca los mismos archivos:** `9f72682` · 2026-11-22 05:21 UTC · Merge pull request #106 from GabrielRuizVarela/t3/causal-profundo
+**Primer commit posterior que toca los mismos archivos:** `b95331d` · 2026-11-22 03:35 UTC · D3: volumen de agua y de petroleo por dia, con sus placebos y marts
 
 Texto agregado en `docs/plan-causal-profundo.md` (primeras 60 de 115 líneas):
 
@@ -903,7 +905,7 @@ def test_colorado():
 
 **Archivos:** `pipeline/causal_profundo.py`
 
-**Primer commit posterior que toca los mismos archivos:** `9f72682` · 2026-11-22 05:21 UTC · Merge pull request #106 from GabrielRuizVarela/t3/causal-profundo
+**Primer commit posterior que toca los mismos archivos:** `313c34f` · 2026-11-22 04:13 UTC · D2 segun D3: la fila y el limite del README y el resumen de causal.md dicen que entra agua en los dias producidos; claims de esas frases
 
 Texto agregado en `pipeline/causal_profundo.py`:
 
@@ -933,7 +935,7 @@ Texto agregado en `pipeline/causal_profundo.py`:
 
 **Archivos:** `pipeline/causal_profundo.py`
 
-**Primer commit posterior que toca los mismos archivos:** `9f72682` · 2026-11-22 05:21 UTC · Merge pull request #106 from GabrielRuizVarela/t3/causal-profundo
+**Primer commit posterior que toca los mismos archivos:** `e5e01c9` · 2026-11-22 05:29 UTC · D5 y D6: forma en el tiempo y donde se sostiene, con sus marts
 
 Texto agregado en `pipeline/causal_profundo.py`:
 
@@ -967,7 +969,7 @@ Texto agregado en `pipeline/causal_profundo.py`:
 
 **Archivos:** `README.md`, `pipeline/causal.py`, `pipeline/causal_profundo.py`, `pipeline/claims.py`, `pipeline/linaje.py`, `tests/fixtures/deslop_numeros_antes.json`, `tests/test_calidad.py`, `tests/test_causal_profundo.py`, `wiki/hallazgos/causal.md`, `wiki/hallazgos/causal_profundo.md`, `wiki/hallazgos/linaje.md`
 
-**Primer commit posterior que toca los mismos archivos:** `cf23817` · 2026-11-22 16:27 UTC · Merge pull request #99 from GabrielRuizVarela/docs/licencia-mit
+**Primer commit posterior que toca los mismos archivos:** `9559f7a` · 2026-11-22 08:31 UTC · D7: la pagina no cae sin meses base, --cuenca solo acepta colorado y la cobertura nombra su denominador (tratados de las celdas de D2)
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -977,7 +979,7 @@ Texto agregado en `pipeline/causal_profundo.py`:
 
 **Archivos:** `README.md`, `pipeline/claims.py`, `pipeline/report.py`, `pipeline/report_template.html`, `site/index.html`, `tests/test_report.py`
 
-**Primer commit posterior que toca los mismos archivos:** `7b165b2` · 2026-11-23 04:14 UTC · Merge pull request #145 from GabrielRuizVarela/copy/ingenieria-matematica
+**Primer commit posterior que toca los mismos archivos:** `5626aa2` · 2026-11-23 04:05 UTC · revisión del lote: prueba sin muestra dicho por los mínimos, test del README ata el veredicto, sale el test del bloque de costo y el CSS muerto
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -987,7 +989,7 @@ Texto agregado en `pipeline/causal_profundo.py`:
 
 **Archivos:** `README.md`, `data/dq_report.json`, `data/manifest.json`, `docs/caso-interferencia.md`, `docs/verificacion.md`, `site/index.html`, `site/informe.html`, `site/mundo.html`, `site/replay.html`, `tests/fixtures/deslop_numeros_antes.json`, `wiki/area/agua-del-cajon.md`, `wiki/area/aguada-canepa.md`, `wiki/area/aguada-de-castro.md`, `wiki/area/aguada-de-la-arena.md` y 530 más
 
-**Primer commit posterior que toca los mismos archivos:** `a12fb67` · 2026-11-23 17:25 UTC · Merge pull request #154 from GabrielRuizVarela/copy/narracion-a1-veredictos
+**Primer commit posterior que toca los mismos archivos:** `e9d01d4` · 2026-11-23 16:48 UTC · copy: README verdict words match the closed list (sin muestra, se replica en 1 de 2 cuencas)
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -997,7 +999,7 @@ Texto agregado en `pipeline/causal_profundo.py`:
 
 **Archivos:** `docs/plan-dia-inicio.md`, `pipeline/dia_inicio.py`, `tests/test_dia_inicio.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1c3e5db` · 2026-11-24 01:21 UTC · Merge pull request #157 from GabrielRuizVarela/t3/study-a-daily-dose
+**Primer commit posterior que toca los mismos archivos:** `6629dc3` · 2026-11-23 17:33 UTC · Dia de inicio como dosis: implementacion corrida contra la regla fijada en d370e0b
 
 Texto agregado en `docs/plan-dia-inicio.md` (primeras 60 de 185 líneas):
 
@@ -1200,7 +1202,7 @@ def test_no_firme_dice_cual_condicion_falla():
 
 **Archivos:** `pipeline/claims.py`, `pipeline/dia_inicio.py`, `pipeline/linaje.py`, `pipeline/run_all.py`, `pipeline/wiki.py`, `tests/fixtures/deslop_numeros_antes.json`, `tests/test_calidad.py`, `tests/test_deslop_numeros.py`, `tests/test_dia_inicio.py`, `tests/test_run_all.py`, `wiki/hallazgos/dia_inicio.md`, `wiki/hallazgos/linaje.md`, `wiki/index.md`
 
-**Primer commit posterior que toca los mismos archivos:** `1c5542a` · 2026-11-23 17:49 UTC · Merge pull request #155 from GabrielRuizVarela/copy/narracion-a2-resumen
+**Primer commit posterior que toca los mismos archivos:** `30bae37` · 2026-11-23 17:49 UTC · Diagnostico del sorteo: la rotacion entre pads ahora es un ciclo sin puntos fijos (hallazgo del finder)
 
 Texto agregado en `pipeline/claims.py`:
 
@@ -1335,7 +1337,7 @@ Texto agregado en `pipeline/linaje.py`:
 
 **Archivos:** `docs/plan-dia-inicio.md`, `pipeline/dia_inicio.py`, `tests/fixtures/deslop_numeros_antes.json`, `wiki/hallazgos/dia_inicio.md`
 
-**Primer commit posterior que toca los mismos archivos:** `1c3e5db` · 2026-11-24 01:21 UTC · Merge pull request #157 from GabrielRuizVarela/t3/study-a-daily-dose
+**Primer commit posterior que toca los mismos archivos:** `fe46183` · 2026-11-23 18:45 UTC · Plan y pagina: registrar la correccion del sorteo sin pad propio y su alcance (revision del finder de fidelidad)
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -1345,7 +1347,7 @@ Texto agregado en `pipeline/linaje.py`:
 
 **Archivos:** `docs/paper/seccion-analisis.md`, `scripts/publicar_sitio.sh`, `tests/test_publicar_sitio.py`
 
-**Primer commit posterior que toca los mismos archivos:** `6ecc744` · 2026-11-26 07:18 UTC · Merge pull request #179 from GabrielRuizVarela/chore/excluir-docs-internos
+**Primer commit posterior que toca los mismos archivos:** `d96c255` · 2026-11-26 06:59 UTC · Sitio: no publica los planes de trabajo ni la linea base de Fable
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -1355,7 +1357,7 @@ Texto agregado en `pipeline/linaje.py`:
 
 **Archivos:** `README.md`, `docs/operador-datos-propios.md`, `docs/paper/paper.md`, `docs/paper/vaca-muerta-paper.pdf`, `docs/resumen-operador.md`, `pipeline/report_template.html`, `site/index.html`
 
-**Primer commit posterior que toca los mismos archivos:** `e60194b` · 2026-11-26 11:35 UTC · Merge pull request #187 from GabrielRuizVarela/t3/local-agua-tarjeta
+**Primer commit posterior que toca los mismos archivos:** `b80eaf8` · 2026-11-26 06:56 UTC · D9: el agua en Wyoming con la regla de f29014a
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -1373,7 +1375,7 @@ Texto agregado en `pipeline/linaje.py`:
 
 **Archivos:** `pipeline/causal_profundo.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1219ed6` · 2026-11-26 15:28 UTC · Merge pull request #193 from GabrielRuizVarela/t3/texto-O
+**Primer commit posterior que toca los mismos archivos:** `b80eaf8` · 2026-11-26 06:56 UTC · D9: el agua en Wyoming con la regla de f29014a
 
 Texto agregado en `pipeline/causal_profundo.py`:
 
@@ -1404,7 +1406,7 @@ Wyoming ya corrio (regla d4a7355, no se replico) y el corte de agua de Wyoming n
 
 **Archivos:** `pipeline/causal_profundo.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1219ed6` · 2026-11-26 15:28 UTC · Merge pull request #193 from GabrielRuizVarela/t3/texto-O
+**Primer commit posterior que toca los mismos archivos:** `5ebed5a` · 2026-11-26 10:59 UTC · P: auditoría frase por frase aplicada (rótulos de las reglas, D9 en los resúmenes y el paper, 114 y 38, Holm en el conteo de pruebas)
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -1414,7 +1416,7 @@ Wyoming ya corrio (regla d4a7355, no se replico) y el corte de agua de Wyoming n
 
 **Archivos:** `README.md`, `pipeline/causal_profundo.py`, `pipeline/claims.py`, `pipeline/linaje.py`, `tests/test_calidad.py`, `tests/test_causal_profundo.py`, `wiki/hallazgos/causal_profundo.md`, `wiki/hallazgos/linaje.md`
 
-**Primer commit posterior que toca los mismos archivos:** `d347bfd` · 2026-11-26 06:48 UTC · Merge pull request #177 from GabrielRuizVarela/t3/siguiente-nivel
+**Primer commit posterior que toca los mismos archivos:** `e5aa13d` · 2026-11-26 07:04 UTC · D9: la foto de cifras de las dos páginas que cambian y la etiqueta D9 del README como definicional
 
 Texto agregado en `README.md`:
 
@@ -1529,9 +1531,9 @@ Texto agregado en `pipeline/claims.py`:
 
 **Archivos:** `pipeline/causal_exposicion.py`, `pipeline/cota_rr.py`, `pipeline/inferencia.py`, `pipeline/stacked.py`, `pipeline/tarjeta.py`, `tests/test_cota_rr.py`, `tests/test_inferencia_regla.py`
 
-**Primer commit posterior que toca los mismos archivos:** `0a17b54` · 2026-11-26 09:43 UTC · Merge pull request #178 from GabrielRuizVarela/t3/siguiente-nivel-lead
+**Primer commit posterior que toca los mismos archivos:** `c682a63` · 2026-11-26 07:09 UTC · D12: corte de agua dentro de operador por área
 
-Texto agregado en `pipeline/causal_exposicion.py` (primeras 120 de 150 líneas):
+Texto agregado en `pipeline/causal_exposicion.py`:
 
 ~~~
 """Exposicion: golpes repetidos (D10), exposicion por rama y anillos de derrame (D11), operador por area (D12).
@@ -1654,9 +1656,39 @@ def veredicto_rama(n_cerca: int, n_lejos: int, dif_bajo: float, dif_alto: float,
         return V_RAMA_SIN_GRADIENTE
     return V_NO_FIRME
 
+
+def veredicto_anillos(n_por_anillo: dict[tuple[float, float], int], bajos: dict[tuple[float, float], float]) -> str:
+    """bajos: IC bajo de dW por anillo (los de ANILLOS_KM)."""
+    if n_por_anillo.get((2.0, 3.0), 0) < MIN_TRATADOS_BANDA:
+        return V_SIN_MUESTRA
+    lejos = [a for a in ANILLOS_KM if a[0] >= KM_LIMPIO and n_por_anillo.get(a, 0) >= MIN_TRATADOS_BANDA
+             and bajos.get(a, float("-inf")) > 0]
+    if lejos:
+        return V_ANILLOS_DERRAME.format(r=max(a[1] for a in lejos))
+    return V_ANILLOS_LIMPIOS
+
+
+def veredicto_operador_area(n_tratados: int, bajo: float, alto: float) -> str:
+    if n_tratados < MIN_TRATADOS:
+        return V_SIN_MUESTRA
+    if bajo > UMBRAL_AGUA_PP:
+        return V_D12_SOSTIENE
+    if bajo <= 0 <= alto:
+        return V_D12_COMPOSICION
+    return V_NO_FIRME
+
+
+def veredicto_fuera_de_ypf(n_tratados: int, bajo: float, alto: float) -> str:
+    if n_tratados < MIN_TRATADOS_OPERADOR:
+        return V_SIN_MUESTRA
+    if bajo > 0:
+        return V_D12_FUERA_REPITE
+    if bajo <= 0 <= alto:
+        return V_D12_FUERA_NO
+    return V_NO_FIRME
 ~~~
 
-Texto agregado en `pipeline/cota_rr.py` (primeras 120 de 121 líneas):
+Texto agregado en `pipeline/cota_rr.py`:
 
 ~~~
 """Cota de Rambachan y Roth (2023), magnitudes relativas, sobre una serie de eventos (porcion F).
@@ -1779,6 +1811,7 @@ def veredicto_rr(hay_previos: bool, mbar_quiebre: float) -> str:
         return V_RR_RESISTE
     if mbar_quiebre > 0:
         return V_RR_PARCIAL
+    return V_RR_NO
 ~~~
 
 Texto agregado en `pipeline/inferencia.py`:
@@ -1904,13 +1937,176 @@ def veredicto_escala(excluye: dict[str, dict[float, bool]], bloques: dict[float,
     return V_ESCALA_NO
 ~~~
 
+Texto agregado en `pipeline/stacked.py`:
+
+~~~
+"""Estimador apilado del petroleo (porcion E): una pila por evento con controles limpios emparejados.
+
+Se corre despues de pipeline.causal:  uv run python -m pipeline.stacked
+
+REGLA FIJADA ANTES DE CALCULAR (2026-11-26, porcion E de docs/plan-siguiente-nivel.md). Este commit trae solo la regla, las
+constantes y el veredicto; no se calculo ninguna cifra de este diseno (ni ATT, ni placebos, ni cuentas de eventos o de
+controles). Si algo resulta ambiguo al construirlo, se corrige en un commit nuevo que lo diga, nunca despues de ver una cifra.
+Regla informada en esto: se conocian las cifras de D1 (ATT(1) de -25,8 con 468 tratados; el placebo de nunca tratados con
+fecha sorteada da -8,0 con IC de -15,2 a -0,5 y tumba el diseno; M* simplificado de 0,62) y la brecha mediana publicada.
+
+Por que: D1 promedia celdas (g, edad) con controles aun no tratados de toda la cuenca, y su placebo de nunca tratados da -8,0:
+los pozos que reciben un hijo a menos de 1 km ya rendian distinto. Aca cada evento tiene su propia pila (Cengiz, Dube,
+Lindner y Zipperer, 2019) con controles cercanos, limpios en la ventana y emparejados por el nivel y la pendiente de la base.
+
+Definiciones (todo lo que no se nombra es lo de pipeline.causal: golpe, edad, base, indice, bloques):
+  * Evento: un tratado de D1 (cohortes de causal: padre i, mes g del primer golpe a KM_TRATADO, edad de EDAD_MIN o mas,
+    ventana previa limpia a KM_LIMPIO, base valida).
+  * Candidatos a control del evento: pozos j distintos de i con boca a KM_CONTROL_MIN a KM_CONTROL_MAX km de la boca de i,
+    edad en g de EDAD_MIN o mas y en el mismo grupo de edad (CORTES_EDAD), base valida en g, sin golpe a KM_LIMPIO en
+    [g - VENTANA_PREVIA, g + H_APILADO], y nunca tratados o con su primer golpe a KM_TRATADO despues de g + H_APILADO.
+  * Emparejamiento, dentro del grupo de edad: dos variables de la base,
+      - nivel: log de la media de petroleo por dia calendario en los meses BASE (la de causal);
+      - pendiente: pendiente de minimos cuadrados del log de petroleo por dia calendario contra el mes, en los meses
+        VENTANA_PENDIENTE (relativos a g) con fila y petroleo positivo, con al menos MIN_MESES_PENDIENTE meses; sin eso,
+        el pozo no es candidato (y un tratado sin eso no es evento).
+    Cada variable se estandariza con el desvio de los eventos. Distancia euclidea sobre las dos estandarizadas. Se toman
+    los K_MAX candidatos mas cercanos con distancia de CALIPER o menos, con reemplazo entre eventos. Un evento con menos de
+    K_MIN controles queda fuera; se publica cuantos.
+  * Resultado: el indice I(e) de causal (recortado en INDICE_TOPE) para e en E_SERIE. Efecto del evento en e: I_i(e) menos
+    la media de I(e) de sus controles con dato en e (al menos K_MIN con dato; si no, el evento no entra en e).
+  * ATT(e): media simple de los efectos de los eventos que entran en e, por 100 (puntos de indice). Estimando: ATT(1).
+  * IC 95%: bootstrap de percentiles por bloques de TAM_BLOQUE_KM km de la boca del padre del evento (causal._pesos_bloques
+    sobre los padres de los eventos), REPS sorteos, semilla SEMILLA_APILADO; los mismos sorteos para todo e y para la cota.
+  * Balance: diferencia estandarizada de medias de nivel y pendiente entre eventos y controles, antes y despues de emparejar.
+  * Cota: pipeline.cota_rr con ATT(1) y los previos e = -3, -2, -1 de esta misma serie, sorteo por sorteo.
+
+Placebos (cada uno con la misma maquinaria: candidatos, emparejamiento, ATT(1)). Rompe si causal.rompe con
+UMBRAL_ROTURA_PUNTOS:
+  * fecha falsa: g' = g - DESFASE_FECHA_FALSA para cada evento, con las condiciones de evento y de control en g';
+  * distancia falsa: pseudo eventos con el primer golpe en [KM_FALSO_MIN, KM_FALSO_MAX) km y ninguno a KM_LIMPIO en
+    [g - VENTANA_PREVIA, g + H_APILADO];
+  * nunca tratados: los pseudo eventos del placebo de D1 (causal._cohorte_nunca_tratados, la misma fecha sorteada), con sus
+    propios controles emparejados. Es la prueba de que el -8,0 de D1 desaparece.
+La pretendencia no es un placebo: va a la cota (D1 tolera anticipacion de hasta 3 meses).
+
+Dejar un operador afuera: ATT(1) sin los eventos de cada operador del padre con MIN_TRATADOS_OPERADOR o mas eventos y sin
+los controles de ese operador.
+
+Veredicto (`veredicto_apilado`), en este orden:
+  * "sin muestra": menos de MIN_TRATADOS eventos con efecto en e = 1, o menos de MIN_BLOQUES bloques.
+  * "no sobrevive a su placebo": rompe la fecha falsa, la distancia falsa o los nunca tratados.
+  * "sostiene como causal bajo tendencias paralelas condicionales al emparejamiento": IC alto de ATT(1) menor que
+    UMBRAL_EFECTO_PUNTOS, la cota de Rambachan y Roth da "resiste Mbar = 1", y el IC alto de cada ATT(1) sin un operador
+    es menor que cero.
+  * "no firme": cualquier otro caso.
+
+Que se publica en cada caso:
+  * "sostiene": ATT(1) pasa a ser el titular del petroleo (README, portada, paper) y la brecha mediana agrupada de
+    pipeline/sql/04_interferencia.sql pasa a descripcion.
+  * cualquier otro: el titular sigue siendo una huella medida (la brecha mediana, rotulada descriptiva) y este resultado se
+    publica como falla o como "no firme", con sus placebos.
+  * Siempre: la serie ATT(e), los tres placebos, el balance, los eventos fuera por falta de controles, la cota y el dejar un
+    operador afuera. Mart: mart_apilado (escrito con `_escribir(con, "mart_apilado", ...)` literal para el linaje).
+
+Prueba: en datos sinteticos con seleccion (los tratados rinden menos y caen mas rapido antes de g) y un efecto plantado,
+el ATT(1) recupera el efecto plantado y los placebos no rompen; con efecto cero, el ATT(1) incluye cero.
+
+Lo que no dice: aun con "sostiene" es causa bajo supuestos nombrados (tendencias paralelas condicionales al emparejamiento,
+anticipacion acotada por la cota, sin derrame sobre controles a 2 a 5 km: lo prueba H), no un hecho fisico medido.
+"""
+from __future__ import annotations
+
+from pipeline.causal import (CORTES_EDAD, DESFASE_FECHA_FALSA, E_SERIE, EDAD_MIN, INDICE_TOPE, KM_FALSO_MAX,
+                             KM_FALSO_MIN, KM_LIMPIO, KM_TRATADO, MIN_BLOQUES, MIN_TRATADOS, MIN_TRATADOS_OPERADOR, REPS,
+                             SEMILLA_CAUSAL, TAM_BLOQUE_KM, UMBRAL_EFECTO_PUNTOS, UMBRAL_ROTURA_PUNTOS, V_NO_FIRME,
+                             V_PLACEBO, V_SIN_MUESTRA, VENTANA_PREVIA)
+from pipeline.cota_rr import V_RR_RESISTE
+
+# heredado de pipeline.causal sin cambio
+REGLA_HEREDADA = {"KM_TRATADO": KM_TRATADO, "KM_LIMPIO": KM_LIMPIO, "VENTANA_PREVIA": VENTANA_PREVIA,
+                  "EDAD_MIN": EDAD_MIN, "CORTES_EDAD": CORTES_EDAD, "INDICE_TOPE": INDICE_TOPE, "E_SERIE": E_SERIE,
+                  "TAM_BLOQUE_KM": TAM_BLOQUE_KM, "REPS": REPS, "DESFASE_FECHA_FALSA": DESFASE_FECHA_FALSA,
+                  "KM_FALSO": (KM_FALSO_MIN, KM_FALSO_MAX), "MIN_TRATADOS": MIN_TRATADOS, "MIN_BLOQUES": MIN_BLOQUES,
+                  "MIN_TRATADOS_OPERADOR": MIN_TRATADOS_OPERADOR, "UMBRAL_ROTURA_PUNTOS": UMBRAL_ROTURA_PUNTOS,
+                  "UMBRAL_EFECTO_PUNTOS": UMBRAL_EFECTO_PUNTOS}
+
+# ---- regla fijada (no cambiar despues de ver cifras) ----
+SEMILLA_APILADO = SEMILLA_CAUSAL + 60
+H_APILADO = 6                          # ventana limpia de los controles, como H_CORTO de D1
+KM_CONTROL_MIN, KM_CONTROL_MAX = 2.0, 5.0
+VENTANA_PENDIENTE = (-9, -4)           # meses relativos a g, inclusive
+MIN_MESES_PENDIENTE = 3
+K_MAX = 5
+K_MIN = 3
+CALIPER = 0.5                          # en desvios de los eventos, distancia euclidea sobre las dos variables
+E_PRINCIPAL = 1
+
+V_APILADO_SOSTIENE = "sostiene como causal bajo tendencias paralelas condicionales al emparejamiento"
+
+
+def veredicto_apilado(n_eventos: int, n_bloques: int, placebos_rotos: bool, alto: float, v_rr: str,
+                      altos_sin_operador: list[float]) -> str:
+    if n_eventos < MIN_TRATADOS or n_bloques < MIN_BLOQUES:
+        return V_SIN_MUESTRA
+    if placebos_rotos:
+        return V_PLACEBO
+    if alto < UMBRAL_EFECTO_PUNTOS and v_rr == V_RR_RESISTE and all(a < 0 for a in altos_sin_operador):
+        return V_APILADO_SOSTIENE
+    return V_NO_FIRME
+~~~
+
+Texto agregado en `pipeline/tarjeta.py`:
+
+~~~
+"""Modo local con agua y tarjeta del operador (porcion D).
+
+Se corre desde el modo local:  uv run python -m pipeline.local --dir CARPETA  (escribe tarjeta.json y tarjeta.md junto a su
+salida). Este modulo arma la tarjeta y su prueba de privacidad; pipeline.local lee las tablas.
+
+REGLA FIJADA ANTES DE CORRER (2026-11-26, porcion D de docs/plan-siguiente-nivel.md). Este commit trae la regla, la
+validacion y los campos permitidos; no se corrio D2 sobre tablas locales. Si algo resulta ambiguo al construirlo, se corrige
+en un commit nuevo que lo diga, nunca despues de ver una cifra de la validacion.
+
+Entrada. `mensual.csv` acepta `agua_m3` opcional (m3 del mes, mayor o igual a cero), en la lista de opcionales de
+pipeline.local junto a `dias_produccion`. Sin `agua_m3`, el modo local hace lo de hoy y la tarjeta dice "sin dato de agua".
+Con `agua_m3`, corre D2 de pipeline.causal sobre las tablas locales: W, base de W, dW = max(W(g), W(g+1)) - base, celdas,
+placebos previo, fecha falsa y distancia falsa, bootstrap por bloques, la misma semilla y REPS. El placebo de cierre necesita
+dias producidos: sin `dias_produccion` no se corre, el veredicto se calcula sin esa prueba y la tarjeta lo dice ("sin prueba
+de cierre"). Las ubicaciones y los meses de fractura salen de `pozos.csv` como hoy.
+
+Validacion, fijada antes de correr: el warehouse publico exportado a `pozos.csv` y `mensual.csv` (con `agua_m3`, y
+`dias_produccion` desde `dias_efectivos`) y corrido por el modo local da D2 con VALIDACION_D2_TRATADOS tratados y ATT_W de
+VALIDACION_D2_PP (a un decimal), igual con la misma semilla y repeticiones. Si no da igual, el commit de construccion dice
+por que y la diferencia tiene que ser TOLERANCIA_VALIDACION_PP o menos en el valor y en los dos extremos del IC; si no,
+la porcion no esta lista. La exportacion y la comparacion son una prueba que se corre con el warehouse (lenta, opcional
+sin el).
+
+Tarjeta (`tarjeta.json` y `tarjeta.md`, en espanol con voseo en el .md). Solo cifras agrupadas, de CAMPOS_TARJETA:
+eventos (tratados con dato), brecha del mes 1 con IC, dW con IC, veredictos, y la version del codigo (SHA corto). Ningun
+pozo_id, pad, coordenada, nombre de pozo ni fecha (mes o dia; el anio tampoco). Una cifra que sale de menos de
+MIN_POZOS_CIFRA pozos se suprime ("menos de N pozos"). La prueba de privacidad: con tablas sinteticas, ningun pozo_id ni
+nombre de la entrada aparece en la tarjeta, ninguna clave fuera de CAMPOS_TARJETA, ningun numero con forma de coordenada de
+la entrada y ningun texto con forma de fecha (AAAA-MM, AAAA-MM-DD, DD/MM/AAAA).
+
+Lo que no dice: la tarjeta de un operador no es una replicacion independiente del estudio publico si el operador ya esta en
+el dato publico; lo dice la tarjeta.
+"""
+from __future__ import annotations
+
+# ---- regla fijada (no cambiar despues de ver cifras) ----
+VALIDACION_D2_TRATADOS = 447
+VALIDACION_D2_PP = 13.8
+TOLERANCIA_VALIDACION_PP = 0.1
+MIN_POZOS_CIFRA = 10
+CAMPOS_TARJETA = ("version", "eventos", "brecha_mes1", "brecha_mes1_ic", "dw_pp", "dw_ic", "veredicto_petroleo",
+                  "veredicto_agua", "notas")
+SIN_AGUA = "sin dato de agua"
+SIN_CIERRE = "sin prueba de cierre"
+~~~
+
 ## `f72c10c` · 2026-11-26 07:18 UTC
 
 **Asunto:** Reglas E, G a J e I: el docstring ya no trae la llamada literal a _escribir
 
 **Archivos:** `pipeline/causal_exposicion.py`, `pipeline/inferencia.py`, `pipeline/stacked.py`
 
-**Primer commit posterior que toca los mismos archivos:** `0a17b54` · 2026-11-26 09:43 UTC · Merge pull request #178 from GabrielRuizVarela/t3/siguiente-nivel-lead
+**Primer commit posterior que toca los mismos archivos:** `761e955` · 2026-11-26 07:29 UTC · Porción E: estimador apilado del petróleo, mart_apilado y página apilado.md
 
 Texto agregado en `pipeline/causal_exposicion.py`:
 
@@ -1938,9 +2134,76 @@ Texto agregado en `pipeline/stacked.py`:
 
 **Archivos:** `scripts/publicar_sitio.sh`, `tests/fixtures/deslop_numeros_antes.json`, `tests/test_publicar_sitio.py`, `wiki/hallazgos/literatura.md`
 
-**Primer commit posterior que toca los mismos archivos:** `edddc0d` · 2026-11-26 09:43 UTC · Merge pull request #188 from GabrielRuizVarela/t3/run-all-causal-claims
+**Primer commit posterior que toca los mismos archivos:** `c8fd7db` · 2026-11-26 08:38 UTC · Antecedentes leídos: página para el lector (sin bitácora de proceso); OGJ/Procyk vuelve a rotularse nota
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
+
+## `88a9168` · 2026-11-26 08:08 UTC
+
+**Asunto:** Regla I: aclaración antes de calcular
+
+**Archivos:** `pipeline/inferencia.py`
+
+**Primer commit posterior que toca los mismos archivos:** `fe27468` · 2026-11-26 08:20 UTC · Porción I: escala de los bloques, permutación de D2 y Holm sobre la familia confirmatoria
+
+Texto agregado en `pipeline/inferencia.py`:
+
+~~~
+
+ACLARACION (2026-11-26, antes de calcular ninguna cifra de esta porcion). Puntos que la regla dejaba abiertos; se fijan aca y no
+se tocan despues de ver un numero.
+  * I1, veredicto por diseno: `veredicto_escala` se aplica dos veces, una con las cuatro cantidades de D1 (ATT(1) y sus tres
+    placebos) y otra con las cuatro de D2 (ATT_W y sus tres placebos); cada diseno tiene su veredicto. "El IC excluye cero" es
+    ic_bajo > 0 o ic_alto < 0. La cantidad de bloques de un tamano es la de los pozos tratados de las celdas primarias, la que
+    cuentan D1 y D2 en su propio veredicto (D1 y D2 comparten celdas, asi que el conteo es el mismo). El bootstrap de cada
+    tamano usa el mismo universo de pozos y la misma semilla que `pipeline.causal.main` (las seis familias de celdas, para que
+    con 5 km salgan los mismos sorteos); solo cambia `D["bloque"]` por `clave_bloque(lat, lon, tamano)`.
+  * I2, observaciones: son los pares (pozo, celda) de las celdas que D2 usa de verdad (al menos 1 tratado y MIN_CONTROLES_CELDA
+    controles con dW); los pares de una celda que D2 descarta no entran, asi el ATT_W observado es el de D2. El anio de la celda
+    es g // 12 (g es el indice absoluto de mes, anio * 12 + mes - 1). Un estrato sin las dos etiquetas no cambia en las
+    permutaciones y cuenta en el denominador de la parte de observaciones. La comparacion es |perm| >= |obs| sin tolerancia.
+  * I3, lectura de los marts: se busca la fila por la columna `diseno`; el mart de D7 (`mart_causal_profundo_d7`) no tiene esa
+    columna sino `resultado`, y su estimando de corte de agua es la fila resultado = 'dW' (no hay fila 'D2'): FILA_ALIAS. Un
+    veredicto que empieza con "sin muestra" entra con p = 1 aunque la fila tenga IC (el caso de D1b).
+  * I3, publicado sin veredicto: los 141 son las filas de mart_descomposicion_k (95), mart_descomposicion_aditiva (38) y
+    mart_descomposicion_distancia (8), una prueba por fila, como las cuenta pipeline.bloques.conteo_pruebas. La cantidad de cada
+    fila es su brecha con su IC (brecha, ic_bajo, ic_alto; en la aditiva brecha_total con total_ic_bajo y total_ic_alto). Una sola
+    familia de Holm con las filas de las tres tablas. Se informa cuantas excluyen cero sin ajuste y cuantas con Holm.
+# mart de D7: la fila de su estimando de corte de agua (ver ACLARACION)
+FILA_ALIAS = {("mart_causal_profundo_d7", "D2"): "dW"}
+
+~~~
+
+## `eb1c51b` · 2026-11-26 08:48 UTC
+
+**Asunto:** I: D11c entra en la familia de Holm (k = 16), con una segunda aclaración fechada que dice que las cifras de D11 ya se conocían
+
+**Archivos:** `pipeline/inferencia.py`, `tests/fixtures/deslop_numeros_antes.json`, `tests/test_inferencia_regla.py`, `wiki/hallazgos/inferencia.md`
+
+**Primer commit posterior que toca los mismos archivos:** `f43f08b` · 2026-11-26 08:52 UTC · I: la página de inferencia con todos los marts de esta fase en el warehouse (D10 rechaza con Holm; E, D11 y D12 entran sin muestra)
+
+Texto agregado en `pipeline/inferencia.py`:
+
+~~~
+
+ACLARACION 2 (2026-11-26, revision del PR #192, despues de la primera corrida). La regla de D11 da dos filas con veredicto,
+D11a (`veredicto_rama`) y D11c (`veredicto_anillos`, sobre dW); D11b va sin veredicto. Como D4 y D12 entran con sus dos filas,
+D11c entra tambien: k pasa de 15 a 16. Ya se conocian las cifras de D11 (pagina de exposicion: D11a y D11c dan "sin muestra",
+con menos tratados por banda que MIN_TRATADOS_BANDA) y las de la primera corrida de esta familia; por la regla, las dos filas
+de D11 entran con p = 1, asi que sumar D11c solo puede hacer a Holm mas exigente. El valor de la fila D11c es el anillo de 2 a
+3 km; su veredicto puede decidirlo tambien el de 3 a 5 km.
+    ("D11c", "mart_causal_exposicion_veredicto", "D11c"),        # anillos (ACLARACION 2)
+          "Un diseño sin muestra, sin fila o sin IC entra con p = 1: la familia no se achica. D7 y D9 se leen de la fila `dW` de "
+          "su mart, que guarda sus resultados en la columna `resultado`. D11c se sumó después de la primera corrida, con las "
+          "cifras de D11 ya conocidas: la regla de D11 le da veredicto propio, como a D4 y D12 sus dos filas (segunda "
+          "aclaración de la regla, en `pipeline/inferencia.py`).", "",
+~~~
+
+Texto agregado en `tests/test_inferencia_regla.py`:
+
+~~~
+    assert len(ids) == len(set(ids)) == 16   # 15 en la regla, mas D11c (ACLARACION 2)
+~~~
 
 ## `a1f1fee` · 2026-11-26 11:11 UTC
 
@@ -1948,7 +2211,7 @@ Texto agregado en `pipeline/stacked.py`:
 
 **Archivos:** `pipeline/causal_profundo.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1219ed6` · 2026-11-26 15:28 UTC · Merge pull request #193 from GabrielRuizVarela/t3/texto-O
+**Primer commit posterior que toca los mismos archivos:** `f3357c0` · 2026-11-26 11:15 UTC · D13: Colorado por operador (codigo, Holm k=17, claims, pruebas)
 
 Texto agregado en `pipeline/causal_profundo.py`:
 
@@ -1989,7 +2252,7 @@ MIN_OPERADORES_D13 = 2    # con menos de dos operadores con el minimo, D13 da "s
 
 **Archivos:** `pipeline/inferencia.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1219ed6` · 2026-11-26 15:28 UTC · Merge pull request #193 from GabrielRuizVarela/t3/texto-O
+**Primer commit posterior que toca los mismos archivos:** `a8bf328` · 2026-11-26 11:12 UTC · I4 (permutacion dentro de las celdas de D2) y fila dA_pd de D3 en Holm: codigo y tests
 
 Texto agregado en `pipeline/inferencia.py`:
 
@@ -2026,7 +2289,7 @@ CANT_PERM_CELDA = "ATT_W (pp), I4 dentro de la celda"
 
 **Archivos:** `README.md`, `docs/caso-interferencia.md`, `docs/paper/paper.md`, `docs/paper/vaca-muerta-paper.pdf`, `docs/proceso/antecedentes-leidos.md`, `pipeline/bloques.py`, `pipeline/claims.py`, `pipeline/report_template.html`, `scripts/publicar_sitio.sh`, `site/index.html`, `tests/fixtures/deslop_numeros_antes.json`, `tests/test_publicar_sitio.py`, `wiki/hallazgos/bloques.md`, `wiki/hallazgos/inferencia.md` y 1 más
 
-**Primer commit posterior que toca los mismos archivos:** `e60194b` · 2026-11-26 11:35 UTC · Merge pull request #187 from GabrielRuizVarela/t3/local-agua-tarjeta
+**Primer commit posterior que toca los mismos archivos:** `3b1620a` · 2026-11-26 12:06 UTC · I5: permutacion por pad padre (codigo, pagina, claims, tests)
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
@@ -2036,7 +2299,7 @@ CANT_PERM_CELDA = "ATT_W (pp), I4 dentro de la celda"
 
 **Archivos:** `pipeline/inferencia.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1219ed6` · 2026-11-26 15:28 UTC · Merge pull request #193 from GabrielRuizVarela/t3/texto-O
+**Primer commit posterior que toca los mismos archivos:** `3b1620a` · 2026-11-26 12:06 UTC · I5: permutacion por pad padre (codigo, pagina, claims, tests)
 
 Texto agregado en `pipeline/inferencia.py`:
 
@@ -2082,7 +2345,7 @@ CANT_PERM_PAD = "ATT_W (pp), I5 por pad padre"
 
 **Archivos:** `pipeline/stacked.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1219ed6` · 2026-11-26 15:28 UTC · Merge pull request #193 from GabrielRuizVarela/t3/texto-O
+**Primer commit posterior que toca los mismos archivos:** `2d34af6` · 2026-11-26 12:06 UTC · E2: anillo de donantes parametrizado, mart_apilado_e2, entrada de Holm y pruebas
 
 Texto agregado en `pipeline/stacked.py`:
 
@@ -2115,13 +2378,86 @@ despues de ver una cifra. La regla de E de arriba (commit 857d434) no cambia.
 KM_CONTROL_MAX_E2 = 10.0               # E2: el mismo piso, anillo de donantes hasta 10 km (regla E2 del docstring)
 ~~~
 
+## `5002094` · 2026-11-26 12:04 UTC
+
+**Asunto:** Regla D14 fijada antes de calcular: D2 con el golpe definido por distancia entre ramas (2016-2023)
+
+**Archivos:** `pipeline/causal_exposicion.py`, `pipeline/inferencia.py`
+
+**Primer commit posterior que toca los mismos archivos:** `f1b1e08` · 2026-11-26 12:05 UTC · Aclaracion D14: celdas propias, etiqueta del veredicto y ventanas del padre (antes de calcular)
+
+Texto agregado en `pipeline/causal_exposicion.py`:
+
+~~~
+REGLA D14 FIJADA ANTES DE CALCULAR (2026-11-26, ronda 2, S2 del revisor: "la distancia entre ramas como exposicion primaria en
+2016-2023"). Este commit trae solo la regla y las constantes; no se calculo ninguna cuenta ni efecto de D14. Lo que se conocia:
+D2 (13,8 con 447 tratados), la cobertura de D11a (279 de 312 tratados de D2 de 2016 a 2023 con distancia de rama, y su
+"sin muestra"), y las cifras publicadas de D11b en wiki/hallazgos/exposicion.md (seccion D11). Ninguna cuenta de tratados ni
+de controles de D14, ningun efecto y ningun p se vieron antes de este commit.
+
+D14. D2 con el golpe definido por la distancia entre ramas.
+  * Universo, celdas (g, grupo de edad, y lo demas que usen las celdas de D2), resultado (W, dW con k = 0), bloques de
+    bootstrap y sorteos: los de D2, restringidos a g en ANIOS_RAMA (2016 a 2023). Eleccion: el filtro de g se aplica DESPUES de
+    construir las celdas de D2 y de sus minimos (MIN_CONTROLES_CELDA), es decir, una celda de D2 de esos anios entra o sale
+    igual que en D2; solo se descartan las celdas de otros anios. Asi D14 y la fila de comparacion usan las mismas celdas.
+  * Tratado: un padre con golpe de rama en el mes g: un hijo fracturado en g con un par (hijo, padre) en mart_trayectoria_par
+    con `m_min` menor que RAMA_TRATADO_M (250 m, la banda mas cercana de RAMA en pipeline.trayectorias). Cuenta sin importar la
+    distancia de boca (hasta los 5 km que cubre el mart). Ademas: todas las condiciones de D2 sobre el padre (edad, base valida,
+    etc.) y ventana previa limpia en los dos sentidos de D2: ningun par de rama a menos de RAMA_TRATADO_M ni golpe de boca a
+    menos de KM_TRATADO con un hijo fracturado en [g - VENTANA_PREVIA, g - 1]. Eleccion: un padre con golpe de rama en g y un
+    golpe de boca previo en la ventana queda fuera de los tratados (la ventana previa limpia manda) y no es control; un padre
+    con un golpe de rama en g y tambien un golpe de boca en g es tratado (los dos golpes ocurren en el mes de la cohorte).
+  * Controles: padres de las mismas celdas sin NINGUNO de estos en [g - VENTANA_PREVIA, g + H_CORTO]: un par medido con `m_min`
+    menor que RAMA_CONTROL_M (1000 m, donde empieza la banda lejana); un hijo a distancia de boca menor que KM_LIMPIO cuyo par
+    con el padre no tiene `m_min` medido (exposicion desconocida). Los controles de D2 que cumplen esto son los de D14.
+  * Estimador: ATT_W de D2 con la regla de celdas de D2 (MIN_CONTROLES_CELDA) y el IC de D2 (bootstrap por bloques, los mismos
+    sorteos).
+  * Veredicto (`veredicto_d14`): usa la logica de veredicto_d2 de pipeline.causal: "sin muestra" con menos de MIN_TRATADOS (300)
+    tratados con dW en celdas con control; "sostiene: la rama como golpe" si el IC bajo de ATT_W es mayor que UMBRAL_AGUA_PP;
+    "no firme" en otro caso. Eleccion: los pasos de placebo y de cierre de veredicto_d2 NO se recalculan para D14 (no se
+    construyen placebos con la definicion de rama), y el veredicto lo dice en su texto; "sin muestra" aqui significa menos de
+    300 tratados de rama, no falta de cobertura de rama.
+  * Publicado sin veredicto, al lado: D2 restringido a g en ANIOS_RAMA (golpe de boca a KM_TRATADO), con las mismas celdas,
+    los mismos controles de D2 (los suyos, no los de D14) y los mismos sorteos, para ver si la definicion por rama mueve la
+    estimacion. Tambien: cuantos tratados de D14 no son tratados de D2 (rama cerca, boca de 1 a 5 km) y cuantos tratados de D2
+    de esos anios no son tratados de D14.
+  * Holm: D14 entra en FAMILIA_CONFIRMATORIA de pipeline.inferencia con la fila `diseno` = "D14" de su mart. Esto se fija antes
+    de calcular y puede cambiar el p ajustado por Holm de los otros disenos (k sube en uno).
+  * Lo que no dice: `m_min` es la distancia entre ramas medidas, no la geometria de la fractura; un hijo sin rama medida puede
+    estar cerca igual (queda fuera de los controles, pero no de los otros golpes de un padre tratado); la ventana es solo 2016 a
+    2023.
+
+Mart mart_causal_d14 (nombre literal en _escribir, con columna `diseno`) y una seccion D14 en wiki/hallazgos/exposicion.md
+(su generador en este modulo), con la regla citada por el SHA de este commit.
+# D14
+RAMA_TRATADO_M = 250.0                # tratado: par con m_min menor que esto (la banda mas cercana de RAMA)
+RAMA_CONTROL_M = 1000.0               # control: ningun par medido con m_min menor que esto (empieza la banda lejana)
+
+V_D14_SOSTIENE = "sostiene: la rama como golpe"
+def veredicto_d14(n_tratados: int, bajo: float) -> str:
+    """Los pasos de veredicto_d2 sin placebos ni cierre (no se recalculan para D14)."""
+    if n_tratados < MIN_TRATADOS:
+        return V_SIN_MUESTRA
+    if bajo > UMBRAL_AGUA_PP:
+        return V_D14_SOSTIENE
+    return V_NO_FIRME
+
+
+~~~
+
+Texto agregado en `pipeline/inferencia.py`:
+
+~~~
+    ("D14", "mart_causal_d14", "D14"),                           # D2 con el golpe por distancia entre ramas (regla en causal_exposicion)
+~~~
+
 ## `f1b1e08` · 2026-11-26 12:05 UTC
 
 **Asunto:** Aclaracion D14: celdas propias, etiqueta del veredicto y ventanas del padre (antes de calcular)
 
 **Archivos:** `pipeline/causal_exposicion.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1219ed6` · 2026-11-26 15:28 UTC · Merge pull request #193 from GabrielRuizVarela/t3/texto-O
+**Primer commit posterior que toca los mismos archivos:** `0a71605` · 2026-11-26 12:08 UTC · D14: calculo, mart_causal_d14, seccion de la pagina, claims y tests
 
 Texto agregado en `pipeline/causal_exposicion.py`:
 
@@ -2154,7 +2490,7 @@ V_D14_SOSTIENE = "la suba se ve también con el golpe por rama"
 
 **Archivos:** `tests/fixtures/deslop_numeros_antes.json`, `tests/test_inferencia_regla.py`, `tests/test_wyoming_pagina.py`
 
-**Primer commit posterior que toca los mismos archivos:** `1219ed6` · 2026-11-26 15:28 UTC · Merge pull request #193 from GabrielRuizVarela/t3/texto-O
+**Primer commit posterior que toca los mismos archivos:** `6ff9a55` · 2026-11-26 13:14 UTC · Lista factual de la ronda 2: siete correcciones de texto y tres claims del mes 6 de E2
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 

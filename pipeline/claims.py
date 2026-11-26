@@ -37,6 +37,10 @@ _PALABRAS = {"un": 1, "uno": 1, "una": 1, "dos": 2, "tres": 3, "cuatro": 4, "cin
              "mitad": 50, "half": 50}  # "mitad" y "half": la mitad de una parte, en por ciento
 
 
+class SinDato(Exception):
+    """A claim's valor_fn raises it when the data it reads was never built here (another basin's step did not run): SKIP, not FAIL."""
+
+
 @dataclass(frozen=True)
 class Claim:
     id: str
@@ -109,7 +113,10 @@ def evaluar(c: Claim, texto: str, con, lentos: bool = True, con_co=None, con_alm
         return Resultado(c, "SKIP", detalle="la frase no esta en este texto (depende de la lectura de los datos)")
     if doc is None:
         return Resultado(c, "FAIL", detalle="la frase ya no coincide con el patron (cambio el texto o el numero dejo de estar)")
-    calc = float(c.valor_fn(con))
+    try:
+        calc = float(c.valor_fn(con))
+    except SinDato as e:
+        return Resultado(c, "SKIP", detalle=str(e))
     ok = abs(doc - calc) <= c.tolerancia + EPS
     return Resultado(c, "PASS" if ok else "FAIL", doc, calc, "" if ok else f"documento {fmt(c, doc)} contra calculado {fmt(c, calc)}")
 
@@ -2522,19 +2529,34 @@ def _claims_siguiente_nivel() -> list[Claim]:
 
     TH, T3, T6 = "mart_inferencia_holm", "mart_causal_profundo_d3", "mart_causal_profundo_d6"
 
+    SIN_MART = "sin fila o sin mart"   # estado de un diseno cuya cuenca no se armo (D7, D9, D13: run_all --with-colorado y Wyoming)
+
+    def sin_cuenca(con) -> None:   # SKIP si la familia se calculo sin Colorado o sin Wyoming: sus cuentas son otras
+        n = con.execute(f"select count(*) from {TH} where familia = 'confirmatoria' and id in ('D7', 'D9', 'D13') and estado = ?",
+                        [SIN_MART]).fetchone()[0]
+        if n:
+            raise SinDato("la familia de Holm se calculo sin Colorado o sin Wyoming (D7, D9 o D13 sin mart): corre run_all --with-colorado")
+
     def holm(dis: str, col: str, estado: str) -> Callable:   # nan si el diseno cambia de estado (leido o sin muestra)
         def f(con):
             e_, x = con.execute(f"select estado, {col} from {TH} where familia = 'confirmatoria' and id = ?", [dis]).fetchone()
+            if e_ == SIN_MART:
+                sin_cuenca(con)
             return x if e_ == estado else nan
         return f
 
     def fila(tabla: str, donde: str, col: str) -> Callable:
         return lambda con: con.execute(f"select {col} from {tabla} where {donde}").fetchone()[0]
 
-    def familia(sql: str) -> Callable:
-        return lambda con: con.execute(f"select {sql} from {TH} where familia = ?", ["confirmatoria"]).fetchone()[0]
+    def familia(sql: str, con_cuencas: bool = False) -> Callable:
+        def f(con):
+            if con_cuencas:
+                sin_cuenca(con)
+            return con.execute(f"select {sql} from {TH} where familia = ?", ["confirmatoria"]).fetchone()[0]
+        return f
 
     def rechazan(con):   # la frase nombra los que rechazan y dice que D1 no sobrevive a su placebo
+        sin_cuenca(con)
         ids = {r[0] for r in con.execute(f"select id from {TH} where familia = 'confirmatoria' and rechaza").fetchall()}
         d1 = con.execute(f"select veredicto from {TH} where familia = 'confirmatoria' and id = 'D1'").fetchone()[0]
         return len(ids) if ids == {"D1", "D2", "D3", "D5", "D7", "D10", "D13"} and d1 == "no sobrevive a su placebo" else nan
@@ -2556,7 +2578,7 @@ def _claims_siguiente_nivel() -> list[Claim]:
     PRUEBAS = {"p" + p_: (0, _n_pruebas(n_), "") for p_, n_ in (("tot", "total"), ("hip", "hip"), ("rob", "rob"), ("desc", "desc"),
                                                                 ("hij", "hij"), ("blq", "blq"))}
     HOLM = {"hk": (0, familia("count(*)"), TH), "hr": (0, rechazan, TH),
-            "hs": (0, familia("count(*) filter (where estado = 'sin muestra' and p = 1)"), TH),
+            "hs": (0, familia("count(*) filter (where estado = 'sin muestra' and p = 1)", con_cuencas=True), TH),
             "dk": (0, desc("count(*)"), TH), "dz": (0, desc("count(*) filter (where excluye_cero)"), TH),
             "dr": (0, desc("count(*) filter (where rechaza)"), TH)}
     # D13 (Colorado sin cada operador): el valor del veredicto es el "sin el operador" de IC bajo mas chico, que el texto nombra
@@ -4901,6 +4923,7 @@ CLAIMS: list[Claim] = [
 
 # Numeros de README.md que son parte de una definicion y no un resultado: cada uno es una frase, no un numero suelto.
 README_DEFINICIONALES: tuple[str, ...] = (
+    r"datos-crudos-2026-11-23",  # el nombre de la release con los archivos crudos, no una cifra
     r"en los meses -3, -2 y -1",  # los meses de la serie previa de E; sus cifras son claims
     r"en los meses 10 a 12",  # la ventana de la serie de D10; sus cifras son claims
     r"the larger of months 0 and 1",  # D2 es el mayor de los meses 0 y 1, no una media

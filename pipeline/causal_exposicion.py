@@ -2,6 +2,10 @@
 
 Se corre despues de pipeline.causal_profundo:  uv run python -m pipeline.causal_exposicion
 
+Las reglas de este modulo se citan tal como se escribieron: "este commit" es el commit en que se fijo cada una (857d434
+para la regla de abajo), y el plan que nombran (docs/plan-siguiente-nivel.md) no se publica. El SHA, la fecha y el texto
+de cada regla estan en docs/reglas-fijadas.md.
+
 REGLA FIJADA ANTES DE CALCULAR (2026-11-26, porciones G, H y J de docs/plan-siguiente-nivel.md). Este commit trae solo la
 regla, las constantes y los veredictos; no se calculo ninguna cifra de D10, D11 ni D12. Si algo resulta ambiguo al
 construirlo, se corrige en un commit nuevo que lo diga, nunca despues de ver una cifra.

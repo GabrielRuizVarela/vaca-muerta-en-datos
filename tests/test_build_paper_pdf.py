@@ -19,8 +19,12 @@ needs_npx = pytest.mark.skipif(
 
 @needs_chrome
 @needs_npx
-def test_build_paper_pdf():
-    r = subprocess.run(["bash", str(SCRIPT)], capture_output=True, text=True)
+def test_build_paper_pdf(tmp_path):
+    antes = PDF.read_bytes() if PDF.exists() else None
+    out = tmp_path / "paper.pdf"
+    r = subprocess.run(["bash", str(SCRIPT), str(out)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr[-2000:]
-    assert PDF.exists()
-    assert PDF.read_bytes()[:4] == b"%PDF"
+    assert out.read_bytes()[:4] == b"%PDF"
+    # a clone stays clean after the tests: the tracked PDF is untouched and the intermediate page is gone
+    assert (PDF.read_bytes() if PDF.exists() else None) == antes
+    assert not (PDF.parent / "vaca-muerta-paper.html").exists()

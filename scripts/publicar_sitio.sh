@@ -55,7 +55,8 @@ rm -f "$OUT_DIR/docs/deslop-review.md" "$OUT_DIR/docs/revision-independiente.md"
       "$OUT_DIR/docs/proceso/fable-base-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-factual-verificacion-2026-11-26.md" \
       "$OUT_DIR/docs/proceso/auditoria-P-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-P-2026-11-26.md" \
       "$OUT_DIR/docs/proceso/ronda1-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-R1-2026-11-26.md" \
-      "$OUT_DIR/docs/proceso/ronda2-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-R2-2026-11-26.md"
+      "$OUT_DIR/docs/proceso/ronda2-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-R2-2026-11-26.md" \
+      "$OUT_DIR/docs/proceso/fable-final-2026-11-26.md"
 
 cp -a "$ROOT/README.md" "$ROOT/ATRIBUCION.md" "$ROOT/LICENSE" "$OUT_DIR/"
 
