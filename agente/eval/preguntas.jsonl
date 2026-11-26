@@ -1,0 +1,68 @@
+{"id": "dev-01", "split": "dev", "pregunta": "¿Cuánto petróleo produce hoy Vaca Muerta?", "esperado": {"op": "produccion_vm", "args": {}}}
+{"id": "dev-02", "split": "dev", "pregunta": "¿Cuánto produjo YPF en Vaca Muerta en septiembre de 2025?", "esperado": {"op": "produccion_vm", "args": {"operador": "YPF", "mes": "2025-09"}}}
+{"id": "dev-03", "split": "dev", "pregunta": "Producción de gas de Vista en junio 2026", "esperado": {"op": "produccion_vm", "args": {"operador": "Vista", "mes": "2026-06"}}}
+{"id": "dev-04", "split": "dev", "pregunta": "¿Qué participación tiene Pluspetrol en el petróleo de la formación?", "esperado": {"op": "produccion_vm", "args": {"operador": "Pluspetrol"}}}
+{"id": "dev-05", "split": "dev", "pregunta": "¿Cuántos pozos activos tenía Vaca Muerta en enero de 2020?", "esperado": {"op": "produccion_vm", "args": {"mes": "2020-01"}}}
+{"id": "dev-06", "split": "dev", "pregunta": "¿Quiénes son las 5 operadoras que más petróleo producen?", "esperado": {"op": "ranking_operadores", "args": {"n": 5}}}
+{"id": "dev-07", "split": "dev", "pregunta": "Top 3 de productoras de petróleo en diciembre de 2023", "esperado": {"op": "ranking_operadores", "args": {"n": 3, "mes": "2023-12"}}}
+{"id": "dev-08", "split": "dev", "pregunta": "¿Cuánto creció la producción de Vaca Muerta en el último año?", "esperado": {"op": "variacion_interanual", "args": {}}}
+{"id": "dev-09", "split": "dev", "pregunta": "Variación interanual de Chevron", "esperado": {"op": "variacion_interanual", "args": {"operador": "Chevron"}}}
+{"id": "dev-10", "split": "dev", "pregunta": "¿Cuánto rinde en su mes 6 un pozo de YPF que empezó en 2021?", "esperado": {"op": "curva_tipo", "args": {"cohorte": 2021, "mes_produccion": 6}}}
+{"id": "dev-11", "split": "dev", "pregunta": "Caudal promedio del primer mes de los pozos del resto de las operadoras, cohorte 2024", "esperado": {"op": "curva_tipo", "args": {"cohorte": 2024, "grupo": "Resto", "mes_produccion": 1}}}
+{"id": "dev-12", "split": "dev", "pregunta": "¿Qué largo de rama tenían los pozos de YPF de 2018?", "esperado": {"op": "diseno_cohorte", "args": {"cohorte": 2018}}}
+{"id": "dev-13", "split": "dev", "pregunta": "Productividad por metro de rama de los pozos de otras operadoras de la cohorte 2022", "esperado": {"op": "diseno_cohorte", "args": {"cohorte": 2022, "grupo": "Resto"}}}
+{"id": "dev-14", "split": "dev", "pregunta": "¿Cuánto cae un pozo viejo cuando fracturan uno nuevo al lado?", "esperado": {"op": "interferencia_brecha", "args": {}}}
+{"id": "dev-15", "split": "dev", "pregunta": "Brecha de interferencia en el mismo mes de la fractura para padres de 12 a 23 meses", "esperado": {"op": "interferencia_brecha", "args": {"k": 0, "grupo_edad": "12-23"}}}
+{"id": "dev-16", "split": "dev", "pregunta": "¿Se recuperan los pozos padre seis meses después de la fractura vecina?", "esperado": {"op": "interferencia_brecha", "args": {"k": 6}}}
+{"id": "dev-17", "split": "dev", "pregunta": "¿Cómo fue la interferencia de las fracturas de 2022?", "esperado": {"op": "interferencia_anual", "args": {"anio": 2022}}}
+{"id": "dev-18", "split": "dev", "pregunta": "¿Cuánto petróleo se difirió en total por interferencia entre pozos?", "esperado": {"op": "petroleo_diferido", "args": {}}}
+{"id": "dev-19", "split": "dev", "pregunta": "Barriles diferidos por fracturas cercanas en La Amarga Chica", "esperado": {"op": "petroleo_diferido", "args": {"area": "La Amarga Chica"}}}
+{"id": "dev-20", "split": "dev", "pregunta": "Petróleo diferido de Shell por interferencia", "esperado": {"op": "petroleo_diferido", "args": {"operador": "Shell"}}}
+{"id": "dev-21", "split": "dev", "pregunta": "Dame la ficha del pozo YPF.Nq.LLL-1610(h)", "esperado": {"op": "pozo", "args": {"sigla": "YPF.Nq.LLL-1610(h)"}}}
+{"id": "dev-22", "split": "dev", "pregunta": "¿Qué problemas de calidad tienen los datos públicos?", "esperado": {"op": "calidad", "args": {}}}
+{"id": "dev-23", "split": "dev", "pregunta": "Mostrame la página de la wiki sobre el hallazgo de interferencia", "esperado": {"op": "pagina_wiki", "args": {"ruta": "hallazgos/interferencia.md"}}}
+{"id": "dev-24", "split": "dev", "pregunta": "¿Cuánto cuesta perforar un pozo horizontal en Vaca Muerta?", "esperado": {"op": "abstener", "args": {}}}
+{"id": "dev-25", "split": "dev", "pregunta": "¿Cuál es el precio del barril Medanito hoy?", "esperado": {"op": "abstener", "args": {}}}
+{"id": "dev-26", "split": "dev", "pregunta": "¿Cuánto va a producir YPF en 2030?", "esperado": {"op": "abstener", "args": {}}}
+{"id": "dev-27", "split": "dev", "pregunta": "¿Cuántos empleados tiene Vista?", "esperado": {"op": "abstener", "args": {}}}
+{"id": "holdout-01", "split": "holdout", "pregunta": "Dame el caudal de petróleo de la formación en marzo de 2026", "esperado": {"op": "produccion_vm", "args": {"mes": "2026-03"}}}
+{"id": "holdout-02", "split": "holdout", "pregunta": "¿Cuántos kbbl/d hace Vista Energy Argentina actualmente?", "esperado": {"op": "produccion_vm", "args": {"operador": "Vista"}}}
+{"id": "holdout-03", "split": "holdout", "pregunta": "¿Qué porcentaje del crudo de Vaca Muerta aporta Tecpetrol?", "esperado": {"op": "produccion_vm", "args": {"operador": "Tecpetrol"}}}
+{"id": "holdout-04", "split": "holdout", "pregunta": "Ranking de las 10 mayores operadoras de petróleo", "esperado": {"op": "ranking_operadores", "args": {"n": 10}}}
+{"id": "holdout-05", "split": "holdout", "pregunta": "¿YPF produce más o menos que hace un año?", "esperado": {"op": "variacion_interanual", "args": {"operador": "YPF"}}}
+{"id": "holdout-06", "split": "holdout", "pregunta": "Producción promedio en el mes 12 de los pozos YPF de la cohorte 2019", "esperado": {"op": "curva_tipo", "args": {"cohorte": 2019, "mes_produccion": 12}}}
+{"id": "holdout-07", "split": "holdout", "pregunta": "Etapas de fractura y arena por metro de la cohorte 2025 de YPF", "esperado": {"op": "diseno_cohorte", "args": {"cohorte": 2025}}}
+{"id": "holdout-08", "split": "holdout", "pregunta": "Un mes después de fracturar un pozo hijo, ¿cuánto pierden los padres de más de 4 años?", "esperado": {"op": "interferencia_brecha", "args": {"k": 1, "grupo_edad": "48+"}}}
+{"id": "holdout-09", "split": "holdout", "pregunta": "Efecto de interferencia en los pozos fracturados durante 2025", "esperado": {"op": "interferencia_anual", "args": {"anio": 2025}}}
+{"id": "holdout-10", "split": "holdout", "pregunta": "¿Cuánto petróleo difirió YPF por frac hits en Loma Campana?", "esperado": {"op": "petroleo_diferido", "args": {"operador": "YPF", "area": "Loma Campana"}}}
+{"id": "holdout-11", "split": "holdout", "pregunta": "Barriles diferidos por interferencia en fracturas de 2024", "esperado": {"op": "petroleo_diferido", "args": {"anio": 2024}}}
+{"id": "holdout-12", "split": "holdout", "pregunta": "Info del pozo XOM.Nq.BdC-45(h)", "esperado": {"op": "pozo", "args": {"sigla": "XOM.Nq.BdC-45(h)"}}}
+{"id": "holdout-13", "split": "holdout", "pregunta": "¿Hay controles bloqueantes que fallen en el último build?", "esperado": {"op": "calidad", "args": {}}}
+{"id": "holdout-14", "split": "holdout", "pregunta": "¿Cuál es la tarifa de transporte por oleoducto de Oldelval?", "esperado": {"op": "abstener", "args": {}}}
+{"id": "holdout-15", "split": "holdout", "pregunta": "¿Qué operadora tiene mejor clima laboral?", "esperado": {"op": "abstener", "args": {}}}
+{"id": "holdout-16", "split": "holdout", "pregunta": "Pronóstico de producción de gas para el invierno de 2027", "esperado": {"op": "abstener", "args": {}}}
+{"id": "dev-28", "split": "dev", "pregunta": "¿Cuántos eventos registra el pozo TAU.Nq.AP-1090(h)?", "esperado": {"op": "eventos_pozo", "args": {"sigla": "TAU.Nq.AP-1090(h)"}}}
+{"id": "dev-29", "split": "dev", "pregunta": "¿Cuántos saltos de corte de agua tuvo el pozo TAU.Nq.AP-1052(h)?", "esperado": {"op": "eventos_pozo", "args": {"sigla": "TAU.Nq.AP-1052(h)", "tipo": "salto_agua"}}}
+{"id": "dev-30", "split": "dev", "pregunta": "¿Qué parte de los pozos padre cercanos mostró algún efecto cuando fracturaron un vecino?", "esperado": {"op": "clases_interferencia", "args": {}}}
+{"id": "dev-31", "split": "dev", "pregunta": "¿Qué porcentaje de los padres de YPF a menos de 1 km tuvo algún efecto en las fracturas de 2022?", "esperado": {"op": "clases_interferencia", "args": {"operador": "YPF", "anio": 2022}}}
+{"id": "dev-32", "split": "dev", "pregunta": "¿Cuántas hipótesis del libro de hallazgos están confirmadas?", "esperado": {"op": "libro_hallazgos", "args": {}}}
+{"id": "dev-33", "split": "dev", "pregunta": "¿En qué estado está la hipótesis de recuperación al mes 6 del libro?", "esperado": {"op": "libro_hallazgos", "args": {"id": "recuperacion_mes6"}}}
+{"id": "holdout-17", "split": "holdout", "pregunta": "Listame los eventos de fractura del pozo TAU.Nq.AP-1089(h)", "esperado": {"op": "eventos_pozo", "args": {"sigla": "TAU.Nq.AP-1089(h)", "tipo": "fractura"}}}
+{"id": "holdout-18", "split": "holdout", "pregunta": "¿Qué proporción de los pozos de control, a 2 a 5 km, también muestra efecto en los datos mensuales?", "esperado": {"op": "clases_interferencia", "args": {"banda": "control"}}}
+{"id": "holdout-19", "split": "holdout", "pregunta": "¿Cuánto vale la brecha medida de la hipótesis brecha_mes1 en el libro?", "esperado": {"op": "libro_hallazgos", "args": {"id": "brecha_mes1"}}}
+{"id": "holdout-20", "split": "holdout", "pregunta": "¿Cuál es el umbral de la hipótesis de anisotropía y su resultado actual?", "esperado": {"op": "libro_hallazgos", "args": {"id": "anisotropia"}}}
+{"id": "holdout-21", "split": "holdout", "pregunta": "¿Cuánta producción propia pierde el pozo hijo por la interferencia con su vecino?", "esperado": {"op": "abstener", "args": {}}}
+{"id": "dev-34", "split": "dev", "pregunta": "¿Cuántos eventos registra el pozo TPT.Nq.FP.x-1003 y qué estado tiene en el libro la hipótesis brecha_mes1?", "esperado": {"calls": [{"op": "eventos_pozo", "args": {"sigla": "TPT.Nq.FP.x-1003"}}, {"op": "libro_hallazgos", "args": {"id": "brecha_mes1"}}]}}
+{"id": "dev-35", "split": "dev", "pregunta": "¿Qué parte de los padres de YPF muestra algún efecto por una fractura vecina, y cuántos barriles diferidos suma YPF?", "esperado": {"calls": [{"op": "clases_interferencia", "args": {"operador": "YPF"}}, {"op": "petroleo_diferido", "args": {"operador": "YPF"}}]}}
+{"id": "dev-36", "split": "dev", "pregunta": "Si se fractura en el pad p165347, ¿cuánto petróleo se esperaría diferir? Y comparalo con el diferido total de Loma Campana.", "esperado": {"calls": [{"op": "costo_interferencia", "args": {"pad": "p165347"}}, {"op": "petroleo_diferido", "args": {"area": "Loma Campana"}}]}}
+{"id": "dev-37", "split": "dev", "pregunta": "¿Cuántos barriles se esperaría diferir si se fractura en el pad p163810?", "esperado": {"op": "costo_interferencia", "args": {"pad": "p163810"}}}
+{"id": "dev-38", "split": "dev", "pregunta": "Costo de interferencia en barriles para un pozo nuevo en latitud -38,22 y longitud -68,642", "esperado": {"op": "costo_interferencia", "args": {"lat": -38.22, "lon": -68.642}}}
+{"id": "dev-39", "split": "dev", "pregunta": "Barriles diferidos esperados por una fractura en el pad p165559 en junio de 2025", "esperado": {"op": "costo_interferencia", "args": {"pad": "p165559", "fecha": "2025-06"}}}
+{"id": "holdout-22", "split": "holdout", "pregunta": "¿Qué porcentaje de los pozos padre de Loma Campana muestra efecto y cuánto petróleo difirió esa área?", "esperado": {"calls": [{"op": "clases_interferencia", "args": {"area": "Loma Campana"}}, {"op": "petroleo_diferido", "args": {"area": "Loma Campana"}}]}}
+{"id": "holdout-23", "split": "holdout", "pregunta": "Dame la ficha del pozo YPF.Nq.LLL-586 y cuánto se esperaría diferir si se fractura un pozo nuevo en su pad p145256.", "esperado": {"calls": [{"op": "pozo", "args": {"sigla": "YPF.Nq.LLL-586"}}, {"op": "costo_interferencia", "args": {"pad": "p145256"}}]}}
+{"id": "holdout-24", "split": "holdout", "pregunta": "¿Cuánto petróleo se perdería por interferencia si se fractura el pad p164930?", "esperado": {"op": "costo_interferencia", "args": {"pad": "p164930"}}}
+{"id": "holdout-25", "split": "holdout", "pregunta": "Estimá el petróleo diferido por una fractura en lat -38,387 y lon -68,4965 en marzo de 2026", "esperado": {"op": "costo_interferencia", "args": {"lat": -38.387, "lon": -68.4965, "fecha": "2026-03"}}}
+{"id": "dev-40", "split": "dev", "pregunta": "¿En cuántos subconjuntos de robustez el eje de interferencia está definido?", "esperado": {"op": "robustez_eje", "args": {}}}
+{"id": "dev-41", "split": "dev", "pregunta": "¿Cuál es el eje de la cuenca sin Loma Campana y qué costo diferido esperado tiene el pad p165347?", "esperado": {"calls": [{"op": "robustez_eje", "args": {"subconjunto": "Sin LOMA CAMPANA"}}, {"op": "costo_interferencia", "args": {"pad": "p165347"}}]}}
+{"id": "holdout-26", "split": "holdout", "pregunta": "¿El eje de interferencia se sostiene si se deja afuera La Amarga Chica?", "esperado": {"op": "robustez_eje", "args": {"subconjunto": "Sin LA AMARGA CHICA"}}}
+{"id": "holdout-27", "split": "holdout", "pregunta": "¿Qué tan firme es el eje este-oeste entre los pozos padre de YPF?", "esperado": {"op": "robustez_eje", "args": {"subconjunto": "Padre YPF"}}}

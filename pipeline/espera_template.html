@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barriles que llegan tarde</title>
+<meta name="description" content="Un caso real de Vaca Muerta: se fractura un pozo nuevo cerca de uno que ya producía, el pozo vecino rinde menos durante unos meses y vuelve. Cuánto cuesta esa espera, con tus supuestos.">
+<style>
+/*__SISTEMA__*/
+
+/* ---- el mazo: una lámina por idea, el suelo es el cielo ---- */
+html.mov { scroll-snap-type: y proximity; }
+.mov .lamina { scroll-snap-align: start; }
+.mov .entra { transition: opacity 200ms ease-out; }
+.mov .pendiente .entra { opacity: 0; }
+@media print { .mov .pendiente .entra { opacity: 1; } .banda { transform: none !important; } }
+
+.lamina { min-height: 100vh; min-height: 100svh; display: flex; padding: 24px 20px; }
+.lamina > .dentro { width: 100%; max-width: 1080px; margin: auto; }
+@media (min-width: 900px) { .lamina { padding: 20px 60px; } }
+@media (max-width: 899px) { .lamina { padding-right: 52px; } }
+
+/* el riel: cinco marcas a la derecha, la única navegación */
+.riel { position: sticky; top: calc(50vh - 100px); z-index: 5; height: 0; margin: 0; padding: 0 12px 0 0;
+  display: flex; flex-direction: column; align-items: flex-end; }
+.riel-enlace { position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; text-decoration: none; }
+.riel-disco { width: 12px; height: 12px; fill: none; stroke: var(--tinta); stroke-width: 1.5; }
+.riel-enlace[aria-current="true"] .riel-disco { stroke-width: 3; }
+.riel .rotulo { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); white-space: nowrap; padding: 2px 8px;
+  background: var(--cielo); color: var(--tinta); font: 600 14px/1.3 "Archivo", "Arial Narrow", system-ui, sans-serif;
+  clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; }
+.riel a:hover .rotulo, .riel a:focus-visible .rotulo { clip-path: none; width: auto; height: auto; overflow: visible; }
+@media (max-width: 899px) { .riel-enlace { width: 28px; height: 28px; } .riel-disco { width: 9px; height: 9px; } }
+
+/* ---- la tapa: la foto a sangre y el texto al lado ---- */
+.caso { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: center; }
+.caso .marco { margin: 0; }
+.caso .lienzo { position: relative; width: 100%; aspect-ratio: 4 / 5; height: auto; background: var(--cielo); overflow: hidden; }
+.caso .lienzo canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.caso #capa { pointer-events: none; }
+.caso .texto-hero { padding: 0 52px 24px 20px; }
+@media (min-width: 900px) {
+  .caso { grid-template-columns: 60fr 40fr; gap: 40px; }
+  .caso .lienzo { aspect-ratio: auto; height: calc(100svh - 40px); }
+  .caso .texto-hero { padding: 0; }
+}
+@media (max-width: 899px) { #caso { padding: 0; } #caso > .dentro { margin: 0; } }
+
+/* ---- los textos ---- */
+.cap { font-size: 17px; margin: 0 0 16px; max-width: 34em; }
+.cap.primera { font-size: 19px; }
+.texto { font-size: 17px; max-width: 34em; margin: 0 0 24px; }
+.suave { color: var(--jarilla); }
+.credito { font: 400 14px/1.45 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--jarilla); margin: 12px 0 0; }
+.leyenda, .nota, .chispa-nota, .etiqueta, .mes-fecha {
+  font: 400 14px/1.45 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--jarilla); }
+.nota { margin: 0 0 16px; max-width: 34em; }
+.cifra { font-family: "Archivo", "Arial Narrow", system-ui, sans-serif; font-stretch: 68%; font-weight: 800;
+  font-variant-numeric: tabular-nums; }
+
+/* ---- el vecino: el mes y su chispa ---- */
+.meses { margin: 24px 0 0; }
+.mes-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.mes-tit { font: 400 17px/1.2 "Archivo", "Arial Narrow", system-ui, sans-serif; }
+.chispa { display: block; width: 100%; height: 90px; margin-top: 8px; }
+.chispa-nota { margin: 4px 0 0; }
+.acciones { display: flex; flex-wrap: wrap; gap: 0 24px; margin: 8px 0 0; }
+button { cursor: pointer; background: transparent; border: 0; padding: 0; min-height: 44px;
+  text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--jarilla) 40%, transparent); text-underline-offset: 4px; }
+button:hover, button:focus-visible { text-decoration-color: var(--tinta); }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; height: 24px; margin: 0; display: block; }
+input[type="range"]::-webkit-slider-runnable-track { height: 1px; background: color-mix(in srgb, var(--jarilla) 40%, transparent); }
+input[type="range"]::-moz-range-track { height: 1px; background: color-mix(in srgb, var(--jarilla) 40%, transparent); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; margin-top: -7px;
+  clip-path: circle(50%); background: var(--tinta); border: 0; }
+input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; clip-path: circle(50%); background: var(--tinta); }
+
+/* ---- la cuenca: la banda de la brecha y los números ---- */
+#cuenca > .dentro, #diferidos > .dentro { max-width: 1320px; }
+.banda-caja { margin: 24px 0; }
+.banda { display: block; width: 100%; height: 40svh; transform-origin: 50% 0; }
+@media (max-width: 899px) { .banda { height: 30svh; } }
+.grafico { margin: 24px 0; }
+.grafico canvas { display: block; width: 100%; height: 260px; }
+
+/* ---- el cajón: el único marco de la página, a rayas porque es supuesto ---- */
+.cajon { border: 1.5px dashed var(--tinta); padding: 24px; margin: 0; max-width: 44em; }
+.etiqueta { margin: 0 0 16px; }
+.etiqueta span { display: block; }
+.mandos { display: grid; gap: 16px; max-width: 30em; }
+.mando label { display: flex; justify-content: space-between; gap: 16px; font-size: 14px; color: var(--jarilla); margin-bottom: 4px; }
+.mando output { color: var(--tinta); font-family: "Archivo", "Arial Narrow", system-ui, sans-serif; }
+.frase { font-size: 17px; margin: 24px 0 16px; max-width: 30em; }
+.cajon .suave { max-width: 34em; margin: 0; }
+/* ---- el explorador: la cuenca entera, solo en pantalla grande ---- */
+.explorador { padding: 48px 52px 64px 20px; }
+.explorador-dentro { max-width: 1320px; margin: 0 auto; }
+.ex-chico { margin: 0; max-width: 34em; }
+.ex-cuerpo, .explorador h2 { display: none; }
+.ex-lienzo { position: relative; width: 100%; max-width: 100%; background: var(--cielo); overflow: hidden; }
+.ex-lienzo canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ex-lienzo .ex-puntero { cursor: pointer; }
+.ex-rotulo { position: absolute; z-index: 2; pointer-events: none; padding: 2px 8px; white-space: nowrap;
+  background: var(--cielo); color: var(--tinta); font: 400 14px/1.3 "Archivo", "Arial Narrow", system-ui, sans-serif; }
+.ex-clases { border: 0; margin: 0; padding: 0; min-width: 0; }
+.ex-clases label { display: flex; align-items: center; gap: 12px; min-height: 36px; font: 400 17px/1.3 "Archivo", "Arial Narrow", system-ui, sans-serif; cursor: pointer; }
+.ex-clases input { width: 17px; height: 17px; margin: 0; accent-color: var(--tinta); flex: none; }
+.ex-forma { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--tinta); stroke-width: 1.5; overflow: visible; }
+.ex-forma .lleno { fill: var(--tinta); }
+.ex-forma .vacio { stroke: var(--jarilla); }
+.ex-cerca { position: relative; width: min(100%, 440px); aspect-ratio: 1; margin: 16px 0 8px; background: var(--cielo); overflow: hidden; }
+.ex-cerca canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ex-nota { font: 400 14px/1.45 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--jarilla); margin: 16px 0 8px; max-width: 30em; }
+.ex-fila { display: flex; align-items: baseline; gap: 24px; margin: 0; }
+#ex-reproducir { font: 400 17px/1.3 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); }
+.ex-mes { font: 400 17px/1.3 "Archivo", "Arial Narrow", system-ui, sans-serif; font-variant-numeric: tabular-nums; color: var(--jarilla); margin: 0; min-height: 22px; }
+.ex-sel { font: 400 17px/1.3 "Archivo", "Arial Narrow", system-ui, sans-serif; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; min-height: 44px; }
+.ex-aviso { font: 400 14px/1.45 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--jarilla); margin: 0; min-height: 20px; }
+@media (min-width: 900px) {
+  .explorador { padding: 40px 60px; }
+  .explorador h2 { display: block; }
+  .ex-chico { display: none; }
+  .ex-cuerpo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 64px; align-items: start; margin-top: 24px; }
+  .ex-clases { display: grid; grid-template-columns: repeat(2, max-content); column-gap: 40px; }
+  .ex-mandos { position: sticky; top: 24px; }
+}
+@media print { .explorador { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="riel" aria-label="Láminas">
+  <a class="riel-enlace marca--vacio" href="#caso"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">El caso</span></a>
+  <a class="riel-enlace marca--vacio" href="#vecino"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">El pozo vecino</span></a>
+  <a class="riel-enlace marca--vacio" href="#cuenca"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">En toda la cuenca</span></a>
+  <a class="riel-enlace marca--vacio" href="#diferidos"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">Diferidos</span></a>
+  <a class="riel-enlace marca--vacio" href="#cajon"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">¿Cuánto cuesta esperarlos?</span></a>
+  <a class="riel-enlace marca--vacio" href="#despues"><svg class="riel-disco" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="5.25"></circle></svg><span class="rotulo">¿Y después?</span></a>
+</nav>
+
+<main>
+
+<section class="lamina" id="caso">
+  <div class="dentro caso entra">
+    <figure class="marco">
+      <div class="lienzo" id="lienzo">
+        <canvas id="foto"></canvas>
+        <canvas id="capa"></canvas>
+      </div>
+      <p class="credito" id="credito">Contains modified Copernicus Sentinel data 2025, imágenes del 2025-12-29 al 2025-12-30.</p>
+    </figure>
+    <div class="texto-hero">
+      <h1>Barriles que llegan tarde</h1>
+      <p class="cap primera" id="cap1">Loma Campana, mayo de 2014. Se fracturó un pozo nuevo a 0,8 km de un pozo de YPF que ya producía.</p>
+    </div>
+  </div>
+</section>
+
+<section class="lamina" id="vecino">
+  <div class="dentro entra">
+    <h2>El pozo vecino</h2>
+    <p class="cap" id="cap2">En los seis meses siguientes, ese pozo vecino produjo 914 barriles menos que pozos de control a 2 a 5 km de un pozo nuevo.</p>
+    <p class="cap suave">Es una huella medida: la diferencia contra un control, no una causa probada.</p>
+
+    <div class="meses">
+      <div class="mes-cab">
+        <span class="mes-tit" id="mes-tit">mes 1 después de la fractura</span>
+        <span class="mes-fecha" id="mes-fecha">junio de 2014</span>
+      </div>
+      <input id="mes" type="range" min="-3" max="12" step="1" value="1" aria-label="meses desde la fractura">
+      <canvas class="chispa" id="chispa"></canvas>
+      <p class="chispa-nota">caudal del pozo vecino, índice 100 = su promedio de los tres meses previos</p>
+    </div>
+
+    <div class="acciones">
+      <button id="otro" type="button">Otro caso</button>
+      <button id="tipico" type="button">El caso típico</button>
+    </div>
+    <details>
+      <summary>Ver los números</summary>
+      <p class="nota">Elegimos el caso típico con una regla escrita antes de mirar los casos: el del medio entre los que tienen dos años de datos.</p>
+    </details>
+  </div>
+</section>
+
+<section class="lamina" id="cuenca">
+  <div class="dentro entra">
+    <h2>En toda la cuenca</h2>
+    <p class="texto">Esto pasó <span class="cifra" id="n-casos">2.094</span> veces a menos de un kilómetro. Un mes después de la fractura, los pozos vecinos que ya producían rinden entre <span class="cifra">19</span> y <span class="cifra">23</span> puntos porcentuales menos que pozos de control a 2 a 5 km de un pozo nuevo; a los seis meses la brecha es de <span class="cifra">2,1</span> puntos porcentuales.</p>
+
+    <details id="ver-curva">
+      <summary>Ver los números</summary>
+      <figure class="grafico">
+        <canvas id="curva"></canvas>
+      </figure>
+      <p class="leyenda">Índice de caudal por mes desde la fractura. 100 es el promedio de los tres meses previos de cada pozo.</p>
+    </details>
+
+    <div class="banda-caja">
+      <!--__BANDA__-->
+    </div>
+  </div>
+</section>
+
+<section class="lamina" id="diferidos">
+  <div class="dentro entra">
+    <h2>Diferidos</h2>
+    <p class="texto">Sumados los meses 0 a 6, quedan diferidos entre <span class="cifra" id="rango">6,4 y 11,4</span> millones de barriles. El rango depende de cómo se cuentan los casos que se superponen. No damos un punto medio.</p>
+
+    <div class="banda-caja">
+      <!--__BANDA__-->
+    </div>
+  </div>
+</section>
+
+<section class="lamina" id="cajon">
+  <div class="dentro entra">
+    <section class="cajon">
+      <h3>¿Cuánto cuesta esperarlos?</h3>
+      <p class="etiqueta">Línea llena: medido. Línea a rayas: supuesto.<span>supuesto, no medición</span></p>
+      <div class="mandos">
+        <div class="mando">
+          <label for="s-precio">Precio por barril <output id="o-precio"></output></label>
+          <input id="s-precio" type="range" min="30" max="100" step="5" value="60">
+        </div>
+        <div class="mando">
+          <label for="s-tasa">Tasa de descuento anual <output id="o-tasa"></output></label>
+          <input id="s-tasa" type="range" min="0" max="20" step="1" value="10">
+        </div>
+        <div class="mando">
+          <label for="s-meses">Meses de espera <output id="o-meses"></output></label>
+          <input id="s-meses" type="range" min="6" max="24" step="1" value="12">
+        </div>
+      </div>
+      <p class="frase" id="frase" aria-live="polite"></p>
+      <p class="suave">No es lo que vale ese petróleo, que igual llega: es lo que cuesta cobrarlo más tarde. Usa el rango de barriles de arriba y supone que todos llegan más tarde. Los barriles son una huella medida contra un control; no probamos su causa.</p>
+    </section>
+  </div>
+</section>
+
+<section class="lamina" id="despues">
+  <div class="dentro entra">
+    <h2>¿Y después?</h2>
+    <p class="texto">A los 24 meses, el pozo vecino típico no muestra pérdida acumulada: el dato no la distingue de cero. Eso no prueba que todo vuelva. La mediana por caso es de <span class="cifra" id="med24">-954</span> barriles y su intervalo incluye el cero.</p>
+    <nav class="pie-sitio">
+      <a href="index.html">La historia completa</a>
+      <a href="replay.html">La cuenca mes a mes</a>
+      <a href="mundo.html">Vaca Muerta en 3D</a>
+    </nav>
+  </div>
+</section>
+
+<section class="bloque wrap explorador" id="explorador">
+  <div class="explorador-dentro">
+    <h2>Elegí un caso</h2>
+    <p class="ex-chico">En una pantalla grande podés elegir cualquiera de los casos en el mapa de la cuenca.</p>
+    <div class="ex-cuerpo">
+      <div class="ex-mapa">
+        <div class="ex-lienzo" id="ex-lienzo" role="img" aria-label="Mapa de la cuenca con cada fractura de un pozo nuevo cerca de un pozo que ya producía">
+          <canvas id="ex-foto"></canvas>
+          <canvas id="ex-capa"></canvas>
+          <div class="ex-rotulo" id="ex-rotulo" hidden></div>
+        </div>
+      </div>
+      <div class="ex-mandos">
+        <p class="ex-nota">Cada punto marca qué pasó en el pozo vecino.</p>
+        <fieldset class="ex-clases">
+          <label><input type="checkbox" data-clase="golpe" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle class="lleno" cx="8" cy="8" r="5.25"></circle></svg><span>Subida del corte de agua tras el hijo</span></label>
+          <label><input type="checkbox" data-clase="cierre_preventivo" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.25"></circle><path class="lleno" d="M8 2.75A5.25 5.25 0 0 0 8 13.25Z"></path></svg><span>Cierre preventivo</span></label>
+          <label><input type="checkbox" data-clase="ambos" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle class="lleno" cx="8" cy="8" r="3.5"></circle><circle cx="8" cy="8" r="6.25"></circle></svg><span>Ambos</span></label>
+          <label><input type="checkbox" data-clase="sin_efecto" checked><svg class="ex-forma" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle class="vacio" cx="8" cy="8" r="5.25"></circle></svg><span>Sin efecto</span></label>
+        </fieldset>
+        <p class="ex-nota">Los anillos muestran cuánto rinden menos los pozos vecinos al mes 1, según su distancia al pozo nuevo. Más oscuro, más brecha. Aquí el control son pozos de 5 a 10 km, más lejos que el control del resto de la página.</p>
+        <div class="ex-cerca" id="ex-cerca" role="img" aria-label="Acercamiento al pozo elegido con anillos de 1, 2 y 5 km">
+          <canvas id="ex-cerca-foto"></canvas>
+          <canvas id="ex-cerca-capa"></canvas>
+        </div>
+        <p class="ex-sel"><span id="ex-sel"></span><a href="#caso" id="ex-arriba">Ver este caso arriba</a></p>
+        <div class="ex-fila">
+          <button type="button" id="ex-reproducir">Ver la cuenca en el tiempo</button>
+          <p class="ex-mes" id="ex-mes"></p>
+        </div>
+        <p class="ex-aviso" id="ex-aviso" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const D = /*__DATA__*/null;
+
+// regla:inicio
+function dinero(bbl, precio, tasaPct, meses) {
+  return bbl * precio * (1 - Math.pow(1 + tasaPct / 100, -meses / 12));
+}
+function millones(v) {
+  return Math.floor(v / 1e6 + 0.5);
+}
+function numeroEs(v) {
+  var neg = v < 0;
+  var s = String(Math.abs(Math.round(v)));
+  var out = s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return (neg ? "-" : "") + out;
+}
+function frase(lo, hi, p, t, m) {
+  var a = millones(dinero(lo, p, t, m));
+  var b = millones(dinero(hi, p, t, m));
+  return "Con USD " + numeroEs(p) + " por barril, " + numeroEs(t) + "% anual y " + numeroEs(m) +
+    " meses de espera, esperar costó entre USD " + numeroEs(a) + " y " + numeroEs(b) +
+    " millones. El extremo alto es un máximo; es un supuesto, no una medición.";
+}
+// regla:fin
+
+(function () {
+  "use strict";
+  if (!D) return;
+
+  var MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+    "septiembre", "octubre", "noviembre", "diciembre"];
+  var MENOR = ["de", "del", "la", "las", "el", "los", "y", "en", "a"];
+  var M_LAT = 110574;
+  var MES_MIN = -3, MES_MAX = 12;
+  var FOTO = D.foto || null;
+  var NM = D.meta.meses.length;
+  var MESES = D.meta.meses;
+
+  // Los siete colores del sistema, leidos del css en cada dibujo.
+  var C = {};
+  function leeTokens() {
+    var cs = getComputedStyle(document.documentElement);
+    function token(nombre) { return cs.getPropertyValue(nombre).trim(); }
+    C = {
+      cielo: token("--cielo"), estepa: token("--estepa"), lutita: token("--lutita"),
+      tinta: token("--tinta"), hueso: token("--hueso"), jarilla: token("--jarilla"),
+      orilla: token("--orilla")
+    };
+  }
+  leeTokens();
+  // El pozo nuevo es el unico color que vive fuera de los tokens: tiene que leerse sobre el terreno rojo.
+  var NUEVO = "#E8A33D";  // sistema.MARCADOR_POZO_NUEVO
+  var FUENTE_ARCHIVO = '"Archivo", "Arial Narrow", system-ui, sans-serif';
+
+  // ---- el caso ----
+  var caso = D.caso >= 0 ? D.caso : 0;
+
+  // Dos ventanas de tiempo: el indice absoluto (ano x 12 + mes) para sumar meses y el
+  // indice de la linea de datos para leer la matriz de caudal.
+  function indiceAbs(anio, mes0) { return anio * 12 + mes0; }
+  var ABS0 = indiceAbs(parseInt(MESES[0].slice(0, 4), 10), parseInt(MESES[0].slice(5, 7), 10) - 1);
+  function absDeFecha(fecha) {
+    return indiceAbs(parseInt(fecha.slice(0, 4), 10), parseInt(fecha.slice(5, 7), 10) - 1);
+  }
+  function mesDeAbs(abs) { return { anio: Math.floor(abs / 12), mes: abs % 12 }; }
+  function titulo(s) {
+    var ps = String(s).trim().toLowerCase().split(/\s+/);
+    return ps.map(function (p, i) {
+      if (i > 0 && MENOR.indexOf(p) >= 0) return p;
+      return p.charAt(0).toUpperCase() + p.slice(1);
+    }).join(" ");
+  }
+  function sinSA(s) { return String(s).replace(/\s*S\.?A\.?$/i, "").trim(); }
+
+  // ---- caudal: matriz de pozos x meses, Uint16 little endian en base64 ----
+  var CBUF = null;
+  function decodificaCaudal(b64) {
+    var bin = atob(b64), n = bin.length, by = new Uint8Array(n);
+    for (var i = 0; i < n; i++) by[i] = bin.charCodeAt(i);
+    return by.buffer;
+  }
+  function caudal(pozo, abs) {
+    var f = abs - ABS0;
+    if (!CBUF || f < 0 || f >= NM) return 0;
+    return new DataView(CBUF).getUint16((pozo * NM + f) * 2, true);
+  }
+  if (D.caudal) CBUF = decodificaCaudal(D.caudal);
+  function hayMes(abs) { var f = abs - ABS0; return f >= 0 && f < NM; }
+  // "Otro caso" sortea solo entre los casos cuya ventana entera (meses -3 a 12) cae
+  // dentro de los datos: un mes que no existe no se dibuja como un caudal de cero.
+  var SORTEABLES = [];
+  for (var si = 0; si < D.eventos.length; si++) {
+    var sm = absDeFecha(D.eventos[si].f);
+    if (hayMes(sm + MES_MIN) && hayMes(sm + MES_MAX)) SORTEABLES.push(si);
+  }
+
+  // ---- la foto del terreno ----
+  function mPorGradoLon(lat) { return 111320 * Math.cos(lat * Math.PI / 180); }
+
+  function geometria(capa) {
+    var lon0 = capa.caja[0], lat0 = capa.caja[1], lon1 = capa.caja[2], lat1 = capa.caja[3];
+    var mLon = mPorGradoLon((lat0 + lat1) / 2);
+    var anchoM = (lon1 - lon0) * mLon, altoM = (lat1 - lat0) * M_LAT;
+    return { lon0: lon0, lat0: lat0, lon1: lon1, lat1: lat1, mLon: mLon, anchoM: anchoM, altoM: altoM,
+      mx: anchoM / capa.ancho, my: altoM / capa.alto, ancho: capa.ancho, alto: capa.alto };
+  }
+  function capaPorNombre(nombre) {
+    if (!FOTO) return null;
+    for (var i = 0; i < FOTO.capas.length; i++) if (FOTO.capas[i].nombre === nombre) return FOTO.capas[i];
+    return null;
+  }
+  var IMAGENES = {};
+  function imagenDe(capa) {
+    if (IMAGENES[capa.nombre]) return IMAGENES[capa.nombre];
+    var img = new Image();
+    IMAGENES[capa.nombre] = img;
+    img.onload = function () { if (capaActual === capa) dibujaFoto(); };
+    img.src = "data:image/webp;base64," + capa.webp;
+    return img;
+  }
+
+  var lienzo = document.getElementById("foto");
+  var capaLienzo = document.getElementById("capa");
+  var ctx = lienzo.getContext("2d");
+  var ctxCapa = capaLienzo.getContext("2d");
+
+  var vista = null;        // {lon0, lat0, lon1, lat1, s, mLon}
+  var capaActual = null;
+  var wells = [];          // pozos dentro del recuadro, con su posicion en la pantalla
+  var casoGeo = null;      // {padre, hijo, centro}
+
+  function eligeCapa(cajaVista) {
+    var nucleo = capaPorNombre("nucleo"), caja = capaPorNombre("caja");
+    if (nucleo) {
+      var g = geometria(nucleo);
+      if (cajaVista.lon0 >= g.lon0 && cajaVista.lon1 <= g.lon1 &&
+          cajaVista.lat0 >= g.lat0 && cajaVista.lat1 <= g.lat1) return nucleo;
+    }
+    return caja || nucleo;
+  }
+
+  function anchoVistaMetros() {
+    return window.innerWidth >= 900 ? 8000 : 4000;
+  }
+
+  function preparaCaso() {
+    var ev = D.eventos[caso];
+    if (!ev) return;
+    var padre = D.pozos[ev.p], hijo = D.pozos[ev.h];
+    var clat = (padre.lat + hijo.lat) / 2, clon = (padre.lon + hijo.lon) / 2;
+    var w = lienzo.clientWidth || 390, h = lienzo.clientHeight || 500;
+    var anchoM = anchoVistaMetros();
+    var altoM = anchoM * (h / w);
+    var mLon = mPorGradoLon(clat);
+    var dLon = (anchoM / 2) / mLon, dLat = (altoM / 2) / M_LAT;
+    var cajaVista = { lon0: clon - dLon, lon1: clon + dLon, lat0: clat - dLat, lat1: clat + dLat };
+    var capa = eligeCapa(cajaVista);
+    if (!capa) return;
+    var g = geometria(capa);
+    var s = w / ((cajaVista.lon1 - cajaVista.lon0) * g.mLon);
+    vista = { lon0: cajaVista.lon0, lon1: cajaVista.lon1, lat0: cajaVista.lat0, lat1: cajaVista.lat1,
+      s: s, mLon: g.mLon, g: g };
+    capaActual = capa;
+    imagenDe(capa);
+
+    function px(lon) { return (lon - vista.lon0) * vista.mLon * vista.s; }
+    function py(lat) { return h - (lat - vista.lat0) * M_LAT * vista.s; }
+    casoGeo = { padre: padre, hijo: hijo, px: px, py: py,
+      pxHijo: px(hijo.lon), pyHijo: py(hijo.lat),
+      pxPadre: px(padre.lon), pyPadre: py(padre.lat) };
+
+    wells = [];
+    for (var i = 0; i < D.pozos.length; i++) {
+      var p = D.pozos[i];
+      if (p.lon < vista.lon0 || p.lon > vista.lon1 || p.lat < vista.lat0 || p.lat > vista.lat1) continue;
+      wells.push({ p: p, x: px(p.lon), y: py(p.lat) });
+    }
+    dibujaFoto();
+    dibujaCapa();
+    dibujaChispa();
+    actualizaTexto();
+  }
+
+  function dibujaFoto() {
+    if (!vista || !capaActual) return;
+    var w = lienzo.clientWidth, h = lienzo.clientHeight;
+    if (!w || !h) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    lienzo.width = Math.round(w * dpr); lienzo.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = C.cielo; ctx.fillRect(0, 0, w, h);
+    var img = IMAGENES[capaActual.nombre];
+    var g = vista.g;
+    var sx = (vista.lon0 - g.lon0) * g.mLon / g.mx;
+    var sy = (g.altoM - (vista.lat1 - g.lat0) * M_LAT) / g.my;
+    var sw = (vista.lon1 - vista.lon0) * g.mLon / g.mx;
+    var sh = (vista.lat1 - vista.lat0) * M_LAT / g.my;
+    if (img && img.complete && img.naturalWidth) {
+      var x0 = Math.max(0, sx), y0 = Math.max(0, sy);
+      var x1 = Math.min(g.ancho, sx + sw), y1 = Math.min(g.alto, sy + sh);
+      if (x1 > x0 && y1 > y0) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, x0, y0, x1 - x0, y1 - y0,
+          (x0 - sx) * w / sw, (y0 - sy) * h / sh, (x1 - x0) * w / sw, (y1 - y0) * h / sh);
+      }
+    }
+    dibujaPozos();
+    dibujaReferencias();
+  }
+
+  function dibujaPozos() {
+    ctx.fillStyle = C.jarilla;
+    ctx.globalAlpha = 0.85;
+    for (var i = 0; i < wells.length; i++) {
+      if (!wells[i].p) continue;
+      ctx.beginPath();
+      ctx.arc(wells[i].x, wells[i].y, 1.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // El circulo de 1 km alrededor del pozo nuevo y el anillo del vecino: dos trazos, sin letras encima.
+  function dibujaReferencias() {
+    if (!vista || !casoGeo) return;
+    var s = vista.s;
+    ctx.save();
+    ctx.strokeStyle = C.hueso;
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(casoGeo.pxHijo, casoGeo.pyHijo, 1000 * s, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ---- la capa de encima: el pozo nuevo y el vecino ----
+  var mesActual = 1;
+  var anillo = null;
+
+  function dibujaCapa() {
+    if (!vista || !casoGeo) return;
+    var w = capaLienzo.clientWidth, h = capaLienzo.clientHeight;
+    if (!w || !h) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    capaLienzo.width = Math.round(w * dpr); capaLienzo.height = Math.round(h * dpr);
+    ctxCapa.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctxCapa.clearRect(0, 0, w, h);
+    var ev = D.eventos[caso];
+    var evMes = absDeFecha(ev.f);
+    var base = baseDelVecino(ev.p, evMes);
+    var tasa = caudal(ev.p, evMes + mesActual) / (base || 1);
+    var op = hayMes(evMes + mesActual) ? Math.max(0.15, Math.min(1, tasa)) : 1;
+    // El vecino: un anillo de hueso con una sombra de lutita de 1 px. Su caudal contra su
+    // propia base baja solo la opacidad del anillo; el pozo nuevo va en el naranja.
+    aroPozo(casoGeo.pxPadre, casoGeo.pyPadre, 1);
+    ctxCapa.save();
+    ctxCapa.globalAlpha = op;
+    ctxCapa.strokeStyle = C.hueso;
+    ctxCapa.lineWidth = 2;
+    ctxCapa.beginPath();
+    ctxCapa.arc(casoGeo.pxPadre, casoGeo.pyPadre, 6, 0, Math.PI * 2);
+    ctxCapa.stroke();
+    ctxCapa.restore();
+    // el pozo nuevo
+    aroPozo(casoGeo.pxHijo, casoGeo.pyHijo, 2);
+    ctxCapa.fillStyle = NUEVO;
+    ctxCapa.beginPath();
+    ctxCapa.arc(casoGeo.pxHijo, casoGeo.pyHijo, 6, 0, Math.PI * 2);
+    ctxCapa.fill();
+    if (anillo !== null) {
+      ctxCapa.save();
+      ctxCapa.strokeStyle = NUEVO;
+      ctxCapa.globalAlpha = anillo.alfa;
+      ctxCapa.lineWidth = 1.5;
+      ctxCapa.beginPath();
+      ctxCapa.arc(casoGeo.pxHijo, casoGeo.pyHijo, anillo.radio, 0, Math.PI * 2);
+      ctxCapa.stroke();
+      ctxCapa.restore();
+    }
+  }
+
+  // ---- la sombra oscura de los pozos, para que se lean sobre cualquier terreno ----
+  function aroPozo(x, y, grosor) {
+    ctxCapa.save();
+    ctxCapa.strokeStyle = C.lutita;
+    ctxCapa.lineWidth = grosor;
+    ctxCapa.beginPath();
+    ctxCapa.arc(x, y, 8, 0, Math.PI * 2);
+    ctxCapa.stroke();
+    ctxCapa.restore();
+  }
+
+  function baseDelVecino(indicePozo, mesEvento) {
+    var vals = [];
+    for (var k = -3; k <= -1; k++) vals.push(caudal(indicePozo, mesEvento + k));
+    var suma = 0;
+    for (var i = 0; i < vals.length; i++) suma += vals[i];
+    return suma / vals.length;
+  }
+
+  // ---- la chispa del vecino: su linea es el horizonte de la lamina ----
+  function dibujaChispa() {
+    var cv = document.getElementById("chispa");
+    if (!cv || !casoGeo) return;
+    var w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    var c = cv.getContext("2d");
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+    var ev = D.eventos[caso];
+    var evMes = absDeFecha(ev.f);
+    var base = baseDelVecino(ev.p, evMes);
+    var pts = [];
+    for (var k = MES_MIN; k <= MES_MAX; k++) {
+      if (!hayMes(evMes + k)) { pts.push({ k: k, v: null }); continue; }
+      var v = base ? (caudal(ev.p, evMes + k) / base) * 100 : 0;
+      pts.push({ k: k, v: v });
+    }
+    var mayor = 0;
+    for (var m = 0; m < pts.length; m++) if (pts[m].v !== null && pts[m].v > mayor) mayor = pts[m].v;
+    var max = Math.max(120, Math.ceil(mayor / 10) * 10), min = 0;
+    var pad = 4;
+    function x(k) { return pad + (k - MES_MIN) / (MES_MAX - MES_MIN) * (w - 2 * pad); }
+    function y(v) { return h - pad - (v - min) / (max - min) * (h - 2 * pad); }
+    c.save();
+    c.beginPath(); c.rect(0, 0, w, h); c.clip();
+    // la paridad (100) y la marca del mes 0
+    c.strokeStyle = C.jarilla; c.globalAlpha = 0.4; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(0, y(100)); c.lineTo(w, y(100)); c.stroke();
+    c.beginPath(); c.moveTo(x(0), 0); c.lineTo(x(0), h - pad); c.stroke();
+    c.globalAlpha = 1;
+    // la linea del caudal: un mes sin datos corta la linea
+    c.strokeStyle = C.tinta; c.lineWidth = 2; c.lineJoin = "round"; c.beginPath();
+    var sigue = false;
+    for (var i = 0; i < pts.length; i++) {
+      if (pts[i].v === null) { sigue = false; continue; }
+      var px = x(pts[i].k), py = y(pts[i].v);
+      if (sigue) c.lineTo(px, py); else c.moveTo(px, py);
+      sigue = true;
+    }
+    c.stroke();
+    c.restore();
+    c.font = "14px " + FUENTE_ARCHIVO;
+    c.textAlign = "left"; c.textBaseline = "top";
+    c.lineJoin = "round"; c.lineWidth = 3; c.strokeStyle = C.cielo;
+    c.strokeText("100", 2, y(100) + 2);
+    c.fillStyle = C.jarilla;
+    c.fillText("100", 2, y(100) + 2);
+  }
+
+  // ---- el texto del caso ----
+  function actualizaTexto() {
+    var ev = D.eventos[caso];
+    if (!ev) return;
+    var padre = D.pozos[ev.p], hijo = D.pozos[ev.h];
+    var f = ev.f.split("-");
+    var mes = MESES_ES[parseInt(f[1], 10) - 1], anio = f[0];
+    var km = (Math.round(ev.km * 10) / 10).toString().replace(".", ",");
+    document.getElementById("cap1").textContent =
+      titulo(hijo.area) + ", " + mes + " de " + anio + ". Se fracturó un pozo nuevo a " + km +
+      " km de un pozo de " + sinSA(padre.op_nombre) + " que ya producía.";
+    var bbl = Math.round(ev.bbl);
+    var verbo = bbl >= 0 ? "menos" : "más";
+    document.getElementById("cap2").textContent =
+      "En los seis meses siguientes, ese pozo vecino produjo " + numeroEs(Math.abs(bbl)) +
+      " barriles " + verbo + " que pozos de control a 2 a 5 km de un pozo nuevo.";
+  }
+
+  // ---- el mes: la linea de tiempo de un caso ----
+  function etiquetaMes(k) {
+    if (k === 0) return "el mes de la fractura";
+    if (k === 1) return "mes 1 después de la fractura";
+    if (k === -1) return "1 mes antes";
+    if (k < 0) return (-k) + " meses antes";
+    return k + " meses después de la fractura";
+  }
+  function fijaMes(k, conAnillo) {
+    var anterior = mesActual;
+    mesActual = k;
+    var ev = D.eventos[caso];
+    var evMes = absDeFecha(ev.f);
+    var m = mesDeAbs(evMes + k);
+    document.getElementById("mes-tit").textContent = etiquetaMes(k);
+    document.getElementById("mes-fecha").textContent = m ? MESES_ES[m.mes] + " de " + m.anio : "";
+    var control = document.getElementById("mes");
+    if (Math.round(Number(control.value)) !== k) control.value = String(k);
+    if (conAnillo && anterior < 0 && k >= 0) arrancaAnillo();
+    dibujaCapa();
+  }
+  function arrancaAnillo() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var t0 = null;
+    function paso(ts) {
+      if (t0 === null) t0 = ts;
+      var p = Math.min(1, (ts - t0) / 700);
+      anillo = { radio: 5 + p * 26, alfa: 0.85 * (1 - p) };
+      dibujaCapa();
+      if (p < 1) requestAnimationFrame(paso);
+      else anillo = null;
+    }
+    requestAnimationFrame(paso);
+  }
+  // El mes se reproduce una vez, cuando el lector llega a la lamina del vecino.
+  function reproduce() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      fijaMes(1, false);
+      return;
+    }
+    var t0 = null;
+    function paso(ts) {
+      if (t0 === null) t0 = ts;
+      var e = ts - t0;
+      // Los primeros milisegundos no mueven el mes: la pagina abre en el mes 1 y recien
+      // despues arranca la repeticion desde el mes -3.
+      if (e >= 120) fijaMes(MES_MIN + Math.round(Math.min(1, e / 4000) * (MES_MAX - MES_MIN)), true);
+      if (e < 4000) requestAnimationFrame(paso);
+    }
+    requestAnimationFrame(paso);
+  }
+  window.reproducirMes = reproduce;
+
+  // ---- el dinero: los tres supuestos ----
+  function Preparado() {
+    var s = D.supuestos;
+    var p = document.getElementById("s-precio"), t = document.getElementById("s-tasa"), m = document.getElementById("s-meses");
+    p.min = s.precio[0]; p.max = s.precio[1]; p.step = s.precio[3]; p.value = s.precio[2];
+    t.min = s.tasa[0]; t.max = s.tasa[1]; t.step = s.tasa[3]; t.value = s.tasa[2];
+    m.min = s.meses[0]; m.max = s.meses[1]; m.step = s.meses[3]; m.value = s.meses[2];
+    [p, t, m].forEach(function (c) { c.addEventListener("input", calculaDinero); });
+    calculaDinero();
+  }
+  function calculaDinero() {
+    var p = Number(document.getElementById("s-precio").value);
+    var t = Number(document.getElementById("s-tasa").value);
+    var m = Number(document.getElementById("s-meses").value);
+    document.getElementById("o-precio").textContent = "USD " + numeroEs(p);
+    document.getElementById("o-tasa").textContent = numeroEs(t) + "%";
+    document.getElementById("o-meses").textContent = numeroEs(m) + " meses";
+    document.getElementById("frase").textContent =
+      frase(D.rango.inferior_bbl, D.rango.superior_bbl, p, t, m);
+  }
+
+  // ---- las cifras del texto ----
+  function completo() {
+    document.getElementById("n-casos").textContent = numeroEs(D.rango.eventos_superior);
+    var lo = Math.round(D.rango.inferior_bbl / 1e6 * 10) / 10;
+    var hi = Math.round(D.rango.superior_bbl / 1e6 * 10) / 10;
+    document.getElementById("rango").textContent = numeroDec(lo, 1) + " y " + numeroDec(hi, 1);
+    document.getElementById("med24").textContent = numeroEs(Math.round(D.mediana_24.bbl));
+    if (FOTO) {
+      document.getElementById("credito").textContent =
+        FOTO.atribucion + ", imágenes del " + FOTO.desde + " al " + FOTO.hasta + ".";
+    }
+  }
+  function numeroDec(v, decimales) {
+    var neg = v < 0, x = Math.abs(v);
+    var s = x.toFixed(decimales);
+    var partes = s.split(".");
+    partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (neg ? "-" : "") + partes.join(",");
+  }
+
+  // ---- la curva de la cuenca: la misma brecha, con las dos lineas ----
+  function dibujaCurva() {
+    var cv = document.getElementById("curva");
+    if (!cv) return;
+    var w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    var c = cv.getContext("2d");
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+    var cerc = {}, ctrl = {}, ks = [];
+    for (var i = 0; i < D.curva.length; i++) {
+      var p = D.curva[i];
+      if (p.banda === "cercano") cerc[p.k] = p.indice * 100; else ctrl[p.k] = p.indice * 100;
+      if (ks.indexOf(p.k) < 0) ks.push(p.k);
+    }
+    ks.sort(function (a, b) { return a - b; });
+    var k0 = ks[0], k1 = ks[ks.length - 1];
+    var v0 = Infinity, v1 = -Infinity;
+    ks.forEach(function (k) {
+      v0 = Math.min(v0, cerc[k], ctrl[k]);
+      v1 = Math.max(v1, cerc[k], ctrl[k]);
+    });
+    v0 = Math.floor(v0 / 10) * 10; v1 = Math.ceil(v1 / 10) * 10;
+    var pa = 46, pb = 76, pc = 26, pd = 48;
+    function x(k) { return pa + (k - k0) / (k1 - k0) * (w - pa - pb); }
+    function y(v) { return pc + (v1 - v) / (v1 - v0) * (h - pc - pd); }
+    // el mes de la fractura: una vertical fina
+    c.strokeStyle = C.jarilla; c.globalAlpha = 0.4; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(x(0), pc); c.lineTo(x(0), h - pd); c.stroke();
+    // la brecha, entre el mes 0 y el mes 6
+    c.beginPath();
+    var primero = true;
+    ks.forEach(function (k) {
+      if (k < 0 || k > 6) return;
+      if (primero) { c.moveTo(x(k), y(ctrl[k])); primero = false; } else c.lineTo(x(k), y(ctrl[k]));
+    });
+    ks.slice().reverse().forEach(function (k) {
+      if (k < 0 || k > 6) return;
+      c.lineTo(x(k), y(cerc[k]));
+    });
+    c.closePath();
+    c.fillStyle = C.lutita; c.globalAlpha = 0.35; c.fill(); c.globalAlpha = 1;
+    // la paridad con el control
+    c.strokeStyle = C.jarilla; c.globalAlpha = 0.4; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(pa, y(100)); c.lineTo(w - pb, y(100)); c.stroke();
+    c.globalAlpha = 1;
+    // las dos lineas
+    c.lineJoin = "round";
+    c.strokeStyle = C.jarilla; c.lineWidth = 1.5; c.beginPath();
+    ks.forEach(function (k, i) { if (i === 0) c.moveTo(x(k), y(ctrl[k])); else c.lineTo(x(k), y(ctrl[k])); });
+    c.stroke();
+    c.strokeStyle = C.tinta; c.lineWidth = 2; c.beginPath();
+    ks.forEach(function (k, i) { if (i === 0) c.moveTo(x(k), y(cerc[k])); else c.lineTo(x(k), y(cerc[k])); });
+    c.stroke();
+    // cada linea se nombra en su extremo derecho
+    c.font = "14px " + FUENTE_ARCHIVO; c.textAlign = "left"; c.textBaseline = "middle";
+    var arriba = cerc[k1] >= ctrl[k1] ? -1 : 1;
+    c.fillStyle = C.tinta;
+    var yv = y(cerc[k1]) + arriba * 8;   // dos renglones: el margen derecho no alcanza para "pozos vecinos" en uno
+    c.fillText("pozos", x(k1) + 8, yv - (arriba < 0 ? 14 : 0));
+    c.fillText("vecinos", x(k1) + 8, yv + (arriba > 0 ? 14 : 0));
+    c.fillStyle = C.jarilla;
+    c.fillText("control", x(k1) + 8, y(ctrl[k1]) - arriba * 8);
+    // el texto de los ejes: a lo mas cuatro marcas por eje
+    c.font = "14px " + FUENTE_ARCHIVO;
+    c.fillStyle = C.jarilla;
+    c.textAlign = "right";
+    c.fillText(String(v1), pa - 8, y(v1));
+    c.fillText(String(v0), pa - 8, y(v0));
+    if (v0 < 100 && v1 > 100) c.fillText("100", pa - 8, y(100));
+    c.textAlign = "left"; c.textBaseline = "top";
+    c.fillText("caudal, índice", 0, 2);
+    c.textAlign = "center"; c.textBaseline = "top";
+    var marcas = [k0, 0, k1].filter(function (k, i, a) { return a.indexOf(k) === i; });
+    marcas.forEach(function (k) {
+      c.fillText(k === 0 ? "fractura" : String(k), x(k), h - pd + 8);
+    });
+    c.fillText("meses desde la fractura", (pa + w - pb) / 2, h - pd + 28);
+  }
+
+  // explorador:inicio
+  // La cuenca entera: cada fractura en su pozo hijo, la clase por la forma. Elegir uno cambia el caso de arriba.
+  var EX_CLASES = ["golpe", "ambos", "cierre_preventivo", "sin_efecto"];
+  var exActivas = { golpe: true, ambos: true, cierre_preventivo: true, sin_efecto: true };
+  var exLienzo = document.getElementById("ex-lienzo");
+  var exFoto = document.getElementById("ex-foto");
+  var exCapa = document.getElementById("ex-capa");
+  var exCtx = exFoto.getContext("2d");
+  var exCtxCapa = exCapa.getContext("2d");
+  var exCerca = document.getElementById("ex-cerca");
+  var exCercaFoto = document.getElementById("ex-cerca-foto");
+  var exCercaCapa = document.getElementById("ex-cerca-capa");
+  var exCtxCercaFoto = exCercaFoto.getContext("2d");
+  var exCtxCerca = exCercaCapa.getContext("2d");
+  var exC = null;        // el acercamiento: {size, s, mLon, g, capa, clon, clat, lon0, lat0, lon1, lat1}
+  var CERCA_MITAD = 6500;
+  var exRotulo = document.getElementById("ex-rotulo");
+  var exV = null;        // {w, h, s, g, lon0, lat0, lon1, lat1, capa}
+  var exPts = [];        // {i, x, y}
+  var exAhora = null;    // mes absoluto de la reproduccion, o null fuera de ella
+  var exAnim = 0;
+  var exSobre = -1;
+  var EX_DURACION = 20000, EX_DESVANECE = 6;
+
+  function exGrande() { return window.innerWidth >= 900; }
+
+  // El recuadro: todos los pozos hijo con un 5 % de margen.
+  var exCaja = null;
+  (function () {
+    var a = 180, b = -180, c = 90, d = -90, hay = false;
+    for (var i = 0; i < D.eventos.length; i++) {
+      var h = D.pozos[D.eventos[i].h];
+      a = Math.min(a, h.lon); b = Math.max(b, h.lon); c = Math.min(c, h.lat); d = Math.max(d, h.lat); hay = true;
+    }
+    if (!hay) return;
+    var mx = (b - a) * 0.05, my = (d - c) * 0.05;
+    exCaja = { lon0: a - mx, lon1: b + mx, lat0: c - my, lat1: d + my };
+  })();
+
+  function exPrepara() {
+    var capa = capaPorNombre("caja");
+    if (!exCaja || !capa || !exGrande()) return false;
+    var cuerpo = exLienzo.parentNode.parentNode;
+    var libre = Math.round((cuerpo.clientWidth - 64) * 0.6);
+    if (!libre) return false;
+    var g = geometria(capa);
+    // alto de la pantalla menos 160 px, con la proporción del recuadro; el ancho sigue
+    var aspecto = ((exCaja.lat1 - exCaja.lat0) * M_LAT) / ((exCaja.lon1 - exCaja.lon0) * g.mLon);
+    var h = Math.round(Math.min(libre * aspecto, window.innerHeight - 160));
+    var w = Math.round(h / aspecto);
+    var s = w / ((exCaja.lon1 - exCaja.lon0) * g.mLon);
+    exLienzo.style.width = w + "px";
+    exLienzo.style.height = h + "px";
+    exV = { w: w, h: h, s: s, g: g, capa: capa, lon0: exCaja.lon0, lat0: exCaja.lat0, lon1: exCaja.lon1, lat1: exCaja.lat1 };
+    var img = imagenDe(capa);
+    if (!img.complete && !img.dataset.exEscucha) {
+      img.dataset.exEscucha = "1";
+      img.addEventListener("load", function () { exRedibuja(); });
+    }
+    exPts = [];
+    for (var i = 0; i < D.eventos.length; i++) {
+      var hj = D.pozos[D.eventos[i].h];
+      exPts.push({ i: i, x: (hj.lon - exV.lon0) * g.mLon * s, y: h - (hj.lat - exV.lat0) * M_LAT * s });
+    }
+    return true;
+  }
+
+  function exTamano(cv, c, w, h) {
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+  }
+
+  // El acercamiento: 13 km de lado centrados en el pozo hijo elegido, de la capa con más píxeles por km.
+  function exPreparaCerca() {
+    var ev = D.eventos[caso];
+    var size = exCerca.clientWidth;
+    if (!ev || !size || !exGrande()) { exC = null; return false; }
+    var hijo = D.pozos[ev.h];
+    var mLon = mPorGradoLon(hijo.lat);
+    var dLon = CERCA_MITAD / mLon, dLat = CERCA_MITAD / M_LAT;
+    var caja = { lon0: hijo.lon - dLon, lon1: hijo.lon + dLon, lat0: hijo.lat - dLat, lat1: hijo.lat + dLat };
+    var capa = eligeCapa(caja);
+    if (!capa) { exC = null; return false; }
+    exC = { size: size, s: size / (2 * CERCA_MITAD), mLon: mLon, g: geometria(capa), capa: capa,
+      clon: hijo.lon, clat: hijo.lat, lon0: caja.lon0, lon1: caja.lon1, lat0: caja.lat0, lat1: caja.lat1 };
+    var img = imagenDe(capa);
+    if (!img.complete && !img.dataset.exEscucha) {
+      img.dataset.exEscucha = "1";
+      img.addEventListener("load", function () { exRedibuja(); });
+    }
+    return true;
+  }
+  function exCercaX(lon) { return exC.size / 2 + (lon - exC.clon) * exC.mLon * exC.s; }
+  function exCercaY(lat) { return exC.size / 2 - (lat - exC.clat) * M_LAT * exC.s; }
+
+  // El terreno de la cuenca, sin nada encima.
+  function exDibujaFoto() {
+    if (!exV) return;
+    var v = exV, w = v.w, h = v.h;
+    exTamano(exFoto, exCtx, w, h);
+    exPintaTerreno(exCtx, v, w, h);
+  }
+  function exPintaTerreno(c, v, w, h) {
+    var g = v.g;
+    c.fillStyle = C.cielo; c.fillRect(0, 0, w, h);
+    var img = IMAGENES[v.capa.nombre];
+    if (img && img.complete && img.naturalWidth) {
+      var sx = (v.lon0 - g.lon0) * g.mLon / g.mx;
+      var sy = (g.altoM - (v.lat1 - g.lat0) * M_LAT) / g.my;
+      var sw = (v.lon1 - v.lon0) * g.mLon / g.mx;
+      var sh = (v.lat1 - v.lat0) * M_LAT / g.my;
+      c.imageSmoothingEnabled = true;
+      c.imageSmoothingQuality = "high";
+      c.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+      c.globalAlpha = 0.3; c.fillStyle = C.cielo; c.fillRect(0, 0, w, h); c.globalAlpha = 1;
+    }
+  }
+
+  // Las bandas de distancia: entre anillos, lutita, tan oscura como la brecha del mes 1.
+  function exBandas(c, x, y, s) {
+    var d = D.distancia;
+    if (!d || d.length < 3) return;
+    var ref = Math.abs(d[0].brecha) || 1;
+    for (var i = d.length - 1; i >= 0; i--) {
+      var r1 = d[i].km_hasta * 1000 * s, r0 = d[i].km_desde * 1000 * s;
+      c.save();
+      c.globalAlpha = 0.6 * Math.abs(d[i].brecha) / ref;
+      c.fillStyle = C.lutita;
+      c.beginPath();
+      c.arc(x, y, r1, 0, Math.PI * 2);
+      if (r0 > 0) { c.moveTo(x + r0, y); c.arc(x, y, r0, 0, Math.PI * 2, true); }
+      c.fill("evenodd");
+      c.restore();
+    }
+  }
+  // Los anillos de 1, 2 y 5 km con su rótulo en un radio hacia arriba a la derecha, lejos del centro.
+  function exAnillos(c, x, y, s) {
+    var radios = [1, 2, 5], k, r;
+    c.save();
+    c.strokeStyle = C.hueso; c.lineWidth = 1;
+    for (k = 0; k < radios.length; k++) {
+      c.beginPath(); c.arc(x, y, radios[k] * 1000 * s, 0, Math.PI * 2); c.stroke();
+    }
+    c.font = "14px " + FUENTE_ARCHIVO;
+    c.lineJoin = "round"; c.lineWidth = 3;
+    c.textAlign = "left"; c.textBaseline = "bottom";
+    for (k = 0; k < radios.length; k++) {
+      r = radios[k] * 1000 * s * Math.SQRT1_2;
+      c.strokeStyle = C.lutita; c.strokeText(radios[k] + " km", x + r + 3, y - r);
+      c.fillStyle = C.hueso; c.fillText(radios[k] + " km", x + r + 3, y - r);
+    }
+    c.restore();
+  }
+
+  function exDibujaCercaFoto() {
+    if (!exC) return;
+    exTamano(exCercaFoto, exCtxCercaFoto, exC.size, exC.size);
+    exPintaTerreno(exCtxCercaFoto, exC, exC.size, exC.size);
+    exBandas(exCtxCercaFoto, exC.size / 2, exC.size / 2, exC.s);
+  }
+  function exDibujaCercaCapa() {
+    if (!exC) return;
+    var c = exCtxCerca, v = exC;
+    exTamano(exCercaCapa, c, v.size, v.size);
+    for (var i = 0; i < D.eventos.length; i++) {
+      var ev = D.eventos[i];
+      if (!exActivas[ev.clase]) continue;
+      var h = D.pozos[ev.h];
+      if (h.lon < v.lon0 || h.lon > v.lon1 || h.lat < v.lat0 || h.lat > v.lat1) continue;
+      var a = exAlfa(ev);
+      if (a > 0) exMarca(c, exCercaX(h.lon), exCercaY(h.lat), ev.clase, a);
+    }
+    exAnillos(exCtxCerca, v.size / 2, v.size / 2, v.s);
+    // aroPozo dibuja en la capa del caso de arriba: se la cambia un momento por la de este acercamiento
+    var guardada = ctxCapa;
+    ctxCapa = exCtxCerca;
+    aroPozo(v.size / 2, v.size / 2, 2);
+    ctxCapa = guardada;
+    c.fillStyle = NUEVO;
+    c.beginPath(); c.arc(v.size / 2, v.size / 2, 6, 0, Math.PI * 2); c.fill();
+  }
+
+  // Una forma por clase, la misma que en los filtros: disco, medio disco, disco con anillo, anillo.
+  function exMarca(c, x, y, clase, alfa) {
+    var r = 2.5;
+    c.save();
+    c.globalAlpha = alfa;
+    c.lineWidth = 1.5;
+    if (clase === "sin_efecto") {
+      c.strokeStyle = C.jarilla;
+      c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+    } else {
+      c.fillStyle = C.tinta; c.strokeStyle = C.tinta;
+      if (clase === "cierre_preventivo") {
+        c.lineWidth = 1.2;
+        c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+        c.beginPath(); c.arc(x, y, r, Math.PI / 2, Math.PI * 1.5); c.closePath(); c.fill();
+      } else {
+        c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+        if (clase === "ambos") { c.beginPath(); c.arc(x, y, r + 2.5, 0, Math.PI * 2); c.stroke(); }
+      }
+    }
+    c.restore();
+  }
+
+  function exAlfa(ev) {
+    if (exAhora === null) return 1;
+    var edad = exAhora - absDeFecha(ev.f);
+    if (edad < 0 || edad >= EX_DESVANECE) return 0;
+    return 1 - edad / EX_DESVANECE;
+  }
+
+  function exDibujaCapa() {
+    if (!exV) return;
+    var c = exCtxCapa, v = exV;
+    exTamano(exCapa, c, v.w, v.h);
+    for (var i = 0; i < exPts.length; i++) {
+      var ev = D.eventos[i];
+      if (!exActivas[ev.clase]) continue;
+      var a = exAlfa(ev);
+      if (a > 0) exMarca(c, exPts[i].x, exPts[i].y, ev.clase, a);
+    }
+    // en este mapa solo un cuadrito: dónde está el acercamiento
+    var sel = exPts[caso];
+    if (sel) {
+      var lado = 2 * CERCA_MITAD * v.s;
+      c.strokeStyle = C.hueso; c.lineWidth = 1;
+      c.strokeRect(Math.round(sel.x - lado / 2) + 0.5, Math.round(sel.y - lado / 2) + 0.5, Math.round(lado), Math.round(lado));
+    }
+    exDibujaCercaCapa();
+  }
+
+  function exTextoDe(i) {
+    var ev = D.eventos[i], f = ev.f.split("-");
+    return titulo(D.pozos[ev.h].area) + ", " + MESES_ES[parseInt(f[1], 10) - 1] + " de " + f[0];
+  }
+  function exTextoSel() {
+    document.getElementById("ex-sel").textContent = D.eventos[caso] ? exTextoDe(caso) : "";
+  }
+
+  function exRedibuja() {
+    if (!exPrepara()) return;
+    exPreparaCerca();
+    exDibujaFoto();
+    exDibujaCercaFoto();
+    exDibujaCapa();
+    exTextoSel();
+  }
+
+  function exCercano(mx, my) {
+    var mejor = -1, dmin = 64;
+    for (var i = 0; i < exPts.length; i++) {
+      if (!exActivas[D.eventos[i].clase]) continue;
+      var dx = exPts[i].x - mx, dy = exPts[i].y - my, d2 = dx * dx + dy * dy;
+      if (d2 <= dmin) { dmin = d2; mejor = i; }
+    }
+    return mejor;
+  }
+  function exPosicion(e) {
+    var r = exCapa.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  exCapa.addEventListener("mousemove", function (e) {
+    if (exAhora !== null || !exV) return;
+    var p = exPosicion(e), i = exCercano(p.x, p.y);
+    exSobre = i;
+    exCapa.classList.toggle("ex-puntero", i >= 0);
+    if (i < 0) { exRotulo.hidden = true; return; }
+    exRotulo.textContent = exTextoDe(i);
+    exRotulo.hidden = false;
+    var x = exPts[i].x + 10, y = exPts[i].y - 28;
+    if (x + exRotulo.offsetWidth > exV.w) x = exPts[i].x - 10 - exRotulo.offsetWidth;
+    exRotulo.style.left = Math.max(0, x) + "px";
+    exRotulo.style.top = Math.max(0, y) + "px";
+  });
+  exCapa.addEventListener("mouseleave", function () { exSobre = -1; exRotulo.hidden = true; });
+  exCapa.addEventListener("click", function (e) {
+    if (!exV) return;
+    var p = exPosicion(e), i = exCercano(p.x, p.y);
+    if (i < 0) return;
+    var aviso = document.getElementById("ex-aviso");
+    if (SORTEABLES.indexOf(i) < 0) {
+      aviso.textContent = "Este caso todavía no tiene doce meses de datos";
+      return;
+    }
+    aviso.textContent = "";
+    caso = i;
+    preparaCaso();
+    fijaMes(1, false);
+    exPreparaCerca();
+    exDibujaCercaFoto();
+    exDibujaCapa();
+    exTextoSel();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".ex-clases input"), function (cb) {
+    cb.addEventListener("change", function () {
+      exActivas[cb.getAttribute("data-clase")] = cb.checked;
+      exRotulo.hidden = true;
+      exDibujaCapa();
+    });
+  });
+
+  document.getElementById("ex-arriba").addEventListener("click", function (e) {
+    e.preventDefault();
+    var reducido = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById("caso").scrollIntoView({ behavior: reducido ? "auto" : "smooth", block: "start" });
+  });
+
+  // La cuenca en el tiempo: cada punto aparece en su mes y se apaga en los seis siguientes. Sin cuentas.
+  var exBoton = document.getElementById("ex-reproducir");
+  var exMes = document.getElementById("ex-mes");
+  function exPara() {
+    if (exAnim) cancelAnimationFrame(exAnim);
+    exAnim = 0; exAhora = null;
+    exBoton.textContent = "Ver la cuenca en el tiempo";
+    exMes.textContent = "";
+    exDibujaCapa();
+  }
+  exBoton.addEventListener("click", function () {
+    if (exAnim) { exPara(); return; }
+    if (!exV) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) { exDibujaCapa(); return; }
+    var a0 = null, a1 = null;
+    for (var i = 0; i < D.eventos.length; i++) {
+      if (!exActivas[D.eventos[i].clase]) continue;
+      var a = absDeFecha(D.eventos[i].f);
+      if (a0 === null || a < a0) a0 = a;
+      if (a1 === null || a > a1) a1 = a;
+    }
+    if (a0 === null) return;
+    a1 += EX_DESVANECE;
+    var t0 = null;
+    exBoton.textContent = "Detener";
+    exRotulo.hidden = true;
+    function paso(ts) {
+      if (t0 === null) t0 = ts;
+      var p = Math.min(1, (ts - t0) / EX_DURACION);
+      exAhora = a0 + p * (a1 - a0);
+      var m = mesDeAbs(Math.floor(exAhora));
+      exMes.textContent = MESES_ES[m.mes] + " de " + m.anio;
+      exDibujaCapa();
+      if (p < 1) exAnim = requestAnimationFrame(paso); else exPara();
+    }
+    exAnim = requestAnimationFrame(paso);
+  });
+  // explorador:fin
+
+  // ---- arranque ----
+  document.getElementById("mes").addEventListener("input", function () {
+    fijaMes(Number(this.value), true);
+  });
+  document.getElementById("otro").addEventListener("click", function () {
+    if (!SORTEABLES.length) return;
+    caso = SORTEABLES[Math.floor(Math.random() * SORTEABLES.length)];
+    preparaCaso();
+    fijaMes(1, false);
+    exRedibuja();
+  });
+  document.getElementById("tipico").addEventListener("click", function () {
+    caso = D.caso >= 0 ? D.caso : 0;
+    preparaCaso();
+    fijaMes(1, false);
+    exRedibuja();
+  });
+  var resize = null;
+  window.addEventListener("resize", function () {
+    if (resize) clearTimeout(resize);
+    resize = setTimeout(function () {
+      preparaCaso();
+      dibujaCurva();
+      exRedibuja();
+    }, 120);
+  });
+
+  // De noche es el mismo lugar: al cambiar el tema se releen los tokens y se redibuja todo.
+  var tema = window.matchMedia("(prefers-color-scheme: dark)");
+  function redibuja() {
+    leeTokens();
+    dibujaFoto();
+    dibujaCapa();
+    dibujaChispa();
+    dibujaCurva();
+    exDibujaFoto();
+    exDibujaCercaFoto();
+    exDibujaCapa();
+  }
+  if (tema.addEventListener) tema.addEventListener("change", redibuja);
+  else if (tema.addListener) tema.addListener(redibuja);
+
+  completo();
+  Preparado();
+  preparaCaso();
+  dibujaCurva();
+  fijaMes(1, false);
+  exRedibuja();
+  // la curva vive dentro de un detalle cerrado: se dibuja cuando se abre, que antes no tiene ancho
+  var verCurva = document.getElementById("ver-curva");
+  if (verCurva) verCurva.addEventListener("toggle", function () { if (verCurva.open) dibujaCurva(); });
+})();
+
+// mazo:inicio
+// La historia como láminas. Sin JavaScript o con movimiento reducido la página se lee de corrido y cada banda
+// ya está en su estado final. Con movimiento, una sola transición por cambio de lámina: la banda sube desde la
+// línea del control y el texto aparece 200 ms después. Las teclas y el toque en el tercio de abajo pasan de
+// lámina; el riel de la derecha marca dónde se está.
+(function () {
+  "use strict";
+  var raiz = document.documentElement;
+  var laminas = Array.prototype.slice.call(document.querySelectorAll(".lamina"));
+  if (!laminas.length) return;
+  var enlaces = {};
+  Array.prototype.slice.call(document.querySelectorAll(".riel-enlace")).forEach(function (a) {
+    enlaces[a.getAttribute("href").slice(1)] = a;
+  });
+  var reducido = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var mov = !reducido.matches;
+  var DUR = 700;
+  var actual = -1;
+  var yaReprodujo = false;
+
+  function bandasDe(lam) { return Array.prototype.slice.call(lam.querySelectorAll(".banda")); }
+
+  function preparar(lam) {
+    lam.classList.add("pendiente");
+    bandasDe(lam).forEach(function (b) { b.style.transform = "scaleY(0)"; });
+  }
+
+  function activar(i) {
+    if (i === actual || i < 0) return;
+    actual = i;
+    var lam = laminas[i];
+    Object.keys(enlaces).forEach(function (id) {
+      if (id === lam.id) enlaces[id].setAttribute("aria-current", "true");
+      else enlaces[id].removeAttribute("aria-current");
+    });
+    if (lam.id === "vecino" && !yaReprodujo && window.reproducirMes) { yaReprodujo = true; window.reproducirMes(); }
+    if (!mov) return;
+    bandasDe(lam).forEach(function (b) {
+      if (!b.animate) return;
+      b.style.transform = "";
+      b.animate([{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }],
+        { duration: DUR, easing: "cubic-bezier(.2,.7,.2,1)" });
+    });
+    if (lam.classList.contains("pendiente")) {
+      setTimeout(function () { lam.classList.remove("pendiente"); }, DUR);
+    }
+  }
+
+  if (mov) {
+    raiz.classList.add("mov");
+    var visible = 0;
+    for (var i = 0; i < laminas.length; i++) {
+      var r = laminas[i].getBoundingClientRect();
+      if (r.top <= window.innerHeight / 2 && r.bottom > window.innerHeight / 2) { visible = i; break; }
+    }
+    for (var j = visible + 1; j < laminas.length; j++) preparar(laminas[j]);
+  }
+
+  // la lámina activa es la que cruza la mitad de la pantalla
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) activar(laminas.indexOf(e.target)); });
+  }, { rootMargin: "-49% 0px -49% 0px" });
+  laminas.forEach(function (l) { io.observe(l); });
+
+  function ir(i) {
+    var lam = laminas[Math.max(0, Math.min(laminas.length - 1, i))];
+    lam.scrollIntoView({ behavior: mov ? "smooth" : "auto", block: "start" });
+  }
+
+  addEventListener("keydown", function (e) {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || actual < 0) return;
+    var t = e.target;
+    if (t.closest && t.closest("input, textarea, select, [contenteditable]")) return;
+    var lam = laminas[actual], r = lam.getBoundingClientRect();
+    var control = t.closest && t.closest("a, button, summary");
+    var adelante = e.key === "ArrowDown" || e.key === "PageDown" || (e.key === " " && !e.shiftKey && !control);
+    var atras = e.key === "ArrowUp" || e.key === "PageUp" || (e.key === " " && e.shiftKey && !control);
+    // el explorador queda debajo de la última lámina: ahí las teclas desplazan la página
+    var hayExplorador = !!document.getElementById("explorador") && actual === laminas.length - 1;
+    if (adelante) {
+      if (hayExplorador) return;
+      if (r.height > window.innerHeight + 8 && r.bottom > window.innerHeight + 8) return;
+      e.preventDefault(); ir(actual + 1);
+    } else if (atras) {
+      if (hayExplorador && r.bottom < window.innerHeight - 8) return;
+      if (r.height > window.innerHeight + 8 && r.top < -8) return;
+      e.preventDefault(); ir(actual - 1);
+    } else if (e.key === "Home") { e.preventDefault(); ir(0); }
+    else if (e.key === "End") { e.preventDefault(); ir(laminas.length - 1); }
+  });
+
+  // tocar el tercio de abajo de una lámina pasa a la siguiente (solo con el dedo, nunca en el cajón, en
+  // enlaces, detalles o texto seleccionado): un clic de mouse no mueve la página
+  var ultimoPuntero = "";
+  addEventListener("pointerdown", function (e) { ultimoPuntero = e.pointerType || ""; }, true);
+  laminas.forEach(function (lam, i) {
+    lam.addEventListener("click", function (e) {
+      if (ultimoPuntero !== "touch") return;
+      if (e.target.closest("a, button, summary, details, input, label, output, .cajon")) return;
+      if (e.target.closest(".marco")) return;
+      if (String(window.getSelection()).length) return;
+      if (e.clientY > window.innerHeight * 2 / 3 && i < laminas.length - 1) ir(i + 1);
+    });
+  });
+})();
+// mazo:fin
+</script>
+</body>
+</html>

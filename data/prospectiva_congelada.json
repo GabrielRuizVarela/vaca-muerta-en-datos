@@ -1,0 +1,36 @@
+{
+ "fecha_congelado": "2026-11-18",
+ "fractura_sha256": "ff95734bf485b1a27ecb75e3a44dda3035e5496805cf3970a28d19802bf03026",
+ "manifest_sha256": "fb843ffcf005383eeece5a71c963ee864324b1cf5173a4b208b1f0b56d4e382f",
+ "p1": {
+  "conocidos_cercanos": 0,
+  "conocidos_controles": 17,
+  "desde": "2026-09-01",
+  "fuente": "mart_bloques brecha_mes1_base_original, IC 95% por bloques de 5 km",
+  "intervalo_alto": -0.167574,
+  "intervalo_bajo": -0.286977,
+  "k": 1,
+  "prediccion": -0.229264
+ },
+ "p2": {
+  "conocidos_cercanos": 129,
+  "conocidos_controles": 1235,
+  "desde": "2026-04-01",
+  "fuente": "placebo.marco, todos los eventos hasta ultimo_mes",
+  "k": 6,
+  "prediccion": -0.020975,
+  "umbral": 0.05
+ },
+ "parametros": {
+  "cierre_max": 0.1,
+  "min_bloques": 15,
+  "min_cercanos": 100,
+  "min_controles": 100,
+  "reps": 400,
+  "semilla": 20262130,
+  "umbral_chico": 0.05
+ },
+ "produccion_sha256": "61cecc31c8dd81fd474c4094f2605b2b01b5a5d157e2089db7f3c548c410deae",
+ "ultimo_mes": "2026-09-01",
+ "version": 1
+}

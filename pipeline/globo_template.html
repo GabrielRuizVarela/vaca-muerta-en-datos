@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El globo: dónde se mide pozo por pozo</title>
+<meta name="description" content="La Tierra oscura salvo donde un regulador publica petróleo por pozo; cada cuenca medida se abre en la misma repetición mes a mes, con su veredicto.">
+<style>
+/*__SISTEMA__*/
+:root {
+  color-scheme: dark;
+  --fondo: var(--cielo); --panel: color-mix(in srgb, var(--cielo) 88%, transparent); --linea: color-mix(in srgb, var(--tinta) 16%, var(--cielo));
+  --tinta-2: color-mix(in srgb, var(--tinta) 55%, var(--jarilla)); --tinta-3: var(--jarilla);
+  --dato: #ece5d3; --medido: #5fd3c4; --supuesto: #c796f2; --petroleo: #f4b860; --mal: #f08a6c; --bien: #5fd3c4;
+  --ui: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --relato: "Faustina", Georgia, serif;
+  --izq: 440px;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { margin: 0; background: var(--fondo); color: var(--tinta); font: 15px/1.5 var(--ui); font-variant-numeric: tabular-nums; }
+a { color: inherit; }
+button, select, input { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+/* Resumen estático: es la página sin JavaScript o sin WebGL, y lo que leen los lectores de pantalla. */
+.resumen { max-width: 68ch; margin: 0 auto; padding: 48px 20px 24px; }
+.resumen h1 { font: 400 clamp(30px, 6vw, 42px)/1.08 var(--relato); margin: 0 0 12px; }
+.resumen .bajada { color: var(--tinta-2); margin: 0 0 28px; }
+.resumen ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.resumen li { border-top: 1px solid var(--linea); padding-top: 14px; color: var(--tinta-2); }
+.resumen li b { color: var(--tinta); font-weight: 600; }
+.resumen .lectura-final { font: 400 22px/1.3 var(--relato); color: var(--tinta); margin: 24px 0 0; }
+.resumen .enlaces { margin-top: 24px; color: var(--tinta-3); font-size: 14px; }
+.sin-webgl { max-width: 68ch; margin: 0 auto; padding: 0 20px 12px; color: var(--petroleo); }
+
+/* Las tres clases de cosa se distinguen también por forma: lleno, con aro, a rayas. */
+/* La base del sistema dibuja .marca como un disco de 12 px; aquí las tres clases de cosa son pastillas de texto. */
+.marca { width: auto; height: auto; border: 0; transform: none; background: none; display: inline-block; font: 600 12px/1 var(--ui); padding: 3px 7px 4px; border-radius: 10px; margin-right: 6px; vertical-align: 1px; }
+.marca.dato { background: var(--dato); color: var(--fondo); }
+.marca.medido { color: var(--medido); box-shadow: inset 0 0 0 1.5px var(--medido); }
+.marca.supuesto { color: var(--supuesto); border: 1.5px dashed var(--supuesto); padding: 2px 6px 3px; }
+
+.pie { max-width: 68ch; margin: 0 auto; padding: 16px 20px 40px; color: var(--tinta-3); font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.pie .ok { color: var(--bien); } .pie .mal { color: var(--mal); font-weight: 600; }
+.aviso { max-width: 68ch; margin: 0 auto; padding: 0 20px; }
+.aviso p { border: 1px solid var(--mal); color: var(--mal); border-radius: 6px; padding: 10px 12px; margin: 0; background: var(--fondo); }
+
+/* Con JavaScript el resumen queda para lectores de pantalla y el globo ocupa la ventana. */
+.con-globo .resumen { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; padding: 0; }
+.con-globo .pie { position: fixed; z-index: 3; left: 20px; top: 74px; margin: 0; padding: 0; font-size: 12px; gap: 0 12px; max-width: 420px; pointer-events: none; opacity: .85; }
+.con-globo .aviso { position: fixed; z-index: 9; top: 12px; left: 50%; transform: translateX(-50%); }
+.con-globo { overflow: hidden; }
+
+#escena { position: fixed; inset: 0; }
+#globo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; transition: none; }
+#vista { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+#vista canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; opacity: 0; pointer-events: none; }
+#vista canvas.activo { pointer-events: auto; }
+#rotulos { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.rotulo { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 12.5px; line-height: 1.2; color: var(--tinta-2); text-shadow: 0 0 6px var(--fondo), 0 0 2px var(--fondo); }
+.rotulo.titulo-eje, .rotulo.pie-eje { color: var(--tinta-3); }
+.rotulo.serie { font-weight: 600; font-size: 13px; background: rgba(6, 20, 27, .82); padding: 2px 7px; border-radius: 3px; text-shadow: none; }
+.rotulo.cercano { color: var(--medido); } .rotulo.control { color: var(--tinta); }
+.rotulo.brecha { color: var(--mal); font-weight: 600; font-size: 14px; background: rgba(6, 20, 27, .82); padding: 3px 8px; border-radius: 3px; text-shadow: none; }
+@media (max-width: 760px) { .rotulo { white-space: normal; max-width: 240px; } }
+
+.marca-cuenca { position: fixed; left: 0; top: 0; width: 44px; height: 44px; margin: -22px 0 0 -22px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; z-index: 2; }
+.marca-cuenca:focus-visible { outline: 2px solid var(--tinta); outline-offset: 0; }
+
+.titulo { position: fixed; left: 20px; top: 16px; z-index: 3; pointer-events: none; max-width: calc(100vw - 150px); }
+.titulo h2 { margin: 0; font: 400 26px/1.1 var(--relato); }
+.titulo p { margin: 4px 0 0; color: var(--tinta-3); font-size: 12px; }
+
+.panel { position: fixed; z-index: 3; background: var(--panel); border: 1px solid var(--linea); border-radius: 4px 18px 4px 4px; padding: 16px 18px 14px; backdrop-filter: blur(6px); }
+.regla { left: 20px; bottom: calc(var(--banda, 112px) + 10px); width: min(420px, calc(100vw - 40px)); }
+.regla h3, .veredicto h3 { margin: 0 0 4px; font: 400 18px/1.25 var(--relato); }
+.regla .sub { margin: 0 0 8px; color: var(--tinta-3); font-size: 12.5px; }
+.escala { display: block; width: 100%; height: 22px; overflow: visible; }
+.fila { display: grid; grid-template-columns: 92px 1fr; align-items: center; width: 100%; padding: 5px 0 5px; border: 0; border-top: 1px solid var(--linea); border-radius: 0; text-align: left; background: transparent; cursor: pointer; }
+.fila:hover, .fila.resalte { background: rgba(236, 229, 211, .06); }
+.fila .nombre { font: 400 15px/1.15 var(--relato); }
+.fila .nombre small { display: block; font: 400 11.5px/1.3 var(--ui); color: var(--tinta-3); }
+.fila svg { display: block; width: 100%; height: 28px; overflow: visible; }
+.fila .cifra { grid-column: 2; font-size: 12px; color: var(--tinta-2); margin-top: -2px; }
+.regla .lectura { margin: 8px 0 6px; font: 400 17px/1.3 var(--relato); }
+.regla .nota { margin: 0; color: var(--tinta-3); font-size: 12.5px; }
+
+.ficha { right: 20px; top: 16px; width: min(330px, calc(100vw - 40px)); max-height: calc(100vh - 150px); overflow: auto; border-radius: 18px 4px 4px 4px; }
+.ficha h3 { margin: 0 30px 2px 0; font: 400 20px/1.15 var(--relato); }
+.ficha .sub { margin: 0 0 8px; color: var(--tinta-2); font-size: 13px; }
+.ficha .nivel { display: flex; gap: 8px; align-items: center; font-size: 13px; margin: 0 0 8px; }
+.ficha dl { margin: 0; display: grid; gap: 6px; font-size: 13px; }
+.ficha dt { color: var(--tinta-3); font-size: 12px; }
+.ficha dd { margin: 0; color: var(--tinta-2); }
+.ficha .cerrar { position: absolute; right: 10px; top: 10px; padding: 1px 9px; }
+.ficha ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ficha ul button { font-size: 12.5px; padding: 2px 10px; }
+.ficha .abrir { margin-top: 10px; }
+
+.banda { left: 20px; right: 20px; bottom: 16px; border-radius: 4px; padding: 10px 14px 10px; }
+.banda h3 { margin: 0 0 6px; font: 400 13px/1.3 var(--ui); color: var(--tinta-3); }
+.grupos { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.grupo { display: inline-flex; align-items: center; gap: 7px; padding: 3px 11px 3px 4px; font-size: 12.5px; border-radius: 999px; }
+.grupo canvas { width: 30px; height: 20px; display: block; border-radius: 3px; }
+.grupo b { font-weight: 600; }
+.grupo[aria-pressed="true"] { border-color: var(--tinta); background: rgba(236, 229, 211, .08); }
+
+button { background: transparent; border: 1px solid var(--linea); border-radius: 999px; padding: 5px 13px; cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--tinta-3); }
+button:disabled { opacity: .4; cursor: default; }
+button.principal { background: var(--tinta); color: var(--fondo); border-color: var(--tinta); font-weight: 600; }
+button[aria-pressed="true"] { border-color: var(--petroleo); color: var(--petroleo); }
+.grupo[aria-pressed="true"] { color: var(--tinta); }
+
+/* Dentro de una cuenca. */
+/* La base del sistema usa .veredicto para una fila de marcas; aquí es un panel de texto, de bloque. */
+.veredicto { left: 20px; bottom: calc(var(--banda, 112px) + 10px); width: min(420px, calc(100vw - 40px)); display: block; margin: 0; }
+.veredicto .rol { margin: 0; color: var(--tinta-3); font-size: 13px; }
+.veredicto h3 { font-size: 26px; margin: 2px 0 8px; }
+.veredicto .linea { margin: 0 0 6px; font-size: 14px; color: var(--tinta); }
+.veredicto .linea.aparte { color: var(--tinta-2); font-size: 13px; }
+.veredicto .mini-regla { margin: 8px 0 8px; }
+.veredicto .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.veredicto .otras { margin: 10px 0 0; font-size: 12.5px; color: var(--tinta-3); display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.veredicto .otras button { font-size: 12.5px; padding: 1px 10px; }
+.reloj { left: 20px; right: 20px; bottom: 16px; border-radius: 4px; display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; gap: 8px 14px; align-items: center; }
+.reloj .lectura { font-size: 13px; color: var(--tinta-2); min-width: 190px; }
+.reloj .lectura b { color: var(--tinta); font-size: 18px; font-weight: 600; display: block; line-height: 1.2; }
+.reloj input[type=range] { width: 100%; accent-color: var(--petroleo); }
+.reloj .nota { grid-column: 1 / -1; margin: 0; color: var(--tinta-3); font-size: 12px; }
+#volver { position: fixed; right: 20px; top: 14px; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 4px 16px 4px 4px; border-radius: 999px; background: var(--panel); }
+#volver canvas { width: 56px; height: 56px; display: block; border-radius: 50%; }
+#exageracion { position: fixed; right: 24px; bottom: 124px; z-index: 3; color: var(--tinta-3); font-size: 12px; text-align: right; max-width: 320px; pointer-events: none; }
+
+/* Quién se ve cuándo: globo, vuelo, cuenca. */
+body:not(.en-cuenca) .solo-cuenca, body.en-cuenca .solo-globo, body.volando .solo-cuenca, body.volando .solo-globo { display: none !important; }
+body.volando .titulo, body.volando .pie { opacity: 0; }
+#exageracion { display: none; } body.en-cuenca #exageracion { display: block; }
+
+@media (max-width: 760px) {
+  .con-globo { overflow: auto; }
+  .con-globo.en-cuenca, .con-globo.volando { overflow: hidden; }
+  #app { display: flex; flex-direction: column; }
+  #app > * { order: 9; }
+  #escena { position: relative; inset: auto; height: min(112vw, 78vh); order: 0 !important; }
+  .titulo { order: 1 !important; } .panel.ficha { order: 2 !important; } .panel.regla { order: 3 !important; } .panel.banda { order: 4 !important; }
+  .titulo { position: relative; left: auto; top: auto; padding: 14px 16px 0; max-width: none; }
+  .titulo h2 { font-size: 22px; }
+  .con-globo .pie { position: static; padding: 10px 16px 20px; max-width: none; opacity: 1; pointer-events: auto; }
+  .panel.regla, .panel.ficha, .panel.banda { position: relative; inset: auto; left: auto; right: auto; bottom: auto; top: auto; width: auto; max-height: none; margin: 10px 12px 0; }
+  body.en-cuenca .titulo { position: fixed; left: 0; top: 0; right: 0; background: linear-gradient(var(--fondo), transparent); z-index: 4; }
+  .veredicto { position: fixed; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; overflow: auto; z-index: 5; }
+  .reloj { position: fixed; left: 8px; right: 8px; bottom: auto; top: 74px; z-index: 5; grid-template-columns: 1fr; padding: 8px 12px; }
+  .reloj .nota { display: none; }
+  #volver { right: 10px; top: 8px; padding: 2px; } #volver canvas { width: 44px; height: 44px; } #volver span { display: none; }
+  #exageracion { bottom: auto; top: 150px; right: 12px; }
+  .fila { grid-template-columns: 84px 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main class="resumen" id="resumen">
+  <h1>Dónde se puede medir pozo por pozo</h1>
+  <p class="bajada">Revisamos {{n_auditadas}} lugares (países, provincias o estados). Solo {{n_con_fractura}} publican el petróleo de cada pozo con fecha de fractura o terminación, y {{n_entran}} de esos cumplen nuestras condiciones de acceso y licencia. Lo oscuro no publica por pozo, o no pudimos verificarlo: no dice que no produce.</p>
+  <ul>
+    <li><span class="marca medido">medido</span><b>Vaca Muerta, medición original.</b> Un mes después de fracturar un pozo hijo, los padres a menos de 1 km rinden <b>entre {{vm_rango_bajo}} y {{vm_rango_alto}} puntos menos</b> que pozos de control a 2 a 5 km de un pozo hijo.</li>
+    <li data-cuenca="colorado" data-se-replica="{{co_replica}}"><span class="marca medido">medido</span><b>Colorado, {{co_lectura}}.</b> Brecha al mes 1 de <b>{{co_brecha}} puntos</b> (intervalo de 95% por bloques de 5 km: {{co_ic_bajo}} a {{co_ic_alto}}). Al mes 6 la brecha no se cierra del todo (-5,9). Colorado no está entre esos lugares: lo medimos antes.</li>
+    <li data-cuenca="wyoming" data-se-replica="{{wy_replica}}" data-incluye-cero="{{wy_cero_n}}"><span class="marca medido">medido</span><b>Wyoming, {{wy_lectura}}.</b> Brecha al mes 1 de <b>{{wy_brecha}} puntos</b> (intervalo de 95% por bloques de 5 km: {{wy_ic_bajo}} a {{wy_ic_alto}}), {{wy_cero}}. El mes 0 es la primera fecha de terminación, no la fractura.</li>
+  </ul>
+  <p class="lectura-final">Se replica en {{replican}} de {{de}} cuencas. No sumamos las cuencas en una sola cifra.</p>
+  <p class="enlaces">La misma repetición mes a mes, por cuenca, está en <a href="mundo.html">Vaca Muerta en 3D</a>. La auditoría de fuentes, jurisdicción por jurisdicción, está en la <a href="../wiki/hallazgos/fuentes_mundo.md">página de fuentes</a>.</p>
+</main>
+<div class="sin-webgl" id="sin-webgl" hidden><p>Este navegador no abre WebGL2: el globo se ve, pero la repetición mes a mes de cada cuenca no. Las cifras de cada cuenca están en el resumen de arriba.</p></div>
+
+<div id="app" hidden>
+  <div id="escena"><canvas id="globo" aria-label="Globo terráqueo: cada jurisdicción auditada con la textura de lo que publica el regulador. Los puntos amarillos son pozos con petróleo medidos."></canvas></div>
+  <div id="vista"><div id="rotulos"></div></div>
+  <header class="titulo">
+    <h2 id="titulo-h">Dónde se puede medir pozo por pozo</h2>
+    <p id="titulo-p">Lo oscuro no publica por pozo (o no pudimos verificarlo). No dice que no produce.</p>
+  </header>
+  <section class="panel regla solo-globo" id="regla" aria-label="La regla, aplicada a las tres cuencas"></section>
+  <section class="panel ficha solo-globo" id="ficha" hidden aria-live="polite"></section>
+  <section class="panel banda solo-globo" id="banda" aria-label="La auditoría de fuentes"></section>
+  <section class="panel veredicto solo-cuenca" id="veredicto" aria-live="polite"></section>
+  <section class="panel reloj solo-cuenca" id="reloj" aria-label="Línea de tiempo">
+    <div class="botones"><button id="andar" class="principal" aria-pressed="false">Reproducir</button> <select id="vel" aria-label="Velocidad"><option value="2">lento</option><option value="5" selected>normal</option><option value="12">rápido</option></select></div>
+    <input id="cursor" type="range" min="0" max="1" value="0" step="1" aria-label="Mes">
+    <div class="lectura"><b id="mes"></b><span id="suma"></span></div>
+    <p class="nota" id="nota-suma"></p>
+  </section>
+  <button id="volver" class="solo-cuenca" hidden aria-label="Volver al globo"><canvas id="mini" width="112" height="112"></canvas><span>Volver al globo</span></button>
+  <p id="exageracion"></p>
+</div>
+<div class="aviso" id="aviso" role="alert" hidden><p>Las cifras de esta página no coinciden con el estudio. No las usés hasta regenerarla.</p></div>
+<footer class="pie">
+  <span id="autov">verificando las cifras...</span>
+  <span>datos a {{mes_vm}} (Vaca Muerta), {{mes_co}} (Colorado), {{mes_wy}} (Wyoming)</span>
+  <span id="hash"></span>
+  <span id="generado"></span>
+  <span>Límites: Natural Earth, dominio público, simplificados: sirven para ubicar, no para medir ni para decir de quién es una frontera.</span>
+</footer>
+<script id="datos">
+const DATA = /*__DATA__*/null;
+</script>
+<script id="nucleo">
+/*__NUCLEO__*/
+</script>
+<script id="motor">
+/*__MOTOR__*/
+</script>
+<script id="globo-app">
+"use strict";
+(() => {
+  const D = DATA, $ = id => document.getElementById(id);
+  const reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const TIERRA = "#0a1c25", TINTE = "#1a3541", LINDE = "#6f8a99", HUESO = "#ece5d3", AMBAR = "#f4b860", FONDO = "#06141b", BASE_POZO = "#0d2733";
+  const RAD = Math.PI / 180;
+  const ancha = () => window.innerWidth > 760;
+
+  function fmt(x, dec) {
+    const s = Math.abs(x).toFixed(dec || 0).split(".");
+    s[0] = s[0].replace(/\B(?=(\d{3})+$)/g, ".");
+    return (x < 0 && Number(Math.abs(x).toFixed(dec || 0)) !== 0 ? "-" : "") + s.join(",");
+  }
+  const pts = x => fmt(100 * x, 1);
+  const nodo = (tag, clase, texto) => { const e = document.createElement(tag); if (clase) e.className = clase; if (texto !== undefined) e.textContent = texto; return e; };
+  const SVG = "http://www.w3.org/2000/svg";
+  const svg = (tag, attrs) => { const e = document.createElementNS(SVG, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const mesTxt = (B, j) => { const s = B.c.M.meta.meses[j]; return MESES[Number(s.slice(5)) - 1] + " " + s.slice(0, 4); };
+
+  /* ------------------------------------------------------------ datos: jurisdicciones, cuencas */
+  const JUR = new Map(D.jur.map(j => [j.id, j]));
+  const NIVELES = D.niveles;
+  const ORDEN = Object.keys(NIVELES);
+  const CLAVE_URL = { vaca_muerta: "vm", colorado: "co", wyoming: "wy" };
+  const B = {};
+  for (const c of D.cuencas) B[c.id] = { c, M: null, motor: null, canvas: null, pozos: null, ult: null };
+  const IDS = D.cuencas.map(c => c.id);
+  const jurDeGeo = new Map();
+  for (const j of D.jur) if (j.geo) jurDeGeo.set(j.geo[0] + ":" + j.geo[1], j);
+
+  /* ------------------------------------------------------------ decodificación (z64: zlib en base64, little-endian) */
+  async function inflar(b64) {
+    const bin = atob(b64), u = new Uint8Array(bin.length);
+    for (let i = 0; i < u.length; i++) u[i] = bin.charCodeAt(i);
+    const flujo = new Blob([u]).stream().pipeThrough(new DecompressionStream("deflate"));
+    return new Uint8Array(await new Response(flujo).arrayBuffer());
+  }
+  const u16 = b => { const o = new Uint16Array(b.length >> 1); for (let i = 0; i < o.length; i++) o[i] = b[2 * i] | (b[2 * i + 1] << 8); return o; };
+  async function abrirCuenca(b) {
+    const c = b.c, m = c.M.meta, E = c.M.eventos;
+    const [caudal, fp, fd, padre, hijo, mes, km, indice, flags] = await Promise.all([
+      inflar(c.M.caudal), inflar(c.M.fracs.pozo), inflar(c.M.fracs.dia), inflar(E.padre), inflar(E.hijo), inflar(E.mes), inflar(E.km), inflar(E.indice), inflar(E.flags)]);
+    b.M = {
+      meta: m, nm: m.meses.length, n: m.n_pozos, ne: m.n_eventos, ancho: m.k_max - m.k_min + 1,
+      inicio: [Number(m.meses[0].slice(0, 4)), Number(m.meses[0].slice(5))], pozos: c.M.pozos, caudal: u16(caudal),
+      ev: { padre: u16(padre), hijo: u16(hijo), mes: u16(mes), km: u16(km), indice: u16(indice), flags },
+      fracs: { pozo: u16(fp), dia: u16(fd) }, curva: c.M.curva,
+    };
+    const M = b.M, ult = M.nm - 1;
+    b.ult = ult;
+    b.total = new Float64Array(M.nm); b.activos = new Int32Array(M.nm);
+    for (let p = 0; p < M.n; p++) for (let t = 0; t < M.nm; t++) {
+      const v = M.caudal[p * M.nm + t];
+      if (v !== m.sin_fila) { b.total[t] += v / m.escala_caudal / 1000; if (v > 0) b.activos[t]++; }
+    }
+    /* Tono de cada pozo en el globo: caudal del último mes con fila, por tramos del percentil 90 de los que producen. */
+    const q = new Float64Array(M.n), vivos = [];
+    for (let p = 0; p < M.n; p++) {
+      let v = 0;
+      for (let t = ult; t >= Math.max(0, ult - 2); t--) { const x = M.caudal[p * M.nm + t]; if (x !== m.sin_fila) { v = x; break; } }
+      q[p] = v; if (v > 0) vivos.push(v);
+    }
+    vivos.sort((x, y) => x - y);
+    const p90 = vivos.length ? vivos[Math.floor(vivos.length * .9)] : 1;
+    b.tono = new Uint8Array(M.n);
+    for (let p = 0; p < M.n; p++) b.tono[p] = q[p] <= 0 ? 0 : Math.min(3, 1 + Math.floor(3 * Math.sqrt(q[p] / p90)));
+  }
+
+  /* Autoverificación: recalcula con las funciones del núcleo las medianas de los eventos embebidos y las compara con la curva y el veredicto publicados. */
+  function autoverificar() {
+    let total = 0; const fallas = [];
+    const ver = (nombre, ok) => { total++; if (!ok) fallas.push(nombre); };
+    const igual = (a, b) => (a === null || b === null ? a === b : Math.abs(a - b) <= 1.5e-4);
+    for (const id of IDS) {
+      const b = B[id], M = b.M, v = b.c.veredicto;
+      let nCerca = 0;
+      for (let e = 0; e < M.ne; e++) if (Nucleo.esCercano(M.ev.flags[e])) nCerca++;
+      ver(id + ": eventos", M.ev.flags.length === M.ne && M.ev.indice.length === M.ne * M.ancho);
+      ver(id + ": cercanos", nCerca > 0 && nCerca < M.ne);
+      for (let k = M.meta.k_min; k <= M.meta.k_max; k++) {
+        const i = k - M.meta.k_min;
+        ver(id + ": mediana cercano k=" + k, igual(Nucleo.medianaIndices(M, Nucleo.esCercano, k), M.curva.cercano[i]));
+        ver(id + ": mediana control k=" + k, igual(Nucleo.medianaIndices(M, Nucleo.esControl, k), M.curva.control[i]));
+      }
+      const br = Nucleo.brechaMediana(M, 1);
+      const ref = v.brecha !== undefined ? v.brecha : v.brecha_mes1;
+      ver(id + ": brecha al mes 1 contra el veredicto", br !== null && Math.abs(br - ref) <= 1.5e-4);
+      ver(id + ": el signo del intervalo coincide con el veredicto", id === "vaca_muerta" || ((v.valor < 0) === v.se_replica));
+    }
+    return { total, ok: total - fallas.length, fallas };
+  }
+
+  /* ------------------------------------------------------------ geometría: anillos preparados para proyectar */
+  function prepararAnillos(anillos) {
+    return anillos.map(r => {
+      const n = r.length, a = new Float32Array(n * 4);
+      let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      for (let i = 0; i < n; i++) {
+        const lo = r[i][0] * RAD, la = r[i][1] * RAD;
+        a[4 * i] = Math.cos(lo); a[4 * i + 1] = Math.sin(lo); a[4 * i + 2] = Math.cos(la); a[4 * i + 3] = Math.sin(la);
+        x0 = Math.min(x0, r[i][0]); x1 = Math.max(x1, r[i][0]); y0 = Math.min(y0, r[i][1]); y1 = Math.max(y1, r[i][1]);
+      }
+      return { a, n, pts: r, caja: [x0, y0, x1, y1] };
+    });
+  }
+  const PAISES = Object.entries(D.geo.paises).map(([k, v]) => ({ clave: "pais:" + k, nombre: v.nombre, anillos: prepararAnillos(v.anillos), jur: jurDeGeo.get("pais:" + k) || null }));
+  const UNIDADES = Object.entries(D.geo.unidades).map(([k, v]) => ({ clave: "unidad:" + k, nombre: v.nombre, anillos: prepararAnillos(v.anillos), jur: jurDeGeo.get("unidad:" + k) || null }));
+  const FORMAS = PAISES.concat(UNIDADES);
+  const centroide = f => {
+    let mejor = f.anillos[0];
+    for (const r of f.anillos) if (r.n > mejor.n) mejor = r;
+    return [(mejor.caja[0] + mejor.caja[2]) / 2, (mejor.caja[1] + mejor.caja[3]) / 2];
+  };
+  for (const f of FORMAS) f.centro = centroide(f);
+  for (const c of D.cuencas) { const j = JUR.get(c.jur); c.jurObj = j; }
+
+  /* ------------------------------------------------------------ estilos de la auditoría: la textura es el nivel */
+  const DPR = () => Math.min(2, window.devicePixelRatio || 1);
+  const patrones = new Map();
+  function lienzoPatron(tam, dibujar) {
+    const d = DPR(), c = document.createElement("canvas");
+    c.width = c.height = Math.round(tam * d);
+    const g = c.getContext("2d"); g.scale(d, d); dibujar(g, tam);
+    return { c, d };
+  }
+  function patron(ctx, nivel) {
+    const k = nivel + DPR();
+    if (patrones.has(k)) return patrones.get(k);
+    let p = null;
+    const puntos = (tam, r, color) => lienzoPatron(tam, (g, t) => { g.fillStyle = color; g.beginPath(); g.arc(t / 2, t / 2, r, 0, 2 * Math.PI); g.fill(); });
+    let pc = null;
+    if (nivel === "por_pozo_con_fractura" || nivel === "medida_sin_auditar") pc = puntos(7, 1.15, "rgba(236,229,211,.85)");
+    else if (nivel === "por_pozo_sin_fractura") pc = puntos(11, 1, "rgba(236,229,211,.7)");
+    else if (nivel === "por_lease_o_campo") pc = lienzoPatron(8, (g, t) => { g.strokeStyle = "rgba(111,138,153,.55)"; g.lineWidth = 1; g.strokeRect(.5, .5, t - 1, t - 1); });
+    if (pc) { p = ctx.createPattern(pc.c, "repeat"); if (p && p.setTransform) p.setTransform(new DOMMatrix().scale(1 / pc.d)); }
+    patrones.set(k, p);
+    return p;
+  }
+  /* Relleno y contorno por nivel. Cada nivel se lee también en blanco y negro: puntos, malla, plano, hueco, hueco con puntos. */
+  function pintarForma(ctx, nivel, escala) {
+    const w = escala || 1;
+    const base = nivel === "solo_totales" ? TINTE : (nivel === "por_pozo_con_fractura" || nivel === "por_pozo_sin_fractura" || nivel === "medida_sin_auditar") ? BASE_POZO : TIERRA;
+    ctx.fillStyle = base; ctx.fill();
+    const p = patron(ctx, nivel);
+    if (p) { ctx.fillStyle = p; ctx.fill(); }
+    ctx.lineJoin = "round"; ctx.lineCap = "butt"; ctx.setLineDash([]);
+    if (nivel === "por_pozo_con_fractura" || nivel === "por_pozo_sin_fractura") { ctx.strokeStyle = HUESO; ctx.lineWidth = 1.5 * w; }
+    else if (nivel === "medida_sin_auditar") { ctx.strokeStyle = HUESO; ctx.lineWidth = 1.5 * w; ctx.setLineDash([9 * w, 3 * w, 1.5 * w, 3 * w]); }
+    else if (nivel === "no_verificado") { ctx.strokeStyle = LINDE; ctx.lineWidth = 1.7 * w; ctx.lineCap = "round"; ctx.setLineDash([.1, 3.6 * w]); }
+    else { ctx.strokeStyle = LINDE; ctx.lineWidth = 1.2 * w; }
+    ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = "butt";
+  }
+  function muestra(canvas, nivel) {
+    const d = DPR(), w = canvas.clientWidth || 30, h = canvas.clientHeight || 20;
+    canvas.width = Math.round(w * d); canvas.height = Math.round(h * d);
+    const g = canvas.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+    g.beginPath(); g.rect(2, 2, w - 4, h - 4);
+    if (nivel === "registro_de_fractura") {
+      g.fillStyle = TIERRA; g.fill(); g.strokeStyle = LINDE; g.lineWidth = 1; g.setLineDash([]);
+      for (const [x, y] of [[8, 6], [20, 6], [14, 13], [26, 13]]) { g.beginPath(); g.moveTo(x - 2, y); g.lineTo(x + 2, y); g.moveTo(x, y - 2); g.lineTo(x, y + 2); g.stroke(); }
+      return;
+    }
+    pintarForma(g, nivel, .9);
+  }
+
+  /* ------------------------------------------------------------ el globo (ortográfica, dibujada en 2D) */
+  const cv = $("globo"), cx2 = cv.getContext("2d");
+  const V = { l0: -85 * RAD, p0: 8 * RAD, zoom: 1, w: 800, h: 600, cx: 400, cy: 300, R: 250, R0: 250 };
+  let sucio = true;
+  function medir() {
+    const r = cv.getBoundingClientRect(), d = DPR();
+    V.w = r.width; V.h = r.height;
+    const W = window.innerWidth;
+    if (ancha()) {
+      const bh = $("banda").getBoundingClientRect().height || 100, libre = V.h - bh - 28;
+      document.documentElement.style.setProperty("--banda", (bh + 16) + "px");
+      V.cx = (W + 420) / 2; V.cy = Math.max(150, 14 + libre / 2); V.R0 = Math.max(120, Math.min((W - 440) / 2 - 24, libre / 2 - 14));
+    }
+    else { V.R0 = Math.max(110, (W - 32) / 2); V.cx = W / 2; V.cy = Math.min(V.h / 2 + 18, V.R0 + 62); }
+    cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d));
+    sucio = true;
+  }
+  let cl0, sl0, cp0, sp0;
+  function vista() { cl0 = Math.cos(V.l0); sl0 = Math.sin(V.l0); cp0 = Math.cos(V.p0); sp0 = Math.sin(V.p0); }
+  const px = new Float64Array(4096), py = new Float64Array(4096), pz = new Float64Array(4096);
+  /* Traza un anillo recortado al hemisferio visible: lo que cruza el horizonte sigue por el borde del disco. Devuelve false si no se ve. */
+  function trazar(ctx, r) {
+    const n = r.n, a = r.a, R = V.R, cx = V.cx, cy = V.cy;
+    if (n > px.length) return false;
+    let vis = 0, primero = -1;
+    for (let i = 0; i < n; i++) {
+      const cl = a[4 * i], sl = a[4 * i + 1], cp = a[4 * i + 2], sp = a[4 * i + 3];
+      const dc = cl * cl0 + sl * sl0, ds = sl * cl0 - cl * sl0;
+      px[i] = cp * ds; py[i] = cp0 * sp - sp0 * cp * dc; pz[i] = sp0 * sp + cp0 * cp * dc;
+      if (pz[i] > 0) { vis++; if (primero < 0) primero = i; }
+    }
+    if (!vis) return false;
+    if (vis === n) {
+      ctx.moveTo(cx + R * px[0], cy - R * py[0]);
+      for (let i = 1; i < n; i++) ctx.lineTo(cx + R * px[i], cy - R * py[i]);
+      ctx.closePath(); return true;
+    }
+    let salida = 0;
+    ctx.moveTo(cx + R * px[primero], cy - R * py[primero]);
+    for (let j = 1; j <= n; j++) {
+      const i = (primero + j) % n, h = (i + n - 1) % n;
+      const vi = pz[i] > 0, vh = pz[h] > 0;
+      if (vh && vi) ctx.lineTo(cx + R * px[i], cy - R * py[i]);
+      else if (vh && !vi) {
+        const t = pz[h] / (pz[h] - pz[i]), x = px[h] + (px[i] - px[h]) * t, y = py[h] + (py[i] - py[h]) * t, l = Math.hypot(x, y) || 1;
+        ctx.lineTo(cx + R * x / l, cy - R * y / l); salida = Math.atan2(-y, x);
+      } else if (!vh && vi) {
+        const t = pz[h] / (pz[h] - pz[i]), x = px[h] + (px[i] - px[h]) * t, y = py[h] + (py[i] - py[h]) * t, l = Math.hypot(x, y) || 1;
+        const entrada = Math.atan2(-y, x);
+        let d = entrada - salida; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI;
+        ctx.arc(cx, cy, R, salida, salida + d, d < 0);
+        ctx.lineTo(cx + R * px[i], cy - R * py[i]);
+      }
+    }
+    ctx.closePath(); return true;
+  }
+  function proyectar(lon, lat) {
+    const lo = lon * RAD, la = lat * RAD, cp = Math.cos(la), sp = Math.sin(la);
+    const dc = Math.cos(lo - V.l0), ds = Math.sin(lo - V.l0);
+    const z = sp0 * sp + cp0 * cp * dc;
+    return [V.cx + V.R * cp * ds, V.cy - V.R * (cp0 * sp - sp0 * cp * dc), z];
+  }
+  function inversa(sx, sy) {
+    const x = (sx - V.cx) / V.R, y = -(sy - V.cy) / V.R, r2 = x * x + y * y;
+    if (r2 > 1) return null;
+    const z = Math.sqrt(1 - r2);
+    const lat = Math.asin(Math.max(-1, Math.min(1, y * cp0 + z * sp0)));
+    const lon = V.l0 + Math.atan2(x, z * cp0 - y * sp0);
+    return [((((lon / RAD) % 360) + 540) % 360) - 180, lat / RAD];   // V.l0 no se acota al arrastrar: el módulo de JS conserva el signo
+  }
+  function dentro(r, lon, lat) {
+    const c = r.caja;
+    if (lon < c[0] || lon > c[2] || lat < c[1] || lat > c[3]) return false;
+    let en = false; const p = r.pts;
+    for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+      if ((p[i][1] > lat) !== (p[j][1] > lat) && lon < (p[j][0] - p[i][0]) * (lat - p[i][1]) / (p[j][1] - p[i][1]) + p[i][0]) en = !en;
+    }
+    return en;
+  }
+  function formaEn(lon, lat) {
+    for (const lista of [UNIDADES, PAISES]) for (const f of lista) for (const r of f.anillos) if (dentro(r, lon, lat)) return f;
+    return null;
+  }
+
+  const S = { sel: null, nivel: null, resalte: null, cuenca: null, v: 0, objetivo: 0, rapido: false, g0: null, pend: null, listo: false, webgl: true, mes: 0, andando: false, gira: null };
+  const estaOculta = j => S.nivel && j && j.nivel !== S.nivel;
+
+  function dibujarGlobo(ctx, mini) {
+    const d = mini ? 1 : DPR();
+    const R = V.R;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    ctx.clearRect(0, 0, mini ? V.w : V.w, V.h);
+    ctx.beginPath(); ctx.arc(V.cx, V.cy, R, 0, 2 * Math.PI); ctx.fillStyle = FONDO; ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.arc(V.cx, V.cy, R, 0, 2 * Math.PI); ctx.clip();
+    /* Retícula cada 15 grados. */
+    if (!mini && R < 2000) {
+      ctx.strokeStyle = "rgba(47,80,94,.35)"; ctx.lineWidth = 1; ctx.beginPath();
+      const seg = (f, g, t0, t1) => {
+        let en = false;
+        for (let t = t0; t <= t1; t += 3) {
+          const [x, y, z] = f(t, g);
+          if (z > 0) { if (en) ctx.lineTo(x, y); else { ctx.moveTo(x, y); en = true; } } else en = false;
+        }
+      };
+      for (let lo = -180; lo < 180; lo += 15) seg((la, l) => proyectar(l, la), lo, -90, 90);
+      for (let la = -75; la <= 75; la += 15) seg((lo, l) => proyectar(lo, l), la, -180, 180);
+      ctx.stroke();
+    }
+    /* Tierra: todo país con la costa fina; sobre él, cada jurisdicción auditada con su textura. */
+    ctx.lineWidth = 1; ctx.strokeStyle = "rgba(61,99,115,.55)";
+    for (const f of PAISES) {
+      if (f.jur && f.jur.nivel) continue;
+      ctx.beginPath(); let vis = false;
+      for (const r of f.anillos) if (trazar(ctx, r)) vis = true;
+      if (vis) { ctx.fillStyle = TIERRA; ctx.fill(); if (!mini) ctx.stroke(); }
+    }
+    for (const f of FORMAS) {
+      if (!(f.jur && f.jur.nivel)) continue;
+      ctx.beginPath(); let vis = false;
+      for (const r of f.anillos) if (trazar(ctx, r)) vis = true;
+      if (!vis) continue;
+      if (mini) { ctx.fillStyle = TINTE; ctx.fill(); continue; }
+      ctx.save();
+      if (estaOculta(f.jur)) ctx.globalAlpha = .25;
+      pintarForma(ctx, f.jur.nivel, 1);
+      ctx.restore();
+    }
+    /* Selección: contorno grueso en hueso. */
+    if (!mini && S.sel) {
+      const f = FORMAS.find(x => x.jur && x.jur.id === S.sel);
+      if (f) { ctx.beginPath(); for (const r of f.anillos) trazar(ctx, r); ctx.lineWidth = 3; ctx.strokeStyle = HUESO; ctx.stroke(); }
+    }
+    /* Pozos: ámbar, lo único que brilla. 1 a 2 px, nunca agrandados. */
+    if (!mini) {
+      const lado = Math.max(1.4, Math.min(2.6, R / 400)), alfa = [.4, .62, .85, 1];
+      for (const id of IDS) {
+        const b = B[id], P = b.c.M.pozos, n = P.lon.length;
+        if (!b.trig) { b.trig = new Float32Array(n * 4); for (let p = 0; p < n; p++) { const lo = P.lon[p] * RAD, la = P.lat[p] * RAD; b.trig.set([Math.cos(lo), Math.sin(lo), Math.cos(la), Math.sin(la)], 4 * p); } b.bx = [0, 1, 2, 3].map(() => new Float32Array(n)); b.by = [0, 1, 2, 3].map(() => new Float32Array(n)); }
+        const cuenta = [0, 0, 0, 0], T4 = b.trig;
+        for (let p = 0; p < n; p++) {
+          const cl = T4[4 * p], sl = T4[4 * p + 1], cp = T4[4 * p + 2], sp = T4[4 * p + 3];
+          const dc = cl * cl0 + sl * sl0;
+          if (sp0 * sp + cp0 * cp * dc <= 0) continue;
+          const t = b.tono ? b.tono[p] : 2;
+          if (!t) continue;
+          const k = t - 1;
+          b.bx[k][cuenta[k]] = V.cx + R * cp * (sl * cl0 - cl * sl0); b.by[k][cuenta[k]++] = V.cy - R * (cp0 * sp - sp0 * cp * dc);
+        }
+        for (let k = 0; k < 4; k++) {
+          if (!cuenta[k]) continue;
+          ctx.fillStyle = "rgba(244,184,96," + alfa[k] + ")"; ctx.beginPath();
+          for (let i = 0; i < cuenta[k]; i++) ctx.rect(b.bx[k][i] - lado / 2, b.by[k][i] - lado / 2, lado, lado);
+          ctx.fill();
+        }
+      }
+    }
+    /* Oscurecimiento del borde, apenas, para dar volumen. */
+    const g = ctx.createRadialGradient(V.cx, V.cy, R * .78, V.cx, V.cy, R);
+    g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.22)");
+    ctx.fillStyle = g; ctx.fillRect(V.cx - R, V.cy - R, 2 * R, 2 * R);
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(V.cx, V.cy, R, 0, 2 * Math.PI); ctx.strokeStyle = "rgba(236,229,211,.3)"; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  /* Las tres cuencas sobre el globo: aro de hueso alrededor de sus pozos, botón para teclado, hilo a su fila de la regla. */
+  const botones = {};
+  for (const id of IDS) {
+    const bt = nodo("button", "marca-cuenca solo-globo"); bt.setAttribute("aria-label", "Abrir " + B[id].c.nombre + " mes a mes");
+    bt.onclick = () => ir(id);
+    bt.onmouseenter = () => resaltar(id); bt.onmouseleave = () => resaltar(null); bt.onfocus = () => resaltar(id); bt.onblur = () => resaltar(null);
+    document.body.appendChild(bt); botones[id] = bt;
+  }
+  function marcas(ctx) {
+    const d = DPR();
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    for (const id of IDS) {
+      const c = B[id].c, [x, y, z] = proyectar(c.centro[0], c.centro[1]), visible = z > .02 && !S.cuenca;
+      const bt = botones[id];
+      if (!visible) { bt.style.visibility = "hidden"; continue; }
+      bt.style.visibility = ""; bt.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)";
+      const sobre = S.resalte === id;
+      ctx.beginPath(); ctx.arc(x, y, 9, 0, 2 * Math.PI); ctx.strokeStyle = HUESO; ctx.lineWidth = sobre ? 2.5 : 1.2; ctx.stroke();
+      if (!ancha() || sobre) {
+        ctx.font = "13px " + getComputedStyle(document.body).fontFamily; ctx.fillStyle = HUESO; ctx.textBaseline = "middle";
+        ctx.shadowColor = FONDO; ctx.shadowBlur = 4;
+        const izq = id === IDS[2];
+        ctx.textAlign = izq ? "right" : "left";
+        ctx.fillText(c.nombre.replace(/ \(.*\)/, ""), x + (izq ? -14 : 14), y); ctx.shadowBlur = 0; ctx.textAlign = "left";
+      }
+      const fila = filas[id];
+      if (ancha() && fila) {
+        const r = fila.getBoundingClientRect(), cr = cv.getBoundingClientRect();
+        ctx.beginPath(); ctx.moveTo(r.right - cr.left + 4, r.top + r.height / 2 - cr.top); ctx.lineTo(x - 9, y);
+        ctx.strokeStyle = sobre ? "rgba(236,229,211,.75)" : "rgba(236,229,211,.28)"; ctx.lineWidth = 1; ctx.stroke();
+      }
+    }
+  }
+
+  /* ------------------------------------------------------------ La regla: las tres brechas en una sola escala */
+  const filas = {};
+  const ESC = { lo: -30, hi: 10 };
+  function construirRegla() {
+    const el = $("regla"); el.textContent = "";
+    el.append(nodo("h3", "", "La misma regla en todas las cuencas. La escribimos antes de ver el resultado."));
+    el.append(nodo("p", "sub", "Brecha al mes 1, en puntos: lo que rinden de menos los padres a menos de 1 km de un hijo recién fracturado, frente a controles de 2 a 5 km."));
+    const ancho = 270, x = v => 6 + (v - ESC.lo) / (ESC.hi - ESC.lo) * (ancho - 12);
+    const eje = svg("svg", { class: "escala", viewBox: "0 0 " + (ancho + 92) + " 22", "aria-hidden": "true" });
+    for (const v of [-30, -20, -10, 0, 10]) {
+      const t = svg("text", { x: 92 + x(v), y: 14, "text-anchor": "middle", fill: v === 0 ? HUESO : "#8497a0", "font-size": 11 }); t.textContent = (v > 0 ? "+" : "") + v; eje.append(t);
+    }
+    el.append(eje);
+    for (const id of IDS) {
+      const c = B[id].c, v = c.veredicto;
+      const fila = nodo("button", "fila");
+      fila.setAttribute("aria-label", c.nombre + ": " + (id === "vaca_muerta" ? "entre " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) : pts(v.brecha)) + " puntos. Abrir mes a mes.");
+      const nom = nodo("span", "nombre", c.nombre.replace(/ \(.*\)/, "")); nom.append(nodo("small", "", c.tipo === "caso" ? "original" : "réplica"));
+      fila.append(nom);
+      const s = svg("svg", { viewBox: "0 0 " + ancho + " 28", "aria-hidden": "true", preserveAspectRatio: "none" });
+      s.append(svg("line", { x1: x(0), x2: x(0), y1: 0, y2: 28, stroke: HUESO, "stroke-opacity": .55, "stroke-width": 1 }));
+      const ic = id === "vaca_muerta" ? [v.ic_bajo_bloque, v.ic_alto_bloque] : [v.ic_bajo_bloque, v.ic_alto_bloque];
+      const y = 12;
+      s.append(svg("line", { x1: x(100 * ic[0]), x2: x(100 * ic[1]), y1: y, y2: y, stroke: LINDE, "stroke-width": 1.4 }));
+      for (const e of ic) s.append(svg("line", { x1: x(100 * e), x2: x(100 * e), y1: y - 4, y2: y + 4, stroke: LINDE, "stroke-width": 1.4 }));
+      if (id === "vaca_muerta") {
+        s.append(svg("line", { x1: x(100 * v.brecha_mes1_descontada), x2: x(100 * v.brecha_mes1), y1: y, y2: y, stroke: HUESO, "stroke-width": 1.5 }));
+        for (const e of [v.brecha_mes1_descontada, v.brecha_mes1]) {
+          s.append(svg("circle", { cx: x(100 * e), cy: y, r: 7.5, fill: "none", stroke: HUESO, "stroke-opacity": .6, "stroke-width": 1 }));
+          s.append(svg("circle", { cx: x(100 * e), cy: y, r: 4.5, fill: HUESO }));
+        }
+      } else s.append(svg("circle", { cx: x(100 * v.brecha), cy: y, r: 4.5, fill: HUESO }));
+      fila.append(s);
+      const cifra = nodo("span", "cifra", id === "vaca_muerta"
+        ? "dos estimaciones: " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) + " (intervalo de 95%: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")"
+        : pts(v.brecha) + " (intervalo de 95%: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")" + (v.ic_bajo_bloque < 0 && v.ic_alto_bloque > 0 ? ", incluye el cero" : ""));
+      fila.append(cifra);
+      fila.onclick = () => ir(id);
+      fila.onmouseenter = () => resaltar(id); fila.onmouseleave = () => resaltar(null); fila.onfocus = () => resaltar(id); fila.onblur = () => resaltar(null);
+      filas[id] = fila; el.append(fila);
+    }
+    const L = D.lectura;
+    el.append(nodo("p", "lectura", "Se replica en " + L.replican + " de " + L.de + " cuencas. No sumamos las cuencas en una sola cifra."));
+    el.append(nodo("p", "nota", "Cada cuenca se mide con las fuentes que su regulador publica. Tocá una fila o un aro del globo para verla mes a mes."));
+  }
+  function resaltar(id) {
+    S.resalte = id; sucio = true;
+    for (const k of IDS) if (filas[k]) filas[k].classList.toggle("resalte", k === id);
+  }
+
+  /* ------------------------------------------------------------ La auditoría: banda de niveles y ficha de jurisdicción */
+  const grupos = {};
+  function construirBanda() {
+    const el = $("banda"); el.textContent = "";
+    const total = D.meta.n_auditadas;
+    el.append(nodo("h3", "", "Cada textura es lo que publica el regulador: tocá una para ver cuál es."));
+    const g = nodo("div", "grupos");
+    const cuenta = {};
+    for (const j of D.jur) cuenta[j.nivel] = (cuenta[j.nivel] || 0) + 1;
+    for (const nivel of Object.keys(NIVELES)) {
+      if (!cuenta[nivel]) continue;
+      const b = nodo("button", "grupo"); b.setAttribute("aria-pressed", "false");
+      const c = nodo("canvas"); b.append(c);
+      b.append(nodo("span", "", NIVELES[nivel] + " "), nodo("b", "", String(cuenta[nivel])));
+      b.onclick = () => { S.nivel = S.nivel === nivel ? null : nivel; S.sel = null; for (const k in grupos) grupos[k].b.setAttribute("aria-pressed", String(k === S.nivel)); fichaNivel(); sucio = true; };
+      g.append(b); grupos[nivel] = { b, c };
+    }
+    el.append(g);
+    for (const nivel in grupos) requestAnimationFrame(() => muestra(grupos[nivel].c, nivel));
+  }
+  function fichaVacia() { const f = $("ficha"); f.hidden = true; f.textContent = ""; }
+  function cerrarBoton() { const b = nodo("button", "cerrar", "Cerrar"); b.setAttribute("aria-label", "Cerrar"); b.textContent = "×"; b.onclick = () => { S.sel = null; S.nivel = null; for (const k in grupos) grupos[k].b.setAttribute("aria-pressed", "false"); fichaVacia(); sucio = true; }; return b; }
+  function textoNivel(j) {
+    if (j.nivel === "por_pozo_con_fractura" || j.nivel === "por_pozo_sin_fractura") return "Publica petróleo por pozo.";
+    if (j.nivel === "medida_sin_auditar") return "Medida por este estudio con petróleo por pozo. La medimos antes de revisar las fuentes.";
+    if (j.nivel === "por_lease_o_campo") return "No publica petróleo por pozo: lo publica por lease, campo o instalación. No dice que no produce.";
+    if (j.nivel === "solo_totales") return "No publica petróleo por pozo: solo totales. No dice que no produce.";
+    if (j.nivel === "nada_publico") return "No publica petróleo por pozo en abierto (nada público o de pago). No dice que no produce.";
+    if (j.nivel === "registro_de_fractura") return "Es un registro de fracturas, sin petróleo por pozo.";
+    if (j.nivel === "no_verificado") return "No pudimos verificar si publica petróleo por pozo. Oscuro no dice que no produce.";
+    return "No publica petróleo por pozo. No dice que no produce.";
+  }
+  function fichaJur(j, nombreForma) {
+    const f = $("ficha"); f.hidden = false; f.textContent = "";
+    f.append(cerrarBoton());
+    f.append(nodo("h3", "", j ? j.nombre + " (" + j.pais + ")" : nombreForma));
+    if (!j) { f.append(nodo("p", "sub", "Fuera de la auditoría: no la miramos. Oscuro no quiere decir que no produce.")); return; }
+    f.append(nodo("p", "sub", j.organismo));
+    const n = nodo("p", "nivel"); const c = nodo("canvas"); c.style.cssText = "width:30px;height:20px"; n.append(c, nodo("span", "", j.rotulo)); f.append(n);
+    requestAnimationFrame(() => muestra(c, j.nivel));
+    f.append(nodo("p", "sub", textoNivel(j)));
+    const dl = nodo("dl");
+    dl.append(nodo("dt", "", "Por qué"), nodo("dd", "", j.motivo));
+    dl.append(nodo("dt", "", j.auditada ? "Revisada" : "Revisión"), nodo("dd", "", j.auditada ? "el " + j.fecha_verificada + ", con pedidos reales a la fuente" : "sin registro: la medimos antes de revisar las fuentes"));
+    f.append(dl);
+    if (j.medida) { const a = nodo("button", "principal abrir", "Ver " + B[j.medida].c.nombre.replace(/ \(.*\)/, "") + " mes a mes"); a.onclick = () => ir(j.medida); f.append(a); }
+  }
+  function fichaNivel() {
+    if (!S.nivel) { fichaVacia(); return; }
+    const f = $("ficha"); f.hidden = false; f.textContent = "";
+    f.append(cerrarBoton());
+    f.append(nodo("h3", "", NIVELES[S.nivel]));
+    const lista = D.jur.filter(j => j.nivel === S.nivel);
+    f.append(nodo("p", "sub", lista.length + (lista.length === 1 ? " jurisdicción." : " jurisdicciones.") + (S.nivel === "registro_de_fractura" ? " Un registro nacional no tiene límites propios: no se pinta en el globo." : "")));
+    const ul = nodo("ul");
+    for (const j of lista) {
+      const li = nodo("li"), b = nodo("button", "", j.nombre + " (" + j.pais + ")");
+      b.onclick = () => seleccionar(j.id, true); li.append(b); ul.append(li);
+    }
+    f.append(ul);
+  }
+  function seleccionar(id, girar) {
+    const j = JUR.get(id); if (!j) return;
+    S.sel = id; fichaJur(j);
+    if (girar && j.geo) {
+      const f = FORMAS.find(x => x.clave === j.geo[0] + ":" + j.geo[1]);
+      if (f) girarA(f.centro[0], f.centro[1]);
+    }
+    sucio = true;
+  }
+  /* El globo gira hasta una jurisdicción: la ruta más corta, 0,9 s como mucho, sin rebote. */
+  function girarA(lon, lat) {
+    const l1 = lon * RAD, p1 = Math.max(-1.2, Math.min(1.2, lat * RAD)), l0 = V.l0, p0 = V.p0;
+    let dl = l1 - l0; dl -= Math.round(dl / (2 * Math.PI)) * 2 * Math.PI;
+    const dur = reducido ? 0 : Math.min(.9, .25 + Math.abs(dl) * .5);
+    S.gira = { t: 0, dur, l0, p0, dl, dp: p1 - p0 };
+    if (!dur) { V.l0 = l0 + dl; V.p0 = p1; S.gira = null; sucio = true; }
+  }
+
+  /* Entrada del puntero al globo: arrastrar gira, tocar elige. */
+  const dedos = new Map(); let movido = 0;
+  cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); dedos.set(e.pointerId, [e.clientX, e.clientY]); movido = 0; S.gira = null; });
+  cv.addEventListener("pointermove", e => {
+    const a = dedos.get(e.pointerId);
+    if (!a) return;
+    const dx = e.clientX - a[0], dy = e.clientY - a[1];
+    dedos.set(e.pointerId, [e.clientX, e.clientY]); movido += Math.abs(dx) + Math.abs(dy);
+    if (movido > 4) { V.l0 -= dx / V.R / Math.max(.35, Math.cos(V.p0)); V.p0 = Math.max(-1.35, Math.min(1.35, V.p0 + dy / V.R)); sucio = true; }
+  });
+  const soltar = e => {
+    dedos.delete(e.pointerId);
+    if (movido > 5 || e.type === "pointercancel" || S.cuenca) return;
+    const r = cv.getBoundingClientRect(), p = inversa(e.clientX - r.left, e.clientY - r.top);
+    if (!p) { S.sel = null; fichaVacia(); sucio = true; return; }
+    const f = formaEn(p[0], p[1]);
+    if (!f) { S.sel = null; fichaVacia(); sucio = true; return; }
+    S.nivel = null; for (const k in grupos) grupos[k].b.setAttribute("aria-pressed", "false");
+    if (f.jur) seleccionar(f.jur.id, false); else { S.sel = null; fichaJur(null, f.nombre); sucio = true; }
+  };
+  cv.addEventListener("pointerup", soltar); cv.addEventListener("pointercancel", soltar);
+  cv.addEventListener("wheel", e => { if (S.cuenca) return; e.preventDefault(); V.zoom = Math.max(.8, Math.min(2.2, V.zoom * Math.exp(-e.deltaY * .001))); sucio = true; }, { passive: false });
+
+  /* ------------------------------------------------------------ dentro de una cuenca: el motor de la página del mundo */
+  const vistaEl = $("vista"), rotulosEl = $("rotulos");
+  const T = { mes: 0, vel: 5 };
+  const rotulos = [];
+  const sm = u => u * u * (3 - 2 * u), lim = u => Math.max(0, Math.min(1, u));
+  const anims = [];
+  function animar(clave, seg, paso, fin) {
+    for (let i = anims.length - 1; i >= 0; i--) if (anims[i].clave === clave) anims.splice(i, 1);
+    if (reducido || seg <= 0) { paso(1); if (fin) fin(); return; }
+    anims.push({ clave, t: 0, seg, paso, fin });
+  }
+  const tramo = (clave, obj, campo, a, seg, fin) => { const de = obj[campo]; animar(clave, seg, u => { obj[campo] = de + (a - de) * sm(u); }, fin); };
+
+  function crearMotor(b) {
+    if (b.motor || b.sinMotor) return b.motor;
+    const c = nodo("canvas"); c.setAttribute("aria-label", "Repetición mes a mes de " + b.c.nombre + ": cada hilo es un pozo");
+    vistaEl.insertBefore(c, rotulosEl);
+    try { b.motor = Motor.crear(c, b.M); } catch (e) { console.error(e); b.motor = null; }
+    if (!b.motor) { c.remove(); b.sinMotor = true; S.webgl = false; $("sin-webgl").hidden = false; return null; }
+    b.canvas = c;
+    // Distancia de encuadre: el radio que contiene al 95% de los pozos.
+    const d = []; for (let p = 0; p < b.M.n; p++) { const [x, z] = b.motor.pos(p); d.push(Math.hypot(x, z)); }
+    d.sort((x, y) => x - y);
+    b.r95 = Math.max(6, d[Math.floor(d.length * .95)] || 20);
+    c.addEventListener("pointerdown", e => { if (S.cuenca !== b.c.id) return; c.setPointerCapture(e.pointerId); dedos.set(e.pointerId, [e.clientX, e.clientY]); anims.length = 0; });
+    c.addEventListener("pointermove", e => {
+      const a = dedos.get(e.pointerId); if (!a || S.cuenca !== b.c.id) return;
+      const dx = e.clientX - a[0], dy = e.clientY - a[1]; dedos.set(e.pointerId, [e.clientX, e.clientY]);
+      const cam = b.motor.cam;
+      if (e.shiftKey || e.buttons === 2) { const k = cam.dist * .0016, s = Math.sin(cam.az), co = Math.cos(cam.az); cam.t[0] -= (co * dx + s * dy) * k; cam.t[2] -= (-s * dx + co * dy) * k; }
+      else { cam.az -= dx * .005; cam.el = Math.max(.03, Math.min(1.5, cam.el + dy * .005)); }
+    });
+    const fin = e => dedos.delete(e.pointerId);
+    c.addEventListener("pointerup", fin); c.addEventListener("pointercancel", fin);
+    c.addEventListener("wheel", e => { if (S.cuenca !== b.c.id) return; e.preventDefault(); b.motor.cam.dist = Math.max(6, Math.min(900, b.motor.cam.dist * Math.exp(e.deltaY * .0012))); }, { passive: false });
+    c.addEventListener("contextmenu", e => e.preventDefault());
+    return b.motor;
+  }
+  const FOV = () => Math.tan(Motor.FOV / 2);
+  function camFinal(b) {
+    const H = window.innerHeight;
+    return { dist: Math.max(30, Math.min(500, b.r95 / (FOV() * (ancha() ? .72 : .8)))), az: -.3, el: .62, H };
+  }
+  function desvio(b) {
+    const W = window.innerWidth;
+    if (ancha()) return [420 / W, (V.h / 2 - V.cy) / (V.h / 2)];
+    return [0, .28];
+  }
+
+  /* Línea de tiempo y lectura de la cuenca abierta. */
+  function ponerMes(j) {
+    const b = B[S.cuenca]; if (!b) return;
+    T.mes = Math.max(0, Math.min(b.ult, j));
+    b.motor.est.mes = T.mes;
+    const m = Math.round(T.mes);
+    $("cursor").value = m; $("cursor").setAttribute("aria-valuetext", mesTxt(b, m));
+    $("mes").textContent = mesTxt(b, m);
+    $("suma").textContent = fmt(b.total[m], b.total[m] < 10 ? 2 : 0) + " mil bbl/d, " + fmt(b.activos[m], 0) + " pozos activos";
+  }
+  function andar(si) { S.andando = si; $("andar").textContent = si ? "Pausar" : "Reproducir"; $("andar").setAttribute("aria-pressed", String(si)); }
+  $("andar").onclick = () => { const b = B[S.cuenca]; if (!b) return; if (!S.andando && T.mes >= b.ult) ponerMes(0); andar(!S.andando); };
+  $("cursor").oninput = e => { andar(false); ponerMes(Number(e.target.value)); };
+  $("vel").onchange = e => { T.vel = Number(e.target.value); };
+
+  function limpiarRotulos() { for (const r of rotulos) r.el.remove(); rotulos.length = 0; }
+  function rotulo(clase, texto, pos, ancla, vis) { const el = nodo("div", "rotulo " + clase, texto); rotulosEl.appendChild(el); const r = { el, pos, ancla: ancla || "", vis: vis || (() => 1) }; rotulos.push(r); return r; }
+  function rotulosGrafico(b) {
+    limpiarRotulos();
+    const M = b.M, mo = b.motor, G = mo.GRAFICO, K0 = M.meta.k_min, visG = () => lim((mo.est.morph - .2) * 8);
+    for (let k = K0; k <= M.meta.k_max; k++) rotulo("eje", String(k), mo.gp(k, -.09), "translate(-50%,0)", visG);
+    rotulo("titulo-eje", "meses desde " + (b.c.veredicto.mes0_es === "terminación" ? "la primera terminación del hijo" : "la fractura del hijo"), mo.gp(1.5, -.2), "translate(-50%,0)", visG);
+    for (const v of [.5, 1, 1.5]) rotulo("eje", fmt(v, 1), mo.gp(K0 - .12, v), "translate(-100%,-50%)", visG);
+    rotulo("pie-eje", "índice de caudal del padre: 1 es el promedio de sus tres meses previos. Sobre 2 queda fuera del cuadro.", mo.gp(K0, G.vmax + .22), "translate(0,0)", visG);
+    const mc = mo.medianas.cercano, mk = mo.medianas.control, u = M.meta.k_max - K0;
+    rotulo("serie cercano", "mediana de padres a menos de 1 km", mo.gp(M.meta.k_max - .08, Math.min(mc[u], mk[u]) - .3), "translate(-100%,0)", () => lim((mo.est.morph - .8) * 8));
+    rotulo("serie control", "mediana de controles a 2 a 5 km", mo.gp(M.meta.k_max - .08, Math.max(mc[u], mk[u]) + .3), "translate(-100%,0)", () => lim((mo.est.morph - .8) * 8));
+    rotulo("brecha", "brecha al mes 1: " + fmt(100 * mo.medianas.brecha[1 - K0], 1) + " puntos", mo.gp(1.12, (mc[1 - K0] + mk[1 - K0]) / 2), "", () => lim((mo.est.morph - .85) * 8));
+  }
+  function colocarRotulos(b) {
+    for (const r of rotulos) {
+      const p = typeof r.pos === "function" ? r.pos() : r.pos, s = p && b.motor.proyectar(p[0], p[1], p[2]), a = r.vis();
+      if (!s || a <= .02) { r.el.style.opacity = 0; continue; }
+      r.el.style.opacity = a; r.el.style.transform = "translate(" + s[0].toFixed(1) + "px," + s[1].toFixed(1) + "px) " + r.ancla;
+    }
+  }
+  function vistaGrafico(b) {
+    const W = window.innerWidth, H = window.innerHeight, t = FOV();
+    if (!ancha()) return { t: [-6.5, 25, 0], dist: Math.max(37 * H / (t * H * .45), 44 * H / (t * (W - 24))), az: 0, el: .1, ve: 8 };
+    const porAlto = 37 / (t * Math.max(.3, (H - 230) / H)), porAncho = 44 * (H / 2) / (t * Math.max(60, (W - 440) / 2 - 20));
+    return { t: [-6.5, 25, 0], dist: Math.max(porAlto, porAncho), az: 0, el: .1, ve: 8 };
+  }
+  function volarA(b, a, seg) {
+    const cam = b.motor.cam, de = { t: cam.t.slice(), dist: cam.dist, az: cam.az, el: cam.el };
+    let daz = a.az - de.az; daz -= Math.round(daz / (2 * Math.PI)) * 2 * Math.PI;
+    animar("cam", seg, u => {
+      const s = sm(u);
+      for (let i = 0; i < 3; i++) cam.t[i] = de.t[i] + (a.t[i] - de.t[i]) * s;
+      cam.dist = Math.exp(Math.log(de.dist) + (Math.log(a.dist) - Math.log(de.dist)) * s);
+      cam.az = de.az + daz * s; cam.el = de.el + (a.el - de.el) * s;
+    });
+  }
+  function alternarGrafico() {
+    const b = B[S.cuenca]; if (!b) return;
+    const a = b.motor.est.morph > .5 ? 0 : 1, bt = $("ver-grafico");
+    if (bt) bt.setAttribute("aria-pressed", String(a === 1));
+    if (a) { rotulosGrafico(b); volarA(b, vistaGrafico(b), 3); b.motor.est.cierre = 0; tramo("cierre", b.motor.est, "cierre", b.M.meta.k_max - 1, 3); }
+    else { const f = camFinal(b); volarA(b, { t: [0, 0, 0], dist: f.dist, az: f.az, el: f.el }, 3); }
+    tramo("morph", b.motor.est, "morph", a, a ? 5 : 2.5, () => { if (!a) limpiarRotulos(); });
+  }
+
+  /* Tarjeta del veredicto: el mismo esqueleto para las tres cuencas. */
+  function tarjeta(b) {
+    const c = b.c, v = c.veredicto, el = $("veredicto"); el.textContent = "";
+    const nombre = c.nombre, rol = c.tipo === "caso" ? "medición original" : "réplica";
+    const sr = c.tipo === "caso" ? "Medición original" : v.se_replica ? "Se replica" : "No se replica";
+    el.append(nodo("p", "rol", nombre + ", " + rol));
+    el.append(nodo("h3", "", sr));
+    const l1 = nodo("p", "linea"); l1.append(nodo("span", "marca medido", "medido"));
+    if (c.tipo === "caso") l1.append("Brecha al mes 1: entre " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) + " puntos, según la base que se use. Intervalo de 95% por bloques de 5 km de la segunda: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ".");
+    else l1.append("Brecha al mes 1: " + pts(v.brecha) + " puntos. Intervalo de 95% por bloques de 5 km: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + (v.ic_bajo_bloque < 0 && v.ic_alto_bloque > 0 ? ". El intervalo incluye el cero." : "."));
+    el.append(l1);
+    const l2 = nodo("p", "linea aparte"); l2.append(nodo("span", "marca dato", "dato"));
+    l2.append(fmt(v.n_cercanos, 0) + " eventos cercanos y " + fmt(v.n_controles, 0) + " de control. Regla escrita antes de ver el resultado.");
+    el.append(l2);
+    if (c.tipo !== "caso" && v.mes0_es) {
+      const l3 = nodo("p", "linea aparte"); l3.append(nodo("span", "marca supuesto", "supuesto"));
+      l3.append(v.mes0_es === "terminación" ? "El mes 0 es la primera fecha de terminación, no la fractura." : "El mes 0 es la fecha de la fractura.");
+      el.append(l3);
+    }
+    const l4 = nodo("p", "linea aparte"); l4.append(nodo("span", "marca supuesto", "supuesto"));
+    l4.append("La profundidad de los hilos es de esquema: el globo no tiene la de cada pozo.");
+    el.append(l4);
+    const ac = nodo("div", "acciones");
+    const g = nodo("button", "", "Ver en el gráfico"); g.id = "ver-grafico"; g.setAttribute("aria-pressed", "false"); g.onclick = alternarGrafico; ac.append(g);
+    el.append(ac);
+    const ot = nodo("p", "otras", "Las otras dos:");
+    for (const k of IDS) if (k !== c.id) { const bt = nodo("button", "", B[k].c.nombre.replace(/ \(.*\)/, "")); bt.onclick = () => ir(k); ot.append(bt); }
+    el.append(ot);
+    $("titulo-h").textContent = nombre;
+    $("titulo-p").textContent = "Un hilo por pozo, mes a mes. Arrastrá para girar, rueda para acercar.";
+    $("nota-suma").textContent = c.id === "vaca_muerta" ? "Suma de los " + fmt(b.M.n, 0) + " pozos no convencionales con ubicación." : "Suma de los " + fmt(b.M.n, 0) + " pozos que entran al estudio (los padres y los hijos de sus eventos): no es toda la producción del estado.";
+    $("cursor").max = b.ult;
+  }
+
+  /* ------------------------------------------------------------ el vuelo: una sola cámara, del globo a la cuenca y de vuelta */
+  const DUR_ENTRA = 3.0, DUR_SALE = 1.6, DUR_CORTE = .25;
+  function aplicarVuelo() {
+    const v = S.v, b = S.cuenca ? B[S.cuenca] : null;
+    if (!b) { cv.style.opacity = 1; return; }
+    const c = b.c, g0 = S.g0;
+    const u1 = sm(lim(v / .30)), u2 = sm(lim((v - .30) / .47)), u3 = sm(lim((v - .77) / .23));
+    let dl = c.centro[0] * RAD - g0.l0; dl -= Math.round(dl / (2 * Math.PI)) * 2 * Math.PI;
+    V.l0 = g0.l0 + dl * u1; V.p0 = g0.p0 + (c.centro[1] * RAD - g0.p0) * u1;
+    const F = Math.max(8, Math.min(120, (Math.min(V.h, V.w) * .4) / Math.max(1, b.r95 / 6371 * V.R0 * g0.zoom)));
+    V.R = V.R0 * g0.zoom * Math.exp(Math.log(F) * u2);
+    const mezcla = sm(lim((u2 - .3) / .5));
+    cv.style.opacity = String(1 - mezcla);
+    if (b.motor) {
+      const cam = b.motor.cam, f = camFinal(b);
+      b.canvas.style.opacity = String(mezcla);
+      if (!anims.some(a => a.clave === "cam") || v < 1) {
+        cam.t = [0, 0, 0];
+        cam.dist = Math.exp(Math.log(f.dist * 6) + (Math.log(f.dist) - Math.log(f.dist * 6)) * u2);
+        cam.az = f.az * u3; cam.el = 1.45 + (f.el - 1.45) * u3;
+      }
+      const d = desvio(b); b.motor.est.desvio[0] = d[0]; b.motor.est.desvio[1] = d[1];
+    }
+    vistaEl.style.pointerEvents = "none";
+    sucio = true;
+  }
+  function pintarEstado() {
+    const volando = S.v > 0 && S.v < 1;
+    document.body.classList.toggle("volando", volando);
+    document.body.classList.toggle("en-cuenca", S.v >= 1 && !!S.cuenca);
+    cv.style.pointerEvents = S.cuenca ? "none" : "";
+    for (const id of IDS) { const b = B[id]; if (b.canvas) b.canvas.classList.toggle("activo", S.cuenca === id && S.v >= 1); }
+    $("volver").hidden = !(S.v >= 1 && !!S.cuenca);
+    if (!S.cuenca || S.v < 1) { $("titulo-h").textContent = S.cuenca ? B[S.cuenca].c.nombre : "Dónde se puede medir pozo por pozo"; }
+    if (!S.cuenca) $("titulo-p").textContent = "Lo oscuro no publica por pozo (o no pudimos verificarlo). No dice que no produce.";
+  }
+  async function ir(id, rapido) {
+    if (!S.listo) await S.promesa;
+    if (S.cuenca === id && S.objetivo === 1) return;
+    const b = B[id];
+    if (!b.M) return;
+    if (S.cuenca === id) { S.objetivo = 1; S.rapido = reducido; return; }
+    if (S.cuenca && S.cuenca !== id) { salir(); S.pend = id; return; }
+    if (!crearMotor(b)) { mostrarSinMotor(b); return; }
+    if (!ancha()) window.scrollTo(0, 0);
+    S.cuenca = id; S.rapido = !!rapido || reducido; S.objetivo = 1;
+    S.g0 = { l0: V.l0, p0: V.p0, zoom: V.zoom };
+    fichaVacia(); S.sel = null; S.nivel = null; for (const k in grupos) grupos[k].b.setAttribute("aria-pressed", "false");
+    const f = camFinal(b);
+    ponerMes(b.ult); andar(false);
+    b.motor.est.morph = 0; b.motor.est.ve = 8; b.motor.est.cierre = 0; anims.length = 0; limpiarRotulos();
+    tarjeta(b); ponerMes(b.ult);
+    b.motor.cam.t = [0, 0, 0]; b.motor.cam.dist = f.dist * 6; b.motor.cam.az = 0; b.motor.cam.el = 1.45;
+    try { (rapido ? history.replaceState : history.pushState).call(history, null, "", "#cuenca=" + CLAVE_URL[id]); } catch (e) { /* abierto desde disco */ }
+    document.body.classList.add("volando");
+  }
+  function salir() {
+    if (!S.cuenca) return;
+    const b = B[S.cuenca]; andar(false);
+    if (b.motor) { b.motor.est.morph = 0; limpiarRotulos(); anims.length = 0; ponerMes(b.ult); }
+    S.objetivo = 0; S.rapido = reducido; S.pend = null;     // Esc o Atrás durante un cambio de cuenca cancelan el destino pendiente
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* abierto desde disco */ }
+    pintarEstado();
+  }
+  function mostrarSinMotor(b) {
+    // Sin WebGL2 no hay repetición: se muestra la tarjeta con las cifras de la cuenca sobre el globo.
+    S.sel = null; fichaVacia();
+    const f = $("ficha"); f.hidden = false; f.textContent = "";
+    f.append(cerrarBoton());
+    f.append(nodo("h3", "", b.c.nombre));
+    const v = b.c.veredicto;
+    f.append(nodo("p", "sub", "Este navegador no abre WebGL2, así que no hay repetición mes a mes. Brecha al mes 1: " + (b.c.tipo === "caso" ? "entre " + pts(v.brecha_mes1_descontada) + " y " + pts(v.brecha_mes1) : pts(v.brecha)) + " puntos (intervalo de 95% por bloques de 5 km: " + pts(v.ic_bajo_bloque) + " a " + pts(v.ic_alto_bloque) + ")."));
+  }
+  $("volver").onclick = () => salir();
+  window.addEventListener("keydown", e => {
+    if (e.key === "Escape" && S.cuenca) { e.preventDefault(); salir(); }
+    else if (e.key === " " && S.cuenca && S.v >= 1 && !/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(e.target.tagName)) { e.preventDefault(); $("andar").click(); }
+  });
+  window.addEventListener("hashchange", () => {
+    const h = /cuenca=(vm|co|wy)/.exec(location.hash);
+    if (!h) { if (S.cuenca && S.objetivo === 1) salir(); return; }
+    const id = IDS.find(k => CLAVE_URL[k] === h[1]);
+    if (id && S.cuenca !== id) ir(id);
+  });
+
+  /* ------------------------------------------------------------ cuadro */
+  let antes = performance.now();
+  function cuadro(ahora) {
+    const dt = Math.min(.1, (ahora - antes) / 1000); antes = ahora;
+    for (let i = anims.length - 1; i >= 0; i--) {
+      const a = anims[i]; a.t += dt;
+      const u = Math.min(1, a.t / a.seg); a.paso(u);
+      if (u >= 1) { anims.splice(anims.indexOf(a), 1); if (a.fin) a.fin(); }
+    }
+    if (S.gira) {
+      const g = S.gira; g.t += dt; const u = sm(Math.min(1, g.t / g.dur));
+      V.l0 = g.l0 + g.dl * u; V.p0 = g.p0 + g.dp * u; sucio = true;
+      if (g.t >= g.dur) S.gira = null;
+    }
+    /* El vuelo: avanza hacia el objetivo, entra en 3,0 s y sale en 1,6 s; sin movimiento, un corte de 0,25 s. */
+    if (S.cuenca && S.v !== S.objetivo) {
+      const dur = S.rapido ? DUR_CORTE : (S.objetivo === 1 ? DUR_ENTRA : DUR_SALE);
+      const paso = dt / dur;
+      S.v = S.objetivo === 1 ? Math.min(1, S.v + paso) : Math.max(0, S.v - paso);
+      aplicarVuelo(); pintarEstado();
+      if (S.v === 0 && S.objetivo === 0) {
+        const b = B[S.cuenca]; if (b && b.canvas) b.canvas.style.opacity = 0;
+        S.cuenca = null; V.R = V.R0 * V.zoom; cv.style.opacity = 1;
+        if (S.g0) { V.l0 = S.g0.l0; V.p0 = S.g0.p0; }
+        pintarEstado(); sucio = true;
+        if (S.pend) { const p = S.pend; S.pend = null; ir(p); }
+      }
+    }
+    const b = S.cuenca ? B[S.cuenca] : null;
+    if (b && b.motor && S.v >= 1) {
+      if (S.andando) { ponerMes(T.mes + T.vel * dt); if (T.mes >= b.ult) andar(false); }
+      const mo = b.motor;
+      if (!anims.some(a => a.clave === "cam")) mo.est.ve += (8 - mo.est.ve) * Math.min(1, dt * 3);
+      const d = desvio(b); mo.est.desvio[0] = d[0]; mo.est.desvio[1] = d[1];
+      $("exageracion").textContent = "exageración vertical ×" + fmt(mo.est.ve, 0) + ". Profundidad de esquema.";
+    }
+    if (b && b.motor && S.v > .3) { b.motor.dibujar(reducido ? 0 : dt); colocarRotulos(b); }
+    if (sucio) {
+      if (!b) V.R = V.R0 * V.zoom;
+      if (!b || S.v < .85) { vista(); dibujarGlobo(cx2); marcas(cx2); }
+      sucio = !!S.gira;
+    }
+    requestAnimationFrame(cuadro);
+  }
+
+  /* ------------------------------------------------------------ arranque */
+  function miniatura() {
+    const m = $("mini"), g = m.getContext("2d");
+    return () => {
+      const b = S.cuenca ? B[S.cuenca] : null; if (!b) return;
+      const sv = Object.assign({}, V);
+      V.w = 112; V.h = 112; V.cx = 56; V.cy = 56; V.R = 52; V.l0 = b.c.centro[0] * RAD; V.p0 = b.c.centro[1] * RAD;
+      vista(); dibujarGlobo(g, true);
+      const [x, y] = [56, 56]; g.beginPath(); g.arc(x, y, 4, 0, 2 * Math.PI); g.fillStyle = AMBAR; g.fill();
+      Object.assign(V, sv); vista();
+    };
+  }
+  const dibujarMini = miniatura();
+  const ponerMini = () => { if (S.cuenca) { $("mini").getContext("2d").setTransform(1, 0, 0, 1, 0, 0); dibujarMini(); } };
+
+  const hashEl = $("hash"), genEl = $("generado");
+  hashEl.textContent = "hash de los datos " + D.meta.hash_datos;
+  genEl.textContent = "generado " + D.meta.generado;
+  window.__globo = { datos: D, estado: () => ({ cuenca: S.cuenca, v: S.v, sel: S.sel, nivel: S.nivel, listo: S.listo, webgl: S.webgl, mes: T.mes, vista: { l0: V.l0 / RAD, p0: V.p0 / RAD, R: V.R } }), ir, salir, seleccionar, nivel: n => { S.nivel = n; fichaNivel(); sucio = true; }, B, V, autoverificacion: null, fps: () => 0, mes: m => ponerMes(m), grafico: alternarGrafico, girarA };
+
+  document.body.classList.add("con-globo");
+  $("app").hidden = false;
+  construirRegla(); construirBanda();
+  medir(); vista();
+  window.addEventListener("resize", () => { medir(); for (const k in grupos) muestra(grupos[k].c, k); });
+
+  S.promesa = (async () => {
+    if (typeof DecompressionStream === "undefined") { $("autov").textContent = "verificación de cifras: este navegador no abre los datos comprimidos"; S.webgl = false; $("sin-webgl").hidden = false; return; }
+    for (const id of IDS) await abrirCuenca(B[id]);
+    S.listo = true; sucio = true;
+    const r = autoverificar();
+    window.__globo.autoverificacion = r;
+    const el = $("autov"), bien = r.ok === r.total;
+    el.textContent = "cifras comprobadas " + r.ok + "/" + r.total; el.className = bien ? "ok" : "mal";
+    $("aviso").hidden = bien;
+  })();
+  S.promesa.then(() => {
+    const h = /cuenca=(vm|co|wy)/.exec(location.hash);
+    if (h) { const id = IDS.find(k => CLAVE_URL[k] === h[1]); if (id) ir(id, true); }
+    const hs = /jur=([a-z_]+)/.exec(location.hash);
+    if (hs && JUR.has(hs[1])) seleccionar(hs[1], true);
+  });
+  S.promesa.catch(e => { console.error(e); $("autov").textContent = "verificación de cifras: error al abrir los datos"; });
+  let miniT = 0;
+  const cuadroMini = () => { if (S.cuenca && S.v >= 1 && ++miniT % 30 === 1) ponerMini(); requestAnimationFrame(cuadroMini); };
+  requestAnimationFrame(cuadroMini);
+  requestAnimationFrame(cuadro);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vaca Muerta en datos</title>
+<meta name="description" content="Si fracturar un pozo nuevo le quita producción a los pozos vecinos: qué se probó con datos públicos de Vaca Muerta, qué falló, qué se sostiene y qué sigue abierto.">
+<style>
+/*__SISTEMA__*/
+/* Solo para esta página. Los alias dejan que el tablero de abajo siga usando sus nombres; los colores son los del sistema. */
+:root {
+  --other: var(--jarilla);
+  --papel: var(--cielo); --linea: color-mix(in srgb, var(--tinta) 22%, var(--cielo)); --medido: var(--tinta); --supuesto: var(--jarilla);
+  --bg: var(--cielo); --card: var(--cielo); --line: var(--linea); --grid: var(--linea);
+  --ink: var(--tinta); --ink-2: var(--jarilla); --ink-3: var(--jarilla);
+  --pt: 0.85vh;
+  --margen: max(24px, calc(50vw - 520px));
+}
+@supports (height: 1svh) { :root { --pt: 0.85svh; } }
+
+/* La historia: cada lámina es cielo arriba, la banda de la brecha en el horizonte y estepa abajo. Un punto de brecha
+   mide 0,85 del alto de la pantalla. Sin JS, o sin movimiento, es una página que se lee de corrido. */
+.historia { position: relative; }
+.lamina { position: relative; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; background: var(--estepa); }
+.col { width: min(36rem, 100% - 24px - 56px); margin-left: var(--margen); }
+.campo-cielo { background: var(--cielo); padding: 88px 0 24px; flex: 0 0 auto; }
+@media (min-width: 900px) { .campo-cielo { padding-top: 15vh; padding-top: 15svh; } }
+.campo-cielo h2 { max-width: 16em; font-stretch: 100%; text-wrap: balance; }
+.campo-cielo .veredicto { margin: 16px 0 0; }
+.campo-estepa { flex: 1 0 auto; position: relative; isolation: isolate; padding: 24px 0 40px; display: flex; flex-direction: column; }
+.campo-estepa > .col { flex: 1 0 auto; display: flex; flex-direction: column; }
+/* la estepa lleva una sola textura: matas de jarilla vistas de lejos, puntos sueltos sobre el 2% del área */
+.campo-estepa::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--tinta); opacity: .2;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='61' height='53'%3E%3Cg fill='black'%3E%3Ccircle cx='7' cy='9' r='1.6'/%3E%3Ccircle cx='31' cy='4' r='1.2'/%3E%3Ccircle cx='50' cy='17' r='1.9'/%3E%3Ccircle cx='19' cy='29' r='1.3'/%3E%3Ccircle cx='42' cy='38' r='1.6'/%3E%3Ccircle cx='9' cy='45' r='1.9'/%3E%3Ccircle cx='57' cy='48' r='1.1'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 61px 53px repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='61' height='53'%3E%3Cg fill='black'%3E%3Ccircle cx='7' cy='9' r='1.6'/%3E%3Ccircle cx='31' cy='4' r='1.2'/%3E%3Ccircle cx='50' cy='17' r='1.9'/%3E%3Ccircle cx='19' cy='29' r='1.3'/%3E%3Ccircle cx='42' cy='38' r='1.6'/%3E%3Ccircle cx='9' cy='45' r='1.9'/%3E%3Ccircle cx='57' cy='48' r='1.1'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 61px 53px repeat; }
+.primera { font-size: 17px; line-height: 1.55; margin: 0 0 8px; max-width: 34em; }
+@media (min-width: 900px) { .primera { font-size: 19px; } }
+.campo-estepa details { margin: 8px 0 0; max-width: 34em; }
+.campo-estepa details[open] { margin-bottom: 24px; }
+.campo-estepa details p { font-size: 17px; }
+.campo-estepa details figure img { display: block; width: 100%; max-width: 350px; height: auto; margin: 0 0 16px; }
+.campo-estepa figcaption { color: var(--tinta); }
+.duda { margin: auto 0 0; padding-top: 32px; max-width: 30em; font-size: 17px; line-height: 1.5; }
+@media (min-width: 900px) { .duda { font-size: 19px; } }
+.prueba { font-size: 14px; }
+.caso-real { margin: 16px 0 0; max-width: 30em; }
+.caso-real a { font-weight: 600; }
+.caso-real span { display: block; margin-top: 4px; font-size: 15px; color: var(--jarilla); }
+.campo-estepa a { text-decoration-color: color-mix(in srgb, currentColor 55%, transparent); }
+
+/* el escenario: la banda sube desde el suelo; las cifras y rótulos se ubican en % del ancho y en puntos de brecha */
+.escenario { position: relative; margin: 0; height: calc(var(--alto) * var(--pt)); background: var(--cielo); flex: 0 0 auto; }
+.escenario svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.banda { fill: var(--lutita); stroke: var(--orilla); stroke-width: 1.5; vector-effect: non-scaling-stroke; transform-box: fill-box; transform-origin: 50% 100%; }
+.fantasma { fill: none; stroke: var(--jarilla); stroke-width: 1.5; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
+.permutada { fill: none; stroke: var(--tinta); stroke-width: 1.5; stroke-dasharray: 7 5; vector-effect: non-scaling-stroke; }
+.contorno { fill: none; stroke: var(--tinta); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.corchete { fill: none; stroke: var(--tinta); stroke-width: 1.5; stroke-dasharray: 7 5; vector-effect: non-scaling-stroke; }
+.marca-prevista { stroke: var(--tinta); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.numero, .etiqueta { position: absolute; left: calc(var(--x) * 1%); bottom: calc(var(--y) * var(--pt)); margin: 0; white-space: nowrap;
+  font-family: "Archivo", "Arial Narrow", system-ui, sans-serif; font-variant-numeric: tabular-nums lining-nums; color: var(--tinta); }
+.numero { font-size: clamp(56px, 18vw, 120px); font-weight: 800; font-stretch: 68%; line-height: .78; letter-spacing: -0.01em; }
+.etiqueta { font-size: 17px; font-weight: 600; font-stretch: 85%; line-height: 1; }
+.etiqueta.tenue { color: var(--jarilla); transform: translateX(-50%); }
+.derecha { left: auto; right: max(calc((100 - var(--x)) * 1%), 56px); text-align: right; }
+.etiqueta.chica { font-size: 14px; }
+/* una cifra sobre una línea a rayas la tapa con el mismo cielo, sin borde: la línea se interrumpe detrás del texto */
+.recorte { background: var(--cielo); padding: 2px 8px 2px 0; }
+.dentro { color: var(--hueso); }
+.unidad { display: block; margin-top: 8px; font-size: 17px; font-weight: 600; font-stretch: 85%; letter-spacing: 0; line-height: 1.2; }
+.n-cuenta .unidad { background: var(--cielo); padding: 2px 0 2px 8px; }
+.rotulo-suelo { position: absolute; top: 100%; left: calc(var(--x) * 1%); transform: translateX(-50%); z-index: 1; padding-top: 6px; white-space: nowrap;
+  font: 600 14px/1.2 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); display: inline-flex; align-items: center; gap: 8px; }
+.rotulo-suelo.izquierda { transform: none; }
+.escenario + .campo-estepa, .par + .campo-estepa { padding-top: 40px; }
+/* por lámina */
+.n-pico { left: 52%; bottom: calc(15 * var(--pt)); font-size: clamp(56px, 18vw, 104px); }
+@media (min-width: 1100px) { .n-pico { left: calc(var(--x) * 1%); bottom: calc(var(--y) * var(--pt)); transform: translateX(-50%); color: var(--hueso); } }
+.n-grieta { font-size: clamp(44px, 13vw, 104px); }
+.n-cuenta { font-size: clamp(36px, 10vw, 88px); }
+.n-columna { font-size: clamp(40px, 11vw, 104px); }
+.n-par { font-size: clamp(48px, 14vw, 104px); }
+.n-cierre { font-size: clamp(48px, 13vw, 80px); }
+.par { display: grid; grid-template-columns: 1fr; gap: 56px; background: var(--estepa); }
+.par .escenario { margin-bottom: 0; }
+@media (min-width: 760px) { .par { grid-template-columns: 1fr 1fr; gap: 0 24px; background: var(--cielo); } }
+/* una línea a rayas que cruza el cielo, como un anillo; lleva la cifra de la posición del padre (costado contra punta) */
+.rumbo { position: absolute; left: 0; right: 0; bottom: 4px; height: 0; border-top: 1.5px dashed var(--tinta); transform: rotate(3deg); transform-origin: 0 0; opacity: .45; pointer-events: none; }
+.campo-cielo { position: relative; }
+.rumbo span { position: absolute; right: 56px; top: -24px; font: 600 14px/1 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); }
+.cierre { min-height: 0; }
+.cierre .campo-cielo { padding-top: 48px; }
+.cierre .campo-estepa h2 { font-size: 27px; margin: 32px 0 8px; }
+.cierre .campo-estepa h2:first-child { margin-top: 0; }
+.cierre ul { margin: 0 0 16px; padding-left: 20px; max-width: 34em; }
+.cierre li { margin: 0 0 8px; }
+.cierre p { max-width: 34em; }
+.cierre h3 { font-size: 20px; margin: 28px 0 8px; }
+
+/* la tapa: la pregunta, una respuesta, tres cifras, las cinco palabras y dos botones, todo en la primera pantalla */
+.respuesta { font-size: 17px; line-height: 1.5; max-width: 34em; margin: 0 0 16px; font-weight: 600; }
+.respuesta--resumen { font-size: 16px; font-weight: 400; }
+.respuesta--resumen b { font-weight: 800; }
+@media (min-width: 900px) { .respuesta { font-size: 19px; } }
+.botones { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 20px; }
+.boton { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; font: 600 16px/1.2 "Archivo", "Arial Narrow", system-ui, sans-serif; text-decoration: none; background: var(--tinta); color: var(--cielo); border: 2px solid var(--tinta); }
+.boton--sec { background: transparent; color: var(--tinta); }
+.campo-estepa a.boton { text-decoration: none; }
+.boton:hover, .boton:focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; }
+.evento-3d { margin: 16px 0 8px; max-width: 34em; }
+.evento-3d .poster { display: block; }
+.evento-3d img { display: block; width: 100%; height: auto; aspect-ratio: 740 / 320; background: var(--lutita); }
+.evento-3d figcaption { margin-top: 12px; }
+.evento-3d .nota, .evento-3d .sin-3d { display: block; margin-top: 8px; font: 400 14px/1.4 "Archivo", "Arial Narrow", system-ui, sans-serif; }
+.evento-3d [hidden] { display: none; }
+.como-leer { margin-top: 20px; }
+.como-leer .leyenda-sellos { margin: 8px 0 0; }
+.tapa .campo-estepa { padding-bottom: 28px; }
+/* "Limitaciones": una columna de lectura, entre la última pregunta y "Qué sigue" */
+.resumen { min-height: 0; }
+.resumen h2 { font-size: 27px; margin: 24px 0 8px; }
+.resumen ul { margin: 0 0 8px; padding-left: 20px; }
+.resumen li { margin: 0 0 8px; }
+.resumen p { margin: 0 0 8px; }
+.resumen .campo-estepa { padding-top: 16px; }
+/* el tablero: cuatro bloques que se abren de a uno */
+details.bloque { margin: 40px 0 0; padding-top: 8px; border-top: 1px solid var(--linea); }
+details.bloque > summary { font-size: 22px; }
+
+/* la tapa: la foto Sentinel del núcleo en dos tonos, con el pozo nuevo en naranja */
+.tapa-foto { position: relative; overflow: hidden; aspect-ratio: 4 / 3; background: var(--lutita); flex: 0 0 auto; }
+.tapa-foto img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; will-change: transform; }
+@media (min-width: 900px) { .tapa-foto { aspect-ratio: auto; height: 36vh; height: 36svh; } .tapa-foto img { object-position: 35% 24%; } }
+.tapa h1 { font-size: 40px; font-stretch: 100%; margin: 8px 0 16px; }
+@media (min-width: 900px) { .tapa h1 { font-size: 56px; } }
+.apertura { font-size: 17px; line-height: 1.55; max-width: 34em; }
+@media (min-width: 900px) { .apertura { font-size: 19px; } }
+.leyenda-sellos { font: 400 14px/1.4 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); max-width: 34em; margin: 8px 0 0; }
+.cinco-palabras { font: 400 14px/1.4 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); max-width: 34em; margin: 12px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; }
+.cinco-palabras dt { font-weight: 600; }
+.cinco-palabras dd { margin: 0; }
+.intentos h3 { font-size: 20px; margin: 28px 0 8px; }
+.intentos ul { margin: 0 0 12px; padding-left: 20px; max-width: 34em; }
+.intentos li { margin: 0 0 8px; }
+.credito { margin: auto 0 0; padding-top: 24px; font: 400 14px/1.4 "Archivo", "Arial Narrow", system-ui, sans-serif; color: var(--tinta); }
+
+/* las seis marcas a la derecha: la única navegación de la historia; queda pegada mientras dura el artículo */
+.seis { position: sticky; top: 88px; z-index: 5; height: 0; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; align-items: flex-end; }
+.seis li { margin: 0; }
+.seis a { position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 40px; text-decoration: none; }
+.seis .marca { outline: 2px solid var(--cielo); transition: transform 200ms ease-out; }
+.seis a[aria-current="true"] .marca { transform: translateY(1px) scale(1.45); }
+.seis .rotulo { position: absolute; right: 44px; top: 50%; transform: translateY(-50%); white-space: nowrap; padding: 2px 8px; background: var(--cielo); color: var(--tinta);
+  font: 600 14px/1.3 "Archivo", "Arial Narrow", system-ui, sans-serif; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; }
+.seis a:hover .rotulo, .seis a:focus-visible .rotulo { clip-path: none; width: auto; height: auto; overflow: visible; }
+
+/* con JS y movimiento: encaje suave por lámina, una sola transición por cambio, nada en bucle */
+html.mov { scroll-snap-type: y proximity; }
+.mov .lamina { scroll-snap-align: start; }
+.mov .entra, .mov .campo-cielo h2 { transition: opacity 200ms ease-out; }
+.mov .pendiente .entra, .mov .pendiente .campo-cielo h2 { opacity: 0; }
+.mov #anticipar .veredicto > span { transition: opacity 200ms ease-out; }
+.mov #anticipar .veredicto > span:nth-child(2) { transition-delay: 300ms; }
+.mov #anticipar .veredicto > span:nth-child(3) { transition-delay: 600ms; }
+.mov #anticipar .veredicto > span:nth-child(4) { transition-delay: 900ms; }
+.mov #anticipar.pendiente .veredicto { opacity: 1; }
+.mov #anticipar.pendiente .veredicto > span { opacity: 0; transition-delay: 0ms; }
+.mov .rumbo { transition: opacity 400ms ease-out 900ms; }
+.mov .pendiente .rumbo { opacity: 1; transition: none; }
+/* al imprimir, cada lámina en su estado final aunque no se haya llegado a ella */
+@media print { .mov .pendiente .entra, .mov .pendiente .campo-cielo h2, .mov .pendiente .veredicto > span { opacity: 1 !important; } .banda, .tapa-foto img { transform: none !important; } .escenario svg { clip-path: none !important; } }
+
+html { scroll-padding-top: 0; }
+main { max-width: 1040px; margin: 0 auto; padding: 40px 20px 64px; }
+.tablero { margin: 64px 0 0; padding-top: 24px; border-top: 1px solid var(--linea); }
+.tablero h2 { margin: 0 0 8px; }
+.contexto { margin: 64px 0 0; padding-top: 24px; border-top: 1px solid var(--linea); }
+.contexto h2 { margin: 0 0 8px; }
+.contexto .sub { margin: 0; }
+section.caso { margin: 40px 0 8px; }
+.caso > h2 { font-size: 27px; margin: 0 0 16px; }
+.grid-caso { display: grid; grid-template-columns: 3fr 2fr; gap: 40px; }
+@media (max-width: 760px) { .grid-caso { grid-template-columns: 1fr; gap: 24px; } }
+.panel { min-width: 0; }
+.panel .cap { margin: 0; font-weight: 600; font-size: 17px; line-height: 1.3; }
+.panel .sub { font-size: 14px; margin: 4px 0 16px; color: var(--jarilla); }
+.panel .legend { margin-bottom: 8px; }
+.chart.chart-caso { height: 300px; }
+.chart.chart-previa { height: 240px; }
+.fila-previa { margin-top: 24px; align-items: start; }
+.leyenda-anual { font-size: 14px; color: var(--jarilla); margin: 8px 0 0; }
+.leyenda-anual .rayado::before { content: ""; display: inline-block; width: 12px; height: 10px; margin-right: 8px; vertical-align: -1px; border: 1px solid var(--s2); background: repeating-linear-gradient(135deg, var(--s2) 0 2px, transparent 2px 4px); }
+.caso .kpis { margin: 24px 0; }
+.glosario { margin-top: 24px; }
+.glosario dl { margin: 8px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 24px; max-width: 34em; }
+.glosario dt { font-weight: 600; }
+.glosario dd { margin: 0; }
+.titulares { list-style: none; margin: 40px 0 8px; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; }
+.titulares li { display: flex; flex-direction: column; gap: 4px; }
+.titulares .v { font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Charter, Georgia, serif; font-size: 33px; line-height: 1.1; font-weight: 600; font-variant-numeric: tabular-nums; }
+.titulares .l { font-size: 14px; line-height: 1.3; }
+.titulares .d { font-size: 14px; color: var(--jarilla); line-height: 1.35; }
+@media (max-width: 900px) { .titulares { grid-template-columns: repeat(2, 1fr); } .titulares li:last-child { grid-column: 1 / -1; } }
+pre.cmd { margin: 8px 0 16px; padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+pre.cmd .c { color: var(--jarilla); }
+@media (max-width: 600px) {
+  #t-dq, #t-dq tbody { display: block; }
+  #t-dq tr { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 8px; padding: 8px 0; border-bottom: 1px solid var(--linea); }
+  #t-dq tr:first-child { display: none; }
+  #t-dq td { border: 0; padding: 0; }
+  #t-dq td:nth-child(1) { font-weight: 600; }
+  #t-dq td:nth-child(4) { grid-column: 1 / -1; color: var(--jarilla); font-size: 14px; }
+}
+.sub { color: var(--jarilla); margin: 0 0 16px; font-size: 17px; max-width: 34em; }
+.meta { color: var(--jarilla); font-size: 14px; margin-top: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin: 24px 0; }
+.kpi .v { font-size: 27px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpi .l { font-size: 14px; }
+.kpi .d { color: var(--jarilla); font-size: 14px; margin-top: 4px; }
+main > section { margin: 64px 0 0; padding: 0; }
+.chart { position: relative; height: 340px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; gap: 24px; } .chart { height: 280px; } }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 16px; font-size: 14px; color: var(--jarilla); }
+.legend span::before { content: ""; display: inline-block; width: 16px; height: 0; border-top: 2px solid var(--c); margin-right: 8px; vertical-align: 4px; }
+.filters { display: flex; gap: 0 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.filters button { font: inherit; font-size: 14px; min-height: 44px; padding: 0 8px; border: 0; background: transparent; color: var(--jarilla); cursor: pointer; text-decoration: underline; text-decoration-color: var(--linea); text-underline-offset: 6px; }
+.filters button[aria-pressed="true"] { color: var(--tinta); font-weight: 600; text-decoration-color: var(--medido); text-decoration-thickness: 2px; }
+.finding { padding: 0; margin: 24px 0 0; color: var(--jarilla); max-width: 34em; }
+.finding strong { color: var(--tinta); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+th { color: var(--jarilla); font-weight: 600; }
+td.n { text-align: right; white-space: nowrap; }
+.tag { font-size: 14px; white-space: nowrap; }
+.tag.aviso { font-weight: 600; }
+.tag.ok { color: var(--medido); }
+.scroll { overflow-x: auto; }
+code { font-size: 14px; }
+ol.flow { padding-left: 20px; }
+ol.flow li { margin: 8px 0; }
+footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em; }
+@media (max-width: 520px) { main { padding: 24px 20px 48px; } }
+</style>
+</head>
+<body>
+<article class="historia" id="historia">
+  <ol class="seis" aria-label="Las seis preguntas">
+    <li><a href="#vecino"><i class="marca marca--medio" aria-hidden="true"></i><span class="rotulo">¿Los pozos vecinos rinden menos?</span></a></li>
+    <li><a href="#artefacto"><i class="marca marca--pleno" aria-hidden="true"></i><span class="rotulo">¿Puede salir sola, por cómo medimos?</span></a></li>
+    <li><a href="#diferido"><i class="marca marca--pleno" aria-hidden="true"></i><span class="rotulo">¿Se pierde o se atrasa?</span></a></li>
+    <li><a href="#direccion"><i class="marca marca--pleno" aria-hidden="true"></i><span class="rotulo">¿Por dónde pasa?</span></a></li>
+    <li><a href="#anticipar"><i class="marca marca--vacio" aria-hidden="true"></i><span class="rotulo">¿Se puede anticipar o planificar?</span></a></li>
+    <li><a href="#fuera"><i class="marca marca--medio" aria-hidden="true"></i><span class="rotulo">¿Pasa fuera de Vaca Muerta?</span></a></li>
+  </ol>
+  <section class="lamina tapa" id="inicio" data-alto="0">
+    <div class="tapa-foto">
+    <picture>
+      <source media="(prefers-color-scheme: dark) and (min-width: 900px)" type="image/avif" srcset="img/portada_oscuro_ancho.avif">
+      <source media="(prefers-color-scheme: dark) and (min-width: 900px)" type="image/webp" srcset="img/portada_oscuro_ancho.webp">
+      <source media="(prefers-color-scheme: dark)" type="image/avif" srcset="img/portada_oscuro_alto.avif">
+      <source media="(prefers-color-scheme: dark)" type="image/webp" srcset="img/portada_oscuro_alto.webp">
+      <source media="(min-width: 900px)" type="image/avif" srcset="img/portada_claro_ancho.avif">
+      <source media="(min-width: 900px)" type="image/webp" srcset="img/portada_claro_ancho.webp">
+      <source type="image/avif" srcset="img/portada_claro_alto.avif">
+      <img src="img/portada_claro_alto.webp" width="880" height="1100" fetchpriority="high" alt="Foto satelital en dos tonos del núcleo de Vaca Muerta, con el río Neuquén cruzándola; el punto naranja es un pozo nuevo en Loma Campana.">
+    </picture>
+    </div>
+    <div class="campo-estepa"><div class="col">
+      <h1>Vaca Muerta en datos</h1>
+      <p class="apertura">Cuando se fractura un pozo nuevo junto a pozos que ya producían, ¿los que ya producían rinden menos?</p>
+      <p class="respuesta respuesta--resumen"><b>Resumen.</b> Medimos qué les pasa a los pozos que ya producían (los padres) cuando se fractura un pozo nuevo (el hijo) a menos de 1 km. Usamos solo el dato público mensual de la Secretaría de Energía, en toda la cuenca: 2.094 eventos. Primero, el padre deja de producir días: el mes de la fractura, entre 79 y 88% de la caída son días sin producir: dos maneras de contar, sin y con los meses en que el padre estuvo cerrado todo el mes. Así se vería un cierre preventivo del operador. Después rinde menos por día. Un mes después de la fractura, los padres rinden entre 19 y 23 puntos menos que pozos de control a 2 a 5 km. Cerca de la mitad de la caída del volumen ya es menos petróleo por día producido. A los 6 meses la brecha baja a menos de 5 puntos, pero con medias de logaritmos el intervalo de la brecha del volumen todavía queda entero por debajo de cero: no está probado que el petróleo que falta llegue después. El agua sigue arriba, a cerca de la mitad del pico: el corte de agua del padre sube 13,8 puntos porcentuales en el mayor de los meses 0 y 1 (447 padres) y sigue arriba en los meses 6 a 12. La caída del petróleo es una huella medida, no una causa demostrada. La suba del agua es causal con supuestos nombrados; medida mes a mes (no como el mayor de dos meses), aguanta una cota de Rambachan y Roth del tamaño del mayor salto previo, sigue cuando la serie se corta en la segunda fractura a menos de 1 km, se repite en Colorado, donde no depende de un solo operador pero no es pareja entre ellos (con los pozos de PDC, el de más tratados, no se distingue de cero; Wyoming no permite probarla), y en Vaca Muerta depende de los pozos de YPF. El dato mensual no separa un cierre preventivo de un daño; los datos diarios y los registros de cierres de un operador sí. Una parte del estudio corre en su máquina sobre su dato mensual: la brecha del estudio de eventos, el modelo de dosis y, como lee el agua mensual opcional, el diseño del corte de agua. No parte la caída en días y caudal, y todavía no lee el diario ni los cierres.</p>
+      <p class="botones"><a class="boton" href="mundo.html#acto=2">Ver un caso en 3D</a><a class="boton boton--sec" href="informe.html">Leer el informe para un operador</a></p>
+      <p class="paper-pdf">Paper en PDF (formato de paper): <a href="../docs/paper/vaca-muerta-paper.pdf">vaca-muerta-paper.pdf</a></p>
+      <dl class="cinco-palabras" aria-label="Cinco palabras">
+        <dt>Hijo</dt><dd>el pozo nuevo que se fractura.</dd>
+        <dt>Padre (pozo vecino)</dt><dd>un pozo que ya producía a menos de 1 km del hijo.</dd>
+        <dt>Pozo de control</dt><dd>un pozo a 2 a 5 km de un pozo hijo, para comparar.</dd>
+        <dt>Puntos</dt><dd>puntos porcentuales del caudal del propio pozo antes de la fractura: de 100 a 80 es una caída de 20 puntos.</dd>
+        <dt>Diferido</dt><dd>producción que el pozo entrega más tarde; no es producción perdida.</dd>
+      </dl>
+      <details class="como-leer"><summary>Datos, método y sellos</summary>
+        <p><b>Datos.</b> Usamos solo datos públicos de la Secretaría de Energía: la producción mensual de cada pozo no convencional, la fecha de cada fractura y las coordenadas de superficie. No hay producción diaria ni cierres declarados. Un evento es un pozo padre y el mes de fractura de su pozo hijo más cercano.</p>
+        <p><b>Método.</b> Seguimos el caudal de cada pozo padre como fracción de su promedio de los 3 meses previos. Restamos la mediana de los pozos de control a la de los pozos padre, mes a mes. El intervalo de 95% se calcula por bloques de 5 km. Para las pruebas de robustez y las de otras cuencas, la regla de decisión se escribió antes del cálculo. Siguen seis preguntas: cada una sale de la duda que deja la anterior.</p>
+        <p class="leyenda-sellos">Cada pregunta lleva uno o más sellos. Sostiene: el dato lo muestra. Sostiene, con una brecha previa: los pozos padre ya rendían menos antes de la fractura, por eso damos un rango. No firme: el dato no alcanza para decidir. No predice: lo probamos y no funcionó. Sin muestra: faltaron casos. Se replica: el resultado aparece también en otra cuenca. Retirado: lo publicamos y no se confirmó. Pendiente: la prueba todavía no se puede evaluar.</p>
+      </details>
+      <p class="credito">Contains modified Copernicus Sentinel data 2025</p>
+    </div></div>
+  </section>
+  <section class="pregunta lamina" id="vecino" data-alto="23.1">
+    <div class="campo-cielo"><div class="col">
+      <h2>¿Los pozos vecinos rinden menos?</h2>
+      <p class="veredicto entra"><span><i class="marca marca--medio" aria-hidden="true"></i>sostiene, con una brecha previa</span></p>
+    </div></div>
+    <figure class="escenario" style="--alto: 24" role="img" aria-label="La brecha mes a mes, de 3 meses antes a 6 meses después de la fractura del hijo: se abre a -23,0 en el mes 1 y a los 6 meses queda en menos de 5 puntos.">
+      <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path class="banda barrido" data-alto="23.1" d="__PERFIL_AREA__"/></svg>
+      <span class="rotulo-suelo" style="--x: 33.33">fractura</span>
+      <span class="numero n-pico" style="--x: 44.44; --y: 1.8" data-cuenta>-23,0</span>
+    </figure>
+    <div class="campo-estepa"><div class="col">
+      <p class="primera entra">Sí. El mes de la fractura el padre pierde días de producción: entre 79 y 88% de la caída son días sin producir: dos maneras de contar, sin y con los meses en que el padre estuvo cerrado todo el mes. Un mes después rinde entre 19 y 23 puntos menos que pozos de control a 2 a 5 km. Cerca de la mitad de la caída del volumen ya es menos petróleo por día producido.</p>
+      <p>Es un rango porque los padres ya rendían un poco menos que los controles antes de la fractura. El 23 es el máximo y el 19 es lo que queda al descontar esa diferencia previa.</p>
+      <figure class="evento-3d">
+        <a class="poster" href="mundo.html#acto=2"><img src="img/evento_3d.webp" width="740" height="320" loading="lazy" alt="Un evento en 3D: un pozo hijo, el círculo de 1 km a su alrededor y sus padres cercanos, cada uno con una barra de caudal."></a>
+        <figcaption>
+          <a class="boton" href="mundo.html#acto=2">Mirá este evento en 3D</a>
+          <span class="nota">Abre la página en 3D (7 MB) en el acto de un solo evento: un pozo hijo y sus padres a menos de 1 km. Arrastrás para girar y movés la línea de tiempo.</span>
+          <span class="sin-3d" hidden>Tu navegador no ofrece WebGL2, así que el 3D no se puede dibujar. La <a href="replay.html">repetición en 2D</a> funciona sin WebGL.</span>
+        </figcaption>
+      </figure>
+      <details class="numeros"><summary>Ver los números</summary>
+      <figure>
+        <picture><source media="(prefers-color-scheme: dark)" srcset="img/vecino_brecha_oscuro.png"><img src="img/vecino_brecha.png" alt="Brecha de petróleo por mes desde la fractura del hijo, en puntos del índice de caudal: cae a -23,0 en el mes 1, ya era negativa antes de la fractura y a los 6 meses queda en menos de 5 puntos." width="350" height="250" loading="lazy"></picture>
+        <picture><source media="(prefers-color-scheme: dark)" srcset="img/vecino_reparto_oscuro.png"><img src="img/vecino_reparto.png" alt="Cómo se reparte esa brecha del volumen, en puntos logarítmicos: los días producidos y el caudal por día producido caen a la vez y se recuperan a los 6 meses." width="350" height="250" loading="lazy"></picture>
+        <figcaption>Brecha de petróleo por mes desde la fractura del hijo, con la descomposición en días y caudal por día.</figcaption>
+      </figure>
+      <p>Mirá un caso en <a href="replay.html">La cuenca mes a mes</a> o en <a href="mundo.html">Vaca Muerta en 3D</a>.</p>
+      <p>Un punto es un punto porcentual del caudal previo de cada pozo: pasar de 100 a 80 es una caída de 20 puntos. Son 2.094 eventos.</p>
+      <p>La brecha previa: antes de la fractura ya había una brecha de -2,5, -3,6 y -6,3 puntos en los meses -3, -2 y -1. Con datos mensuales no se separa una diferencia de nivel de los padres cercanos de un efecto anticipado, así que, contra este control, 23 es una cota superior (el máximo) y 19 el valor descontado; contra pozos de 5 a 10 km la brecha previa es otra.</p>
+      <p>El intervalo de 95% es el rango de valores que el dato deja abierto. Se calcula por bloques de 5 km (145 bloques). Para la brecha de -23,0 va de -30,0 a -17,0.</p>
+      <p class="prueba"><a href="../docs/caso-interferencia.md">La prueba completa: el caso de estudio</a></p>
+    </details>
+      <p class="duda">Con una brecha que ya estaba antes de la fractura, queda la sospecha de que el método invente diferencias entre padres y controles aunque no pase nada.</p>
+    </div></div>
+  </section>
+  <section class="pregunta lamina" id="artefacto" data-alto="2.9">
+    <div class="campo-cielo"><div class="col">
+      <h2>¿Puede salir sola, por cómo medimos?</h2>
+      <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene</span></p>
+    </div></div>
+    <figure class="escenario" style="--alto: 24" role="img" aria-label="Con fechas de fractura falsas la brecha queda en una grieta, de -2,4 a 0,5; con las fechas permutadas, de -8,1 a -4,9; queda el contorno de la brecha real de -23,0.">
+      <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+        <path class="fantasma" d="__PERFIL_LINEA__"/>
+        <rect class="permutada" x="0" y="15.9" width="100" height="3.2"/>
+        <rect class="banda" data-alto="2.9" x="0" y="21.6" width="100" height="2.9"/>
+      </svg>
+      <span class="etiqueta tenue" style="--x: 44.44; --y: 23.4">-23,0</span>
+      <span class="etiqueta chica recorte" style="--x: 3; --y: 5.5">fechas permutadas, -8,1 a -4,9</span>
+      <span class="numero n-grieta recorte" style="--x: 3; --y: 9.6" data-cuenta>-2,4 a 0,5</span>
+    </figure>
+    <div class="campo-estepa"><div class="col">
+      <p class="primera entra">Probamos si el método produce una brecha sin causa. Con fechas de fractura falsas, corridas medio año y un año, la brecha del mes 1 va de -2,4 a 0,5 puntos y los intervalos incluyen el cero.</p>
+      <p>Con las fechas mezcladas entre pozos la brecha llega a -8,1 como máximo, contra -23,0 la real. Si plantamos a propósito una caída de -17,4 puntos en datos reales, el método la encuentra (-19,5).</p>
+      <details class="numeros"><summary>Ver los números</summary>
+      <p>Con las fechas permutadas entre hijos del mismo año va de -8,1 a -4,9, contra -23,0 la real. Plantamos una caída de unos -17,4 puntos sobre datos reales y el estimador la devuelve como -19,5, con la brecha residual de -2,2 del mundo nulo; se cumplen 5 de las 5 reglas escritas antes de correr, y la de falsos positivos da 2 de 30 mundos (7%).</p>
+      <p>Dentro del mes, la brecha del mes 0 cambia -2,1 puntos por cada 0,1 de fracción del mes posterior al inicio de la fractura (IC 95%: -3,3 a -0,8). Esa pendiente no sobrevive a su placebo en la prueba del día de inicio, que se fijó antes de correr: pozos de control, una fecha falsa y los días sorteados la rompen, así que no la leemos como dosis.</p>
+      <p>Con fechas falsas de fractura, la brecha no se reproduce de forma consistente: una da cero y otra tiene el signo contrario.</p>
+      <p class="prueba"><a href="../wiki/hallazgos/placebo.md">La prueba completa: placebo y permutación</a></p>
+    </details>
+      <p class="duda">Que la brecha sea real no dice cuánto cuesta: esa producción puede perderse o llegar más tarde.</p>
+    </div></div>
+  </section>
+  <section class="pregunta lamina" id="diferido" data-alto="23.1">
+    <div class="campo-cielo"><div class="col">
+      <h2>¿Se pierde o se atrasa?</h2>
+      <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene</span></p>
+    </div></div>
+    <figure class="escenario" style="--alto: 24" role="img" aria-label="La brecha se cierra hasta -2,1 en el mes 6; el volumen que falta en los meses 0 a 6 (el diferido) va de 6,4 a 11,4 millones de barriles.">
+      <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path class="banda" data-alto="23.1" d="__PERFIL_AREA__"/></svg>
+      <span class="numero n-cuenta derecha" style="--x: 97; --y: 14.5" data-cuenta>6,4 a 11,4<span class="unidad">millones de barriles</span></span>
+      <span class="etiqueta derecha" style="--x: 99; --y: 8.8" data-cuenta>-2,1</span>
+      <span class="rotulo-suelo" style="--x: 33.33">fractura</span>
+    </figure>
+    <div class="campo-estepa"><div class="col">
+      <p class="primera entra">En el mes 6 la brecha del índice es de -2,1 puntos: menos de 5 puntos, pero no cero. Con medias de logaritmos, el intervalo de la brecha del volumen todavía queda entero por debajo de cero: no está probado que el petróleo que falta llegue después.</p>
+      <p>El agua sigue arriba. El corte de agua del padre sube 13,8 puntos porcentuales en el mayor de los meses 0 y 1 (447 padres) y en los meses 6 a 12 sigue 10,9 puntos arriba (media de cada mes; regla fijada después de ver D2). Es la única afirmación causal, con supuestos nombrados; en Vaca Muerta depende de los pozos de YPF y en Colorado no depende de un solo operador, aunque con los pozos de PDC solos no se distingue de cero. Medida mes a mes (no como el mayor de dos meses), aguanta la cota de Rambachan y Roth con Mbar = 1 (después de la fractura el sesgo puede saltar de un mes al siguiente tanto como el mayor salto previo), y con la serie cortada en la segunda fractura a menos de 1 km los meses 6 a 12 siguen 10,5 puntos arriba (IC 6,8 a 15,4).</p>
+      <p>El volumen que falta en los meses 0 a 6 (el diferido) va de 6,4 a 11,4 millones de barriles: es una brecha descriptiva, no un efecto causal, y no se sabe si llega después. El rango depende de cómo se cuentan los eventos que se superponen y de si se descuenta la brecha previa.</p>
+      <p class="caso-real"><a href="espera.html">Barriles que llegan tarde: mirá un caso real</a><span>Cuánto produce menos un pozo vecino, cuándo lo recupera y cuánto cuesta esperarlo, con el precio que elegís vos.</span></p>
+      <details class="numeros"><summary>Ver los números</summary>
+      <p>Contra un control de la misma edad, el volumen que falta en los meses 0 a 6 (el diferido) va de 6,4 a 11,4 millones de barriles: es una brecha descriptiva, no un efecto causal, y no se sabe si llega después. El rango depende de cómo se cuente: el extremo alto suma cada evento por separado y el bajo cuenta cada mes de un padre una sola vez.</p>
+      <!--__DIFERIDO_CUENTA__-->
+      <p>A los 24 meses, el padre típico no muestra pérdida acumulada: el dato no la distingue de cero. Eso no prueba que todo vuelva. Por evento, la mediana es -954 barriles y su intervalo de 95% incluye el cero.</p>
+      <p class="prueba"><a href="../wiki/hallazgos/diferido.md">La prueba completa: el diferido</a></p>
+    </details>
+      <p class="duda">Un promedio no dice a qué padres les toca: ¿hay una posición respecto del hijo que explique quién pierde más?</p>
+    </div></div>
+  </section>
+  <section class="pregunta lamina" id="direccion" data-alto="50.3">
+    <div class="campo-cielo"><div class="rumbo" aria-hidden="true"><span>-28,0 puntos</span></div><div class="col">
+      <h2>¿Por dónde pasa?</h2>
+      <p class="veredicto entra"><span><i class="marca marca--pleno" aria-hidden="true"></i>sostiene</span></p>
+    </div></div>
+    <figure class="escenario" style="--alto: 52" role="img" aria-label="Al mes 1 los padres al costado de la rama del hijo quedan -28,0 puntos por debajo de los de la punta; a menos de 300 m entre ramas la brecha es de -50,3.">
+      <svg viewBox="0 0 100 52" preserveAspectRatio="none" aria-hidden="true">
+        <rect class="banda" data-alto="28" x="0" y="24" width="44" height="28"/>
+        <rect class="banda" data-alto="1.2" x="46" y="50.8" width="8" height="1.2"/>
+        <rect class="banda" data-alto="50.3" x="56" y="1.7" width="44" height="50.3"/>
+      </svg>
+      <span class="numero n-columna dentro" style="--x: 3; --y: 1.6" data-cuenta>-28,0</span>
+      <span class="numero n-columna dentro" style="--x: 59; --y: 1.6" data-cuenta>-50,3</span>
+      <span class="rotulo-suelo" style="--x: 22">costados</span>
+      <span class="rotulo-suelo" style="--x: 50">puntas</span>
+      <span class="rotulo-suelo" style="--x: 78">a menos de 300 m</span>
+    </figure>
+    <div class="campo-estepa"><div class="col">
+      <p class="primera entra">Con las trayectorias publicadas de las ramas, comparamos dos posiciones del pozo padre: al costado de la rama del pozo hijo o en su punta. Al mes 1, la brecha del costado contra la punta es de -28,0 puntos.</p>
+      <p>Una primera respuesta, una dirección este-oeste, se retiró: está en la pregunta siguiente.</p>
+      <details class="numeros"><summary>Ver los números</summary>
+      <p>El contraste de -28,0 puntos sale de 1.201 costados y 915 puntas (IC 95% por bloques de 5 km: -35,9 a -19,7). La huella además tiene alcance: la brecha del mes 1 es de -50,3 puntos a menos de 300 m entre ramas y de -1,5 de 1.000 a 2.000 m, sobre 10.173 eventos.</p>
+      <p>La muestra es sobre todo de hijos fracturados de 2016 a 2023: las trayectorias cubren el 86% de esos hijos, pero el 39% de los de 2024 y el 25% de los de 2025.</p>
+      <p class="prueba"><a href="../wiki/hallazgos/mecanismo.md">La prueba completa: el mecanismo por la geometría de las ramas</a></p>
+    </details>
+      <p class="duda">Una huella con forma y alcance parece algo que se puede usar: ¿se puede anticipar qué pozo la va a sufrir, o planificar las fracturas para evitarla?</p>
+    </div></div>
+  </section>
+  <section class="pregunta lamina" id="anticipar" data-alto="23.1">
+    <div class="campo-cielo"><div class="col">
+      <h2>¿Se puede anticipar o planificar?</h2>
+      <p class="veredicto entra"><span><i class="marca marca--vacio" aria-hidden="true"></i>no predice</span><span><i class="marca marca--vacio" aria-hidden="true"></i>no predice el riesgo</span><span><i class="marca marca--vacio" aria-hidden="true"></i>no firme</span><span><i class="marca marca--vacio" aria-hidden="true"></i>sin muestra</span></p>
+    </div></div>
+    <figure class="escenario" style="--alto: 24" role="img" aria-label="La brecha promedio, solo su contorno: real en promedio y ruidosa en cada evento.">
+      <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path class="contorno" d="__PERFIL_AREA__"/></svg>
+    </figure>
+    <div class="campo-estepa"><div class="col">
+      <p class="primera entra">La huella es real en promedio y ruidosa en cada evento, y por eso nada de lo que probamos alcanza para decidir sobre un pozo.</p>
+      <div class="intentos">
+      <h3>Resultados negativos y uno retirado</h3>
+      <ul>
+      <li>Una dirección única de la caída, este-oeste: retirado. La publicamos como hallazgo y la retiramos. No se distingue de la dirección del esfuerzo de la roca ni de cómo se ubican los pozos. Hoy es una descripción de los pozos, no un resultado.</li>
+      <li>Predecir el costo de cada evento: el modelo anda peor que usar el promedio de la zona.</li>
+      <li>Predecir qué pozo recibe un golpe de fractura fuerte: acierta algo mejor que el azar, pero no mejora de forma segura a la tasa histórica de la zona.</li>
+      <li>Ver si un trabajo más grande en el hijo (más arena o más presión) agranda la caída: con estos casos, un efecto chico pasaría inadvertido.</li>
+      <li>Ver si un hijo rinde menos junto a pozos ya agotados: la prueba de control dio un efecto donde no debía, así que no se puede leer.</li>
+      <li>Planificar el calendario de fracturas o agrupar hijos con un mismo padre: pedíamos 100 y 150 casos, y hay 81 y 87.</li>
+      </ul>
+      </div>
+      <details class="numeros"><summary>Ver los números</summary>
+      <p>Eje de mayor merma: 93 grados, este-oeste (IC de 70 a 123). No se separa del SHmax publicado (la dirección del esfuerzo máximo de la roca), de 67,5 grados, ni de cómo se ubican los pads y las ramas. El eje de los eventos viejos (92 grados) no predice mejor a los nuevos (89) que uno al azar.</p>
+      <p>El modelo de costo predice peor que la media del área (R2 fuera de muestra de -0,18 contra -0,03). El modelo del riesgo de un golpe de fractura fuerte (la caída de un pozo vecino mientras se fractura el nuevo), probado hacia adelante sobre 492 eventos, tiene un AUC de 0,67 que pasa el umbral, pero su habilidad de Brier de 0,09 tiene un intervalo de -0,04 a 0,21 que incluye el cero. Con la geometría de las ramas, el menor efecto de dosis detectable es de 0,34 desvíos, contra 0,22 de la muestra completa: no da más potencia. El lado del hijo da -0,2 bbl por metro de rama (IC -12,6 a 12,2), pero su control negativo da 8,9 y no es nulo, así que no se lee. Y los dos intentos de planificar pedían más datos de los que hay: el calendario de golpes, 100 eventos aislados y hay 81; agrupar hijos con un mismo padre, 150 padres y 400 meses de golpe y hay 87 y 197.</p>
+      <p class="prueba"><a href="../wiki/hallazgos/libro.md">La prueba completa: el libro de hipótesis</a></p>
+    </details>
+      <p class="duda">Todo esto es en una sola cuenca: ¿la huella es una propiedad de Vaca Muerta o de cómo se ve el dato de acá?</p>
+    </div></div>
+  </section>
+  <section class="pregunta lamina" id="fuera" data-alto="19.9">
+    <div class="campo-cielo"><div class="col">
+      <h2>¿Pasa fuera de Vaca Muerta?</h2>
+      <p class="veredicto entra"><span><i class="marca marca--medio" aria-hidden="true"></i>se replica en 1 de 2 cuencas</span></p>
+    </div></div>
+    <div class="par">
+      <figure class="escenario" style="--alto: 21" role="img" aria-label="En la cuenca DJ de Colorado la brecha del mes 1 es de -19,9: se replica.">
+        <svg viewBox="0 0 100 21" preserveAspectRatio="none" aria-hidden="true"><rect class="banda" data-alto="19.9" x="0" y="1.1" width="100" height="19.9"/></svg>
+        <span class="numero n-par dentro" style="--x: 5; --y: 1.6" data-cuenta>-19,9</span>
+        <span class="rotulo-suelo izquierda" style="--x: 5"><i class="marca marca--pleno" aria-hidden="true"></i>DJ de Colorado</span>
+      </figure>
+      <figure class="escenario" style="--alto: 21" role="img" aria-label="En Wyoming la brecha del mes 1 es de -2,5: no se replica.">
+        <svg viewBox="0 0 100 21" preserveAspectRatio="none" aria-hidden="true"><rect class="banda" data-alto="2.5" x="0" y="18.5" width="100" height="2.5"/></svg>
+        <span class="numero n-par" style="--x: 5; --y: 3.4" data-cuenta>-2,5</span>
+        <span class="rotulo-suelo izquierda" style="--x: 5"><i class="marca marca--vacio" aria-hidden="true"></i>Wyoming</span>
+      </figure>
+    </div>
+    <div class="campo-estepa"><div class="col">
+      <p class="primera entra">Corrimos los mismos estimadores en otras dos cuencas, con una regla escrita antes de correr el cálculo.</p>
+      <details class="numeros"><summary>Ver los números</summary>
+      <p>En la cuenca DJ de Colorado se replica: -19,9 puntos al mes 1 (IC 95% por bloques de 5 km: -27,5 a -14,8), con una brecha previa de -6,9 en el mes -1. Ahí, al mes 6, la brecha no se cierra del todo (-5,9). En Wyoming no: -2,5 puntos (IC -5,5 a 2,2), y su brecha previa, de -11,9, es mayor que la del mes 1. Se publican las dos. En Wyoming la regla se escribió antes de bajar sus datos. Con dos cuencas no podemos decir si la diferencia es propia de cada cuenca o si es ruido del dato: no hay estimación conjunta.</p>
+      <p class="prueba"><a href="../wiki/hallazgos/replicacion_cuencas.md">La prueba completa: la replicación por cuenca</a></p>
+    </details>
+      
+    </div></div>
+  </section>
+  <section class="resumen lamina" id="limitaciones" data-alto="0">
+    <div class="campo-estepa"><div class="col">
+      <h2>Limitaciones</h2>
+      <p>Con un diseño causal, bajo tendencias paralelas, hay un solo resultado: el corte de agua del pozo padre sube 13,8 puntos porcentuales en el mayor de los meses 0 y 1 (447 padres). Depende de los pozos de YPF; sin ellos, el dato no lo separa de cero.</p>
+      <p>No sabemos si la caída de petróleo es una causa. Es una huella medida contra un control (la diferencia que medimos), no una causa demostrada: con datos mensuales y declarados por las operadoras, un cierre preventivo (el operador frena el pozo padre antes de la fractura para protegerlo) se ve igual que un daño por interferencia. Con controles que van a recibir un hijo más tarde, la caída del mes 1 deja de distinguirse de cero si el sesgo salta de un mes al siguiente apenas 0,20 veces el mayor salto previo. Tampoco sabemos si sirve para anticipar un pozo en particular, ni si vale fuera de Vaca Muerta más allá de Colorado.</p>
+    </div></div>
+  </section>
+  <section class="cierre lamina" id="sigue" data-alto="11.9">
+    <div class="campo-cielo"><div class="col">
+      <h2>Qué sigue</h2>
+    </div></div>
+    <figure class="escenario" style="--alto: 31" role="img" aria-label="La prueba prospectiva: un intervalo predicho de -28,7 a -16,8 con -22,9 en el medio, congelado el 2026-11-18 y todavía sin puntuar.">
+      <svg viewBox="0 0 100 31" preserveAspectRatio="none" aria-hidden="true">
+        <rect class="corchete banda" data-alto="11.9" x="0.3" y="2.3" width="99.4" height="11.9"/>
+        <line class="marca-prevista" x1="40" x2="100" y1="8.1" y2="8.1"/>
+      </svg>
+      <span class="numero n-cierre" style="--x: 3; --y: 17.6" data-cuenta>-22,9</span>
+      <span class="etiqueta derecha" style="--x: 97; --y: 29.4">-28,7</span>
+      <span class="etiqueta derecha" style="--x: 97; --y: 13.6">-16,8</span>
+      <span class="rotulo-suelo izquierda" style="--x: 3">2026-11-18</span>
+    </figure>
+    <div class="campo-estepa"><div class="col">
+      <h3>Prueba prospectiva: <!--__PRUEBA_ESTADO__--></h3>
+      <!--__PRUEBA_ABIERTA__-->
+      <p class="prueba"><a href="../wiki/hallazgos/prospectiva.md">La prueba completa: la prueba prospectiva</a></p>
+      <h3>Qué lo resolvería</h3>
+      <ul class="cambiaria">
+      <li>Producción diaria, que separaría un cierre de un golpe dentro del mes.</li>
+      <li>Cierres declarados por las operadoras, que permitirían descartar los preventivos.</li>
+      <li>Trayectorias de los hijos recientes, que hoy cubren el 39% de los de 2024 y el 25% de los de 2025.</li>
+      <li>Presión de fondo y de reservorio, y el nivel al que aterriza cada pozo: el dato público no los trae.</li>
+      <li>Distinguir un nivel de un efecto anticipado: el rango de 19 a 23 quedaría en un solo número.</li>
+      </ul>
+    </div></div>
+  </section>
+</article>
+
+<main>
+
+<div class="tablero" id="tablero">
+  <h2>El tablero</h2>
+  <div class="meta" id="meta"></div>
+</div>
+
+<details class="bloque" name="tablero" id="caso" open>
+<summary>El caso</summary>
+<p class="sub">Cuánto produce menos un padre cuando se fractura el hijo, año por año, y qué diferencia ya había antes.</p>
+<section class="caso" id="interferencia">
+  <h2>El caso: interferencia entre pozos</h2>
+  <div class="grid-caso">
+    <div class="panel">
+      <p class="cap">Caudal del padre, mediana (100 = antes de la fractura)</p>
+      <p class="sub">Fracción de su promedio de los 3 meses previos, padre cercano contra control.</p>
+      <div class="legend" id="leg-interf"></div>
+      <div class="chart chart-caso"><canvas id="c-interf" aria-label="Caudal del pozo padre alrededor de la fractura del hijo"></canvas></div>
+    </div>
+    <div class="panel">
+      <p class="cap">Brecha al mes 1 por año de fractura (puntos)</p>
+      <p class="sub">Cercano menos control.</p>
+      <div class="chart chart-caso"><canvas id="c-interf-anual" aria-label="Brecha de interferencia por año"></canvas></div>
+      <!--__LEYENDA_ANUAL__-->
+    </div>
+  </div>
+  <div class="fila-previa">
+    <div class="panel" id="panel-previa">
+      <p class="cap">Brecha previa, con intervalo de confianza 95% por bootstrap (puntos)</p>
+      <p class="sub">Cercano menos control, meses -3 a 3 en la base limpia. La zona sombreada es la brecha previa a la fractura.</p>
+      <div class="chart chart-previa"><canvas id="c-previa" aria-label="Brecha entre padres cercanos y control con su intervalo de confianza"></canvas></div>
+    </div>
+  </div>
+  <!--__KPIS_INTERF__-->
+  <details><summary>Ver tabla</summary><!--__FINDING_INTERF__--><div class="scroll"><table id="t-interf"></table></div></details>
+  <!--__GLOSARIO__-->
+</section>
+</details>
+
+<details class="cuenca-cifras bloque" name="tablero" id="contexto">
+  <summary>La cuenca en cifras</summary>
+  <p class="sub">Producción por operador, curvas tipo y diseño de terminación. Es contexto: no responde a ninguna de las seis preguntas.</p>
+
+<!--__TITULARES__-->
+
+<section>
+  <h3>Producción de petróleo de Vaca Muerta por operador</h3>
+  <p class="sub">Miles de barriles por día calendario (kbbl/d), apilado. Los cinco operadores con mayor producción en el último mes; el resto en "Otros".</p>
+  <div class="legend" id="leg-mensual"></div>
+  <div class="chart"><canvas id="c-mensual" aria-label="Producción mensual por operador"></canvas></div>
+</section>
+
+<section>
+  <h3>Curva tipo: pozos shale oil por cohorte</h3>
+  <p class="sub">Caudal promedio de petróleo (bbl/d) por mes desde el primer petróleo. La cohorte es el año del primer petróleo. Se muestran solo meses con al menos 10 pozos.</p>
+  <div class="filters" id="f-cohorte" role="group" aria-label="Cohorte"></div>
+  <div class="legend" id="leg-curva"></div>
+  <div class="chart"><canvas id="c-curva" aria-label="Curva tipo"></canvas></div>
+</section>
+
+<section>
+  <h3>Diseño de terminación y productividad</h3>
+  <p class="sub">Medianas por cohorte, pozos con 12 meses de producción publicados. Rama horizontal desde Adjunto IV.</p>
+  <div class="legend" id="leg-diseno"></div>
+  <div class="grid2">
+    <div><p class="sub"><strong>Rama horizontal (m)</strong></p><div class="chart"><canvas id="c-rama"></canvas></div></div>
+    <div><p class="sub"><strong>Petróleo 12 meses por metro de rama (bbl/m)</strong></p><div class="chart"><canvas id="c-prod"></canvas></div></div>
+  </div>
+  <!--__FINDING_DISENO__-->
+  <details><summary>Ver tabla</summary><div class="scroll"><table id="t-diseno"></table></div></details>
+</section>
+
+</details>
+
+<details class="bloque" name="tablero" id="calidad">
+<summary>Calidad de datos</summary>
+  <p class="sub">Antes de publicar, el pipeline revisa el dato público (duplicados, vacíos, valores imposibles). Si falla una revisión grave, no se publica nada. Las anomalías que no frenan la publicación se cuentan y se publican.</p>
+  <details><summary>Ver los controles</summary><div class="scroll"><table id="t-dq"></table></div></details>
+</details>
+
+<details class="como-se-hizo bloque" name="tablero" id="como-se-hizo">
+  <summary>Cómo lo medimos y cómo repetirlo</summary>
+  <p class="sub">Todo se reconstruye desde el dato público y cada paso se puede repetir. La ingeniería y la matemática, de punta a punta: <a href="../README.md#ingeniería-y-matemática">Ingeniería y matemática</a> en el README.</p>
+<section id="reproducir">
+  <h3>Código y reglas fijadas</h3>
+  <p class="sub">El código es público en <a href="https://github.com/GabrielRuizVarela/vaca-muerta-en-datos">github.com/GabrielRuizVarela/vaca-muerta-en-datos</a>, una copia de un solo commit; el historial de trabajo, con el commit de cada regla fijada, se comparte a pedido. Con el código, desde su raíz y con <a href="https://docs.astral.sh/uv/">uv</a> instalado, cada paso es idempotente: una corrida sin cambios en el origen no modifica nada.</p>
+<pre class="cmd"><span class="c"># dependencias</span>
+uv sync
+<span class="c"># toda la cadena, con tiempos</span>
+uv run python -m pipeline.run_all
+<span class="c"># agrega la descarga desde la Secretaría (hace falta salida a su servidor)</span>
+uv run python -m pipeline.run_all --with-ingest
+<span class="c"># tests, incluida la reproducibilidad de este archivo</span>
+uv run pytest -q</pre>
+  <p class="sub">Para recorrer los resultados sin correr nada: <a href="mundo.html">Vaca Muerta en 3D</a> (la cuenca mes a mes, el estudio de eventos armado desde el mapa y un pozo hijo para plantar), <a href="replay.html">La cuenca mes a mes</a> (mapa de pozos mes a mes) y <a href="../wiki/index.md">wiki de hallazgos</a> (<code>wiki/index.md</code>, con el libro de hallazgos y la interferencia).</p>
+</section>
+
+<section>
+  <h3>Cómo se hizo</h3>
+  <p class="sub">Pipeline reproducible sobre los datos abiertos de la Secretaría de Energía: producción mensual por pozo y datos de fractura (Adjunto IV), ingesta con hash, modelo en DuckDB y controles de calidad que se publican junto a los resultados.</p>
+  <ol class="flow">
+    <li><strong>Ingesta</strong> (<code>pipeline/ingest.py</code>): GET condicional (ETag / Last-Modified), hash SHA-256 y capa raw inmutable con un archivo por versión. Una corrida sin cambios no escribe nada.</li>
+    <li><strong>Modelo</strong> (<code>pipeline/sql/</code>, DuckDB): staging tipado, normalización de razones sociales (<code>seeds/operadores.csv</code>), hechos con grano (pozo, mes), dimensiones de pozo y fractura, marts para el reporte. Todo se reconstruye desde raw: idempotente.</li>
+    <li><strong>Calidad</strong> (<code>pipeline/checks.py</code>): controles bloqueantes y avisos con conteo y muestra; el reporte JSON queda versionado.</li>
+    <li><strong>Interferencia</strong> (<code>pipeline/sql/04_interferencia.sql</code>): pads por coordenadas de superficie, pares padre/hijo a menos de 5 km, estudio de eventos con pozos de control a 2 a 5 km de un pozo hijo.</li>
+    <li><strong>Preguntas en lenguaje natural</strong> (<code>agente/</code>): un modelo de lenguaje (local por defecto) elige una de 16 operaciones tipadas y completa sus argumentos; nunca escribe SQL ni números. Las mismas operaciones se exponen como servidor MCP de solo lectura. <span id="eval-txt"></span></li>
+    <li><strong>Publicación</strong>: GitHub Actions corre los tests en cada push.</li>
+  </ol>
+  <div class="scroll"><table id="t-fuentes"></table></div>
+</section>
+</details>
+
+<footer>
+  <nav class="pie-sitio" aria-label="Más páginas del sitio">
+    <a href="#tablero">El tablero</a>
+    <a href="#como-se-hizo">Cómo se hizo</a>
+    <a href="mundo.html">Vaca Muerta en 3D</a>
+    <a href="globo.html">El globo</a>
+    <a href="replay.html">La cuenca mes a mes</a>
+    <a href="../docs/caso-interferencia.md">Caso de estudio</a>
+  </nav>
+  <p>Proyecto personal de Gabriel Ruiz Varela con datos públicos (<a href="http://datos.energia.gob.ar/">datos.energia.gob.ar</a>). No está afiliado ni avalado por ninguna empresa. Conversiones: 1 m³ = 6,2898 bbl; caudales por día calendario. Fuentes y licencias de cada dato: <a href="../ATRIBUCION.md">ATRIBUCION.md</a>.</p>
+</footer>
+</main>
+
+<script>/*__CHARTJS__*/</script>
+<script>
+const D = /*__DATA__*/null;
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = (n, d = 0) => n == null ? "s/d" : Number(n).toLocaleString("es-AR", { maximumFractionDigits: d, minimumFractionDigits: d });
+// Spanish (es-AR) numbers everywhere a number is shown: dot for thousands, comma for decimals.
+const nf = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2, useGrouping: "always" });
+Chart.defaults.locale = "es-AR";
+const alpha = (c, a) => c + Math.round(a * 255).toString(16).padStart(2, "0");
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const slotVars = ["--s1", "--s2", "--s3", "--s4", "--s5"];
+// Color follows the entity: YPF is always slot 1, other operators keep a fixed slot.
+const colorVar = {};
+D.operadores.filter((o) => o !== "Otros").forEach((o, i) => { colorVar[o] = slotVars[i]; });
+colorVar["Otros"] = "--other"; colorVar["Resto"] = "--other"; colorVar["YPF"] = colorVar["YPF"] || "--s1";
+
+function legend(el, names) {
+  el.innerHTML = names.map((n) => `<span style="--c: var(${colorVar[n]})">${esc(n)}</span>`).join("");
+}
+
+// Event-study marks: shaded pre-trend (months -3 to -1, "brecha previa") and a dashed line at the frac (month 0).
+const marcasEvento = {
+  id: "marcasEvento",
+  beforeDatasetsDraw(ch) {
+    const x = ch.scales.x, a = ch.chartArea, ctx = ch.ctx, L = ch.data.labels;
+    const i0 = L.indexOf(-3), i1 = L.indexOf(-1);
+    if (i0 < 0 || i1 < 0) return;
+    ctx.save();
+    ctx.globalAlpha = 0.14; ctx.fillStyle = css("--ink-3");
+    ctx.fillRect(x.getPixelForValue(i0), a.top, x.getPixelForValue(i1) - x.getPixelForValue(i0), a.bottom - a.top);
+    ctx.restore();
+  },
+  afterDatasetsDraw(ch) {
+    const x = ch.scales.x, a = ch.chartArea, ctx = ch.ctx, L = ch.data.labels;
+    const i0 = L.indexOf(-3), i1 = L.indexOf(-1), iz = L.indexOf(0);
+    ctx.save();
+    ctx.font = "600 12px system-ui, sans-serif"; ctx.fillStyle = css("--ink-2");
+    if (i0 >= 0 && i1 >= 0) { ctx.textAlign = "center"; ctx.fillText("brecha previa", (x.getPixelForValue(i0) + x.getPixelForValue(i1)) / 2, a.bottom - 8); }
+    if (iz >= 0) {
+      ctx.strokeStyle = css("--ink-3"); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(x.getPixelForValue(iz), a.top); ctx.lineTo(x.getPixelForValue(iz), a.bottom); ctx.stroke();
+      ctx.setLineDash([]); ctx.textAlign = "left"; ctx.fillText("fractura del hijo", x.getPixelForValue(iz) + 6, a.top + 14);
+    }
+    ctx.restore();
+  },
+};
+// Hatched fill for the current (incomplete) year.
+function rayado(color) {
+  const c = document.createElement("canvas"); c.width = c.height = 8;
+  const g = c.getContext("2d");
+  g.fillStyle = alpha(color, 0.18); g.fillRect(0, 0, 8, 8);
+  g.strokeStyle = color; g.lineWidth = 2; g.beginPath(); g.moveTo(-2, 10); g.lineTo(10, -2); g.moveTo(-2, 2); g.lineTo(2, -2); g.moveTo(6, 10); g.lineTo(10, 6); g.stroke();
+  return g.createPattern(c, "repeat");
+}
+
+const charts = [];
+function baseOptions(yTitle) {
+  return {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: css("--card"), titleColor: css("--ink"), bodyColor: css("--ink-2"), borderColor: css("--line"), borderWidth: 1, padding: 10, boxPadding: 4 } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: css("--ink-3"), maxRotation: 0, autoSkipPadding: 16 }, border: { color: css("--line") } },
+      y: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { color: css("--ink-3"), callback: (v) => nf.format(v) }, border: { display: false }, title: { display: !!yTitle, text: yTitle, color: css("--ink-3") } },
+    },
+  };
+}
+
+function render() {
+  charts.splice(0).forEach((c) => c.destroy());
+  const k = D.kpi;
+  document.getElementById("meta").textContent = `Último mes publicado: ${D.ultimo_mes}. Generado ${D.generado}. Además: ${fmt(k.gas, 1)} MMm³/d de gas y ${fmt(k.pozos)} pozos activos.`;
+
+  // Monthly stacked area.
+  const meses = [...new Set(D.mensual.map((r) => r.mes))];
+  const by = {}; D.mensual.forEach((r) => { (by[r.grupo] ||= {})[r.mes] = r.kbbl_d; });
+  legend(document.getElementById("leg-mensual"), D.operadores);
+  const opt = baseOptions("kbbl/d"); opt.scales.y.stacked = true;
+  opt.plugins.tooltip.callbacks = { label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)} kbbl/d`, footer: (items) => `Total: ${fmt(items.reduce((a, i) => a + i.parsed.y, 0))} kbbl/d` };
+  charts.push(new Chart(document.getElementById("c-mensual"), {
+    type: "line", options: opt,
+    data: { labels: meses, datasets: D.operadores.map((o) => ({
+      label: o, data: meses.map((m) => by[o]?.[m] ?? 0), fill: true, stack: "s",
+      backgroundColor: css(colorVar[o]), borderColor: css("--card"), borderWidth: 1, pointRadius: 0, pointHoverRadius: 4, tension: 0.2,
+    })) },
+  }));
+
+  // Type curve with cohort filter.
+  const cohortes = [...new Set(D.curvas.map((r) => r.cohorte))];
+  const fc = document.getElementById("f-cohorte");
+  if (!fc.dataset.ready) {
+    fc.innerHTML = cohortes.map((c) => `<button type="button" data-c="${c}" aria-pressed="false">${c}</button>`).join("");
+    fc.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { state.cohorte = +b.dataset.c; drawCurve(); } });
+    fc.dataset.ready = "1";
+  }
+  legend(document.getElementById("leg-curva"), ["YPF", "Resto"]);
+  drawCurve();
+
+  // Design vs productivity.
+  legend(document.getElementById("leg-diseno"), ["YPF", "Resto"]);
+  const cs = [...new Set(D.diseno.map((r) => r.cohorte))];
+  const pick = (g, f) => cs.map((c) => D.diseno.find((r) => r.cohorte === c && r.grupo === g)?.[f] ?? null);
+  for (const [id, field, unit] of [["c-rama", "rama_m_mediana", "m"], ["c-prod", "bbl_12m_por_m_mediana", "bbl/m"]]) {
+    const o = baseOptions(unit);
+    o.plugins.tooltip.callbacks = { label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)} ${unit}` };
+    charts.push(new Chart(document.getElementById(id), { type: "line", options: o, data: { labels: cs, datasets: ["YPF", "Resto"].map((g) => ({
+      label: g, data: pick(g, field), borderColor: css(colorVar[g]), backgroundColor: css(colorVar[g]), borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, tension: 0.2,
+    })) } }));
+  }
+  document.getElementById("t-diseno").innerHTML = `<tr><th>Cohorte</th><th>Grupo</th><th class="n">Pozos</th><th class="n">Rama (m)</th><th class="n">Etapas</th><th class="n">Arena (t/m)</th><th class="n">Petróleo 12m (bbl)</th><th class="n">bbl/m</th></tr>` +
+    D.diseno.map((r) => `<tr><td>${r.cohorte}</td><td>${esc(r.grupo)}</td><td class="n">${r.pozos}</td><td class="n">${fmt(r.rama_m_mediana)}</td><td class="n">${fmt(r.etapas_mediana)}</td><td class="n">${fmt(r.arena_tn_por_m_mediana, 2)}</td><td class="n">${fmt(r.petroleo_12m_bbl_mediana)}</td><td class="n">${fmt(r.bbl_12m_por_m_mediana)}</td></tr>`).join("");
+
+  // Interference event study.
+  const I = D.interferencia;
+  const series = { cercano: ["Padre a menos de 1 km", "--s2"], control: ["Control a 2-5 km", "--other"] };
+  document.getElementById("leg-interf").innerHTML = Object.values(series).map(([n, c]) => `<span style="--c: var(${c})">${esc(n)}</span>`).join("");
+  const ks = [...new Set(I.curva.map((r) => r.k))].sort((a, b) => a - b);
+  const oi = baseOptions("% del caudal previo"); oi.scales.y.beginAtZero = false;
+  oi.scales.x.title = { display: true, text: "Meses desde la fractura del hijo", color: css("--ink-3") };
+  oi.plugins.tooltip.callbacks = { title: (i) => `Mes ${i[0].label}`, label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)}%` };
+  oi.scales.y.ticks.callback = (v) => nf.format(v) + "%";
+  charts.push(new Chart(document.getElementById("c-interf"), { type: "line", options: oi, plugins: [marcasEvento], data: { labels: ks, datasets: Object.entries(series).map(([b, [n, c]]) => ({
+    label: n, data: ks.map((k) => (I.curva.find((r) => r.banda === b && r.k === k)?.indice ?? null) * 100),
+    borderColor: css(c), backgroundColor: css(c), borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0.2,
+  })) } }));
+  const oa = baseOptions("puntos"); oa.scales.y.beginAtZero = true;
+  const enCurso = (r) => String(r.anio) === D.ultimo_mes.slice(0, 4);
+  oa.plugins.tooltip.callbacks = { title: (i) => { const r = I.anual[i[0].dataIndex]; return enCurso(r) ? `${r.anio} (año en curso)` : String(r.anio); }, label: (c) => ` ${fmt(c.parsed.y)} puntos (${fmt(I.anual[c.dataIndex].eventos_cercanos)} eventos)` };
+  oa.scales.x.ticks.autoSkip = false; oa.scales.x.ticks.font = { size: 11 };
+  charts.push(new Chart(document.getElementById("c-interf-anual"), { type: "bar", options: oa, data: { labels: I.anual.map((r) => [String(r.anio), fmt(r.eventos_cercanos)]), datasets: [{
+    label: "Brecha", data: I.anual.map((r) => r.brecha * 100),
+    backgroundColor: I.anual.map((r) => enCurso(r) ? rayado(css("--s2")) : css("--s2")),
+    borderColor: css("--s2"), borderWidth: I.anual.map((r) => enCurso(r) ? 1.5 : 0),
+    borderRadius: 4, borderSkipped: "start", maxBarThickness: 28,
+  }] } }));
+
+  // Pre-trend with its bootstrap interval (mart_placebo_pretrend); hidden if the mart is missing.
+  const P = I.pretrend || [];
+  const panelPrevia = document.getElementById("panel-previa");
+  if (P.length) {
+    const op = baseOptions("puntos"); op.scales.y.beginAtZero = false;
+    op.scales.x.title = { display: true, text: "Meses desde la fractura del hijo", color: css("--ink-3") };
+    op.plugins.tooltip.filter = (c) => c.datasetIndex === 2;
+    op.plugins.tooltip.callbacks = { title: (i) => `Mes ${i[0].label}`, label: (c) => { const r = P[c.dataIndex]; return ` ${fmt(r.brecha * 100)} puntos (IC 95%: ${fmt(r.ic_bajo * 100)} a ${fmt(r.ic_alto * 100)})`; } };
+    const banda = alpha(css("--s2"), 0.22);
+    charts.push(new Chart(document.getElementById("c-previa"), { type: "line", options: op, plugins: [marcasEvento], data: { labels: P.map((r) => r.k), datasets: [
+      { label: "IC bajo", data: P.map((r) => r.ic_bajo * 100), borderWidth: 0, pointRadius: 0, fill: false },
+      { label: "IC 95%", data: P.map((r) => r.ic_alto * 100), borderWidth: 0, pointRadius: 0, backgroundColor: banda, fill: "-1" },
+      { label: "Brecha", data: P.map((r) => r.brecha * 100), borderColor: css("--s2"), backgroundColor: css("--s2"), borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, tension: 0 },
+    ] } }));
+  } else if (panelPrevia) { panelPrevia.hidden = true; }
+  document.getElementById("t-interf").innerHTML = `<tr><th>Año</th><th class="n">Eventos cercanos</th><th class="n">Brecha mes 1 (puntos)</th></tr>` +
+    I.anual.map((r) => `<tr><td>${r.anio}</td><td class="n">${fmt(r.eventos_cercanos)}</td><td class="n">${fmt(r.brecha * 100)}</td></tr>`).join("");
+  const ev = D.evals;
+  document.getElementById("eval-txt").textContent = ev.holdout ? `Exactitud en preguntas reservadas: ${fmt(ev.holdout.exactitud * 100)}% (${ev.holdout.n} preguntas, modelo ${ev.holdout.modelo}, datos a ${ev.holdout.datos_a}).` : "";
+
+  // Data quality and sources.
+  document.getElementById("t-dq").innerHTML = `<tr><th>Control</th><th>Tipo</th><th class="n">Filas</th><th>Qué significa</th></tr>` +
+    D.dq.checks.map((c) => `<tr><td>${esc(c.nombre)}</td><td><span class="tag ${c.ok ? "ok" : "aviso"}">${c.ok ? "✓ OK" : "⚠ " + c.severidad}</span>${c.ok ? ` <span class="tag" style="color:var(--ink-3)">${c.severidad}</span>` : ""}</td><td class="n">${fmt(c.filas)}</td><td>${esc(c.detalle)}</td></tr>`).join("");
+  document.getElementById("t-fuentes").innerHTML = `<tr><th>Fuente</th><th>Publicado</th><th class="n">Tamaño</th><th>SHA-256</th></tr>` +
+    Object.entries(D.dq.fuentes).map(([n, f]) => `<tr><td><a href="${esc(f.url)}">${esc(n)}</a></td><td>${esc(f.last_modified || "s/d")}</td><td class="n">${fmt(f.bytes / 1e6, 1)} MB</td><td><code>${esc(f.sha256.slice(0, 16))}…</code></td></tr>`).join("");
+}
+
+const state = { cohorte: null };
+function drawCurve() {
+  const cohortes = [...new Set(D.curvas.map((r) => r.cohorte))];
+  if (state.cohorte == null) state.cohorte = cohortes[cohortes.length - 2] ?? cohortes[0];
+  document.querySelectorAll("#f-cohorte button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.c === state.cohorte)));
+  const rowsC = D.curvas.filter((r) => r.cohorte === state.cohorte);
+  const mops = [...new Set(rowsC.map((r) => r.mop))].sort((a, b) => a - b);
+  const old = charts.findIndex((c) => c.canvas.id === "c-curva"); if (old >= 0) charts.splice(old, 1)[0].destroy();
+  const o = baseOptions("bbl/d");
+  o.scales.x.title = { display: true, text: "Meses desde el primer petróleo", color: css("--ink-3") };
+  o.plugins.tooltip.callbacks = { title: (i) => `Mes ${i[0].label}`, label: (c) => { const r = rowsC.find((x) => x.grupo === c.dataset.label && x.mop === +c.label); return ` ${c.dataset.label}: ${fmt(c.parsed.y)} bbl/d (${r?.pozos ?? 0} pozos)`; } };
+  charts.push(new Chart(document.getElementById("c-curva"), { type: "line", options: o, data: { labels: mops, datasets: ["YPF", "Resto"].map((g) => ({
+    label: g, data: mops.map((m) => rowsC.find((r) => r.grupo === g && r.mop === m)?.bbl_d ?? null),
+    borderColor: css(colorVar[g]), backgroundColor: css(colorVar[g]), borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, spanGaps: false,
+  })) } }));
+}
+
+render();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+</script>
+<script>
+// La historia como láminas. Sin este guion, o con movimiento reducido, la página es una lectura de corrido: cada banda ya
+// está dibujada en su estado final. Con movimiento: una sola transición por cambio de lámina (la banda va a su alto en
+// 700 ms y la cifra cuenta a la par), las teclas y el toque en el tercio de abajo pasan de lámina.
+(() => {
+  const raiz = document.documentElement;
+  const laminas = [...document.querySelectorAll(".lamina")];
+  if (!laminas.length) return;
+  const enlaces = new Map([...document.querySelectorAll(".seis a")].map((a) => [a.hash.slice(1), a]));
+  const reducido = matchMedia("(prefers-reduced-motion: reduce)");
+  const mov = !reducido.matches && "animate" in Element.prototype;
+  const DUR = 700, ease = "cubic-bezier(.2,.7,.2,1)";
+  let actual = -1;
+
+  const alto = (i) => (i < 0 ? 0 : parseFloat(laminas[i].dataset.alto) || 0);
+  const tope = (lam) => parseFloat(getComputedStyle(lam.querySelector(".escenario") || lam).getPropertyValue("--alto")) || 0;
+  const escala = (el, desde) => {
+    const propio = parseFloat(el.dataset.alto) || 1;
+    const max = tope(el.closest(".lamina")) / propio;
+    return Math.max(0.02, Math.min(desde / propio, max || 1));
+  };
+  const decimales = (t) => (t.split(",")[1] || "").length;
+  const formato = (v, d) => (v < 0 && Math.abs(v) >= 0.5 * 10 ** -d ? "-" : "") + Math.abs(v).toFixed(d).replace(".", ",");
+  const NUM = /-?\d+(?:,\d+)?/g;
+
+  // la cifra cuenta de cero a su valor; los valores intermedios solo viven acá, el HTML tiene el final
+  function contar(el) {
+    const nodo = [...el.childNodes].find((n) => n.nodeType === 3 && /\d/.test(n.textContent));
+    if (!nodo) return;
+    const final = nodo.textContent;
+    const metas = final.match(NUM).map((t) => [parseFloat(t.replace(",", ".")), decimales(t)]);
+    const t0 = performance.now();
+    const paso = (t) => {
+      const u = Math.min(1, (t - t0) / DUR), k = 1 - (1 - u) ** 3;
+      let i = 0;
+      nodo.textContent = u < 1 ? final.replace(NUM, () => { const [v, d] = metas[i++]; return formato(v * k, d); }) : final;
+      if (u < 1) requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+  }
+
+  function preparar(lam, desde) {
+    lam.classList.add("pendiente");
+    lam.querySelectorAll(".banda").forEach((b) => { b.style.transform = `scaleY(${escala(b, desde)})`; });
+    lam.querySelectorAll(".barrido").forEach((b) => { b.closest("svg").style.clipPath = "inset(0 100% 0 0)"; });
+  }
+
+  function activar(i) {
+    if (i === actual) return;
+    const previa = actual;
+    actual = i;
+    const lam = laminas[i];
+    enlaces.forEach((a, id) => (id === lam.id ? a.setAttribute("aria-current", "true") : a.removeAttribute("aria-current")));
+    if (!mov) return;
+    const desde = alto(previa);
+    lam.querySelectorAll(".banda").forEach((b) => {
+      const s = b.style.transform || `scaleY(${escala(b, desde)})`;
+      b.style.transform = "";
+      b.animate([{ transform: s }, { transform: "scaleY(1)" }], { duration: DUR, easing: ease });
+    });
+    lam.querySelectorAll(".barrido").forEach((b) => {
+      const svg = b.closest("svg");
+      const c = svg.style.clipPath || "inset(0 0 0 0)";
+      svg.style.clipPath = "";
+      if (c !== "inset(0 0 0 0)") svg.animate([{ clipPath: c }, { clipPath: "inset(0 0 0 0)" }], { duration: DUR, easing: ease });
+    });
+    lam.querySelectorAll("[data-cuenta]").forEach(contar);
+    if (lam.classList.contains("pendiente")) setTimeout(() => lam.classList.remove("pendiente"), DUR);
+  }
+
+  if (mov) {
+    raiz.classList.add("mov");
+    // las láminas que todavía no se vieron esperan en el estado de la anterior
+    const visible = laminas.findIndex((l) => { const r = l.getBoundingClientRect(); return r.top <= innerHeight / 2 && r.bottom > innerHeight / 2; });
+    laminas.forEach((l, i) => { if (i > visible) preparar(l, alto(i - 1)); });
+  }
+
+  // la lámina activa es la que cruza la mitad de la pantalla
+  const io = new IntersectionObserver((es) => {
+    es.forEach((e) => { if (e.isIntersecting) activar(laminas.indexOf(e.target)); });
+  }, { rootMargin: "-49% 0px -49% 0px" });
+  laminas.forEach((l) => io.observe(l));
+
+  function ir(i) {
+    const lam = laminas[Math.max(0, Math.min(laminas.length - 1, i))];
+    lam.scrollIntoView({ behavior: mov ? "smooth" : "auto", block: "start" });
+  }
+  const enHistoria = () => laminas[laminas.length - 1].getBoundingClientRect().bottom > innerHeight / 2;
+
+  addEventListener("keydown", (e) => {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || actual < 0 || !enHistoria()) return;
+    const t = e.target;
+    if (t.closest && t.closest("input, textarea, select, [contenteditable]")) return;
+    const lam = laminas[actual], r = lam.getBoundingClientRect();
+    const adelante = ["ArrowDown", "PageDown"].includes(e.key) || (e.key === " " && !e.shiftKey && !t.closest("a, button, summary"));
+    const atras = ["ArrowUp", "PageUp"].includes(e.key) || (e.key === " " && e.shiftKey && !t.closest("a, button, summary"));
+    if (adelante) {
+      if (actual === laminas.length - 1) return; // desde el cierre, la flecha sigue hacia el tablero como siempre
+      if (r.height > innerHeight + 8 && r.bottom > innerHeight + 8) return; // lámina más alta que la pantalla (tapa, cierre, detalles abiertos): se desplaza como siempre hasta su pie
+      e.preventDefault(); ir(actual + 1);
+    } else if (atras) {
+      if (r.height > innerHeight + 8 && r.top < -8) return;
+      e.preventDefault(); ir(actual - 1);
+    } else if (e.key === "Home") { e.preventDefault(); ir(0); }
+    else if (e.key === "End") { e.preventDefault(); ir(laminas.length - 1); }
+  });
+
+  // tocar el tercio de abajo de una lámina pasa a la siguiente (salvo en enlaces, detalles o texto seleccionado)
+  laminas.forEach((lam, i) => lam.addEventListener("click", (e) => {
+    if (e.target.closest("a, button, summary, details, input, label") || String(getSelection()).length) return;
+    if (e.clientY > innerHeight * 2 / 3 && i < laminas.length - 1) ir(i + 1);
+  }));
+
+  // sin WebGL2 el botón del 3D no lleva a ningún lado: se cambia por el texto de reserva
+  try {
+    const c = document.createElement("canvas"), gl = c.getContext("webgl2");
+    if (gl) { const x = gl.getExtension("WEBGL_lose_context"); if (x) x.loseContext(); }
+    else document.querySelectorAll(".evento-3d").forEach((f) => { f.querySelectorAll(".poster, .boton, .nota").forEach((e) => { e.hidden = true; }); f.querySelector(".sin-3d").hidden = false; });
+  } catch (e) { /* sin detección: queda el botón */ }
+
+  // la tapa: al bajar, la foto baja con la página hasta que su borde inferior es el horizonte de la primera pregunta
+  const foto = document.querySelector(".tapa-foto img");
+  if (mov && foto) {
+    let pendiente = false;
+    addEventListener("scroll", () => {
+      if (pendiente) return;
+      pendiente = true;
+      requestAnimationFrame(() => {
+        pendiente = false;
+        const y = scrollY;
+        if (y < innerHeight * 1.5) foto.style.transform = `translateY(${(y * 0.35).toFixed(1)}px)`;
+      });
+    }, { passive: true });
+  }
+})();
+</script>
+</body>
+</html>

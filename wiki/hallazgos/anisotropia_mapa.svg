@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 760" width="760" height="760" role="img" aria-labelledby="t d">
+<title id="t">Mapa de ejes de interferencia por área contra el SHmax publicado</title>
+<desc id="d">Por cada área con pozos ubicados, el eje de máxima merma estimado de la interferencia (grados desde el norte) frente al SHmax publicado de 67,5 grados. Trazo continuo: eje definido; trazo gris punteado: eje no definido. El cono azul es el intervalo de confianza de 95% y solo se dibuja si el eje está definido. El eje no es una medición de esfuerzos.</desc>
+<style>:root {
+  color-scheme: light;
+  --cielo: #C9D7DC;
+  --estepa: #A39A7A;
+  --lutita: #2A2623;
+  --orilla: #2A2623;
+  --tinta: #1B2A31;
+  --hueso: #EDE6D6;
+  --jarilla: #3E4A4F;
+  --s1: #2A78D6;
+  --s2: #0E6F6B;
+  --s3: #C2592F;
+  --s4: #B88A00;
+  --s5: #C0508A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --cielo: #18222B;
+    --estepa: #3A362B;
+    --lutita: #0F0E0D;
+    --orilla: #9FB0B6;
+    --tinta: #E6DFCF;
+    --hueso: #EDE6D6;
+    --jarilla: #9FB0B6;
+    --s1: #3987E5;
+    --s2: #5CC9BC;
+    --s3: #E0825E;
+    --s4: #D9B23A;
+    --s5: #DE7FB0;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cielo: #18222B;
+  --estepa: #3A362B;
+  --lutita: #0F0E0D;
+  --orilla: #9FB0B6;
+  --tinta: #E6DFCF;
+  --hueso: #EDE6D6;
+  --jarilla: #9FB0B6;
+  --s1: #3987E5;
+  --s2: #5CC9BC;
+  --s3: #E0825E;
+  --s4: #D9B23A;
+  --s5: #DE7FB0;
+}
+
+:root { --fondo: var(--cielo); --texto: var(--tinta); --suave: var(--jarilla); --linea: var(--jarilla);
+        --eje: var(--tinta); --ref: var(--s3); --cono: var(--s1); }
+.fondo { fill: var(--fondo); }
+.marco { fill: none; stroke: var(--linea); stroke-width: 1; }
+text { fill: var(--texto); font-family: "Archivo", "Arial Narrow", system-ui, sans-serif; font-size: 11px; }
+.titulo { font-size: 15px; font-weight: 600; }
+.nota { fill: var(--suave); }
+.eje-def { stroke: var(--eje); stroke-width: 3; fill: none; }
+.eje-ndef { stroke: var(--suave); stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+.centro-def { fill: var(--eje); }
+.centro-ndef { fill: var(--fondo); stroke: var(--suave); stroke-width: 1.5; }
+.ref { stroke: var(--ref); stroke-width: 1.2; fill: none; }
+.cono { fill: var(--cono); fill-opacity: 0.22; stroke: var(--cono); stroke-opacity: 0.6; stroke-width: 0.8; }
+.punta-def { fill: var(--eje); }
+.punta-ndef { fill: var(--suave); }
+.etiqueta { font-size: 11px; }
+.norte { stroke: var(--texto); stroke-width: 1.5; fill: var(--texto); }
+.escala { stroke: var(--texto); stroke-width: 2; fill: none; }
+</style>
+<defs>
+<marker id="punta-def" class="punta-def" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" class="punta-def"/></marker>
+<marker id="punta-ndef" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" class="eje-ndef" style="stroke-dasharray:none;stroke-width:1.5"/></marker>
+</defs>
+<rect class="fondo" x="0" y="0" width="760" height="760"/>
+<text class="titulo" x="40" y="30">Eje de máxima merma por área contra el SHmax publicado</text>
+<rect class="marco" x="40.0" y="50.0" width="680.0" height="520.0"/>
+<g id="areas">
+<g class="area" data-area="BAJADA DEL PALO OESTE" data-definido="no">
+<title>BAJADA DEL PALO OESTE: eje 22,2 grados, IC 95% de 130,4 a 105,1, contraste 11,0 puntos, p de permutación 0,880, eje no definido</title>
+<line class="ref" x1="517.6" y1="132.8" x2="458.5" y2="157.2"/>
+<line class="eje-ndef" x1="493.4" y1="132.0" x2="482.8" y2="158.0" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
+<circle class="centro-ndef" cx="488.1" cy="145.0" r="3"/>
+<text class="etiqueta" x="518.1" y="151.5" text-anchor="start">BAJADA DEL PALO OESTE</text>
+</g>
+<g class="area" data-area="BANDURRIA SUR" data-definido="no">
+<title>BANDURRIA SUR: eje 21,2 grados, IC 95% de 148,3 a 94,8, contraste 87,4 puntos, p de permutación 0,346, eje no definido</title>
+<line class="ref" x1="442.3" y1="200.5" x2="383.1" y2="225.0"/>
+<line class="eje-ndef" x1="425.3" y1="180.1" x2="400.1" y2="245.3" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
+<circle class="centro-ndef" cx="412.7" cy="212.7" r="3"/>
+<text class="etiqueta" x="445.6" y="219.2" text-anchor="start">BANDURRIA SUR</text>
+</g>
+<g class="area" data-area="FORTIN DE PIEDRA" data-definido="si">
+<title>FORTIN DE PIEDRA: eje 62,0 grados, IC 95% de 49,5 a 88,3, contraste 93,5 puntos, p de permutación 0,020, eje definido</title>
+<path class="cono" data-apertura="38.8" d="M198.2,387.2 L223.6,365.5 A33.4,33.4 0 0 1 231.6,386.2 Z"/>
+<path class="cono" data-apertura="38.8" d="M198.2,387.2 L172.8,408.9 A33.4,33.4 0 0 1 164.8,388.2 Z"/>
+<line class="ref" x1="227.7" y1="374.9" x2="168.6" y2="399.4"/>
+<line class="eje-def" x1="231.2" y1="369.6" x2="165.1" y2="404.7" marker-start="url(#punta-def)" marker-end="url(#punta-def)"/>
+<circle class="centro-def" cx="198.2" cy="387.2" r="3"/>
+<text class="etiqueta" x="233.6" y="393.7" text-anchor="start">FORTIN DE PIEDRA</text>
+</g>
+<g class="area" data-area="LA AMARGA CHICA" data-definido="no">
+<title>LA AMARGA CHICA: eje 77,4 grados, IC 95% de 3,1 a 149,8, contraste 15,5 puntos, p de permutación 0,376, eje no definido</title>
+<line class="ref" x1="490.1" y1="144.7" x2="431.0" y2="169.2"/>
+<line class="eje-ndef" x1="474.2" y1="153.9" x2="446.9" y2="160.0" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
+<circle class="centro-ndef" cx="460.5" cy="156.9" r="3"/>
+<text class="etiqueta" x="490.5" y="163.4" text-anchor="start">LA AMARGA CHICA</text>
+</g>
+<g class="area" data-area="LA CALERA" data-definido="no">
+<title>LA CALERA: eje 155,4 grados, IC 95% de 77,9 a 61,2, contraste 42,1 puntos, p de permutación 0,296, eje no definido</title>
+<line class="ref" x1="270.1" y1="245.4" x2="211.0" y2="269.9"/>
+<line class="eje-ndef" x1="247.6" y1="272.9" x2="233.5" y2="242.3" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
+<circle class="centro-ndef" cx="240.5" cy="257.6" r="3"/>
+<text class="etiqueta" x="270.5" y="264.1" text-anchor="start">LA CALERA</text>
+</g>
+<g class="area" data-area="LINDERO ATRAVESADO" data-definido="no">
+<title>LINDERO ATRAVESADO: eje 67,0 grados, IC 95% de 174,6 a 134,6, contraste 17,4 puntos, p de permutación 0,528, eje no definido</title>
+<line class="ref" x1="591.4" y1="462.8" x2="532.3" y2="487.2"/>
+<line class="eje-ndef" x1="574.7" y1="469.5" x2="548.9" y2="480.5" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
+<circle class="centro-ndef" cx="561.8" cy="475.0" r="3"/>
+<text class="etiqueta" x="591.8" y="481.5" text-anchor="start">LINDERO ATRAVESADO</text>
+</g>
+<g class="area" data-area="LOMA CAMPANA" data-definido="si">
+<title>LOMA CAMPANA: eje 101,5 grados, IC 95% de 77,6 a 130,9, contraste 17,9 puntos, p de permutación 0,046, eje definido</title>
+<path class="cono" data-apertura="53.2" d="M400.1,264.5 L427.5,258.5 A28.0,28.0 0 0 1 421.3,282.9 Z"/>
+<path class="cono" data-apertura="53.2" d="M400.1,264.5 L372.8,270.5 A28.0,28.0 0 0 1 379.0,246.2 Z"/>
+<line class="ref" x1="429.7" y1="252.3" x2="370.6" y2="276.8"/>
+<line class="eje-def" x1="413.9" y1="267.3" x2="386.4" y2="261.8" marker-start="url(#punta-def)" marker-end="url(#punta-def)"/>
+<circle class="centro-def" cx="400.1" cy="264.5" r="3"/>
+<text class="etiqueta" x="430.1" y="271.0" text-anchor="start">LOMA CAMPANA</text>
+</g>
+</g>
+<g id="escala" aria-label="Escala de 20 kilómetros">
+<path class="escala" d="M549.5,541.0 L549.5,546.0 L690.0,546.0 L690.0,541.0"/>
+<text x="619.8" y="537.0" text-anchor="middle" class="etiqueta">20 km</text>
+</g>
+<g id="norte" aria-label="Norte">
+<path class="norte" d="M690.0,70.0 L683.0,100.0 L690.0,93.0 L697.0,100.0 Z"/>
+<text x="690.0" y="115.0" text-anchor="middle" class="etiqueta">N</text>
+</g>
+<g id="leyenda">
+<line class="eje-def" x1="50" y1="598.0" x2="100" y2="598.0" marker-start="url(#punta-def)" marker-end="url(#punta-def)"/>
+<text x="110" y="602.0">Eje definido (p de permutación menor que 0,10 e IC menor que 90 grados)</text>
+<line class="eje-ndef" x1="50" y1="624.0" x2="100" y2="624.0" marker-start="url(#punta-ndef)" marker-end="url(#punta-ndef)"/>
+<text x="110" y="628.0">Eje no definido (gris, punteado, sin cono)</text>
+<line class="ref" x1="50" y1="650.0" x2="100" y2="650.0"/>
+<text x="110" y="654.0">SHmax publicado, 67,5 grados (RAGA 2024)</text>
+<path class="cono" d="M75.0,682.0 L67.5,661.3 A22.0,22.0 0 0 1 82.5,661.3 Z"/>
+<text x="110" y="680.0">IC 95% del eje (solo si está definido)</text>
+<text class="nota" x="380" y="624.0">Largo del segmento proporcional al contraste</text>
+<text class="nota" x="380" y="640.0">(mínimo y máximo acotados).</text>
+<text class="nota" x="380" y="664.0">Cuenca (no se dibuja): eje 93,2 grados,</text>
+<text class="nota" x="380" y="680.0">IC de 69,6 a 122,8 (apertura 53,2),</text>
+<text class="nota" x="380" y="696.0">eje definido, n = 1751.</text>
+</g>
+</svg>

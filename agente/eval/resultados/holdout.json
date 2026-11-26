@@ -1,0 +1,374 @@
+{
+ "split": "holdout",
+ "modelo": "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b",
+ "datos_a": "2026-09",
+ "n": 27,
+ "exactitud": 0.8518518518518519,
+ "exactitud_respuestas": 0.8695652173913043,
+ "abstencion_correcta": 0.75,
+ "abstenciones_indebidas": 2,
+ "corregidas_en_reintento": 3,
+ "filas": [
+  {
+   "id": "holdout-01",
+   "pregunta": "Dame el caudal de petróleo de la formación en marzo de 2026",
+   "op": "produccion_vm",
+   "args": {
+    "mes": "2026-03",
+    "operador": null
+   },
+   "intentos": 1,
+   "segundos": 2.9,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-02",
+   "pregunta": "¿Cuántos kbbl/d hace Vista Energy Argentina actualmente?",
+   "op": "produccion_vm",
+   "args": {
+    "mes": null,
+    "operador": "Vista"
+   },
+   "intentos": 1,
+   "segundos": 1.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-03",
+   "pregunta": "¿Qué porcentaje del crudo de Vaca Muerta aporta Tecpetrol?",
+   "op": "produccion_vm",
+   "args": {
+    "mes": null,
+    "operador": "Tecpetrol"
+   },
+   "intentos": 1,
+   "segundos": 10.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-04",
+   "pregunta": "Ranking de las 10 mayores operadoras de petróleo",
+   "op": "ranking_operadores",
+   "args": {
+    "mes": null,
+    "n": 10
+   },
+   "intentos": 1,
+   "segundos": 2.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-05",
+   "pregunta": "¿YPF produce más o menos que hace un año?",
+   "op": "variacion_interanual",
+   "args": {
+    "mes": null,
+    "operador": "YPF"
+   },
+   "intentos": 1,
+   "segundos": 1.7,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-06",
+   "pregunta": "Producción promedio en el mes 12 de los pozos YPF de la cohorte 2019",
+   "op": "curva_tipo",
+   "args": {
+    "cohorte": 2019,
+    "grupo": "YPF",
+    "mes_produccion": 12
+   },
+   "intentos": 1,
+   "segundos": 1.9,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-07",
+   "pregunta": "Etapas de fractura y arena por metro de la cohorte 2025 de YPF",
+   "op": "diseno_cohorte",
+   "args": {
+    "cohorte": 2025,
+    "grupo": "YPF"
+   },
+   "intentos": 1,
+   "segundos": 4.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-08",
+   "pregunta": "Un mes después de fracturar un pozo hijo, ¿cuánto pierden los padres de más de 4 años?",
+   "op": "error",
+   "args": {},
+   "intentos": 2,
+   "segundos": 48.9,
+   "correcto": false,
+   "tipo": "respuesta",
+   "fallo": "no respondió (error)"
+  },
+  {
+   "id": "holdout-09",
+   "pregunta": "Efecto de interferencia en los pozos fracturados durante 2025",
+   "op": "interferencia_anual",
+   "args": {
+    "anio": 2025
+   },
+   "intentos": 2,
+   "segundos": 17.7,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-10",
+   "pregunta": "¿Cuánto petróleo difirió YPF por frac hits en Loma Campana?",
+   "op": "petroleo_diferido",
+   "args": {
+    "operador": "YPF",
+    "area": "Loma Campana",
+    "anio": null
+   },
+   "intentos": 1,
+   "segundos": 6.2,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-11",
+   "pregunta": "Barriles diferidos por interferencia en fracturas de 2024",
+   "op": "petroleo_diferido",
+   "args": {
+    "operador": null,
+    "area": null,
+    "anio": 2024
+   },
+   "intentos": 1,
+   "segundos": 24.9,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-12",
+   "pregunta": "Info del pozo XOM.Nq.BdC-45(h)",
+   "op": "pozo",
+   "args": {
+    "sigla": "XOM.Nq.BdC-45(h)"
+   },
+   "intentos": 1,
+   "segundos": 2.8,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-13",
+   "pregunta": "¿Hay controles bloqueantes que fallen en el último build?",
+   "op": "error",
+   "args": {},
+   "intentos": 2,
+   "segundos": 21.0,
+   "correcto": false,
+   "tipo": "respuesta",
+   "fallo": "no respondió (error)"
+  },
+  {
+   "id": "holdout-14",
+   "pregunta": "¿Cuál es la tarifa de transporte por oleoducto de Oldelval?",
+   "op": "abstener",
+   "args": {},
+   "intentos": 1,
+   "segundos": 10.7,
+   "correcto": true,
+   "tipo": "abstencion"
+  },
+  {
+   "id": "holdout-15",
+   "pregunta": "¿Qué operadora tiene mejor clima laboral?",
+   "op": "abstener",
+   "args": {},
+   "intentos": 1,
+   "segundos": 5.4,
+   "correcto": true,
+   "tipo": "abstencion"
+  },
+  {
+   "id": "holdout-16",
+   "pregunta": "Pronóstico de producción de gas para el invierno de 2027",
+   "op": "abstener",
+   "args": {},
+   "intentos": 1,
+   "segundos": 2.2,
+   "correcto": true,
+   "tipo": "abstencion"
+  },
+  {
+   "id": "holdout-17",
+   "pregunta": "Listame los eventos de fractura del pozo TAU.Nq.AP-1089(h)",
+   "op": "eventos_pozo",
+   "args": {
+    "sigla": "TAU.Nq.AP-1089(h)",
+    "tipo": "fractura"
+   },
+   "intentos": 1,
+   "segundos": 9.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-18",
+   "pregunta": "¿Qué proporción de los pozos de control, a 2 a 5 km, también muestra efecto en los datos mensuales?",
+   "op": "clases_interferencia",
+   "args": {
+    "operador": null,
+    "area": null,
+    "anio": null,
+    "banda": "control"
+   },
+   "intentos": 1,
+   "segundos": 4.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-19",
+   "pregunta": "¿Cuánto vale la brecha medida de la hipótesis brecha_mes1 en el libro?",
+   "op": "libro_hallazgos",
+   "args": {
+    "id": "brecha_mes1"
+   },
+   "intentos": 1,
+   "segundos": 2.0,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-20",
+   "pregunta": "¿Cuál es el umbral de la hipótesis de anisotropía y su resultado actual?",
+   "op": "libro_hallazgos",
+   "args": {
+    "id": null
+   },
+   "intentos": 1,
+   "segundos": 4.2,
+   "correcto": false,
+   "tipo": "respuesta",
+   "fallo": "esperado libro_hallazgos {'id': 'anisotropia'}, eligió libro_hallazgos {'id': None}"
+  },
+  {
+   "id": "holdout-21",
+   "pregunta": "¿Cuánta producción propia pierde el pozo hijo por la interferencia con su vecino?",
+   "op": "error",
+   "args": {},
+   "intentos": 2,
+   "segundos": 41.0,
+   "correcto": false,
+   "tipo": "abstencion"
+  },
+  {
+   "id": "holdout-22",
+   "pregunta": "¿Qué porcentaje de los pozos padre de Loma Campana muestra efecto y cuánto petróleo difirió esa área?",
+   "op": [
+    "clases_interferencia",
+    "petroleo_diferido"
+   ],
+   "args": [
+    {
+     "operador": null,
+     "area": "Loma Campana",
+     "anio": null,
+     "banda": "cercano"
+    },
+    {
+     "operador": null,
+     "area": "Loma Campana",
+     "anio": null
+    }
+   ],
+   "intentos": 2,
+   "segundos": 19.2,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-23",
+   "pregunta": "Dame la ficha del pozo YPF.Nq.LLL-586 y cuánto se esperaría diferir si se fractura un pozo nuevo en su pad p145256.",
+   "op": [
+    "pozo",
+    "costo_interferencia"
+   ],
+   "args": [
+    {
+     "sigla": "YPF.Nq.LLL-586"
+    },
+    {
+     "pad": "p145256",
+     "lat": null,
+     "lon": null,
+     "fecha": null
+    }
+   ],
+   "intentos": 1,
+   "segundos": 4.7,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-24",
+   "pregunta": "¿Cuánto petróleo se perdería por interferencia si se fractura el pad p164930?",
+   "op": "costo_interferencia",
+   "args": {
+    "pad": "p164930",
+    "lat": null,
+    "lon": null,
+    "fecha": null
+   },
+   "intentos": 1,
+   "segundos": 5.6,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-25",
+   "pregunta": "Estimá el petróleo diferido por una fractura en lat -38,387 y lon -68,4965 en marzo de 2026",
+   "op": "costo_interferencia",
+   "args": {
+    "pad": null,
+    "lat": -38.387,
+    "lon": -68.4965,
+    "fecha": "2026-03"
+   },
+   "intentos": 1,
+   "segundos": 5.4,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-26",
+   "pregunta": "¿El eje de interferencia se sostiene si se deja afuera La Amarga Chica?",
+   "op": "robustez_eje",
+   "args": {
+    "subconjunto": "sin La Amarga Chica"
+   },
+   "intentos": 2,
+   "segundos": 7.2,
+   "correcto": true,
+   "tipo": "respuesta"
+  },
+  {
+   "id": "holdout-27",
+   "pregunta": "¿Qué tan firme es el eje este-oeste entre los pozos padre de YPF?",
+   "op": "robustez_eje",
+   "args": {
+    "subconjunto": "Padre YPF"
+   },
+   "intentos": 1,
+   "segundos": 3.1,
+   "correcto": true,
+   "tipo": "respuesta"
+  }
+ ]
+}

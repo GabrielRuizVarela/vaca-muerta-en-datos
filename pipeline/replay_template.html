@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La cuenca mes a mes</title>
+<meta name="description" content="La cuenca mes a mes: cada pozo no convencional de Vaca Muerta desde 2011, sus fracturas, las subidas del corte de agua en pozos vecinos y el avance de las operadoras.">
+<style>
+/*__SISTEMA__*/
+/* El chrome de la página (fondo, tinta, líneas y letras) lo trae el sistema; lo que queda aquí es la familia: los colores
+   de los datos y los pigmentos de las operadoras, que el replay y el mundo comparten. Una prueba compara este bloque con
+   el de esa página: si cambia uno, cambia el otro. */
+:root {
+  color-scheme: dark;
+  --fondo: var(--cielo); --panel: color-mix(in srgb, var(--cielo) 88%, transparent); --linea: color-mix(in srgb, var(--tinta) 16%, var(--cielo)); --tinta-2: color-mix(in srgb, var(--tinta) 55%, var(--jarilla)); --tinta-3: var(--jarilla);
+  --dato: #ece5d3; --medido: #5fd3c4; --supuesto: #c796f2; --petroleo: #f4b860; --mal: #f08a6c;
+  --azul: #4472d8; --rosa: #cf5a86; --oliva: #8f9a2e; --ladrillo: #b04a2a; --celeste: #3a9ec2; --ciruela: #8c4c96; --gris: #6f8a99; --bien: #5fd3c4;
+  --ui: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --relato: "Faustina", Georgia, serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--fondo); color: var(--tinta); font: 15px/1.5 var(--ui); font-variant-numeric: tabular-nums; }
+a { color: inherit; }
+button, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: transparent; border: 1px solid var(--linea); border-radius: 999px; padding: 5px 13px; }
+button:hover { border-color: var(--tinta-3); }
+[hidden] { display: none !important; }
+
+/* Las tres clases de cosa se distinguen también por forma: lleno, con aro, a rayas. */
+.marca { width: auto; height: auto; border: 0; transform: none; background: none; display: inline-block; font: 600 13px/1 var(--ui); padding: 3px 7px 4px; border-radius: 10px; margin-right: 6px; vertical-align: 1px; text-transform: lowercase; }
+.marca.dato { background: var(--dato); color: var(--fondo); }
+.marca.medido { color: var(--medido); box-shadow: inset 0 0 0 1.5px var(--medido); }
+.marca.supuesto { color: var(--supuesto); border: 1.5px dashed var(--supuesto); padding: 2px 6px 3px; }
+
+.app { display: grid; height: 100vh; height: 100dvh; grid-template-columns: minmax(0, 1fr) 420px; grid-template-rows: auto minmax(0, 1fr) 196px;
+  grid-template-areas: "top top" "map side" "dock side"; gap: 1px; background: var(--linea); }
+.top, .dock, .side { background: linear-gradient(var(--panel), var(--panel)), var(--fondo); }
+.top { grid-area: top; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 22px; padding: 10px 20px; }
+.top h1 { font: 400 24px/1.1 var(--relato); margin: 0; }
+.salidas { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; }
+.salidas a { color: var(--tinta-2); text-decoration: underline; text-decoration-color: var(--tinta-3); text-underline-offset: 3px; }
+.salidas a:hover { color: var(--tinta); }
+.filters { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-left: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 3px 11px 3px 9px; font-size: 13px; color: var(--tinta-3); white-space: nowrap; }
+.chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); opacity: .4; }
+.chip[aria-pressed="true"] { color: var(--tinta); border-color: var(--tinta-3); }
+.chip[aria-pressed="true"] i { opacity: 1; }
+.chip.ypf { font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--linea); border-radius: 999px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 4px 12px; font-size: 13px; color: var(--tinta-3); }
+.seg button:focus-visible { outline-offset: -2px; }
+.seg button[aria-pressed="true"] { background: rgba(244, 184, 96, .14); color: var(--petroleo); }
+select { background: var(--fondo); border: 1px solid var(--linea); border-radius: 999px; padding: 5px 8px; font-size: 13px; max-width: 200px; }
+
+.mapwrap { grid-area: map; position: relative; background: var(--fondo); overflow: hidden; min-height: 0; touch-action: none; }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+#map.drag { cursor: grabbing; }
+.clock { position: absolute; left: 20px; top: 14px; pointer-events: none; text-shadow: 0 0 6px var(--fondo), 0 0 2px var(--fondo); }
+.clock .mes { font: 400 56px/1 var(--relato); letter-spacing: -.01em; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.clock .stats { display: flex; gap: 26px; margin-top: 8px; }
+.clock .stat { display: grid; gap: 4px; }
+.clock .stat b { font: 400 36px/1 var(--relato); font-variant-numeric: lining-nums tabular-nums; }
+.clock .stat span { font-size: 13px; line-height: 1.2; color: var(--tinta-2); white-space: nowrap; }
+.legend { position: absolute; right: 14px; top: 14px; font-size: 13px; line-height: 1.3; color: var(--tinta-2); display: grid; gap: 4px; pointer-events: none; text-align: left; background: var(--panel); border: 1px solid var(--linea); padding: 8px 12px; border-radius: 4px 4px 4px 18px; backdrop-filter: blur(6px); }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.legend.m { display: none; }
+.legend svg { width: 22px; height: 10px; flex: none; }
+.legend .sep { height: 4px; }
+.tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--linea); border-radius: 6px; padding: 7px 10px; font-size: 13px; line-height: 1.4; color: var(--tinta-2); display: none; z-index: 5; max-width: 240px; backdrop-filter: blur(6px); }
+.tip b { font-weight: 600; color: var(--tinta); }
+.zoom { position: absolute; right: 14px; bottom: 50px; display: grid; gap: 6px; }
+.zoom button { width: 36px; height: 36px; padding: 0; background: var(--panel); font-size: 18px; line-height: 1; backdrop-filter: blur(6px); }
+.zoom #zfit { font-size: 13px; }
+.card { position: absolute; left: 14px; bottom: 14px; width: min(390px, calc(100% - 28px)); background: var(--panel); border: 1px solid var(--linea); border-radius: 4px 18px 4px 4px; padding: 14px 16px 12px; display: none; z-index: 4; backdrop-filter: blur(6px); }
+.card.on { display: block; }
+.card h3 { margin: 0; font: 400 24px/1.15 var(--relato); padding-right: 32px; }
+.card .sub { font-size: 13px; color: var(--tinta-2); margin: 3px 0 8px; }
+.card .x { position: absolute; right: 8px; top: 8px; width: 30px; height: 30px; padding: 0; border: 0; font-size: 18px; line-height: 1; color: var(--tinta-3); }
+.card .x:hover { color: var(--tinta); }
+.card canvas { width: 100%; height: 72px; display: block; }
+.card .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; font-size: 13px; color: var(--tinta-3); margin-top: 6px; flex-wrap: wrap; }
+.card .seg button { padding: 2px 10px; }
+.card .cl { font-size: 13px; line-height: 1.4; color: var(--tinta-3); margin: 4px 0 0; }
+
+.dock { grid-area: dock; display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 0 12px; padding: 10px 14px 8px 20px; min-height: 0; }
+.ctl { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.play { display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; background: var(--tinta); color: var(--fondo); border-color: var(--tinta); font-weight: 600; }
+.play svg { width: 16px; height: 16px; fill: currentColor; }
+.speed { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--tinta-3); }
+.speed .seg { flex: 1; }
+.speed .seg button { flex: 1; padding: 3px 0; }
+.hint { font-size: 13px; color: var(--tinta-3); line-height: 1.35; }
+.tl { position: relative; min-width: 0; }
+#tl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: ew-resize; }
+
+.side { grid-area: side; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.tabs { display: flex; gap: 2px; padding: 6px 10px 0; border-bottom: 1px solid var(--linea); flex: none; }
+.tabs button { flex: 1; padding: 9px 10px 9px; border: 0; border-radius: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--tinta-3); }
+.tabs button[aria-selected="true"] { color: var(--tinta); border-bottom-color: var(--petroleo); }
+.pane { overflow-y: auto; padding: 16px 20px 20px; flex: 1; min-height: 0; }
+.lead { margin: 0 0 16px; color: var(--tinta-2); }
+.find { border-top: 1px solid var(--linea); padding: 16px 0 8px; }
+.find h2 { margin: 0 0 8px; font: 400 24px/1.15 var(--relato); }
+.find p { margin: 0 0 10px; color: var(--tinta-2); }
+.find canvas { width: 100%; display: block; }
+.find .live { color: var(--tinta); margin: 8px 0 0; min-height: 3em; }
+.find .live b { font-weight: 600; }
+.find .big { font: 400 36px/1 var(--relato); font-variant-numeric: lining-nums tabular-nums; }
+.find .seg { margin: 2px 0 8px; }
+.feedlist { list-style: none; margin: 0; padding: 0; }
+.feedlist li { border-bottom: 1px solid var(--linea); padding: 10px 0; color: var(--tinta-2); cursor: pointer; }
+.feedlist li:hover { color: var(--tinta); }
+.feedlist li b { color: var(--tinta); font-weight: 600; }
+.feedlist li .m { color: var(--tinta-3); }
+.feedlist li.hit::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--mal); margin-right: 7px; vertical-align: 1px; }
+.empty { color: var(--tinta-3); padding: 12px 0; }
+.fuentes { border-top: 1px solid var(--linea); margin-top: 8px; padding-top: 12px; font-size: 13px; line-height: 1.45; color: var(--tinta-3); }
+.fuentes summary { cursor: pointer; color: var(--tinta-2); }
+.fuentes ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.fuentes li b { color: var(--tinta-2); font-weight: 600; }
+.foot { font-size: 13px; line-height: 1.45; color: var(--tinta-3); margin: 12px 0 0; }
+
+@media (max-width: 900px) {
+  html, body { height: auto; }
+  .app { display: block; height: auto; background: var(--fondo); }
+  .top { padding: 10px 14px; gap: 6px 14px; border-bottom: 1px solid var(--linea); }
+  .filters { margin-left: 0; width: 100%; }
+  .chips { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding: 2px 2px 4px; scrollbar-width: none; }
+  .mapwrap { height: min(66vh, 520px); }
+  .clock { left: 14px; top: 10px; }
+  .clock .mes { font-size: 36px; }
+  .clock .stats { gap: 14px; margin-top: 6px; }
+  .clock .stat { gap: 2px; }
+  .clock .stat b { font-size: 24px; }
+  .zoom { bottom: auto; top: 10px; right: 10px; }
+  .legend { display: none; }
+  .legend.m { display: grid; position: static; margin: 0; border: 0; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea); border-radius: 0; padding: 10px 14px; grid-template-columns: 1fr 1fr; gap: 4px 10px; pointer-events: auto; backdrop-filter: none; }
+  .card { left: 6px; bottom: 6px; width: calc(100% - 12px); }
+  .dock { grid-template-columns: 1fr; height: 204px; grid-template-rows: auto 1fr; gap: 8px; padding: 10px 14px 8px; }
+  .ctl { flex-direction: row; align-items: center; gap: 10px; }
+  .play { width: 124px; height: 40px; flex: none; }
+  .speed { flex: 1; }
+  .speed > span { display: none; }
+  .hint { display: none; }
+  .tl { min-height: 120px; }
+  .side { min-height: 0; border-top: 1px solid var(--linea); }
+  .pane { overflow: visible; padding: 16px 14px 20px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>La cuenca mes a mes</h1>
+    <nav class="salidas" aria-label="Otras vistas de la cuenca">
+      <a id="a-mundo" href="mundo.html#libre">Ver este mes en 3D</a>
+      <a class="back" href="index.html">Volver al tablero</a>
+    </nav>
+    <div class="filters">
+      <div class="chips" id="chips" role="group" aria-label="Filtrar por operadora"></div>
+      <select id="area" aria-label="Filtrar por área"></select>
+      <div class="seg" id="mode" role="group" aria-label="Color de los pozos">
+        <button type="button" data-v="op" aria-pressed="true">Operadora</button>
+        <button type="button" data-v="estado" aria-pressed="false">Estado</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="mapwrap" id="mapwrap" aria-label="Mapa de pozos">
+    <canvas id="map" role="img" aria-label="Mapa de los pozos no convencionales de Vaca Muerta en el mes elegido"></canvas>
+    <div class="clock" aria-live="off">
+      <div class="mes" id="mes">&nbsp;</div>
+      <div class="stats">
+        <div class="stat"><b id="s-pozos">0</b><span>pozos produciendo</span></div>
+        <div class="stat"><b id="s-kbbl">0</b><span>kbbl/d de la cuenca</span></div>
+        <div class="stat"><b id="s-ypf">0%</b><span>de YPF</span></div>
+      </div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="zoom"><button type="button" id="zin" aria-label="Acercar">+</button><button type="button" id="zout" aria-label="Alejar">-</button><button type="button" id="zfit" aria-label="Ver todo">Todo</button></div>
+    <div class="tip" id="tip"></div>
+    <div class="card" id="card" role="dialog" aria-label="Detalle del pozo">
+      <button class="x" id="cx" aria-label="Cerrar">&times;</button>
+      <h3 id="c-t"></h3>
+      <div class="sub" id="c-s"></div>
+      <canvas id="c-q" aria-label="Caudal de petróleo en el tiempo"></canvas>
+      <canvas id="c-w" aria-label="Corte de agua en el tiempo"></canvas>
+      <p class="cl" id="c-l"></p>
+      <div class="row"><span id="c-links"></span><div class="seg" id="c-mode" role="group" aria-label="Alcance"><button type="button" data-v="pozo" aria-pressed="true">Pozo</button><button type="button" data-v="pad" aria-pressed="false" title="pad: la plataforma de la que salen varios pozos">Pad</button></div></div>
+    </div>
+  </section>
+  <div class="legend m" id="legend-m"></div>
+
+  <section class="dock" aria-label="Línea de tiempo">
+    <div class="ctl">
+      <button type="button" class="play" id="play" aria-label="Reproducir"></button>
+      <div class="speed"><span>Velocidad</span><div class="seg" id="speed" role="group" aria-label="Velocidad"></div></div>
+      <div class="hint">Espacio reproduce. Flechas mueven un mes, con mayúscula un año.</div>
+    </div>
+    <div class="tl"><canvas id="tl" role="slider" tabindex="0" aria-label="Mes de la repetición" aria-valuemin="0"></canvas></div>
+  </section>
+
+  <aside class="side">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-h" aria-selected="true" aria-controls="pane-h">Hallazgos</button>
+      <button type="button" role="tab" id="tab-e" aria-selected="false" aria-controls="pane-e">Eventos</button>
+    </div>
+    <div class="pane" id="pane-h" role="tabpanel" aria-labelledby="tab-h">
+      <p class="lead"><span class="marca dato">dato</span>Cada punto es un pozo no convencional de Vaca Muerta en su ubicación de superficie y su tamaño sigue el caudal de petróleo. Reproducí la historia desde 2011 y mirá tres cosas.</p>
+      <div class="find">
+        <h2>Tras la fractura del hijo, el corte de agua del padre sube, pero eso depende de los pozos de YPF</h2>
+        <p id="cifra-agua" hidden><span class="marca medido">medido</span>Tras la fractura de un hijo a menos de 1 km, el corte de agua mediano del padre pasa de <span id="wc-antes"></span> en el mes anterior a <span id="wc-mes2"></span> en el mes 2. En los controles (2 a 5 km) queda en <span id="wc-control"></span>. Sin los pozos de YPF, el dato no separa la suba de cero.</p>
+        <div class="seg" id="band" role="group" aria-label="Distancia al hijo"><button type="button" data-v="0.3" aria-pressed="true">0,3 a 1 km</button><button type="button" data-v="1" aria-pressed="false">1 a 2 km</button></div>
+        <canvas id="rose" aria-label="Rosa de rumbos de la interferencia" style="aspect-ratio: 1.12"></canvas>
+        <p class="live" id="rose-live"></p>
+      </div>
+      <div class="find">
+        <h2>Los padres cercanos se recuperan</h2>
+        <p id="cifra-brecha" hidden><span class="marca medido">medido</span>Frente a los controles, el caudal del padre cercano cae <span id="br-1"></span> en el mes 1 y la brecha es <span id="br-6"></span> en el mes 6. Casi se cierra en el índice, pero no está probado que el petróleo que falta llegue después.</p>
+        <canvas id="curva" aria-label="Caudal indexado del padre cercano y de los controles" style="aspect-ratio: 2.2"></canvas>
+        <p class="live"><span class="big" id="dif">0</span> <span id="dif-u">bbl diferidos en este mes</span></p>
+      </div>
+      <div class="find">
+        <h2>YPF gana participación</h2>
+        <p><span class="marca dato">dato</span>Parte de la producción de la cuenca que viene de YPF, mes a mes.</p>
+        <canvas id="share" aria-label="Participación de YPF en la producción de la cuenca" style="aspect-ratio: 3"></canvas>
+        <p class="live" id="share-live"></p>
+      </div>
+      <details class="fuentes" id="fuentes" hidden><summary>Mapa base: fuentes y licencias</summary><ul id="fuentes-lista"></ul></details>
+      <p class="foot" id="foot"></p>
+    </div>
+    <div class="pane" id="pane-e" role="tabpanel" aria-labelledby="tab-e" hidden>
+      <ul class="feedlist" id="feed"></ul>
+    </div>
+  </aside>
+</div>
+<noscript>Esta página necesita JavaScript para mostrar el mapa.</noscript>
+
+<script id="base">
+/* Mapa base, sin DOM: abre el producto de pipeline.base_mapa, el mismo que usa "Vaca Muerta en 3D". Las pruebas
+   corren este bloque con node y lo comparan con el decodificador de Python. */
+const Base = (() => {
+  "use strict";
+  function bytes(s) {
+    const b = atob(s), u = new Uint8Array(b.length);
+    for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    return u;
+  }
+  /* Relieve en metros enteros, fila 0 al norte: cada fila empieza con un valor absoluto de 16 bits y sigue con
+     diferencias de 8 bits con signo; el byte 128 anuncia otro valor absoluto. */
+  function relieve(r) {
+    const b = bytes(r.d), z = new Int16Array(r.cols * r.filas);
+    let i = 0;
+    for (let f = 0; f < r.filas; f++) {
+      let v = b[i] | (b[i + 1] << 8); i += 2; z[f * r.cols] = v;
+      for (let c = 1; c < r.cols; c++) {
+        const d = b[i++];
+        if (d === 128) { v = b[i] | (b[i + 1] << 8); i += 2; } else v += d > 127 ? d - 256 : d;
+        z[f * r.cols + c] = v;
+      }
+    }
+    if (i !== b.length) throw new Error("relieve: sobran o faltan bytes");
+    return z;
+  }
+  /* Línea o anillo: pares de enteros de 16 bits sobre la caja, x hacia el este e y hacia el sur. */
+  function linea(s) {
+    const u = bytes(s), o = new Uint16Array(u.length >> 1);
+    for (let i = 0; i < o.length; i++) o[i] = u[2 * i] | (u[2 * i + 1] << 8);
+    return o;
+  }
+  const unidad = (v) => { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; };
+  /* Sombreado: luz del noroeste sobre la pendiente (exagerada 5 veces para que la barda se lea), más una pasada
+     ancha que separa mesetas de valles. Es dibujo sobre el dato de cotas, no otra medición. mx y my son los metros
+     por celda; devuelve un valor de 0 a 255 por celda y el llano queda en 128. */
+  function sombra(z, cols, filas, mx, my) {
+    const L = unidad([-.62, .6, -.5]), luz = new Uint8Array(cols * filas);
+    const zc = (c, f) => z[Math.max(0, Math.min(filas - 1, f)) * cols + Math.max(0, Math.min(cols - 1, c))];
+    for (let f = 0; f < filas; f++) for (let c = 0; c < cols; c++) {
+      let v = 0;
+      for (const [d, peso] of [[1, .7], [5, .3]]) {
+        const n = unidad([-5 * (zc(c + d, f) - zc(c - d, f)) / (2 * d * mx), 1, -5 * (zc(c, f + d) - zc(c, f - d)) / (2 * d * my)]);
+        v += peso * (n[0] * L[0] + n[1] * L[1] + n[2] * L[2] - L[1]);
+      }
+      luz[f * cols + c] = Math.max(0, Math.min(255, Math.round(255 * (.5 + 1.25 * v))));
+    }
+    return luz;
+  }
+  /* Color del suelo, de sombra a luz y apenas más claro en altura: los tonos del terreno del mundo en 3D. */
+  const SOMBRA = [.030, .092, .122], LUZ = [.118, .232, .282], ALTURA = [.016, .024, .028], AGUA = [.066, .185, .255];
+  function suelo(l, h) {
+    const e = Math.max(0, Math.min(1, (h - 400) / 2200)), s = e * e * (3 - 2 * e);
+    return [0, 1, 2].map((i) => Math.round(255 * (SOMBRA[i] + (LUZ[i] - SOMBRA[i]) * l + ALTURA[i] * s)));
+  }
+  const css = (c, a) => "rgba(" + c.map((v) => Math.round(255 * v)).join(", ") + ", " + (a === undefined ? 1 : a) + ")";
+  return { bytes, relieve, linea, sombra, suelo, css, AGUA };
+})();
+/* Cifras de los hallazgos, sin DOM: salen de las series que dibujan los gráficos y nunca se escriben a mano.
+   Las pruebas corren este bloque con node contra la misma cuenta en Python. */
+const Cifras = (() => {
+  "use strict";
+  function de(serie, banda, k, campo) {
+    const p = (serie || []).find((q) => q.banda === banda && q.k === k);
+    return p && Number.isFinite(p[campo]) ? p[campo] : null;
+  }
+  /* Brecha del caudal indexado en el mes k: la mediana de los controles menos la de los padres cercanos. */
+  function brecha(curva, k) {
+    const c = de(curva, "control", k, "indice"), n = de(curva, "cercano", k, "indice");
+    return c === null || n === null ? null : c - n;
+  }
+  /* Corte de agua mediano de una banda en el mes k, como fracción. */
+  const corte = (serie, banda, k) => de(serie, banda, k, "corte");
+  return { brecha, corte };
+})();
+</script>
+<script>
+const DATA = /*__DATA__*/null;
+(() => {
+"use strict";
+const $ = (s) => document.querySelector(s);
+const D = DATA, META = D.meta, W = D.pozos, N = W.length, MS = META.meses, M = MS.length;
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const fmt = (n, d = 0) => n.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = (x, d = 0) => fmt(x * 100, d) + "%";
+const monthLabel = (i) => { const p = MS[Math.max(0, Math.min(M - 1, i))].split("-"); return MESES[+p[1] - 1] + " " + p[0]; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const title = (s) => s.toLowerCase().replace(/(^|\s)(\S)/g, (_, a, b) => a + b.toUpperCase());
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const slug = (s) => s.normalize("NFKD").replace(/[^\x00-\x7f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+const padLabel = (p) => p.replace(/\./g, ",").replace("_", " / ");
+
+function dec(s, T) {
+  const b = atob(s), u = new Uint8Array(b.length);
+  for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  return new T(u.buffer);
+}
+const QD = dec(D.caudal, Uint16Array), WC = dec(D.agua, Uint8Array), ST = dec(D.estado, Uint8Array);
+
+// ---- static preprocessing -------------------------------------------------------------------------
+const OPS = D.cuenca.ops, NOP = OPS.length;
+const opIdx = new Int8Array(N), mes0 = new Int16Array(N);
+const padMap = new Map(), areaCount = new Map();
+W.forEach((w, i) => {
+  opIdx[i] = OPS.indexOf(w.op); mes0[i] = w.mes0;
+  if (!padMap.has(w.pad)) padMap.set(w.pad, []);
+  padMap.get(w.pad).push(i);
+  areaCount.set(w.area, (areaCount.get(w.area) || 0) + 1);
+});
+const AREAS = [...areaCount.keys()].sort((a, b) => areaCount.get(b) - areaCount.get(a));
+const lon0 = W.map((w) => w.lon).sort((a, b) => a - b)[N >> 1], lat0 = W.map((w) => w.lat).sort((a, b) => a - b)[N >> 1];
+const KX = 111.32 * Math.cos(lat0 * Math.PI / 180), KY = 111.32;
+const X = new Float32Array(N), Y = new Float32Array(N);
+W.forEach((w, i) => { X[i] = (w.lon - lon0) * KX; Y[i] = (lat0 - w.lat) * KY; });
+const areaCenter = AREAS.map((a) => { let sx = 0, sy = 0, n = 0; W.forEach((w, i) => { if (w.area === a) { sx += X[i]; sy += Y[i]; n++; } }); return { a, x: sx / n, y: sy / n, n }; });
+
+// ---- mapa base ------------------------------------------------------------------------------------
+/* El lugar debajo de los pozos. El relieve se sombrea una vez en una imagen y las líneas quedan en kilómetros, la
+   unidad del mapa; los nombres salen en el orden de prioridad del mundo en 3D. Sin DATA.base queda la grilla. */
+const BASE = D.base ? (() => {
+  const B = D.base, [bl0, bt0, bl1, bt1] = B.caja, r = B.relieve;
+  const x0 = (bl0 - lon0) * KX, y0 = (lat0 - bt1) * KY, x1 = (bl1 - lon0) * KX, y1 = (lat0 - bt0) * KY;
+  const z = Base.relieve(r), luz = Base.sombra(z, r.cols, r.filas, (x1 - x0) / r.cols * 1000, (y1 - y0) / r.filas * 1000);
+  const img = document.createElement("canvas"); img.width = r.cols; img.height = r.filas;
+  const ix = img.getContext("2d"), px = ix.createImageData(r.cols, r.filas);
+  for (let i = 0; i < z.length; i++) { const c = Base.suelo(luz[i] / 255, z[i]); px.data[4 * i] = c[0]; px.data[4 * i + 1] = c[1]; px.data[4 * i + 2] = c[2]; px.data[4 * i + 3] = 255; }
+  ix.putImageData(px, 0, 0);
+  const tramo = (s) => {
+    const q = Base.linea(s), p = new Float32Array(q.length);
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity, largo = 0;
+    for (let i = 0; i < q.length; i += 2) {
+      const x = p[i] = x0 + q[i] / B.q * (x1 - x0), y = p[i + 1] = y0 + q[i + 1] / B.q * (y1 - y0);
+      if (x < a) a = x; if (x > c) c = x; if (y < b) b = y; if (y > d) d = y;
+      if (i) largo += Math.hypot(x - p[i - 2], y - p[i - 1]);
+    }
+    return { p, a, b, c, d, largo };
+  };
+  const centro = (p) => {   // centroide de un anillo, por áreas
+    let s = 0, x = 0, y = 0;
+    for (let i = 0; i + 3 < p.length; i += 2) { const k = p[i] * p[i + 3] - p[i + 2] * p[i + 1]; s += k; x += (p[i] + p[i + 2]) * k; y += (p[i + 1] + p[i + 3]) * k; }
+    return s ? [x / (3 * s), y / (3 * s), Math.abs(s) / 2] : [p[0], p[1], 0];
+  };
+  /* Las localidades llegan en el orden de prioridad que fija el exportador. Agua: un nombre por cuerpo, el mayor. */
+  const nombres = B.localidades.map((l, i) => ({ n: l.n, x: (l.lon - lon0) * KX, y: (lat0 - l.lat) * KY, tipo: l.n === "Neuquén" ? "capital" : "lugar", prio: i < 6 ? i : 20 + i }));
+  const cuerpos = new Map();
+  const agua = B.agua.map((a) => {
+    const p = a.p.map(tramo); let mayor = null;
+    if (a.t !== "rio") for (const an of p) { const ce = centro(an.p); if (!mayor || ce[2] > mayor[2]) mayor = ce; }
+    if (mayor && a.n && (!cuerpos.has(a.n) || cuerpos.get(a.n).km2 < a.km2)) cuerpos.set(a.n, { n: a.n, x: mayor[0], y: mayor[1], km2: a.km2 });
+    return { p, orilla: a.t !== "rio" };
+  });
+  [...cuerpos.values()].sort((a, b) => b.km2 - a.km2).forEach((a, i) => nombres.push({ n: a.n, x: a.x, y: a.y, tipo: "agua", prio: i < 4 ? 6 + i : 44 + i }));
+  const rios = B.rios.map((rio) => ({ n: rio.n, km: rio.km, l: rio.l.map(tramo) })).sort((a, b) => b.km - a.km);   // del más largo al más corto
+  nombres.sort((a, b) => a.prio - b.prio);
+  return { img, x0, y0, x1, y1, agua, rios, limites: B.limites.map((l) => l.l.map(tramo)), bloques: B.bloques.map((b) => b.p.map(tramo)), nombres };
+})() : null;
+
+const mIndex = new Map(MS.map((m, i) => [m, i]));
+const EV = D.eventos.map((e) => {
+  const mi = mIndex.get(e.f.slice(0, 7)), y = +e.f.slice(0, 4), mo = +e.f.slice(5, 7), day = +e.f.slice(8, 10);
+  const dim = new Date(y, mo, 0).getDate();
+  return Object.assign({ mi, tt: mi + (day - 1) / dim }, e);
+}).filter((e) => e.mi !== undefined);
+const byMonthFrac = Array.from({ length: M }, () => []), byMonthInt = Array.from({ length: M }, () => []);
+EV.forEach((e, k) => (e.t === "frac" ? byMonthFrac : byMonthInt)[e.mi].push(k));
+const fracCount = new Float32Array(M), hitCount = new Float32Array(M);
+EV.forEach((e) => { if (e.t === "frac") fracCount[e.mi]++; else if (e.km < 1 && (e.clase === "golpe" || e.clase === "ambos")) hitCount[e.mi]++; });
+
+// Cuenca series
+const KB = D.cuenca.kbbl, TOT = new Float32Array(M), SHARE = new Float32Array(M);
+for (let m = 0; m < M; m++) { let s = 0; for (let o = 0; o < NOP; o++) s += KB[o][m]; TOT[m] = s; SHARE[m] = s > 0 ? KB[0][m] / s : 0; }
+let shareStart = 0; while (shareStart < M - 1 && TOT[shareStart] < 1) shareStart++;
+
+// Feed: one line per (month, operator, pad) of new frac jobs
+const FEED = (() => {
+  const groups = new Map();
+  EV.forEach((e) => {
+    if (e.t !== "frac") return;
+    const w = W[e.p], key = e.mi + "|" + w.op_nombre + "|" + w.pad;
+    let g = groups.get(key);
+    if (!g) groups.set(key, (g = { mi: e.mi, tt: e.tt, op: w.op_nombre, opi: opIdx[e.p], pad: w.pad, area: w.area, wells: new Set(), first: e.p }));
+    g.wells.add(e.p);
+  });
+  const hijoGroup = new Map();
+  groups.forEach((g) => g.wells.forEach((h) => hijoGroup.set(h + "|" + g.mi, g)));
+  EV.forEach((e) => {
+    if (e.t !== "interf" || e.km >= 1) return;
+    const g = hijoGroup.get(e.h + "|" + e.mi);
+    if (!g) return;
+    (g.padres = g.padres || new Map()).set(e.p, e.clase);
+  });
+  return [...groups.values()].sort((a, b) => a.tt - b.tt);
+})();
+function feedText(g) {
+  const n = g.wells.size;
+  let s = `<span class="m">${monthLabel(g.mi)}</span> &middot; <b>${esc(g.op.replace(/ S\.?A\.?$/i, ""))}</b> fractura ${n} ${n === 1 ? "pozo" : "pozos"} en el pad ${esc(padLabel(g.pad))}, ${esc(title(g.area))}`;
+  let hit = false;
+  if (g.padres) {
+    let af = 0, ci = 0; g.padres.forEach((c) => { if (c !== "sin_efecto") af++; if (c === "cierre_preventivo" || c === "ambos") ci++; if (c === "golpe" || c === "ambos") hit = true; });
+    if (af) s += ` &middot; ${af} ${af === 1 ? "padre afectado" : "padres afectados"}` + (ci ? `, ${ci} cerrado${ci === 1 ? "" : "s"} preventivamente` : "");
+    else s += ` &middot; ${g.padres.size} ${g.padres.size === 1 ? "padre cercano sin efecto" : "padres cercanos sin efecto"}`;
+  }
+  return [s, hit];
+}
+
+// ---- state ---------------------------------------------------------------------------------------
+const S = { t: M - 1, playing: false, speed: 2, ops: null, area: "", mode: "op", sel: -1, padMode: false, band: 0.3, tab: "h", feedAt: -1 };
+let view = { cx: 0, cy: 0, k: 1 }, fitView = null;
+const vis = new Uint8Array(N); let visList = [];
+let difMes = new Float64Array(M), padDef = new Uint32Array(M);
+let dirty = true, lastMonth = -1, C = {};
+
+/* Los colores salen de las variables de la hoja de estilo. Cada operadora lleva su pigmento por nombre, como en el
+   mundo en 3D; la última serie ("Otros") va en gris. */
+const PIGMENTOS = ["azul", "rosa", "oliva", "ladrillo", "celeste", "ciruela"];
+const PIGMENTO_DE = { ypf: "azul", vista: "rosa", pluspetrol: "oliva", shell: "ladrillo", panamericanenergy: "celeste", chevron: "ciruela" };
+function readColors() {
+  const cs = getComputedStyle(document.documentElement), g = (n) => cs.getPropertyValue(n).trim();
+  const de = OPS.map((n) => PIGMENTO_DE[n.toLowerCase().replace(/[^a-z]/g, "")] || null), libres = PIGMENTOS.filter((c) => !de.includes(c));
+  C = { map: "rgb(" + Base.suelo(.5, 600).join(", ") + ")", grid: "rgba(236, 229, 211, .06)", ink: g("--tinta"), ink2: g("--tinta-2"), ink3: g("--tinta-3"), line: g("--linea"), fondo: g("--fondo"), panel: g("--fondo"),
+    golpe: g("--mal"), cierre: g("--petroleo"), ambos: g("--tinta"), sin: g("--gris"), prod: g("--bien"), parado: g("--petroleo"), ui: g("--ui"), relato: g("--relato") };
+  C.opc = OPS.map((n, i) => g("--" + (i === NOP - 1 ? "gris" : de[i] || libres.shift() || "gris")));
+}
+const F = (px, peso) => (peso ? peso + " " : "") + px + "px " + C.ui;   // letra de los lienzos: 13 px o más
+
+function applyFilters() {
+  visList = [];
+  for (let i = 0; i < N; i++) {
+    const ok = (!S.ops || S.ops.has(opIdx[i])) && (!S.area || W[i].area === S.area);
+    vis[i] = ok ? 1 : 0; if (ok) visList.push(i);
+  }
+  // Diferido del mes, no acumulado: cada evento reparte sus barriles en los meses 0 a 6 y después sale de la cuenta,
+  // porque el padre vuelve a su control. Un total que solo sube se leería como pérdida que se apila.
+  // Solo los eventos cercanos traen bbl (el km viene redondeado y no sirve para separarlos). Un padre con dos hijos
+  // en la ventana cuenta una vez.
+  difMes = new Float64Array(M + 8); padDef = new Uint32Array(M + 8);
+  const enVentana = new Map();
+  EV.forEach((e) => {
+    if (e.t !== "interf" || e.bbl === undefined || !vis[e.p]) return;
+    for (let k = 0; k < 7; k++) {
+      difMes[e.mi + k] += e.bbl / 7;
+      const m = e.mi + k, ya = enVentana.get(e.p) || new Set();
+      if (!ya.has(m)) { ya.add(m); padDef[m]++; }
+      enVentana.set(e.p, ya);
+    }
+  });
+  S.feedAt = -1; roseDirty = true;
+}
+
+// ---- canvases -------------------------------------------------------------------------------------
+const mapC = $("#map"), mapX = mapC.getContext("2d");
+let mw = 0, mh = 0, dpr = 1;
+function fitCanvas(c, ctx) {
+  const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+  if (c.width !== Math.round(w * d) || c.height !== Math.round(h * d)) { c.width = Math.round(w * d); c.height = Math.round(h * d); }
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  return { w, h, d };
+}
+function computeFit() {
+  const xs = [...X].sort((a, b) => a - b), ys = [...Y].sort((a, b) => a - b);
+  const lo = (a) => a[Math.floor(N * 0.09)], hi = (a) => a[Math.ceil(N * 0.91) - 1];
+  const x0 = lo(xs), x1 = hi(xs), y0 = lo(ys), y1 = hi(ys), pad = mw < 600 ? 1.6 : 1.2;
+  const k = Math.min(mw / ((x1 - x0) * pad + 4), mh / ((y1 - y0) * pad + 4));
+  fitView = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, k };
+}
+function resizeMap() {
+  const r = fitCanvas(mapC, mapX); mw = r.w; mh = r.h; dpr = r.d;
+  const first = !fitView; computeFit(); if (first) view = { ...fitView };
+  medirTapas(); dirty = true;
+}
+
+/* Recuadros que tapan el mapa (el reloj, la leyenda, el zoom): ningún nombre se escribe debajo de ellos. */
+let tapas = [], baseKey = "", baseRects = [], baseN = 0;
+const baseC = document.createElement("canvas");
+const pisa = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+const choca = (r) => tapas.some((o) => pisa(r, o)) || baseRects.some((o) => pisa(r, o));
+function medirTapas() {
+  const m = $("#mapwrap").getBoundingClientRect();
+  tapas = [".clock", "#legend", ".zoom"].map((s) => { const r = $(s).getBoundingClientRect(); return { x: r.left - m.left - 10, y: r.top - m.top - 8, w: r.width + 20, h: r.height + 16 }; }).filter((r) => r.w > 20 && r.h > 16);
+  baseKey = "";
+}
+/* El mapa base se dibuja una vez por encuadre y se guarda: mientras la historia corre, la vista no cambia. */
+function drawBase() {
+  const key = [view.cx, view.cy, view.k, mw, mh, dpr].join("|");
+  if (key === baseKey) return;
+  baseKey = key; baseRects = []; baseN++;
+  if (baseC.width !== mapC.width || baseC.height !== mapC.height) { baseC.width = mapC.width; baseC.height = mapC.height; }
+  const ctx = baseC.getContext("2d"), k = view.k, ox = mw / 2 - view.cx * k, oy = mh / 2 - view.cy * k;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = C.map; ctx.fillRect(0, 0, mw, mh);
+  if (BASE) {
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(BASE.img, BASE.x0 * k + ox, BASE.y0 * k + oy, (BASE.x1 - BASE.x0) * k, (BASE.y1 - BASE.y0) * k);
+    const traza = (tr, cerrar) => {
+      if (tr.c * k + ox < 0 || tr.a * k + ox > mw || tr.d * k + oy < 0 || tr.b * k + oy > mh) return;
+      const p = tr.p; ctx.moveTo(p[0] * k + ox, p[1] * k + oy);
+      for (let i = 2; i < p.length; i += 2) ctx.lineTo(p[i] * k + ox, p[i + 1] * k + oy);
+      if (cerrar) ctx.closePath();
+    };
+    const cerca = clamp(Math.log2(k / fitView.k) / 3, 0, 1);
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.fillStyle = Base.css(Base.AGUA); ctx.strokeStyle = "rgba(63, 111, 143, .7)"; ctx.lineWidth = 1;
+    for (const a of BASE.agua) { ctx.beginPath(); for (const an of a.p) traza(an, true); ctx.fill("evenodd"); if (a.orilla) ctx.stroke(); }
+    ctx.strokeStyle = "rgba(63, 111, 143, .8)"; ctx.lineWidth = 1.2; ctx.beginPath(); for (const rio of BASE.rios) for (const tr of rio.l) traza(tr); ctx.stroke();
+    ctx.strokeStyle = "rgba(236, 229, 211, " + (.1 + .16 * cerca) + ")"; ctx.lineWidth = 1; ctx.beginPath(); for (const b of BASE.bloques) for (const an of b) traza(an, true); ctx.stroke();
+    ctx.strokeStyle = "rgba(236, 229, 211, .3)"; ctx.lineWidth = 1.2; ctx.setLineDash([6, 5]); ctx.beginPath(); for (const l of BASE.limites) for (const tr of l) traza(tr); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // graticule every 0.5 degree of latitude / longitude
+  ctx.lineWidth = 1; ctx.strokeStyle = C.grid; ctx.fillStyle = C.ink3; ctx.font = F(13); ctx.textBaseline = "bottom";
+  const lonMin = lon0 + (view.cx - mw / 2 / k) / KX, lonMax = lon0 + (view.cx + mw / 2 / k) / KX;
+  const latMax = lat0 - (view.cy - mh / 2 / k) / KY, latMin = lat0 - (view.cy + mh / 2 / k) / KY;
+  const step = k > 14 ? 0.1 : 0.5;
+  ctx.beginPath();
+  for (let lo = Math.ceil(lonMin / step) * step; lo <= lonMax; lo += step) { const x = ((lo - lon0) * KX - view.cx) * k + mw / 2; ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, mh); }
+  for (let la = Math.ceil(latMin / step) * step; la <= latMax; la += step) { const y = ((lat0 - la) * KY - view.cy) * k + mh / 2; ctx.moveTo(0, y + .5); ctx.lineTo(mw, y + .5); }
+  ctx.stroke();
+  ctx.textAlign = "right"; ctx.lineJoin = "round"; ctx.lineWidth = 3; ctx.strokeStyle = "rgba(6, 20, 27, .7)";
+  for (let la = Math.ceil(latMin / step) * step; la <= latMax; la += step) {
+    const y = ((lat0 - la) * KY - view.cy) * k + mh / 2, tx = fmt(-la, 1) + "° S", w = ctx.measureText(tx).width, r = { x: mw - 10 - w, y: y - 18, w: w + 4, h: 18 };
+    if (y < 22 || choca(r)) continue;
+    baseRects.push(r); ctx.strokeText(tx, mw - 8, y - 2); ctx.fillText(tx, mw - 8, y - 2);
+  }
+  /* Nombres del mapa base, en orden de prioridad: el que choca con otro o cae bajo un recuadro no se escribe. */
+  if (BASE) {
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    const escribir = (g) => {
+      const x = g.x * k + ox, y = g.y * k + oy;
+      if (x < 6 || y < 12 || x > mw - 6 || y > mh - 12) return false;
+      const agua = g.tipo === "agua";
+      ctx.font = agua ? "italic 400 15px " + C.relato : F(g.tipo === "capital" ? 15 : 13);
+      const w = ctx.measureText(g.n).width, tx = agua ? x - w / 2 : x + 9, r = agua ? { x: tx - 4, y: y - 10, w: w + 8, h: 20 } : { x: x - 6, y: y - 10, w: w + 19, h: 20 };
+      if (r.x < 2 || r.x + r.w > mw - 2 || choca(r)) return false;
+      baseRects.push(r);
+      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(6, 20, 27, .8)"; ctx.strokeText(g.n, tx, y);
+      ctx.fillStyle = agua ? "#8fb4d0" : g.tipo === "capital" ? C.ink : "rgba(236, 229, 211, .84)"; ctx.fillText(g.n, tx, y);
+      if (!agua) { ctx.lineWidth = 1.3; ctx.strokeStyle = "rgba(236, 229, 211, .84)"; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 6.2832); ctx.stroke(); }
+      return true;
+    };
+    let i = 0;
+    for (; i < BASE.nombres.length && BASE.nombres[i].prio < 10; i++) escribir(BASE.nombres[i]);
+    /* Los ríos cruzan todo el mapa: su nombre va sobre el tramo que se ve, lo más cerca posible del centro. */
+    const puestos = new Set();
+    for (const rio of BASE.rios) {
+      if (!rio.n || puestos.has(rio.n)) continue;
+      const cand = [];
+      for (const tr of rio.l) for (let j = 0; j < tr.p.length; j += 6) {
+        const x = tr.p[j] * k + ox, y = tr.p[j + 1] * k + oy;
+        if (x > 60 && x < mw - 60 && y > 30 && y < mh - 20) cand.push([Math.hypot(x - mw / 2, y - mh / 2), x, y]);
+      }
+      cand.sort((a, b) => a[0] - b[0]);
+      for (let j = 0, paso = Math.max(1, cand.length >> 4); j < cand.length; j += paso)
+        if (escribir({ n: rio.n, x: (cand[j][1] - ox) / k, y: (cand[j][2] - 12 - oy) / k, tipo: "agua" })) { puestos.add(rio.n); break; }
+    }
+    for (; i < BASE.nombres.length; i++) escribir(BASE.nombres[i]);
+  }
+}
+
+// ---- map drawing ----------------------------------------------------------------------------------
+const rings = [];
+const bx = Array.from({ length: 16 }, () => new Float32Array(N * 3)), bn = new Int32Array(16);
+function sx(i) { return (X[i] - view.cx) * view.k + mw / 2; }
+function sy(i) { return (Y[i] - view.cy) * view.k + mh / 2; }
+function rScale() { return clamp(0.85 + 0.35 * Math.log2(view.k / fitView.k), 0.7, 3); }
+function qAt(i, t) {
+  const m = Math.floor(t), f = t - m, m2 = Math.min(M - 1, m + 1), b = i * M;
+  return QD[b + m] + (QD[b + m2] - QD[b + m]) * f;
+}
+function drawMap(now) {
+  const ctx = mapX;
+  drawBase();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(baseC, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const k = view.k;
+  // area names
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = F(13); ctx.lineJoin = "round"; ctx.lineWidth = 3; ctx.strokeStyle = "rgba(6, 20, 27, .7)"; ctx.fillStyle = "rgba(236, 229, 211, .62)";
+  const placed = [];
+  for (let a = 0; a < areaCenter.length && placed.length < 26; a++) {
+    const ac = areaCenter[a]; if (ac.n < 25) break;
+    if (S.area && ac.a !== S.area) continue;
+    const x = (ac.x - view.cx) * k + mw / 2, y = (ac.y - view.cy) * k + mh / 2 + 18;
+    const tx = title(ac.a), w = ctx.measureText(tx).width + 8, r = { x: x - w / 2, y: y - 9, w, h: 18 };
+    if (r.x < 4 || r.y < 4 || r.x + r.w > mw - 4 || r.y + r.h > mh - 4 || choca(r) || placed.some((p) => pisa(r, p))) continue;
+    placed.push(r); ctx.strokeText(tx, x, y); ctx.fillText(tx, x, y);
+  }
+  // wells
+  const m = Math.floor(S.t), rs = rScale(), mode = S.mode;
+  bn.fill(0);
+  const IDLE = 15;
+  for (let n = 0; n < visList.length; n++) {
+    const i = visList[n]; if (mes0[i] > m) continue;
+    const x = sx(i), y = sy(i); if (x < -8 || y < -8 || x > mw + 8 || y > mh + 8) continue;
+    const st = ST[i * M + m], q = qAt(i, S.t);
+    let b, r;
+    if (st & 2) { b = mode === "op" ? opIdx[i] * 2 + 1 : 1; r = 2.2 * rs; }
+    else if (q > 0.5) { b = mode === "op" ? opIdx[i] * 2 : 0; r = (1.2 + 0.1 * Math.sqrt(q)) * rs; }
+    else { b = IDLE; r = 1.3 * rs; }
+    const o = bn[b]++ * 3; bx[b][o] = x; bx[b][o + 1] = y; bx[b][o + 2] = r;
+  }
+  const paint = (b, col, alpha, aro) => {
+    const n = bn[b]; if (!n) return;
+    ctx.beginPath();
+    const a = bx[b];
+    for (let j = 0; j < n; j++) { const o = j * 3; ctx.moveTo(a[o] + a[o + 2], a[o + 1]); ctx.arc(a[o], a[o + 1], a[o + 2], 0, 6.2832); }
+    if (aro) { ctx.globalAlpha = 0.5; ctx.strokeStyle = C.fondo; ctx.lineWidth = 1.6; ctx.stroke(); }   // un aro oscuro separa los puntos que se pisan
+    ctx.globalAlpha = alpha; ctx.fillStyle = col; ctx.fill();
+  };
+  paint(IDLE, C.sin, 0.5);
+  if (mode === "op") {
+    for (let o = NOP - 1; o >= 0; o--) paint(o * 2 + 1, C.opc[o], 0.4);
+    for (let o = NOP - 1; o >= 0; o--) paint(o * 2, C.opc[o], o === 0 ? 0.95 : 0.85, true);
+  } else { paint(1, C.parado, 0.9, true); paint(0, C.prod, 0.8, true); }
+  ctx.globalAlpha = 1;
+
+  // interference arcs: child to parent, fading over six months
+  const arcs = { sin_efecto: [], golpe: [], cierre_preventivo: [], ambos: [] };
+  for (let mm = Math.max(0, m - 6); mm <= m; mm++) for (const ei of byMonthInt[mm]) {
+    const e = EV[ei]; if (e.km >= 1 || e.tt > S.t || S.t - e.tt >= 6 || !vis[e.p]) continue;
+    arcs[e.clase].push(e);
+  }
+  const arcCol = { sin_efecto: C.sin, golpe: C.golpe, cierre_preventivo: C.cierre, ambos: C.ambos }, arcW = { sin_efecto: 1, golpe: 1.7, cierre_preventivo: 1.7, ambos: 2.4 }, arcA = { sin_efecto: 0.22, golpe: 0.95, cierre_preventivo: 0.95, ambos: 1 };
+  for (const cl of ["sin_efecto", "cierre_preventivo", "golpe", "ambos"]) {
+    ctx.strokeStyle = arcCol[cl]; ctx.fillStyle = arcCol[cl]; ctx.lineWidth = arcW[cl]; ctx.setLineDash(cl === "cierre_preventivo" ? [5, 3] : []);
+    for (const e of arcs[cl]) {
+      const x1 = sx(e.h), y1 = sy(e.h), x2 = sx(e.p), y2 = sy(e.p), age = (S.t - e.tt) / 6;
+      const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+      ctx.globalAlpha = arcA[cl] * Math.pow(1 - age, 0.8);
+      ctx.beginPath(); ctx.moveTo(x1, y1);
+      ctx.quadraticCurveTo((x1 + x2) / 2 - dy * 0.16, (y1 + y2) / 2 + dx * 0.16, x2, y2); ctx.stroke();
+      if (cl !== "sin_efecto") { ctx.beginPath(); ctx.arc(x2, y2, 2.6 + (len > 0 ? 0 : 0), 0, 6.2832); ctx.fill(); }
+    }
+  }
+  ctx.globalAlpha = 1; ctx.setLineDash([]);
+
+  // frac rings: wall-clock animation while playing, month-based when paused or scrubbing
+  ctx.lineWidth = 1.5; ctx.strokeStyle = C.ink;
+  if (!reduce) for (let j = rings.length - 1; j >= 0; j--) {
+    const g = rings[j], age = (now - g.t0) / 1100;
+    if (age >= 1) { rings.splice(j, 1); continue; }
+    const px = sx(g.i), py = sy(g.i), p = 1 - Math.pow(1 - age, 3);
+    ctx.globalAlpha = 0.9 * (1 - age); ctx.beginPath(); ctx.arc(px, py, 3 + 34 * p, 0, 6.2832); ctx.stroke();
+  }
+  if (!S.playing || reduce) for (let mm = Math.max(0, m - 1); mm <= m; mm++) for (const ei of byMonthFrac[mm]) {
+    const e = EV[ei], age = (S.t - e.tt) / 0.5; if (age < 0 || age >= 1 || !vis[e.p]) continue;
+    const p = 1 - Math.pow(1 - age, 3);
+    ctx.globalAlpha = 0.9 * (1 - age); ctx.beginPath(); ctx.arc(sx(e.p), sy(e.p), 3 + 34 * p, 0, 6.2832); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // selection
+  if (S.sel >= 0) {
+    const ids = S.padMode ? padMap.get(W[S.sel].pad) : [S.sel];
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 2;
+    ids.forEach((i) => { ctx.beginPath(); ctx.arc(sx(i), sy(i), 7, 0, 6.2832); ctx.stroke(); });
+  }
+  // scale bar
+  const nice = [1, 2, 5, 10, 20, 50], km = nice.find((v) => v * k >= 70) || 50;
+  const bw = km * k, bx0 = mw - 14 - bw, by = mh - 14;
+  ctx.strokeStyle = C.ink2; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx0, by - 4); ctx.lineTo(bx0, by); ctx.lineTo(bx0 + bw, by); ctx.lineTo(bx0 + bw, by - 4); ctx.stroke();
+  ctx.fillStyle = C.ink2; ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.font = F(13); ctx.lineJoin = "round"; ctx.lineWidth = 3; ctx.strokeStyle = "rgba(6, 20, 27, .7)"; ctx.strokeText(km + " km", mw - 14, by - 6); ctx.fillText(km + " km", mw - 14, by - 6);
+}
+
+// ---- timeline -------------------------------------------------------------------------------------
+const tlC = $("#tl"), tlX = tlC.getContext("2d"), tlOff = document.createElement("canvas");
+let tlw = 0, tlh = 0, TL = { L: 44, R: 10 };
+function drawTimelineBase() {
+  const r = fitCanvas(tlC, tlX); tlw = r.w; tlh = r.h;
+  tlOff.width = tlC.width; tlOff.height = tlC.height;
+  const ctx = tlOff.getContext("2d"); ctx.setTransform(r.d, 0, 0, r.d, 0, 0); ctx.clearRect(0, 0, tlw, tlh);
+  const small = tlw < 420;
+  const L = small ? 42 : 52, R = 12, top = 24, axisH = 20, barsH = small ? 30 : 34;
+  const areaB = tlh - axisH - barsH - 4, pw = tlw - L - R;
+  TL = { L, R, pw, top, areaB, barsTop: areaB + 4, barsH, axisH };
+  const xOf = (m) => L + pw * m / (M - 1);
+  // y scale
+  let maxT = 0; for (let m = 0; m < M; m++) maxT = Math.max(maxT, TOT[m]);
+  const cortes = Math.max(2, Math.min(5, Math.floor((areaB - top) / 20)));   // sin encimar las etiquetas de 13 px
+  const tick = [50, 100, 200, 250, 500, 1000].find((v) => maxT / v <= cortes) || 1000, ymax = Math.ceil(maxT / tick) * tick;
+  const yOf = (v) => areaB - (areaB - top) * v / ymax;
+  ctx.font = F(13); ctx.textBaseline = "middle"; ctx.textAlign = "right";
+  ctx.strokeStyle = C.line; ctx.fillStyle = C.ink3; ctx.lineWidth = 1;
+  for (let v = 0; v <= ymax; v += tick) { const y = Math.round(yOf(v)) + .5; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke(); ctx.fillText(v ? String(v) : "kbbl/d", L - 5, y); }
+  // stacked area, YPF at the baseline
+  const base = new Float32Array(M);
+  for (let o = 0; o < NOP; o++) {
+    const lo = Float32Array.from(base);
+    for (let m = 0; m < M; m++) base[m] += KB[o][m];
+    ctx.beginPath(); ctx.moveTo(xOf(0), yOf(lo[0]));
+    for (let m = 0; m < M; m++) ctx.lineTo(xOf(m), yOf(base[m]));
+    for (let m = M - 1; m >= 0; m--) ctx.lineTo(xOf(m), yOf(lo[m]));
+    ctx.closePath(); ctx.fillStyle = C.opc[o]; ctx.globalAlpha = o === 0 ? 0.95 : 0.78; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = C.fondo; ctx.lineWidth = 1; ctx.beginPath(); for (let m = 0; m < M; m++) { const x = xOf(m), y = yOf(base[m]); if (m) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke();
+  }
+  // event bars: new frac jobs and water hits per month
+  const mf = Math.max(...fracCount), mh2 = Math.max(...hitCount), bw = Math.max(1, pw / M - 1);
+  const row = (arr, mx, y0, h, col) => { ctx.fillStyle = col; for (let m = 0; m < M; m++) if (arr[m]) { const hh = Math.max(1.5, h * arr[m] / mx); ctx.fillRect(xOf(m) - bw / 2, y0 + h - hh, bw, hh); } };
+  const h1 = (barsH - 4) / 2;
+  row(fracCount, mf, TL.barsTop, h1, C.ink3); row(hitCount, mh2, TL.barsTop + h1 + 4, h1, C.golpe);
+  ctx.textAlign = "left"; ctx.fillStyle = C.ink3; ctx.textBaseline = "top";
+  ctx.fillText("fracturas por mes", L + 4, TL.barsTop - 1);
+  ctx.fillStyle = C.golpe; ctx.fillText("subidas del corte de agua por mes", L + 4, TL.barsTop + h1 + 3);
+  // year axis
+  ctx.fillStyle = C.ink3; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  const step = tlw < 520 ? 4 : 2;
+  MS.forEach((s, m) => { if (s.endsWith("-01") && (+s.slice(0, 4)) % step === 0) { const x = xOf(m); ctx.fillText(s.slice(0, 4), x, tlh - axisH + 5); ctx.fillRect(Math.round(x), TL.barsTop + barsH, 1, 3); } });
+  TL.xOf = xOf;
+}
+function drawTimeline() {
+  if (!TL.xOf) return;
+  const ctx = tlX; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, tlC.width, tlC.height); ctx.drawImage(tlOff, 0, 0);
+  const d = window.devicePixelRatio || 1; ctx.setTransform(d, 0, 0, d, 0, 0);
+  const x = TL.xOf(S.t);
+  ctx.fillStyle = "rgba(236, 229, 211, .1)"; ctx.fillRect(TL.L, TL.top, x - TL.L, TL.barsTop + TL.barsH - TL.top);
+  ctx.fillStyle = C.ink; ctx.fillRect(Math.round(x) - 1, TL.top - 2, 2, TL.barsTop + TL.barsH - TL.top + 4);
+  const lab = monthLabel(Math.round(S.t)); ctx.font = F(13, 600); const w = ctx.measureText(lab).width + 16;
+  const lx = clamp(x - w / 2, TL.L, tlw - TL.R - w);
+  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.roundRect(lx, 0, w, 20, 10); ctx.fill();
+  ctx.fillStyle = C.fondo; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(lab, lx + w / 2, 10.5);
+}
+
+// ---- mini charts ----------------------------------------------------------------------------------
+function frame(c) { const ctx = c.getContext("2d"), r = fitCanvas(c, ctx); ctx.clearRect(0, 0, r.w, r.h); return [ctx, r.w, r.h]; }
+let roseDirty = true;
+function drawRose() {
+  if (S.tab !== "h") return;
+  const [ctx, w, h] = frame($("#rose")), cx = w / 2, cy = h / 2 + 18, R = Math.min(w, h - 36) / 2 - 20;
+  const tot = new Float32Array(8), hit = new Float32Array(8), lo = S.band, hiK = S.band === 0.3 ? 1 : 2, mNow = Math.floor(S.t);
+  for (let m = 0; m <= mNow; m++) for (const ei of byMonthInt[m]) {
+    const e = EV[ei]; if (e.tt > S.t || e.km < lo || e.km >= hiK || !vis[e.p]) continue;
+    const s = Math.floor(e.rumbo / 22.5) % 8; tot[s]++; if (e.clase === "golpe" || e.clase === "ambos") hit[s]++;
+  }
+  const mx = Math.max(10, ...tot);
+  ctx.lineWidth = 1; ctx.strokeStyle = C.line; ctx.fillStyle = C.ink3; ctx.font = F(13);
+  [0.5, 1].forEach((f) => { ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, 6.2832); ctx.stroke(); });
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  [["N", 0], ["E", 90], ["S", 180], ["O", 270]].forEach(([l, a]) => { const r = a * Math.PI / 180; ctx.fillText(l, cx + Math.sin(r) * (R + 13), cy - Math.cos(r) * (R + 13)); });
+  const petal = (s, v, col, alpha) => {
+    if (!v) return;
+    const rad = R * Math.sqrt(v / mx);
+    for (const side of [0, 180]) {
+      const c = (s * 22.5 + 11.25 + side - 90) * Math.PI / 180, hw = 10.2 * Math.PI / 180;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, rad, c - hw, c + hw); ctx.closePath();
+      ctx.globalAlpha = alpha; ctx.fillStyle = col; ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  };
+  for (let s = 0; s < 8; s++) petal(s, tot[s], C.ink3, 0.4);
+  for (let s = 0; s < 8; s++) petal(s, hit[s], C.golpe, 0.92);
+  // published SHmax axis
+  const sh = (75 - 90) * Math.PI / 180;
+  ctx.setLineDash([5, 4]); ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx - Math.cos(sh) * (R + 4), cy - Math.sin(sh) * (R + 4)); ctx.lineTo(cx + Math.cos(sh) * (R + 4), cy + Math.sin(sh) * (R + 4)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.font = F(13); ctx.textBaseline = "middle";
+  ctx.setLineDash([4, 3]); ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.moveTo(2, 9); ctx.lineTo(22, 9); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = C.ink2; ctx.textAlign = "left"; ctx.fillText("SHmax publicado (RAGA 2024)", 28, 9);
+  const fila = (y, col, a, t) => { const tw = ctx.measureText(t).width; ctx.fillStyle = col; ctx.globalAlpha = a; ctx.fillRect(w - 2 - tw - 16, y - 5, 10, 10); ctx.globalAlpha = 1; ctx.fillStyle = C.ink2; ctx.textAlign = "right"; ctx.fillText(t, w - 2, y); ctx.textAlign = "left"; };
+  fila(9, C.ink3, 0.6, "padres alcanzados"); fila(28, C.golpe, 1, "con subida del corte de agua");
+  const g = (s) => ({ n: tot[s], h: hit[s], p: tot[s] ? hit[s] / tot[s] : 0 });
+  const ene = g(3), ns = g(0), t = tot.reduce((a, b) => a + b, 0);
+  const el = $("#rose-live");
+  if (t < 8) el.innerHTML = "Todavía hay pocos eventos para este mes.";
+  else el.innerHTML = `<b>${fmt(t)}</b> padres alcanzados hasta ${monthLabel(mNow)}. Con subida del corte de agua: <b>${pct(ene.p)}</b> sobre el eje ENE-OSO, sector de 67,5° a 90° (n=${ene.n}), y <b>${pct(ns.p)}</b> sobre el eje N-S, de 0° a 22,5° (n=${ns.n}).`;
+  roseDirty = false;
+}
+/* Las cifras de los dos hallazgos: del payload a la frase. Si falta un valor, la frase no se muestra. */
+function ponerCifras() {
+  const frase = (id, pares) => {
+    if (pares.some(([, v]) => v === null)) return;
+    for (const [s, v, d, u] of pares) $(s).textContent = fmt(v, d) + u;
+    $(id).hidden = false;
+  };
+  frase("#cifra-agua", [["#wc-antes", Cifras.corte(D.corte, "cercano", -1), 1, "%"], ["#wc-mes2", Cifras.corte(D.corte, "cercano", 2), 1, "%"], ["#wc-control", Cifras.corte(D.corte, "control", 2), 1, "%"]]
+    .map(([s, v, d, u]) => [s, v === null ? null : 100 * v, d, u]));
+  frase("#cifra-brecha", [["#br-1", Cifras.brecha(D.curva, 1), 2, ""], ["#br-6", Cifras.brecha(D.curva, 6), 2, ""]]);
+}
+function drawCurva() {
+  if (S.tab !== "h") return;
+  const [ctx, w, h] = frame($("#curva")), L = 42, R = 12, T = 30, B = 26, pw = w - L - R, ph = h - T - B;
+  const ser = (b) => D.curva.filter((p) => p.banda === b), near = ser("cercano"), ctl = ser("control");
+  if (!near.length) return;
+  const k0 = near[0].k, k1 = near[near.length - 1].k, ymin = 0.5, ymax = 1.25;
+  const xo = (k) => L + pw * (k - k0) / (k1 - k0), yo = (v) => T + ph * (1 - (v - ymin) / (ymax - ymin));
+  ctx.font = F(13); ctx.textBaseline = "middle"; ctx.textAlign = "right"; ctx.lineWidth = 1;
+  [0.5, 0.75, 1, 1.25].forEach((v) => { ctx.strokeStyle = v === 1 ? C.ink3 : C.line; ctx.beginPath(); ctx.moveTo(L, yo(v) + .5); ctx.lineTo(L + pw, yo(v) + .5); ctx.stroke(); ctx.fillStyle = C.ink3; ctx.fillText(fmt(v, 2), L - 4, yo(v)); });
+  ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillStyle = C.ink3;
+  [0, 6, 12, 18].forEach((k) => { if (k <= k1) { ctx.fillText(k === 0 ? "mes 0" : String(k), xo(k), h - B + 6); ctx.fillRect(Math.round(xo(k)), T + ph, 1, 3); } });
+  ctx.setLineDash([3, 3]); ctx.strokeStyle = C.ink3; ctx.beginPath(); ctx.moveTo(xo(0), T); ctx.lineTo(xo(0), T + ph); ctx.moveTo(xo(6), T); ctx.lineTo(xo(6), T + ph); ctx.stroke(); ctx.setLineDash([]);
+  const line = (a, col, lw) => { ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.beginPath(); a.forEach((p, i) => (i ? ctx.lineTo(xo(p.k), yo(p.indice)) : ctx.moveTo(xo(p.k), yo(p.indice)))); ctx.stroke(); };
+  line(ctl, C.ink3, 2); line(near, C.golpe, 2.5);
+  ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = C.ink2;
+  ctx.strokeStyle = C.golpe; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(L, 10); ctx.lineTo(L + 20, 10); ctx.stroke(); ctx.fillText("padres a menos de 1 km", L + 26, 10);
+  const x2 = L + 26 + ctx.measureText("padres a menos de 1 km").width + 16;
+  ctx.strokeStyle = C.ink3; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x2, 10); ctx.lineTo(x2 + 20, 10); ctx.stroke(); ctx.fillText("controles", x2 + 26, 10);
+}
+function drawShare() {
+  if (S.tab !== "h") return;
+  const [ctx, w, h] = frame($("#share")), L = 46, R = 10, T = 10, B = 24, pw = w - L - R, ph = h - T - B;
+  const xo = (m) => L + pw * (m - shareStart) / (M - 1 - shareStart), yo = (v) => T + ph * (1 - v);
+  ctx.font = F(13); ctx.textBaseline = "middle"; ctx.textAlign = "right"; ctx.lineWidth = 1;
+  [0, 0.5, 1].forEach((v) => { ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(L, yo(v) + .5); ctx.lineTo(L + pw, yo(v) + .5); ctx.stroke(); ctx.fillStyle = C.ink3; ctx.fillText(pct(v), L - 4, yo(v)); });
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  MS.forEach((s, m) => { if (m >= shareStart && s.endsWith("-01") && +s.slice(0, 4) % 4 === 0) ctx.fillText(s.slice(0, 4), xo(m), h - B + 6); });
+  ctx.beginPath(); for (let m = shareStart; m < M; m++) (m === shareStart ? ctx.moveTo(xo(m), yo(SHARE[m])) : ctx.lineTo(xo(m), yo(SHARE[m])));
+  ctx.lineTo(xo(M - 1), yo(0)); ctx.lineTo(xo(shareStart), yo(0)); ctx.closePath(); ctx.fillStyle = C.opc[0]; ctx.globalAlpha = 0.18; ctx.fill(); ctx.globalAlpha = 1;
+  ctx.beginPath(); for (let m = shareStart; m < M; m++) (m === shareStart ? ctx.moveTo(xo(m), yo(SHARE[m])) : ctx.lineTo(xo(m), yo(SHARE[m])));
+  ctx.strokeStyle = C.opc[0]; ctx.lineWidth = 2.5; ctx.stroke();
+  const mc = clamp(Math.round(S.t), shareStart, M - 1), x = xo(mc);
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + .5, T); ctx.lineTo(x + .5, T + ph); ctx.stroke();
+  ctx.fillStyle = C.opc[0]; ctx.strokeStyle = C.panel; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, yo(SHARE[mc]), 4.5, 0, 6.2832); ctx.fill(); ctx.stroke();
+}
+
+// ---- pozo card ------------------------------------------------------------------------------------
+function cardData() {
+  const ids = S.padMode ? padMap.get(W[S.sel].pad) : [S.sel];
+  const q = new Float32Array(M), wc = new Float32Array(M).fill(NaN);
+  for (let m = 0; m < M; m++) {
+    let sq = 0, sw = 0;
+    ids.forEach((i) => { const v = QD[i * M + m], w = WC[i * M + m] / 255; sq += v; if (v > 0 && w < 0.995) sw += v * w / (1 - w); });
+    q[m] = sq; if (sq + sw > 0) wc[m] = sw / (sq + sw);
+  }
+  return { ids, q, wc };
+}
+function drawCard() {
+  if (S.sel < 0) return;
+  const w = W[S.sel], d = cardData(), n = padMap.get(w.pad).length;
+  $("#c-t").textContent = S.padMode ? `Pad ${padLabel(w.pad)}` : `Pozo ${w.id}`;
+  $("#c-s").textContent = `${w.op_nombre.replace(/ S\.?A\.?$/i, "")} · ${title(w.area)}` + (S.padMode ? ` · ${n} ${n === 1 ? "pozo" : "pozos"}` : n > 1 ? ` · pad de ${n} pozos` : "");
+  let first = 0; while (first < M - 1 && d.q[first] === 0) first++;
+  const xs = (c, ctx, wd, ht) => (m) => 8 + (wd - 16) * (m - first) / (M - 1 - first);
+  const evts = EV.filter((e) => (e.t === "frac" && d.ids.includes(e.p)) || (e.t === "interf" && e.km < 1 && d.ids.includes(e.p) && e.clase !== "sin_efecto"));
+  const chart = (sel, arr, ymax, col, label, fmtv) => {
+    const [ctx, wd, ht] = frame($(sel)), xo = xs(null, ctx, wd, ht), T = 18, B = 3, yo = (v) => T + (ht - T - B) * (1 - v / ymax);
+    ctx.font = F(13); ctx.textBaseline = "top"; ctx.textAlign = "left"; ctx.fillStyle = C.ink3; ctx.fillText(label, 8, 0);
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(8, yo(0) + .5); ctx.lineTo(wd - 8, yo(0) + .5); ctx.stroke();
+    evts.forEach((e) => { const x = xo(e.tt); if (e.mi < first) return; ctx.strokeStyle = e.t === "frac" ? C.ink2 : (e.clase === "cierre_preventivo" ? C.cierre : C.golpe); ctx.globalAlpha = 0.7; ctx.lineWidth = e.t === "frac" ? 1.5 : 1.2; ctx.setLineDash(e.t === "frac" ? [] : [3, 2]); ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, ht - B); ctx.stroke(); });
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.beginPath(); let started = false;
+    for (let m = first; m < M; m++) { const v = arr[m]; if (Number.isNaN(v)) { started = false; continue; } const x = xo(m), y = yo(v); if (started) ctx.lineTo(x, y); else { ctx.moveTo(x, y); started = true; } }
+    ctx.stroke();
+    const cx = xo(S.t); ctx.strokeStyle = C.ink; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx + .5, T); ctx.lineTo(cx + .5, ht - B); ctx.stroke();
+    const v = arr[Math.floor(S.t)]; ctx.textAlign = "right"; ctx.fillStyle = C.ink; ctx.fillText(Number.isNaN(v) ? "sin dato" : fmtv(v), wd - 8, 0);
+  };
+  let mq = 1; d.q.forEach((v) => { if (v > mq) mq = v; });
+  chart("#c-q", d.q, mq * 1.05, opIdx[S.sel] === NOP - 1 ? C.ink2 : C.opc[opIdx[S.sel]], "Petróleo, bbl/d", (v) => fmt(v) + " bbl/d");
+  chart("#c-w", d.wc, 1, C.ink2, "Corte de agua", (v) => pct(v));
+  $("#c-l").textContent = "Líneas verticales: fractura propia (llena), subida del corte de agua (a rayas, salmón) y cierre preventivo (a rayas, ámbar) cuando el pozo fue padre de un hijo fracturado cerca.";
+  const pad = "pad-" + slug(w.pad).replace(/^-+/, "");
+  $("#c-links").innerHTML = (w.wiki ? `<a href="../wiki/pad/${pad}.md">Pad en el wiki</a> · ` : "") + `<a href="../wiki/area/${slug(w.area)}.md">Área en el wiki</a>`;
+}
+function select(i, padMode) {
+  S.sel = i; if (padMode !== undefined) S.padMode = padMode;
+  $("#card").classList.toggle("on", i >= 0);
+  $("#c-mode").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.v === "pad") === S.padMode)));
+  dirty = true; writeHash();
+}
+
+// ---- UI refresh -----------------------------------------------------------------------------------
+function refreshStats() {
+  const m = Math.round(S.t), mf = Math.floor(S.t);
+  $("#mes").textContent = monthLabel(mf);
+  $("#a-mundo").href = "mundo.html#libre&mes=" + mf;   // la otra vista abre en el mismo mes
+  let act = 0; for (const i of visList) if (mes0[i] <= mf && ST[i * M + mf] & 1) act++;
+  $("#s-pozos").textContent = fmt(act);
+  $("#s-kbbl").textContent = fmt(TOT[mf], 0);
+  $("#s-ypf").textContent = pct(SHARE[mf]);
+  const d = difMes[mf], np = padDef[mf];
+  const quien = fmt(np) + (np === 1 ? " padre cercano" : " padres cercanos") + " entre el mes de un hijo y seis meses después";
+  $("#dif").textContent = fmt(Math.abs(d));
+  $("#dif-u").textContent = (d >= 0 ? "bbl diferidos en " : "bbl por encima del control en ") + monthLabel(mf) + ", en " + quien;
+  $("#share-live").innerHTML = `YPF aporta <b>${pct(SHARE[mf])}</b> de la cuenca en ${monthLabel(mf)}. Partió de ${pct(SHARE[shareStart])} en ${monthLabel(shareStart)} y hoy llega a ${pct(SHARE[M - 1])}.`;
+  tlC.setAttribute("aria-valuemax", M - 1); tlC.setAttribute("aria-valuenow", m); tlC.setAttribute("aria-valuetext", monthLabel(m));
+  drawShare(); if (S.sel >= 0) drawCard();
+}
+function refreshFeed() {
+  if (S.tab !== "e" || S.feedAt === Math.floor(S.t)) return;
+  S.feedAt = Math.floor(S.t);
+  const out = []; let n = 0;
+  for (let j = FEED.length - 1; j >= 0 && n < 40; j--) {
+    const g = FEED[j]; if (g.tt > S.t) continue;
+    if (S.ops && !S.ops.has(g.opi)) continue; if (S.area && g.area !== S.area) continue;
+    const [t, hit] = feedText(g); out.push(`<li data-j="${j}"${hit ? ' class="hit"' : ""}>${t}</li>`); n++;
+  }
+  $("#feed").innerHTML = out.join("") || '<li class="empty">Todavía no hay fracturas con estos filtros.</li>';
+}
+
+// ---- main loop ------------------------------------------------------------------------------------
+let lastNow = 0, lastHash = 0;
+function tick(now) {
+  const dt = lastNow ? Math.min(0.1, (now - lastNow) / 1000) : 0; lastNow = now;
+  if (S.playing) {
+    const prev = S.t; S.t = Math.min(M - 1, S.t + S.speed * dt);
+    if (!reduce && S.t > prev) {
+      const a = Math.floor(prev), b = Math.floor(S.t);
+      for (let m = a; m <= b; m++) for (const ei of byMonthFrac[m]) { const e = EV[ei]; if (e.tt > prev && e.tt <= S.t && vis[e.p] && rings.length < 160) rings.push({ i: e.p, t0: now }); }
+    }
+    if (S.t >= M - 1) setPlaying(false);
+    dirty = true; if (now - lastHash > 1500) { writeHash(); lastHash = now; }
+  }
+  if (dirty || rings.length) {
+    const m = Math.floor(S.t);
+    drawMap(now); drawTimeline();
+    if (m !== lastMonth || dirty) { refreshStats(); if (roseDirty || m !== lastMonth) drawRose(); refreshFeed(); lastMonth = m; }
+    dirty = false;
+  }
+  requestAnimationFrame(tick);
+}
+function setPlaying(p) {
+  if (p && S.t >= M - 1) S.t = 0;
+  S.playing = p; lastNow = 0;
+  $("#play").innerHTML = p ? '<svg viewBox="0 0 16 16"><rect x="3" y="2" width="3.6" height="12" rx="1"/><rect x="9.4" y="2" width="3.6" height="12" rx="1"/></svg>Pausa' : '<svg viewBox="0 0 16 16"><path d="M4 2.2v11.6a.7.7 0 0 0 1.07.6l9.2-5.8a.7.7 0 0 0 0-1.2L5.07 1.6A.7.7 0 0 0 4 2.2z"/></svg>Reproducir';
+  $("#play").setAttribute("aria-label", p ? "Pausar" : "Reproducir");
+  dirty = true; if (!p) writeHash();
+}
+function seek(t) { S.t = clamp(t, 0, M - 1); dirty = true; }
+
+// ---- hash state -----------------------------------------------------------------------------------
+function writeHash() {
+  const p = new URLSearchParams();
+  p.set("m", MS[Math.floor(S.t)]);
+  if (S.ops) p.set("op", [...S.ops].map((i) => OPS[i]).join(","));
+  if (S.area) p.set("area", S.area);
+  if (S.mode !== "op") p.set("c", S.mode);
+  if (S.sel >= 0) p.set("p", W[S.sel].id + (S.padMode ? "-pad" : ""));
+  if (S.tab !== "h") p.set("tab", S.tab);
+  try { history.replaceState(null, "", "#" + p.toString()); } catch (e) { /* file: URLs may refuse */ }
+}
+function readHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  const m = p.get("m"); if (m && mIndex.has(m)) S.t = mIndex.get(m);
+  if (p.get("op")) { const set = new Set(p.get("op").split(",").map((n) => OPS.indexOf(n)).filter((i) => i >= 0)); if (set.size) S.ops = set; }
+  if (p.get("area") && areaCount.has(p.get("area"))) S.area = p.get("area");
+  if (p.get("c") === "estado") S.mode = "estado";
+  if (p.get("tab") === "e") S.tab = "e";
+  const sp = p.get("p"); if (sp) { const id = sp.replace("-pad", ""), i = W.findIndex((w) => String(w.id) === id); if (i >= 0) { S.sel = i; S.padMode = sp.endsWith("-pad"); } }
+}
+
+// ---- controls -------------------------------------------------------------------------------------
+function buildChips() {
+  const box = $("#chips"); box.innerHTML = "";
+  const mk = (label, c, cls, on) => { const b = document.createElement("button"); b.type = "button"; b.className = "chip " + (cls || ""); b.style.setProperty("--c", c); b.innerHTML = `<i></i>${esc(label)}`; b.setAttribute("aria-pressed", String(on)); box.appendChild(b); return b; };
+  OPS.forEach((o, i) => {
+    const b = mk(o === "Pan American Energy" ? "PAE" : o, C.opc[i], i === 0 ? "ypf" : "", !S.ops || S.ops.has(i));
+    b.title = "Tocá para aislar esta operadora; tocá otra para sumarla";
+    b.onclick = () => {
+      if (!S.ops) S.ops = new Set([i]); else if (S.ops.has(i)) { S.ops.delete(i); if (!S.ops.size) S.ops = null; } else S.ops.add(i);
+      if (S.ops && S.ops.size === NOP) S.ops = null;
+      syncFilters();
+    };
+  });
+  const all = mk("Todas", "var(--tinta-3)", "", !S.ops); all.onclick = () => { S.ops = null; syncFilters(); };
+}
+function syncFilters() {
+  $("#chips").querySelectorAll(".chip").forEach((b, i) => b.setAttribute("aria-pressed", String(i === NOP ? !S.ops : !S.ops || S.ops.has(i))));
+  applyFilters(); dirty = true; lastMonth = -1; writeHash();
+}
+function buildLegend() {
+  const sw = (c, dash) => `<svg viewBox="0 0 22 10"><path d="M1 8 Q11 -2 21 8" fill="none" stroke="${c}" stroke-width="2" ${dash ? 'stroke-dasharray="3 2"' : ""}/></svg>`;
+  const rows = (S.mode === "estado" ? `<div><svg viewBox="0 0 22 10"><circle cx="11" cy="5" r="4" fill="${C.prod}"/></svg>Produciendo</div><div><svg viewBox="0 0 22 10"><circle cx="11" cy="5" r="4" fill="${C.parado}"/></svg>Parado transitoriamente</div><div><svg viewBox="0 0 22 10"><circle cx="11" cy="5" r="2" fill="${C.sin}"/></svg>Sin producción</div><div class="sep"></div>` : "")
+    + `<div><svg viewBox="0 0 22 10"><circle cx="11" cy="5" r="4" fill="none" stroke="${C.ink}" stroke-width="1.5"/></svg>Fractura de un pozo</div>`
+    + `<div>${sw(C.golpe)}Subida del corte de agua tras el hijo</div><div>${sw(C.cierre, true)}Cierre preventivo</div><div>${sw(C.ambos)}Ambos</div><div>${sw(C.sin)}Sin efecto</div>`;
+  $("#legend").innerHTML = rows; $("#legend-m").innerHTML = rows;
+  if (fitView) medirTapas();
+}
+function bind() {
+  $("#play").onclick = () => setPlaying(!S.playing);
+  const sp = $("#speed"); [1, 2, 4, 8].forEach((v) => { const b = document.createElement("button"); b.type = "button"; b.textContent = v + "x"; b.dataset.v = v; b.setAttribute("aria-pressed", String(v === S.speed)); b.setAttribute("aria-label", v + " meses por segundo"); sp.appendChild(b); });
+  sp.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; S.speed = +b.dataset.v; sp.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); };
+  const ar = $("#area"); ar.innerHTML = '<option value="">Todas las áreas</option>' + AREAS.map((a) => `<option value="${esc(a)}">${esc(title(a))} (${areaCount.get(a)})</option>`).join("");
+  ar.value = S.area; ar.onchange = () => { S.area = ar.value; syncFilters(); };
+  const mode = $("#mode"); mode.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; S.mode = b.dataset.v; mode.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); buildLegend(); dirty = true; writeHash(); };
+  mode.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.v === S.mode)));
+  $("#band").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; S.band = +b.dataset.v; $("#band").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); roseDirty = true; dirty = true; };
+  $("#c-mode").onclick = (e) => { const b = e.target.closest("button"); if (b) select(S.sel, b.dataset.v === "pad"); };
+  $("#cx").onclick = () => select(-1);
+  const tabs = (t) => { S.tab = t; $("#pane-h").hidden = t !== "h"; $("#pane-e").hidden = t !== "e"; $("#tab-h").setAttribute("aria-selected", String(t === "h")); $("#tab-e").setAttribute("aria-selected", String(t === "e")); S.feedAt = -1; dirty = true; lastMonth = -1; roseDirty = true; if (t === "h") drawCurva(); writeHash(); };
+  $("#tab-h").onclick = () => tabs("h"); $("#tab-e").onclick = () => tabs("e"); tabs(S.tab);
+  $("#feed").onclick = (e) => { const li = e.target.closest("li[data-j]"); if (!li) return; const g = FEED[+li.dataset.j]; view.cx = X[g.first]; view.cy = Y[g.first]; view.k = Math.max(view.k, fitView.k * 6); select(g.first, true); };
+  const zoomBy = (f, px, py) => { const k2 = clamp(view.k * f, fitView.k * 0.8, fitView.k * 60); const wx = (px - mw / 2) / view.k + view.cx, wy = (py - mh / 2) / view.k + view.cy; view.k = k2; view.cx = wx - (px - mw / 2) / k2; view.cy = wy - (py - mh / 2) / k2; dirty = true; };
+  $("#zin").onclick = () => zoomBy(1.6, mw / 2, mh / 2); $("#zout").onclick = () => zoomBy(1 / 1.6, mw / 2, mh / 2); $("#zfit").onclick = () => { view = { ...fitView }; dirty = true; };
+  mapC.addEventListener("wheel", (e) => { e.preventDefault(); const r = mapC.getBoundingClientRect(); zoomBy(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+  // map pointers: drag to pan, pinch to zoom, tap to pick
+  const ptrs = new Map(); let moved = 0, pinch = 0;
+  mapC.addEventListener("pointerdown", (e) => { mapC.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = 0; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
+  mapC.addEventListener("pointermove", (e) => {
+    const p = ptrs.get(e.pointerId);
+    if (!p) { hover(e); return; }
+    const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), r = mapC.getBoundingClientRect(); if (pinch) zoomBy(d / pinch, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top); pinch = d; }
+    else if (moved > 4) { mapC.classList.add("drag"); view.cx -= dx / view.k; view.cy -= dy / view.k; dirty = true; $("#tip").style.display = "none"; }
+  });
+  const up = (e) => { const wasTap = moved < 5 && ptrs.size === 1; ptrs.delete(e.pointerId); mapC.classList.remove("drag"); pinch = 0; if (wasTap && e.type === "pointerup") { const i = pick(e); select(i, i >= 0 ? S.padMode : false); } };
+  mapC.addEventListener("pointerup", up); mapC.addEventListener("pointercancel", (e) => { ptrs.delete(e.pointerId); });
+  mapC.addEventListener("pointerleave", () => { $("#tip").style.display = "none"; });
+  mapC.addEventListener("dblclick", () => { view = { ...fitView }; dirty = true; });
+  // timeline scrub
+  let scrub = false; const at = (e) => { const r = tlC.getBoundingClientRect(); return clamp(Math.round((e.clientX - r.left - TL.L) / TL.pw * (M - 1)), 0, M - 1); };
+  tlC.addEventListener("pointerdown", (e) => { tlC.setPointerCapture(e.pointerId); scrub = true; setPlaying(false); seek(at(e)); });
+  tlC.addEventListener("pointermove", (e) => { if (scrub) seek(at(e)); });
+  tlC.addEventListener("pointerup", () => { scrub = false; writeHash(); });
+  tlC.addEventListener("pointercancel", () => { scrub = false; });
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("select, input") || e.altKey || e.ctrlKey || e.metaKey) return;
+    const big = e.shiftKey ? 12 : 1;
+    if (e.key === " " && !e.target.closest("button")) { e.preventDefault(); setPlaying(!S.playing); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); setPlaying(false); seek(Math.round(S.t) + big); writeHash(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); setPlaying(false); seek(Math.round(S.t) - big); writeHash(); }
+    else if (e.key === "Home") { setPlaying(false); seek(0); } else if (e.key === "End") { setPlaying(false); seek(M - 1); }
+    else if (e.key === "Escape") select(-1);
+  });
+  addEventListener("resize", () => { resizeMap(); drawTimelineBase(); drawCurva(); roseDirty = true; lastMonth = -1; dirty = true; });
+  addEventListener("hashchange", () => { /* manual edits of the hash are applied on reload */ });
+}
+function pick(e) {
+  const r = mapC.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+  const m = Math.floor(S.t); let best = -1, bd = 14 * 14;
+  for (const i of visList) { if (mes0[i] > m) continue; const dx = sx(i) - px, dy = sy(i) - py, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = i; } }
+  return best;
+}
+function hover(e) {
+  const tip = $("#tip"), i = pick(e);
+  if (i < 0) { tip.style.display = "none"; mapC.style.cursor = ""; return; }
+  const m = Math.floor(S.t), q = QD[i * M + m], st = ST[i * M + m], w = W[i], a = WC[i * M + m] / 255;
+  tip.innerHTML = `<b>Pozo ${esc(w.id)}</b><br>${esc(w.op_nombre.replace(/ S\.?A\.?$/i, ""))}<br>${esc(title(w.area))}<br>${st & 2 ? "Parado transitoriamente" : q > 0 ? fmt(q) + " bbl/d, agua " + pct(a) : "Sin producción"}`;
+  const r = mapC.getBoundingClientRect(); tip.style.display = "block";
+  const x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
+  tip.style.left = Math.min(x, mw - 250) + "px"; tip.style.top = Math.min(y, mh - 110) + "px"; mapC.style.cursor = "pointer";
+}
+
+// ---- boot -----------------------------------------------------------------------------------------
+readHash(); readColors(); applyFilters(); buildChips(); buildLegend(); bind();
+$("#foot").textContent = `Datos de la Secretaría de Energía hasta ${monthLabel(M - 1)}. ${fmt(N)} pozos no convencionales con coordenadas. Clasificación de la subida del corte de agua (el corte de agua es el porcentaje de agua en el líquido que produce el pozo): más de 15 puntos de corte de agua en los meses 0 y 1 del hijo. Generado ${META.generado}.`;
+if (D.base) {
+  /* Fuentes y licencias, tal como las fija el exportador: una línea por organismo y licencia. */
+  const CAPA = { relieve: "relieve", rios: "ríos", agua: "lagos, embalses y cauces anchos", limites: "límites provinciales", localidades: "localidades", bloques: "concesiones de explotación" };
+  const grupos = new Map();
+  for (const f of D.base.fuentes) {
+    const k = f.organismo + "|" + f.licencia, g = grupos.get(k) || { f, capas: [], titulos: [] };
+    grupos.set(k, g);
+    if (!g.capas.includes(CAPA[f.capa])) g.capas.push(CAPA[f.capa]);
+    g.titulos.push(f.titulo);
+  }
+  for (const g of grupos.values()) {
+    const li = document.createElement("li"), b = document.createElement("b"), c = g.capas.join("; ");
+    b.textContent = c.charAt(0).toUpperCase() + c.slice(1) + ". ";
+    li.append(b, g.f.organismo + ": " + g.titulos.join("; ") + ". Licencia: " + g.f.licencia + ". Bajado el " + g.f.fecha.split("-").reverse().join("/") + ".");
+    $("#fuentes-lista").appendChild(li);
+  }
+  $("#fuentes").hidden = false;
+}
+ponerCifras(); refreshStats(); resizeMap(); drawTimelineBase(); drawCurva(); setPlaying(false);
+if (S.sel >= 0) select(S.sel);
+window.__replay = { S, M, MS, seek, setPlaying, get ready() { return true; }, colores: () => C,
+  base: () => (BASE ? { relieve: [BASE.img.width, BASE.img.height], agua: BASE.agua.length, rios: BASE.rios.length, limites: BASE.limites.length, bloques: BASE.bloques.length, nombres: BASE.nombres.length, escritos: baseRects.length, dibujos: baseN } : null) };
+requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

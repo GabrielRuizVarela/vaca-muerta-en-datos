@@ -1,0 +1,32 @@
+{
+  "produccion_no_convencional": {
+    "url": "http://datos.energia.gob.ar/dataset/c846e79c-026c-4040-897f-1ad3543b407c/resource/b5b58cdc-9e07-41f9-b392-fb9ec68b0725/download/produccin-de-pozos-de-gas-y-petrleo-no-convencional.csv",
+    "etag": "\"1795381256.61-150670336\"",
+    "last_modified": "Sun, 22 Nov 2026 21:00:56 GMT",
+    "bytes": 150670336,
+    "loaded_at": "2026-11-23T12:05:41+00:00",
+    "sha256": "e5d7ba35139bd113273e7e5feb24245dbfa4e3ac9d93dfea77e608226f08a941",
+    "path": "produccion_no_convencional/2026-11-23_e5d7ba35139b.csv",
+    "checked_at": "2026-11-23T12:05:41+00:00"
+  },
+  "fractura_adjunto_iv": {
+    "url": "http://datos.energia.gob.ar/dataset/71fa2e84-0316-4a1b-af68-7f35e41f58d7/resource/2280ad92-6ed3-403e-a095-50139863ab0d/download/datos-de-fractura-de-pozos-de-hidrocarburos-adjunto-iv-actualizacin-diaria.csv",
+    "etag": "\"1795406406.64-1271920\"",
+    "last_modified": "Mon, 23 Nov 2026 04:00:06 GMT",
+    "bytes": 1271920,
+    "loaded_at": "2026-11-23T12:05:54+00:00",
+    "sha256": "ff95734bf485b1a27ecb75e3a44dda3035e5496805cf3970a28d19802bf03026",
+    "path": "fractura_adjunto_iv/2026-11-23_ff95734bf485.csv",
+    "checked_at": "2026-11-23T12:05:54+00:00"
+  },
+  "trayectorias_pozo": {
+    "url": "http://datos.energia.gob.ar/dataset/f5c0b5a5-b402-44d7-8fe0-f9e4fcb78b8d/resource/94741ac7-4f46-4efe-b112-d3f82a4ef7c5/download/trayectorias-de-pozo-vaca-muerta.csv",
+    "etag": "\"1795323694.99-40497312\"",
+    "last_modified": "Sun, 22 Nov 2026 05:01:34 GMT",
+    "bytes": 40497312,
+    "loaded_at": "2026-11-23T12:05:55+00:00",
+    "sha256": "83093dc4b7bad3b7ab54449bbfb074264f3b6cb17d675c9494a2336403db3034",
+    "path": "trayectorias_pozo/2026-11-23_83093dc4b7ba.csv",
+    "checked_at": "2026-11-23T12:05:55+00:00"
+  }
+}
