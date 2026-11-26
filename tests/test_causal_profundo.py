@@ -321,7 +321,7 @@ def test_d5_y_d6_se_dicen_tal_cual_en_causal_md():
     _marts_d56(con, V_NO_FIRME, cp.V_GENERAL, 1.0)
     d5, d6 = cp.frase_d56(con)
     assert "no se cura" not in d5 and d6.startswith("- ● ") and "YPF" not in d6
-    assert cp.frase_lectura_d56(con) == "Esa suba, con reglas fijadas después en `causal_profundo.md`, se sostiene sin cada operador (D6)."
+    assert cp.frase_lectura_d56(con) == "Esa suba, con reglas fijadas tras ver D2 y antes de sus cifras en `causal_profundo.md`, se sostiene sin cada operador (D6)."
 
 
 def test_cobertura_agua_cuenta_los_meses_base_de_cada_tratado():
@@ -367,3 +367,68 @@ def test_d7_en_la_pagina_dice_el_veredicto_y_la_compuerta():
     assert f"D3 en Colorado: {cp.V_D3_ENTRA_PD}. En Vaca Muerta: {cp.V_D3_ENTRA_PD}." in texto
     assert "queda debajo de 50% del corte de D2, así que con la regla de D2 no rompe" in texto
     assert "del agua por día calendario, no rompe; del agua por día producido, rompe previo" in texto
+
+
+def _mart_d9(con, ver: str, cobertura: float, con_d2: bool = True) -> None:
+    nan = float("nan")
+    filas = [("cobertura_agua", 100, cobertura, nan, nan, False, ""), ("D9", 100, nan, nan, nan, False, ver)]
+    if con_d2:
+        filas += [("dW", 100, 9.0, 6.0, 12.0, False, V_D2_SOSTIENE),
+                  ("placebo_previo_dW", 100, 0.4, -0.8, 1.6, False, ""),
+                  ("placebo_cierre", 100, 2.6, 1.5, 3.7, False, ""),
+                  ("dA", 100, 2.7, -1.0, 7.7, False, cp.V_D3_ENTRA_PD), ("dO", 100, -20.0, -25.0, -14.0, False, ""),
+                  ("dA_pd", 100, 10.4, 5.3, 16.6, False, "")]
+    con.execute("create or replace table mart_causal_profundo_d9 (resultado varchar, n_tratados int, valor double, "
+                "ic_bajo double, ic_alto double, roto boolean, veredicto varchar)")
+    con.executemany("insert into mart_causal_profundo_d9 values (?, ?, ?, ?, ?, ?, ?)", filas)
+
+
+def test_d9_en_la_pagina_dice_el_veredicto_y_la_reserva_del_mes_0():
+    con = duckdb.connect()
+    assert "D9 no se corrió" in "\n".join(cp._seccion_d9(con, cp._filas_d9(con)))
+    con.execute("create table mart_causal_veredicto as select 'D2' as diseno, 13.8 as valor, 9.5 as ic_bajo, "
+                "19.9 as ic_alto, 'sostiene' as veredicto")
+    con.execute(f"create table mart_causal_profundo_veredicto as select 'D3' as diseno, '{cp.V_D3_ENTRA_PD}' as veredicto")
+    _mart_d9(con, cp.V_NO_REPITE, 1.0)
+    texto = "\n".join(cp._seccion_d9(con, cp._filas_d9(con)))
+    assert "## D9: Wyoming" in texto and "primera terminación (FIRSTCOMP)" in texto.split("- Cobertura")[0]
+    assert "○ **D9, Wyoming: no se repite.**" in texto or "**D9, Wyoming: no se repite.**" in texto
+    assert texto.rstrip().endswith(cp.MES0_D9) and "no separa «no hay suba» de «el mes 0 está corrido»" in texto
+    _mart_d9(con, cp.V_REPITE, 1.0)
+    texto = "\n".join(cp._seccion_d9(con, cp._filas_d9(con)))
+    assert "la suba del agua aparece en dos cuencas fuera de Vaca Muerta" in texto and cp.MES0_D9 not in texto
+    _mart_d9(con, cp.V_SIN_DATO_AGUA, 0.5, con_d2=False)
+    texto = "\n".join(cp._seccion_d9(con, cp._filas_d9(con)))
+    assert texto.rstrip().endswith(cp.TEXTO_D9[cp.V_SIN_DATO_AGUA]) and "Wyoming no permite probarla" in texto
+
+
+# ---- D13: donde se sostiene la suba de Colorado
+
+def test_d13_veredicto_con_cero_uno_y_dos_operadores():
+    assert cp.veredicto_d13({}) == (V_SIN_MUESTRA, [])
+    assert cp.veredicto_d13({"A": 1.0}) == (V_SIN_MUESTRA, [])
+    assert cp.veredicto_d13({"A": -1.0}) == (V_SIN_MUESTRA, [])
+    assert cp.veredicto_d13({"A": 1.0, "B": 0.2}) == (cp.V_GENERAL, [])
+    assert cp.veredicto_d13({"A": 1.0, "B": -0.2}) == (cp.V_DEPENDE, ["B"])
+    assert cp.veredicto_d13({"B": float("nan"), "A": 0.0}) == (cp.V_DEPENDE, ["A", "B"])
+
+
+def test_d13_pagina_con_y_sin_mart():
+    sin = "\n".join(cp._seccion_d13(cp._filas_d13(duckdb.connect())))
+    assert "D13 no se corrió" in sin
+    assert cp.frase_d13(duckdb.connect()) is None
+    con = duckdb.connect()
+    con.execute("create table mart_causal_profundo_d13 (corte varchar, grupo varchar, n_tratados integer, n_controles integer, "
+                "valor double, ic_bajo double, ic_alto double, diseno varchar, veredicto varchar)")
+    filas = [("todos", "todos", 100, 500, 9.0, 6.0, 12.0, None, None),
+             ("operador", "A", 60, 400, 3.0, -1.0, 7.0, None, None),
+             ("sin_operador", "A", 40, 300, 5.0, -0.5, 10.0, None, None),
+             ("veredicto", "A", 100, 500, 5.0, -0.5, 10.0, "D13", cp.V_DEPENDE)]
+    con.executemany("insert into mart_causal_profundo_d13 values (?,?,?,?,?,?,?,?,?)", filas)
+    v, nombres, cortes, _ = cp._filas_d13(con)
+    assert (v, len(cortes)) == (cp.V_DEPENDE, 3)
+    txt = "\n".join(cp._seccion_d13(cp._filas_d13(con)))
+    assert "## D13" in txt and "| Sin el operador | A | 40 | 300 |" in txt and cp.COMMIT_REGLA_D13 in txt
+    assert "En Colorado también depende de un operador: A." in cp.frase_d13(con)
+    assert cp.texto_d13(cp.V_GENERAL, []).startswith("En Colorado la suba se sostiene sin cada uno de sus operadores grandes")
+    assert cp.texto_d13(V_SIN_MUESTRA, []) == "D13 no tiene muestra."

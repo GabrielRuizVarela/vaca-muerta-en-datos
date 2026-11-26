@@ -12,7 +12,7 @@ Veredictos contra las reglas fijadas antes de correr (las estimaciones puntuales
 - Pendiente del mes 0: -2,1 puntos por cada 0,1 de f0. IC 95% por pads: -3,3 a -0,8; por bloques de 2 km: -3,2 a -0,8; por bloques de 5 km: -3,5 a -0,8 (145 bloques). Mes -1, por bloques de 5 km: -1,9 a 0,5.
 - Partes al mes 1 con los meses cerrados: los días explican el 52,4% de la brecha del volumen (IC 95% por bloques de 5 km: 42,2 a 63,3) y el caudal por día el 47,6% (36,7 a 57,8).
 - Ancho del IC por bloques de 5 km sobre el de pads: de 0,96 a 1,45 veces en las 15 filas.
-- Pruebas estadísticas corridas en el proyecto: 193 (17 hipótesis del libro, 13 subconjuntos de robustez, 141 intervalos de la descomposición, 9 intervalos descriptivos del lado del hijo y 13 intervalos por bloques que no son hipótesis), sin ajuste por comparaciones múltiples.
+- Pruebas estadísticas del libro: 193 (17 hipótesis del libro, 13 subconjuntos de robustez, 141 intervalos de la descomposición, 9 intervalos descriptivos del lado del hijo y 13 intervalos por bloques que no son hipótesis), sin ajuste por comparaciones múltiples. No cuenta los diseños causales, con sus placebos y cortes, ni las escalas de bloques ni las permutaciones de D2: esas se cuentan aparte en `inferencia.md`.
 
 ## Regla fijada antes de correr
 

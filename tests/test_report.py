@@ -51,7 +51,7 @@ def test_titulares_eje_y_reproduccion(copia, tmp_path):
     assert datos["eje"] is not None
     assert 'id="eje"' not in html and 'class="eje-barra"' not in html and "p de permutación" not in html
     # reproducir
-    assert 'id="reproducir"' in html and "Cómo reproducir" in html
+    assert 'id="reproducir"' in html and "Cómo lo medimos y cómo repetirlo" in html and "Código y reglas fijadas" in html
     assert "uv sync" in html and "pipeline.run_all" in html and "uv run pytest" in html
     assert 'href="replay.html"' in html and 'href="../wiki/index.md"' in html
     # sin rayas largas en el texto de la página ni en el código propio
@@ -74,7 +74,8 @@ def test_la_pagina_se_arma_sin_mart_anisotropia_area(copia, tmp_path):
     finally:
         con.close()
     assert datos["eje"] is None
-    assert 'id="eje"' not in html and "Eje de mayor merma" not in html
+    # sin tarjeta propia del eje; la frase de "Ver los números" es texto fijo de la plantilla (8a38c29), con su claim
+    assert 'id="eje"' not in html and 'class="eje-barra"' not in html
     assert '<ul class="titulares"' in html and 'id="reproducir"' in html
 
 

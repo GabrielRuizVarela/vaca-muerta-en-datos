@@ -188,7 +188,7 @@ def test_solo_escribe_en_salida(tmp_path):
         assert antes == despues
     todos = {p for p in tmp_path.rglob("*") if p.is_file()}
     resto = todos - {pozos, mensual}
-    assert resto <= {out / "resumen.json", out / "resumen.md", out / "eventos.csv"}
+    assert resto <= {out / "resumen.json", out / "resumen.md", out / "eventos.csv", out / "tarjeta.json", out / "tarjeta.md"}
 
 
 def test_dosis_salteada_por_muestra_chica(tmp_path):

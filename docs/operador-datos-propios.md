@@ -8,7 +8,7 @@ Un operador de Vaca Muerta puede correr el mismo estudio de eventos y el mismo m
 uv run python -m pipeline.local --wells pozos.csv --monthly mensual.csv --out salida/ [--reps N]
 ```
 
-`--reps` cambia las repeticiones del bootstrap (por defecto las del estudio público). La salida es `resumen.json` (todas las cifras), `resumen.md` (el informe en español) y `eventos.csv` (un renglón por evento cercano). Nada se escribe fuera de `--out`.
+`--reps` cambia las repeticiones del bootstrap (por defecto las del estudio público). La salida es `resumen.json` (todas las cifras), `resumen.md` (el informe en español), `eventos.csv` (un renglón por evento cercano) y la tarjeta, `tarjeta.json` y `tarjeta.md`. Nada se escribe fuera de `--out`.
 
 ## Esquema de los CSV
 
@@ -23,7 +23,7 @@ uv run python -m pipeline.local --wells pozos.csv --monthly mensual.csv --out sa
 | `arena_tn`, `etapas`, `rama_m`, `presion_max_psi` | columna sí, valor puede faltar | dosis y geometría de la fractura |
 | `operador`, `area` | no | si faltan valen `propio` y `unica` |
 
-`mensual.csv`, una fila por pozo y mes: `pozo_id`, `mes` (AAAA-MM o AAAA-MM-DD), `petroleo_m3`; opcional `dias_produccion` (se valida contra los días del mes y no se usa en la cuenta). Un archivo con errores de formato se rechaza con un mensaje que dice qué falla.
+`mensual.csv`, una fila por pozo y mes: `pozo_id`, `mes` (AAAA-MM o AAAA-MM-DD), `petroleo_m3`; opcionales `dias_produccion` (se valida contra los días del mes; sin `agua_m3` no se usa en la cuenta) y `agua_m3` (agua del mes, mayor o igual a cero). La tarjeta (`tarjeta.json` y `tarjeta.md`) lleva solo cifras agrupadas (sin pozo, pad, coordenada ni fecha; una cifra de menos de 10 pozos se suprime). Sin `agua_m3` dice "sin dato de agua". Con `agua_m3` el modo local corre además el diseño del corte de agua (D2 de `pipeline/causal.py`) sobre tus tablas y la tarjeta lo resume; sin `dias_produccion`, o con esa columna vacía, la tarjeta dice "sin prueba de cierre". La tarjeta no es una replicación independiente si tu operador ya está en el dato público. Un archivo con errores de formato se rechaza con un mensaje que dice qué falla.
 
 ## Qué calcula
 
@@ -52,6 +52,7 @@ La estimación puntual y los n coinciden. El IC difiere de los publicados (-27,4
 - Es el mismo estimador del dato público: no corrige por nada que el operador sepa y no esté en las columnas (espaciamiento real, geometría, presión de fondo). Con esas columnas, el modelo de dosis es el lugar donde agregarlas.
 - Con pocos eventos el IC es ancho; un IC que incluye cero no dice que no haya efecto (ver `wiki/hallazgos/potencia_dosis.md`).
 - Una brecha del mes 1 con datos mensuales no separa cierre preventivo de daño.
+- Con la columna opcional `agua_m3` lee el agua mensual y calcula con ella el diseño del corte de agua; no lee datos diarios ni registros de cierres.
 - Todos los pozos del archivo se toman como padres e hijos posibles; si el archivo es una parte del campo, la distancia al hijo más cercano ignora los pozos que faltan.
 
 ## Corrección de código posterior al registro de la regla

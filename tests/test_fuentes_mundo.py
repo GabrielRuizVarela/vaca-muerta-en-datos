@@ -1,5 +1,6 @@
 """Auditoria de fuentes del mundo: el archivo cumple el esquema, la regla de elegibilidad y la pagina sale de el."""
 import copy
+import datetime
 import json
 
 import pytest
@@ -11,7 +12,9 @@ def test_registros_cumplen_el_esquema():
     regs = fm.cargar()
     assert len(regs) >= 20
     for r in regs:
-        assert r["fecha_verificada"] == "2026-11-19"
+        # cada fuente lleva el dia en que se la verifico; la auditoria empezo el 2026-11-19 y se reintenta por fuente
+        fecha = datetime.date.fromisoformat(r["fecha_verificada"])
+        assert datetime.date(2026, 11, 19) <= fecha <= datetime.date.today(), r["id"]
         assert r["pedidos_hechos"], r["id"]
         assert r["permiten_derivadas"] in {"si", "sin_restriccion", "no_claro", "no"}, r["id"]
 

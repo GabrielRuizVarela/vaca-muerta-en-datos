@@ -62,6 +62,8 @@ El contrato:
    renglón, solo en el guion. La clave de cada página se rehízo solo por eso.
 
 Para rehacer la foto (solo si cambia la base): `python tests/test_deslop_numeros.py --congelar <ref-git>`.
+Para rehacer solo las páginas cuyas cifras cambian a propósito: `python tests/test_deslop_numeros.py --refotear <ruta> [<ruta> ...]`.
+La foto va un renglón por página, así dos ramas que rehacen páginas distintas se juntan sin conflicto.
 """
 from __future__ import annotations
 
@@ -86,10 +88,9 @@ TESTS_README = re.compile(r"hay \d+ tests")
 
 # cifra -> motivo. Cifras que estaban en la foto y ya no están en ninguna página. Vacío si todo se conserva.
 # Una cifra declarada sale de una página y de la foto: el archivo congelado no se toca, se declara la excepción.
-REMOVIDAS: dict[str, str] = {
-    "28726": "los términos de la fuente no permiten reproducir las filas",
-    "33591": "los términos de la fuente no permiten reproducir las filas",
-}
+REMOVIDAS: dict[str, str] = {}
+# 28726 y 33591 (filas de una fuente cuyos términos no permiten reproducirlas) salieron de la foto el 2026-11-26, al rehacer
+# la clave de wiki/hallazgos/fuentes_mundo.md con el reintento de cuatro fuentes de EE. UU.
 
 # La puerta de entrada: los dos archivos que la historia reescribió.
 PUERTA = ("README.md", "site/index.html")
@@ -99,7 +100,8 @@ PAGINAS_HTML = ["site/index.html", "site/informe.html", "site/replay.html", "sit
 
 
 def archivos() -> list[str]:
-    wiki = sorted(p.relative_to(RAIZ).as_posix() for p in (RAIZ / "wiki" / "hallazgos").glob("*.md"))
+    # brechas.md lo genera pipeline.brechas desde brechas.csv: sus cifras son ids (B01) y numeros de linea, no prosa de la puerta
+    wiki = sorted(p.relative_to(RAIZ).as_posix() for p in (RAIZ / "wiki" / "hallazgos").glob("*.md") if p.name != "brechas.md")
     return ["README.md", *wiki, *PAGINAS_HTML]
 
 
@@ -171,9 +173,25 @@ def congelar(ref: str) -> None:
     for ruta in archivos():
         texto = subprocess.run(["git", "show", f"{ref}:{ruta}"], cwd=RAIZ, capture_output=True, text=True, check=True).stdout
         salida[ruta] = foto_de(ruta, texto)
-    FOTO.parent.mkdir(exist_ok=True)
-    FOTO.write_text(json.dumps(salida, sort_keys=True, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf8")
+    escribir_foto(salida)
     print(f"{len(salida)} archivos en {FOTO}")
+
+
+def escribir_foto(foto: dict) -> None:
+    """Un renglon por pagina: dos ramas que rehacen paginas distintas se juntan sin conflicto."""
+    renglones = [json.dumps(k, ensure_ascii=False) + ":" + json.dumps(foto[k], sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+                 for k in sorted(foto)]
+    FOTO.parent.mkdir(exist_ok=True)
+    FOTO.write_text("{\n" + ",\n".join(renglones) + "\n}\n", encoding="utf8")
+
+
+def refotear(rutas: list[str]) -> None:
+    """Rehace solo la clave de cada pagina nombrada, desde el arbol de trabajo (cuando sus cifras cambian a proposito)."""
+    foto = json.loads(FOTO.read_text(encoding="utf8"))
+    for ruta in rutas:
+        foto[ruta] = foto_de(ruta, (RAIZ / ruta).read_text(encoding="utf8"))
+    escribir_foto(foto)
+    print(f"rehechas: {', '.join(rutas)}")
 
 
 def _delta(antes: dict, despues: dict) -> dict[str, int]:
@@ -247,5 +265,7 @@ def test_el_extractor_cuenta_lo_que_importa() -> None:
 if __name__ == "__main__":
     if len(sys.argv) == 3 and sys.argv[1] == "--congelar":
         congelar(sys.argv[2])
+    elif len(sys.argv) >= 3 and sys.argv[1] == "--refotear":
+        refotear(sys.argv[2:])
     else:
         sys.exit(__doc__)

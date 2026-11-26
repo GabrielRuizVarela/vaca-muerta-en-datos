@@ -49,7 +49,13 @@ cp -a "$ROOT/site/." "$OUT_DIR/"
 mkdir -p "$OUT_DIR/docs" "$OUT_DIR/wiki"
 cp -a "$ROOT/docs/." "$OUT_DIR/docs/"
 cp -a "$ROOT/wiki/." "$OUT_DIR/wiki/"
-rm -f "$OUT_DIR/docs/deslop-review.md" "$OUT_DIR/docs/revision-independiente.md"
+# Internal working documents (review notes, plans, the scoring baseline) are not published.
+rm -f "$OUT_DIR/docs/deslop-review.md" "$OUT_DIR/docs/revision-independiente.md" \
+      "$OUT_DIR/docs/plan-nueva-entrada.md" "$OUT_DIR/docs/plan-siguiente-nivel.md" \
+      "$OUT_DIR/docs/proceso/fable-base-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-factual-verificacion-2026-11-26.md" \
+      "$OUT_DIR/docs/proceso/auditoria-P-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-P-2026-11-26.md" \
+      "$OUT_DIR/docs/proceso/ronda1-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-R1-2026-11-26.md" \
+      "$OUT_DIR/docs/proceso/ronda2-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-R2-2026-11-26.md"
 
 cp -a "$ROOT/README.md" "$ROOT/ATRIBUCION.md" "$ROOT/LICENSE" "$OUT_DIR/"
 
@@ -94,12 +100,13 @@ fi
 rm -rf "$RENDER_TMP" "$RENDER_JS"
 
 # Rewrite relative Markdown links to HTML links in every HTML file. Links to the
-# two excluded internal files are unwrapped to plain text first, so no link points
+# excluded internal files are unwrapped to plain text first, so no link points
 # at a page that was not published. Then every relative .html link must resolve.
 python3 - "$OUT_DIR" <<'PY'
 import os, re, sys, pathlib
 root = pathlib.Path(sys.argv[1])
-EXCLUDED = ("deslop-review.md", "revision-independiente.md")
+EXCLUDED = ("deslop-review.md", "revision-independiente.md", "plan-nueva-entrada.md",
+            "plan-siguiente-nivel.md", "fable-base-2026-11-26.md", "fable-factual-verificacion-2026-11-26.md")
 anchor = re.compile(r'<a\s+href="([^"]*)"[^>]*>(.*?)</a>', re.S | re.I)
 href = re.compile(r'href="([^"]*)"')
 md_link = re.compile(r"^(.*)\.md((?:\?[^#\"]*)?(?:#[^\"]*)?)$", re.I)

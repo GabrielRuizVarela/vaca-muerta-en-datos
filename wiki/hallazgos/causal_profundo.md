@@ -16,6 +16,8 @@ Página generada por `pipeline/causal_profundo.py`. El diseño causal (`causal.m
 - ● **D5, forma en el tiempo: persiste.** La suba del corte de agua no se cura en 12 meses: la media de los meses 6 a 12 da 10,9 puntos porcentuales (IC 95%: 7,7 a 15,0), 297 tratados, contra 11,2 de los meses 0 y 1. El IC queda sobre cero en cada mes desde el mes 0.
 - ◐ **D6, dónde se sostiene: depende de un operador: YPF.** La suba del corte de agua de D2 depende de YPF: sin los pozos de YPF da 7,1 puntos porcentuales con un IC que incluye cero (IC 95%: -0,6 a 18,1), sobre 129 tratados de 447; los de YPF solos dan 17,5 (IC 95%: 11,6 a 24,5), 255 tratados. Sin YPF quedan 129 tratados y el IC es ancho: el dato no muestra la suba fuera de YPF, ni la descarta. Sacar cualquiera de los otros operadores con el mínimo (Pluspetrol, Tecpetrol, Vista) la deja sobre cero.
 - ● **D7, Colorado: se repite.** El corte de agua de D2 sostiene también en Colorado, y D3 da allí el mismo veredicto que en Vaca Muerta.
+- ● **Colorado por operador (D13, [causal_profundo.md](causal_profundo.md), regla fijada antes de calcular D13): general.** En Colorado la suba se sostiene sin cada uno de sus operadores grandes (D13).
+- ○ **D9, Wyoming: sin muestra.** La muestra de Wyoming no llega al mínimo de la regla: las cifras se publican pero no deciden, y Wyoming no permite probarla.
 
 ## Regla fijada antes de calcular
 
@@ -114,7 +116,7 @@ Las precisiones de D5 y D6 se fijaron en el commit cfd9039, antes de calcular cu
 
 ## D6: dónde se sostiene
 
-El corte de agua de D2 partido por operador (solo y sin él, con 50 tratados o más), por edad del padre, por año de la cohorte y por área (con el mismo mínimo). Se publican todos los cortes, sin ajuste por comparaciones múltiples, y ningún subgrupo tiene veredicto. Decide solo el "sin el operador": "general" si sin cada operador el IC sigue sobre cero, "depende de un operador" si no. Sacar un operador saca sus tratados y sus controles; un subgrupo deja los controles de su celda.
+El corte de agua de D2 partido por operador (solo y sin él, con 50 tratados o más), por edad del padre, por año de la cohorte y por área (con el mismo mínimo). Se publican todos los cortes, sin ajuste por comparaciones múltiples, y ningún subgrupo tiene veredicto. Decide solo el "sin el operador": "general" si sin cada operador el IC sigue sobre cero, "depende de un operador" si no. Sacar un operador saca sus tratados y sus controles, y con ellos los tratados de las celdas que se quedan con menos de 5 controles: por eso los tratados sin un operador pueden ser menos que el total menos los suyos. Un subgrupo deja los controles de su celda.
 
 | Corte | Grupo | Tratados | Controles | Corte de agua (pp) | IC 95% |
 | --- | --- | ---: | ---: | ---: | --- |
@@ -146,13 +148,52 @@ Tecpetrol y el área FORTIN DE PIEDRA son los mismos tratados: sus dos filas dan
 
 El mismo diseño de D2 y D3, con las mismas constantes, los mismos sorteos y una regla fijada antes de calcular D7, sobre el warehouse de Colorado (cuenca DJ): los pozos horizontales con coordenadas, el mes de fractura de los hijos sin fecha dudosa y la producción mensual. El warehouse de Colorado se abre solo para leer; la tabla `mart_causal_profundo_d7` se escribe en el de Vaca Muerta. La regla pide primero que el dato de agua alcance, y después compara.
 
-- Cobertura del dato de agua: 100% de los meses base (meses -6 a -4) de los 1.495 tratados de las celdas de D2 tienen agua y días efectivos; la regla pide 70%.
+- Cobertura del dato de agua: 100% de los meses base (meses -6 a -4) de los 1.495 tratados de las celdas del diseño tienen agua y días efectivos; la regla pide 70%. D2 cuenta después solo a los tratados con el corte de agua medido, por eso da menos tratados.
 - D2, corte de agua: 9,0 puntos porcentuales (IC 95%: 6,3 a 12,1), con 1.247 tratados; en Vaca Muerta, 13,8 (IC 95%: 9,5 a 19,9). Veredicto en Colorado: sostiene: comunicación física causal bajo tendencias paralelas.
 - Placebos de D2: de los de cohorte, ninguno de los 3 rompe. El placebo de cierre da 2,6 (IC 95%: 1,5 a 3,7): el intervalo no toca cero, pero queda debajo de 50% del corte de D2, así que con la regla de D2 no rompe.
 - D3, en puntos del líquido base: agua por día calendario 2,7 (IC 95%: -1,1 a 7,7), agua por día producido 10,4 (IC 95%: 5,3 a 16,6), petróleo por día calendario -20,0 (IC 95%: -25,3 a -14,4), con 1.360 tratados.
 - Placebos de D3: del agua por día calendario, ninguno de los 4 rompe; del agua por día producido, ninguno de los 2 rompe.
 - D3 en Colorado: entra agua en los días producidos. En Vaca Muerta: entra agua en los días producidos.
 - ● **D7, Colorado: se repite.** El corte de agua de D2 sostiene también en Colorado, y D3 da allí el mismo veredicto que en Vaca Muerta.
+
+## D13: dónde se sostiene la suba de Colorado
+
+El corte de agua de D7 (Colorado) partido por operador, solo y sin él, con 50 tratados o más: las mismas celdas y los mismos sorteos de D7 y los mismos cortes de D6, sin cortes de edad, período ni área porque la pregunta es el operador. Se publican todos los cortes, sin ajuste por comparaciones múltiples, y ningún subgrupo tiene veredicto. Decide solo el "sin el operador": "general" si sin cada operador el IC sigue sobre cero, "depende de un operador" si no, "sin muestra" si hay menos de 2 operadores con el mínimo o D7 no pasa su compuerta de agua. Sacar un operador saca sus tratados y sus controles, y con ellos los tratados de las celdas que se quedan con menos de 5 controles: por eso los tratados sin un operador pueden ser menos que el total menos los suyos. Un subgrupo deja los controles de su celda.
+
+| Corte | Grupo | Tratados | Controles | Corte de agua (pp) | IC 95% |
+| --- | --- | ---: | ---: | ---: | --- |
+| Todos (D7) | todos | 1.247 | 17.389 | 9,0 | 6,3 a 12,1 |
+| Solo el operador | BONANZA CREEK ENERGY OPERATING COMPANY LLC | 107 | 5.426 | 26,2 | 7,6 a 40,9 |
+| Sin el operador | BONANZA CREEK ENERGY OPERATING COMPANY LLC | 1.140 | 15.157 | 7,5 | 5,1 a 9,9 |
+| Solo el operador | CRESTONE PEAK RESOURCES OPERATING LLC | 83 | 5.989 | 6,6 | 0,6 a 17,5 |
+| Sin el operador | CRESTONE PEAK RESOURCES OPERATING LLC | 1.164 | 15.185 | 9,2 | 6,3 a 12,6 |
+| Solo el operador | EXTRACTION OIL & GAS INC | 146 | 2.589 | 7,4 | 2,4 a 14,4 |
+| Sin el operador | EXTRACTION OIL & GAS INC | 1.101 | 15.960 | 9,5 | 6,6 a 12,7 |
+| Solo el operador | KERR MCGEE OIL & GAS ONSHORE LP | 190 | 6.249 | 4,7 | 0,1 a 9,9 |
+| Sin el operador | KERR MCGEE OIL & GAS ONSHORE LP | 1.052 | 12.409 | 9,4 | 6,2 a 13,2 |
+| Solo el operador | NOBLE ENERGY INC | 189 | 5.412 | 12,1 | 5,7 a 19,9 |
+| Sin el operador | NOBLE ENERGY INC | 1.058 | 13.101 | 8,6 | 5,5 a 11,9 |
+| Solo el operador | PDC ENERGY INC | 342 | 7.323 | 3,6 | -0,9 a 8,1 |
+| Sin el operador | PDC ENERGY INC | 877 | 11.564 | 11,1 | 7,5 a 15,2 |
+| Solo el operador | PRAIRIE OPERATING CO LLC | 54 | 1.173 | 3,4 | -19,9 a 22,8 |
+| Sin el operador | PRAIRIE OPERATING CO LLC | 1.193 | 17.186 | 9,3 | 6,4 a 12,4 |
+
+Veredicto: general. En Colorado la suba se sostiene sin cada uno de sus operadores grandes (D13).
+El valor del veredicto es el "sin el operador" de IC bajo más chico: 7,5 puntos porcentuales (IC 95%: 5,1 a 9,9), 1.247 tratados en D7.
+
+La regla se fijó en el commit a1f1fee, antes de calcular ninguna cifra de D13. Entra en la familia de Holm de `inferencia.md`, con la fila de su veredicto.
+
+## D9: Wyoming
+
+El mismo diseño de D7 (D2 y D3 con las mismas constantes, los mismos sorteos y la regla de veredicto de Colorado), con una regla fijada antes de calcular ninguna cifra de agua de Wyoming, sobre el warehouse opcional de Wyoming: los pozos horizontales con coordenadas y la producción mensual. El mes 0 del hijo es el de la primera terminación (FIRSTCOMP), como en la replicación del petróleo de Wyoming, no el de la fractura: es la diferencia con Colorado y un límite de esta prueba. El warehouse de Wyoming se abre solo para leer; la tabla `mart_causal_profundo_d9` se escribe en el de Vaca Muerta. La regla pide primero que el dato de agua alcance, y después compara.
+
+- Cobertura del dato de agua: 100% de los meses base (meses -6 a -4) de los 114 tratados de las celdas del diseño tienen agua y días efectivos; la regla pide 70%. D2 cuenta después solo a los tratados con el corte de agua medido, por eso da menos tratados.
+- D2, corte de agua: 6,7 puntos porcentuales (IC 95%: -0,7 a 13,4), con 38 tratados; en Vaca Muerta, 13,8 (IC 95%: 9,5 a 19,9). Veredicto en Wyoming: sin muestra.
+- Placebos de D2: de los de cohorte, ninguno de los 3 rompe. El placebo de cierre da 2,9 (IC 95%: -0,3 a 5,4): el intervalo toca cero, no rompe.
+- D3, en puntos del líquido base: agua por día calendario -7,7 (IC 95%: -37,6 a 6,6), agua por día producido 6,9 (IC 95%: -3,0 a 18,7), petróleo por día calendario -12,2 (IC 95%: -37,6 a 1,1), con 43 tratados.
+- Placebos de D3: del agua por día calendario, rompen previo, nunca tratados; del agua por día producido, ninguno de los 2 rompe.
+- D3 en Wyoming: sin muestra. En Vaca Muerta: entra agua en los días producidos.
+- ○ **D9, Wyoming: sin muestra.** La muestra de Wyoming no llega al mínimo de la regla: las cifras se publican pero no deciden, y Wyoming no permite probarla.
 
 ## Límites
 

@@ -8,8 +8,8 @@ Datos públicos de ECMC (producción mensual 2018 a 2024 y archivo de pozos) y d
 
 | Archivo | Bytes | sha256 |
 |---|---:|---|
-| `fracfocus_disclosure_list` | 61.854.162 | `4d3937ba834b` |
-| `pozos` | 15.765.543 | `afcdb853c7f2` |
+| `fracfocus_disclosure_list` | 61.878.602 | `84c7b50d2bf4` |
+| `pozos` | 15.766.245 | `d40a9bdcea4c` |
 | `produccion_2018` | 11.783.526 | `34f2184149f3` |
 | `produccion_2019` | 11.597.497 | `14dae3c30fc7` |
 | `produccion_2020` | 10.898.454 | `3656df463515` |
@@ -41,7 +41,7 @@ Datos públicos de ECMC (producción mensual 2018 a 2024 y archivo de pozos) y d
 | Pozos con producción que están en el archivo | 59.421 |
 | Pozos con producción que no están en el archivo | 0 |
 | Pozos con producción y coordenadas | 59.421 |
-| Pozos con producción horizontales | 12.557 |
+| Pozos con producción horizontales | 12.559 |
 | Pozos con algún mes de petróleo | 37.547 |
 | Pozos con primer petróleo censurado (enero de 2018) | 23.938 |
 | Pads (ubicaciones a menos de 50 m) | 79.197 |

@@ -1033,6 +1033,22 @@ def _ic_txt(a: float, b: float, dec: int = 1) -> str:
     return f"{_num(a, dec)} a {_num(b, dec)}"
 
 
+def _limite_nunca_agua(con) -> str:
+    """Limite sobre el placebo de nunca tratados en el agua: si D3 ya lo corrio, dice su resultado tal cual."""
+    from pipeline.causal_profundo import _fila_d3
+    try:
+        nt = _fila_d3(con, "placebo_nunca_tratados_dW")
+    except duckdb.Error:
+        nt = None
+    if nt is None:
+        return ("- La regla fijada no le asigna a D2 el placebo de nunca tratados, el que rompe D1: que los controles aún no "
+                "tratados difieran de los demás pozos, como muestra el petróleo, no se probó sobre el corte de agua; lo acota "
+                "solo el placebo previo de la tabla de D2.")
+    return ("- La regla fijada no le asigna a D2 el placebo de nunca tratados, el que rompe D1. Se corrió después, fuera de la "
+            f"regla, sobre el corte de agua, y {'rompe' if nt[5] else 'no rompe'} (renglón de D3 del resumen y "
+            "`causal_profundo.md`): es una prueba aparte, no parte del veredicto de D2.")
+
+
 def pagina_causal(con) -> str:
     """Pagina de wiki del diseno causal; lee los cinco marts `mart_causal_*`."""
     ver = {r[0]: r for r in con.execute("select * from mart_causal_veredicto").fetchall()}
@@ -1066,7 +1082,7 @@ def pagina_causal(con) -> str:
          f"(la regla pide {MIN_TRATADOS_LARGO}); diferencia {_num(v1b[3])} puntos (IC 95%: {_ic_txt(v1b[4], v1b[5])}).",
          f"- {MARCA_VEREDICTO[v2[1]]} **D2, corte de agua: {v2[1]}.** {TEXTO_VEREDICTO.get(v2[1], '')} ATT_W = {_num(v2[3])} puntos porcentuales "
          f"(IC 95%: {_ic_txt(v2[4], v2[5])}), {_g(v2[6])} tratados."]
-    from pipeline.causal_profundo import frase_d2, frase_d4, frase_d56, frase_d7, frase_lectura_d56
+    from pipeline.causal_profundo import frase_d2, frase_d4, frase_d13, frase_d56, frase_d7, frase_lectura_d56
     d3 = frase_d2(con)
     if d3:
         L.append(d3)
@@ -1077,6 +1093,9 @@ def pagina_causal(con) -> str:
     d7 = frase_d7(con)
     if d7:
         L.append(d7)
+    d13 = frase_d13(con)
+    if d13:
+        L.append(d13)
     lectura_d56 = frase_lectura_d56(con)
     L.append("")
     mitad ="menos de la mitad" if cierre[2] < FRACCION_CIERRE * v2[3] else "la mitad o más"
@@ -1128,7 +1147,7 @@ def pagina_causal(con) -> str:
                      f"{'sí' if r[6] else 'no'} |")
     L += ["", f"Tendencias no paralelas: el mayor paso previo es {_num(m_paso)} puntos (con la serie de los meses -3 a -1: "
           f"{_num(b3)}, {_num(b2)} y {_num(b1)}). M* = {_g(m_est, 2)}: si cada paso posterior a la fractura pudiera desviarse "
-          f"{_g(m_est, 2)} veces ese paso, el IC robusto ya tocaría cero. La pendiente previa que se detectaría con 80% de "
+          f"{_g(m_est, 2)} veces ese paso, el IC robusto ya tocaría cero. Es el M* simplificado, que queda como registro; la cota de Rambachan y Roth (`cota_rr.md`) lo reemplaza en el texto. La pendiente previa que se detectaría con 80% de "
           f"potencia es {_num(pot)} puntos por mes.", "",
           "Dejar un operador afuera (operadores con 50 tratados o más), ATT(1).", "",
           "| Sin el operador | Tratados restantes | ATT (puntos) | IC 95% |", "| --- | ---: | ---: | --- |"]
@@ -1152,9 +1171,10 @@ def pagina_causal(con) -> str:
           "sobre cero (su IC lo excluye); D2 no mide si su propia suba persiste.",
           "- Qué es nuevo: que el padre responda a la fractura de un hijo cercano ya lo trata como señal de interferencia la "
           "literatura de golpes de fractura (frac hits) de Vaca Muerta y de cuencas de Estados Unidos (referencias en "
-          "`docs/revision-independiente.md`). El antecedente causal más cercano es Min y coautores, \"Data-driven Analysis for "
-          "Causality of Parent-child Interactions in the Bakken\" (URTeC). Lo nuevo acá es el diseño, sobre dato mensual "
-          "público de toda la cuenca, no el hecho físico.",
+          "`docs/revision-independiente.md`). Min y coautores, \"Data-driven Analysis for Causality of Parent-child "
+          "Interactions in the Bakken\" (URTeC), tienen causalidad en el título; de ese trabajo leímos el resumen y una nota "
+          "de JPT, que no describen el diseño ([literatura.md](literatura.md)). Lo que agrega este trabajo, hasta donde "
+          "leímos, es el diseño sobre dato mensual público de toda la cuenca, no el hecho físico.",
           f"- Placebo de cierre: meses de padres sin hijo a menos de 2 km desde 12 meses antes hasta el mes siguiente, con menos "
           f"de medio mes producido y base de 0,8 o más, contra meses sin cierre del mismo mes calendario y grupo de edad: "
           f"{_num(cierre[2])} puntos porcentuales (IC 95%: {_ic_txt(cierre[3], cierre[4])}), {_g(cierre[5])} meses cerrados. El cierre "
@@ -1177,6 +1197,8 @@ def pagina_causal(con) -> str:
         if a and w:
             L.append(f"| {nombre} | {_g(a[5])} | {_num(a[2])} | {_ic_txt(a[3], a[4])} | {_g(w[5])} | {_num(w[2])} | "
                      f"{_ic_txt(w[3], w[4])} |")
+    L += ["", "Esta partición de D1 y D2 por posición no tiene veredicto propio; el contraste entre costado y punta con su regla fijada "
+          "está en [mecanismo.md](mecanismo.md), donde sostiene."]
     L += ["", f"Cotas de Lee del caudal por día producido en el mes 1 (meses con 0,9 del mes producido o más): de "
           f"{_num(100 * lb)} a {_num(100 * la)} puntos. Producen el mes entero {_g(100 * qt)}% de los tratados y "
           f"{_g(100 * qc)}% de los controles; con esa diferencia el recorte es grande y la cota no separa un efecto sobre "
@@ -1187,7 +1209,7 @@ def pagina_causal(con) -> str:
           "no se pueden probar después de la fractura, y la exclusión del placebo de cierre.",
           "- El corte de agua es una proporción: sube si entra agua o si el petróleo cae más que el agua. Las dos lecturas son "
           "físicas y ninguna es el cierre del operador (el placebo de cierre acota ese canal), pero D2 no dice cuál de las "
-          "dos domina" + ("; lo mide D3, fijado después, en `causal_profundo.md`." if d3 else "."),
+          "dos domina" + ("; lo mide D3, con su regla fijada tras ver D2, en `causal_profundo.md`." if d3 else "."),
           f"- La pretendencia de D1 no es plana: el mes -1 vale {_num(b1)} puntos (IC 95%: {_ic_txt(pri[-1][6], pri[-1][7])}). "
           "Los cercanos que se tratan antes ya venían cayendo respecto de los que se tratan después.",
           "- Solo cuenta la primera fractura a menos de 1 km de cada padre: los golpes siguientes no se miden acá.",
@@ -1195,9 +1217,7 @@ def pagina_causal(con) -> str:
           f"nunca tratados {_num(s1[1][5])}, y los nunca tratados con fechas sorteadas ya dan "
           f"{_num(pl[('D1', 'nunca_tratados')][3])} puntos sin ninguna fractura cerca.",
           "- Un hijo sin fecha de fractura cargada no cuenta como golpe: un control puede tener uno cerca sin que se vea.",
-          "- La regla fijada no le asigna a D2 el placebo de nunca tratados, el que rompe D1: que los controles aún no tratados "
-          "difieran de los demás pozos, como muestra el petróleo, no se probó sobre el corte de agua; lo acota solo el placebo "
-          "previo de la tabla de D2.",
+          _limite_nunca_agua(con),
           "- Tratado y control se definen por la distancia entre bocas de pozo, no entre ramas: según `trayectorias.md`, parte de "
           "los pares cercanos tiene las ramas a 1 km o más y parte de los pares de control las tiene a menos de 1 km. Ese error "
           "de clasificación lleva sobre todo hacia cero, pero el placebo de distancia falsa también se mide entre bocas.",

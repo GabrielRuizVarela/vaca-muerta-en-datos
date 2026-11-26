@@ -34,7 +34,8 @@ def test_cada_claim_de_wyoming_encuentra_su_cifra_en_la_pagina_publicada():
     wy = [c for c in claims.CLAIMS if c.almacen == "wyoming"]
     assert len(wy) > 100
     assert {c.fichero for c in wy} == {"wiki/hallazgos/wyoming_datos.md", "wiki/hallazgos/replicacion_wyoming.md",
-                                       "wiki/hallazgos/replicacion_cuencas.md", "README.md", "site/globo.html"}
+                                       "wiki/hallazgos/replicacion_cuencas.md", "README.md", "site/globo.html",
+                                       "docs/paper/paper.md"}
     assert len({c.id for c in wy}) == len(wy)
     for c in wy:
         texto = _texto(ROOT / c.fichero)

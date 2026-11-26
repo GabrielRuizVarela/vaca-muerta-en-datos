@@ -241,7 +241,7 @@ GLOSARIO = (
     '<dt>Hijo</dt><dd>El pozo nuevo que se fractura junto a uno en producción (en inglés, child).</dd>'
     '<dt>Golpe de fractura</dt><dd>Caída de la producción de un pozo vecino mientras se fractura el nuevo (en inglés, frac hit).</dd>'
     '<dt>Puntos</dt><dd>Puntos porcentuales del caudal previo del padre: pasar de 100 a 80 es una caída de 20 puntos.</dd>'
-    '<dt>Diferido</dt><dd>Producción que se atrasa y no se pierde: el pozo la entrega más tarde.</dd>'
+    '<dt>Diferido</dt><dd>Producción que falta contra el control; si llega, llega más tarde.</dd>'
     '<dt>Pad</dt><dd>Plataforma de superficie desde la que se perforan varios pozos.</dd>'
     '<dt>Pozo de control</dt><dd>Pozo que produce a 2 a 5 km de un pozo hijo; sirve de comparación.</dd>'
     '<dt>Brecha</dt><dd>El caudal de los padres menos el de los pozos de control, en puntos.</dd>'

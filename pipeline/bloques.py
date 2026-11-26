@@ -281,9 +281,9 @@ def conteo_pruebas(con) -> dict:
 
 
 def linea_pruebas(c: dict) -> str:
-    return (f"Pruebas estadísticas corridas en el proyecto: {_g(c['total'])} ({_g(c['hipotesis'])} hipótesis del libro, "
+    return (f"Pruebas estadísticas del libro: {_g(c['total'])} ({_g(c['hipotesis'])} hipótesis del libro, "
             f"{_g(c['robustez'])} subconjuntos de robustez, {_g(c['descomposicion'])} intervalos de la descomposición, "
-            f"{_g(c['hijo'])} intervalos descriptivos del lado del hijo y {_g(c['bloques'])} intervalos por bloques que no son hipótesis), sin ajuste por comparaciones múltiples.")
+            f"{_g(c['hijo'])} intervalos descriptivos del lado del hijo y {_g(c['bloques'])} intervalos por bloques que no son hipótesis), sin ajuste por comparaciones múltiples. No cuenta los diseños causales, con sus placebos y cortes, ni las escalas de bloques ni las permutaciones de D2: esas se cuentan aparte en `inferencia.md`.")
 
 
 # ------------------------------------------------------------------ pagina

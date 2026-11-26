@@ -14,8 +14,11 @@ Tablas que se arman (mismas columnas que pipeline/sql/01 a 02; el pipeline las l
     'propio' y 'unica'.
   * fct_produccion: pozo_id, mes (primer dia del mes), petroleo_m3 (negativos pasan a 0, faltantes a 0), dias_mes (dias del mes
     calendario). Igual que 02_core.sql, el indice usa los dias del mes calendario y NO los dias de produccion; la columna
-    dias_produccion del CSV mensual se valida (no puede superar los dias del mes) y no se usa en el calculo (el resultado B del
-    pipeline publico, que usa dias efectivos, no se calcula aca).
+    dias_produccion del CSV mensual se valida (no puede superar los dias del mes) y no se usa en el calculo del indice (el resultado B
+    del pipeline publico, que usa dias efectivos, no se calcula aca). Con la columna opcional agua_m3 (porcion D, pipeline.tarjeta)
+    fct_produccion trae ademas agua_m3 (no interpretable o negativo queda nulo) y dias_efectivos (dias_produccion tal cual si es un
+    numero mayor o igual a cero; vacio, negativo o no interpretable, o sin la columna, vale dias_mes) y se corre D2 de pipeline.causal
+    sobre esas tablas; salen tarjeta.json y tarjeta.md ademas de lo de siempre.
   * ultimo_mes: el mayor mes del archivo mensual.
   * stg_fractura y dim_fractura_pozo: una fila por trabajo de fractura (pozo_id, fecha_inicio, rama_horizontal_m, etapas, arena_tn,
     presion_maxima_psi; terminacion nula; operador). Se aplican las reglas de stg_fractura: rama 0 pasa a faltante.
@@ -45,8 +48,8 @@ y p de Holm menor que 0,05, como en pipeline.dosis; no se escribe ningun veredic
 Condicion de muestra: el modelo no se corre si tiene menos de MIN_EVENTOS_DOSIS = 100 eventos o menos de MIN_PADS_DOSIS = 20 pads hijo.
 Aviso de muestra chica de la brecha: menos de MIN_CERCANOS = 30 eventos cercanos o menos de MIN_PADS = 10 pads hijo de los cercanos.
 
-Salidas (SOLO en la carpeta --out): resumen.json (todas las cifras), resumen.md (el informe en espanol) y eventos.csv (un renglon por
-evento cercano con ids, km, mes, indice a k = 1, caida y variables). Nada se escribe en el repo, en el warehouse ni en otra carpeta.
+Salidas (SOLO en la carpeta --out): resumen.json (todas las cifras), resumen.md (el informe en espanol), eventos.csv (un renglon por
+evento cercano con ids, km, mes, indice a k = 1, caida y variables) y la tarjeta (tarjeta.json y tarjeta.md, pipeline.tarjeta). Nada se escribe en el repo, en el warehouse ni en otra carpeta.
 
 Privacidad por construccion: el modulo REHUSA correr, con un mensaje que dice por que y codigo de salida 2, si cualquier ruta de
 entrada o de salida cae dentro del repositorio y esta versionada (git ls-files) o no esta ignorada por git (git check-ignore); fuera
@@ -74,7 +77,7 @@ from pathlib import Path
 import duckdb
 import numpy as np
 
-from pipeline import dosis, placebo
+from pipeline import dosis, placebo, tarjeta
 from pipeline.ingest import ROOT
 from pipeline.placebo import _g
 
@@ -88,6 +91,11 @@ SQL_DIR = Path(__file__).parent / "sql"
 POZOS_OBLIGATORIAS = ("pozo_id", "pad_id", "lon", "lat", "fecha_fractura", "arena_tn", "etapas", "rama_m",
                       "presion_max_psi")
 MENSUAL_OBLIGATORIAS = ("pozo_id", "mes", "petroleo_m3")
+# Columnas opcionales del mensual: dias_produccion se valida y, con agua_m3, entra al diseno D2 (placebo de cierre); agua_m3
+# alimenta el diseno de corte de agua. Agregar diario o cierres exige tocar estas constantes (pipeline.claims las lee para
+# comprobar lo que el README, el resumen y el sitio dicen que el código lee).
+MENSUAL_OPCIONALES = ("dias_produccion", "agua_m3")
+ENTRADAS = ("pozos.csv", "mensual.csv")
 VARS_DOSIS = ("arena_etapa", "arena_rama", "presion", "deplecion")
 
 _E_INT = "try_cast(nullif(trim({c}), '') as integer)"
@@ -160,8 +168,8 @@ def leer_csvs(pozos_csv, mensual_csv):
     nunca valores de las celdas.
     """
     con = duckdb.connect(":memory:")
-    for etiqueta, ruta, tabla in (("pozos.csv", pozos_csv, "raw_pozos"),
-                                  ("mensual.csv", mensual_csv, "raw_mensual")):
+    for etiqueta, ruta, tabla in ((ENTRADAS[0], pozos_csv, "raw_pozos"),
+                                  (ENTRADAS[1], mensual_csv, "raw_mensual")):
         p = str(ruta).replace("'", "''")
         try:
             con.execute(f"create table {tabla} as select * from read_csv('{p}', header = true, all_varchar = true)")
@@ -218,13 +226,33 @@ def armar_base(pozos_csv, mensual_csv):
     id_m = _E_INT.format(c="pozo_id")
     mes_m = _E_MES.format(c="mes")
     pet = _E_DBL.format(c="petroleo_m3")
+    con_agua = "agua_m3" in MENSUAL_OPCIONALES and "agua_m3" in cols_m
+    con_dias = "dias_produccion" in MENSUAL_OPCIONALES and "dias_produccion" in cols_m
+    if con_dias:
+        # Una columna dias_produccion con todas las celdas vacias es como no tenerla: sin meses con dias no hay cierre que
+        # probar, y la tarjeta tiene que decir "sin prueba de cierre" (revision del PR #187).
+        con_dias = con.execute("""select count(*) from raw_mensual
+            where nullif(trim(cast(dias_produccion as varchar)), '') is not null""").fetchone()[0] > 0
+    dm_expr = f"extract(day from last_day(date_trunc('month', {mes_m})))::double"
+    if con_agua:
+        # Agua (porcion D, pipeline.tarjeta): agua_m3 no interpretable o negativo queda sin dato (nulo); dias_efectivos sale de
+        # dias_produccion tal cual si es un numero mayor o igual a cero (como el pipeline publico), y si falta o no se
+        # entiende vale el mes completo (dias_mes), nunca cero: un cero se leeria como un cierre.
+        ag = _E_DBL.format(c="agua_m3")
+        dd = _E_DBL.format(c="dias_produccion")
+        dias = f"case when {dd} is null or {dd} < 0 then {dm_expr} else {dd} end" if con_dias else dm_expr
+        extra_cte = (f", case when {ag} is null or {ag} < 0 then null else {ag} end as agua_m3, "
+                     f"{dias} as dias_efectivos")
+        extra_sel = "sum(m.agua_m3) as agua_m3, max(m.dias_efectivos) as dias_efectivos, "
+    else:
+        extra_cte = extra_sel = ""
     con.execute(f"""create table fct_produccion as
         with m as (
             select {id_m} as pozo_id, date_trunc('month', {mes_m}) as mes,
-                case when {pet} is null or {pet} < 0 then 0.0 else {pet} end as petroleo_m3
+                case when {pet} is null or {pet} < 0 then 0.0 else {pet} end as petroleo_m3{extra_cte}
             from raw_mensual
         )
-        select m.pozo_id, m.mes, sum(m.petroleo_m3) as petroleo_m3,
+        select m.pozo_id, m.mes, sum(m.petroleo_m3) as petroleo_m3, {extra_sel}
             extract(day from last_day(m.mes))::integer as dias_mes
         from m join (select distinct {id_p} as pozo_id from raw_pozos) p using (pozo_id)
         group by m.pozo_id, m.mes""")
@@ -264,7 +292,17 @@ def armar_base(pozos_csv, mensual_csv):
     n_ign = con.execute(f"""select count(*) from raw_mensual r
         left join (select distinct {id_p} as pozo_id from raw_pozos) p
         on {_E_INT.format(c='r.pozo_id')} = p.pozo_id where p.pozo_id is null""").fetchone()[0]
-    if "dias_produccion" in cols_m:
+    n_dias_sin = n_agua = 0
+    if con_agua:
+        lim = f"extract(day from last_day(date_trunc('month', {_E_MES.format(c='mes')})))"
+        dd = _E_DBL.format(c="dias_produccion")
+        n_dias = con.execute(f"""select count(*) from raw_mensual where {dd} > {lim}""").fetchone()[0] if con_dias else 0
+        n_dias_sin = con.execute(f"""select count(*) from raw_mensual
+            where {dd} is null or {dd} < 0""").fetchone()[0] if con_dias else 0
+        ag = _E_DBL.format(c="agua_m3")
+        n_agua = con.execute(f"""select count(*) from raw_mensual where nullif(trim(agua_m3), '') is not null
+            and ({ag} is null or {ag} < 0)""").fetchone()[0]
+    elif con_dias:
         lim = f"extract(day from last_day(date_trunc('month', {_E_MES.format(c='mes')})))"
         n_dias = con.execute(f"""select count(*) from raw_mensual
             where nullif(trim(dias_produccion), '') is not null
@@ -282,16 +320,25 @@ def armar_base(pozos_csv, mensual_csv):
     avisos = []
     if n_ign:
         avisos.append(f"Se ignoraron {n_ign} filas del mensual con pozo ausente en pozos.csv.")
-    if n_dias:
+    if n_dias and con_agua:
+        avisos.append(f"{n_dias} filas del mensual traen dias_produccion mayor que los días del mes; se usó tal cual "
+                      "en el cálculo del corte de agua.")
+    elif n_dias:
         avisos.append(f"{n_dias} filas del mensual traen dias_produccion mayor que los días del mes o no "
                       "interpretable; esa columna no se usa en el cálculo.")
+    if n_dias_sin:
+        avisos.append(f"{n_dias_sin} filas del mensual traen dias_produccion vacío, negativo o no interpretable; se "
+                      "tomó el mes completo.")
+    if n_agua:
+        avisos.append(f"{n_agua} filas del mensual traen agua_m3 no interpretable o negativo; se tomaron como sin dato.")
     if n_fecha:
         avisos.append(f"{n_fecha} pozos traen fecha_fractura no interpretable; se tomaron como pozos sin "
                       "fractura propia.")
     if n_pet:
         avisos.append(f"{n_pet} filas del mensual traen petroleo_m3 no interpretable; se tomaron como 0.")
     info = {"pozos": n_pozos, "pozos_con_fractura": n_frac, "filas_mensual": n_filas,
-            "mes_desde": dmin.strftime("%Y-%m"), "mes_hasta": dmax.strftime("%Y-%m"), "avisos": avisos}
+            "mes_desde": dmin.strftime("%Y-%m"), "mes_hasta": dmax.strftime("%Y-%m"), "avisos": avisos,
+            "con_agua": con_agua, "con_dias": con_dias}
     return con, info
 
 
@@ -428,8 +475,8 @@ def informe(res) -> str:
             "estudio público).",
             "- Los pozos del archivo se toman todos como padres e hijos posibles; si el archivo es una parte del "
             "campo, la distancia al hijo más cercano ignora los pozos que no están.",
-            "", "Los datos no salieron de la carpeta de salida: el módulo solo escribió resumen.json, resumen.md y "
-            "eventos.csv en ella."]
+            "", "Los datos no salieron de la carpeta de salida: el módulo solo escribió resumen.json, resumen.md, "
+            "eventos.csv, tarjeta.json y tarjeta.md en ella."]
     return "\n".join(lin) + "\n"
 
 def _redondear(x):
@@ -490,12 +537,22 @@ def main(argv=None) -> int:
     con, info = armar_base(args.wells, args.monthly)
     br = brecha(con, reps_b)
     dz, d, y = modelo_dosis(con, reps_d)
+    d2 = None
+    if info["con_agua"]:
+        d2 = tarjeta.d2_local(con, con_cierre=info["con_dias"], reps=args.reps)
     res = {"entradas": {k: info[k] for k in ("pozos", "pozos_con_fractura", "filas_mensual", "mes_desde",
                                             "mes_hasta")},
            "avisos": info["avisos"], "brecha": br, "dosis": dz}
+    if d2 is not None:
+        res["agua"] = d2
     (out / "resumen.json").write_text(json.dumps(_redondear(res), indent=2, ensure_ascii=False) + "\n")
     (out / "resumen.md").write_text(informe(res))
     _escribir_eventos(out / "eventos.csv", d, y)
+    # La tarjeta se escribe siempre: sin agua_m3 dice "sin dato de agua" (regla de pipeline.tarjeta).
+    tarjeta.escribir_tarjeta(out, tarjeta.armar_tarjeta({"brecha": br, "d2": d2}))
+    if d2 is not None:
+        print(f"agua D2: dW {_g(d2['att'], 1)} puntos porcentuales (IC {_g(d2['ic_bajo'], 1)} a {_g(d2['ic_alto'], 1)}), "
+              f"tratados: {_g(d2['n_tratados'])}, veredicto: {d2['veredicto']}")
     k1, k6 = br["k1"], br["k6"]
     print(f"pozos: {_g(info['pozos'])}, meses: {info['mes_desde']} a {info['mes_hasta']}")
     for etiqueta, r in (("mes 1", k1), ("mes 6", k6)):

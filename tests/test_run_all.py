@@ -82,16 +82,29 @@ def test_registro_real_tiene_el_orden_documentado():
     assert next(p for p in run_all.PASOS if p.nombre == "ingest").solo_con_flag
     assert nombres.index("trayectorias") < nombres.index("hijo_pad") < nombres.index("wiki")
     assert nombres.index("golpes_mismo_padre") < nombres.index("calendario_golpes") < nombres.index("wiki")
+    # the causal pages are built before wiki, which deletes them when their marts are absent
+    assert nombres.index("hijo_pad") < nombres.index("causal") < nombres.index("causal_profundo") < nombres.index("colorado_build") < nombres.index("causal_profundo_colorado") < nombres.index("wiki")
+    # this phase's designs: D10 to D12 and the bound after causal_profundo; Holm after both basins, before the pages
+    assert nombres.index("causal_profundo") < nombres.index("causal_exposicion") < nombres.index("apilado") < nombres.index("cota_rr")
+    assert nombres.index("causal_profundo_colorado") < nombres.index("causal_profundo_wyoming") < nombres.index("inferencia") < nombres.index("wiki")
+    assert next(p for p in run_all.PASOS if p.nombre == "causal_profundo_wyoming").requiere == "data/wyoming/warehouse.duckdb"
 
 
-def test_pasos_de_colorado_son_opcionales_y_estan_en_la_lista(capsys):
+def test_pasos_de_colorado_son_opcionales_y_estan_en_la_lista(capsys, tmp_path, monkeypatch):
+    monkeypatch.setattr(run_all, "ROOT", tmp_path)
+    (tmp_path / "data" / "colorado").mkdir(parents=True)
+    (tmp_path / "data" / "colorado" / "warehouse.duckdb").write_text("")
     co = [p for p in run_all.PASOS if p.solo_con_colorado]
-    assert [p.nombre for p in co] == ["colorado_ingest", "colorado_build", "replicacion", "dia_inicio_colorado", "dias_perdidos_colorado", "golpes_mismo_mes_colorado",
-                                     "golpes_mismo_padre_colorado", "globo"]
+    assert [p.nombre for p in co] == ["colorado_ingest", "colorado_build", "globo"]
     por_defecto = [p.nombre for p in run_all.seleccionar(run_all.PASOS)]
     assert not {p.nombre for p in co} & set(por_defecto)
+    # the replication steps are not opt-in: they run whenever the Colorado warehouse is on disk
+    for n in ("replicacion", "dia_inicio_colorado", "dias_perdidos_colorado", "golpes_mismo_mes_colorado", "golpes_mismo_padre_colorado"):
+        p = next(p for p in run_all.PASOS if p.nombre == n)
+        assert not p.solo_con_colorado and p.requiere == "data/colorado/warehouse.duckdb"
     con_flag = [p.nombre for p in run_all.seleccionar(run_all.PASOS, con_colorado=True)]
-    assert con_flag.index("colorado_ingest") < con_flag.index("colorado_build") < con_flag.index("replicacion") < con_flag.index("wiki")
+    assert con_flag.index("colorado_ingest") < con_flag.index("colorado_build") < con_flag.index("causal_profundo_colorado") < con_flag.index("replicacion") < con_flag.index("wiki")
+    assert con_flag.index("colorado_build") < con_flag.index("dia_inicio_colorado") < con_flag.index("globo")
     assert con_flag.index("dia_inicio") < con_flag.index("dia_inicio_colorado") < con_flag.index("wiki")
     assert con_flag.index("dias_perdidos") < con_flag.index("dias_perdidos_colorado") < con_flag.index("wiki")
     assert con_flag.index("golpes_mismo_mes") < con_flag.index("golpes_mismo_mes_colorado") < con_flag.index("wiki")
@@ -104,5 +117,48 @@ def test_pasos_de_colorado_son_opcionales_y_estan_en_la_lista(capsys):
     assert run_all.main(["--list"]) == 0
     assert "con --with-colorado" in capsys.readouterr().out
     corren, omitidos = run_all.pasos_muestra()
-    assert not {"colorado_ingest", "colorado_build", "replicacion", "dia_inicio_colorado", "dias_perdidos_colorado", "golpes_mismo_mes_colorado",
-                 "golpes_mismo_padre_colorado", "globo"} & (set(omitidos) | {p.nombre for p in corren})
+    assert not {"colorado_ingest", "colorado_build", "globo"} & (set(omitidos) | {p.nombre for p in corren})
+
+
+def test_requiere_deja_fuera_el_paso_si_falta_el_archivo(tmp_path, monkeypatch):
+    monkeypatch.setattr(run_all, "ROOT", tmp_path)
+    pasos = [run_all.Paso("a", "m.a"), run_all.Paso("b", "m.b", requiere="data/x.duckdb"), run_all.Paso("c", "m.c")]
+    fuera: dict[str, str] = {}
+    assert [p.nombre for p in run_all.seleccionar(pasos, fuera=fuera)] == ["a", "c"]
+    assert fuera == {"b": "falta data/x.duckdb"}
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "x.duckdb").write_text("")
+    fuera = {}
+    assert [p.nombre for p in run_all.seleccionar(pasos, fuera=fuera)] == ["a", "b", "c"]
+    assert fuera == {}
+
+
+def test_paso_causal_de_colorado_no_es_opt_in_y_requiere_su_base():
+    p = next(p for p in run_all.PASOS if p.nombre == "causal_profundo_colorado")
+    assert not p.solo_con_colorado
+    assert p.requiere == "data/colorado/warehouse.duckdb" and p.args == ("--cuenca", "colorado")
+
+
+def test_correr_omite_el_paso_cuyo_requisito_no_aparecio(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(run_all, "ROOT", tmp_path)
+    corridos = []
+    pasos = [run_all.Paso("a", "m.a"), run_all.Paso("b", "m.b", requiere="data/x.duckdb"), run_all.Paso("c", "m.c")]
+    filas = run_all.correr(pasos, ejecutor=lambda p: corridos.append(p.nombre) or 0)
+    assert corridos == ["a", "c"] and [f[2] for f in filas] == ["OK", "omitido", "OK"]
+
+
+def test_con_colorado_no_deja_fuera_los_pasos_que_leen_el_almacen_que_se_arma(tmp_path, monkeypatch):
+    monkeypatch.setattr(run_all, "ROOT", tmp_path)   # no data/colorado/warehouse.duckdb yet
+    nombres = [p.nombre for p in run_all.seleccionar(run_all.PASOS, con_colorado=True)]
+    assert {"causal_profundo_colorado", "replicacion", "dia_inicio_colorado", "golpes_mismo_padre_colorado"} <= set(nombres)
+    assert "replicacion" not in [p.nombre for p in run_all.seleccionar(run_all.PASOS)]
+
+
+def test_only_con_un_paso_sin_su_requisito_sale_con_error(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(run_all, "ROOT", tmp_path)   # no data/colorado/warehouse.duckdb
+    assert run_all.main(["--only", "causal_profundo_colorado"]) == 2
+    assert "causal_profundo_colorado" in capsys.readouterr().err
+    # --with-colorado only covers the missing warehouse when colorado_build is in the run too
+    assert run_all.main(["--only", "causal_profundo_colorado", "--with-colorado"]) == 2
+    assert [p.nombre for p in run_all.seleccionar(run_all.PASOS, solo=["colorado_build", "causal_profundo_colorado"],
+                                                   con_colorado=True)] == ["colorado_build", "causal_profundo_colorado"]

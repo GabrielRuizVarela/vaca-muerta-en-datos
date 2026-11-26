@@ -3075,7 +3075,7 @@ void main() { gl_Position = u_vp * vec4(a_p.x, a_p.y + u_dy, a_p.z, 1.); float a
     },
     {
       titulo: "El cierre", seg: 20,
-      frase: "Del mes 2 al 6 se cierra entre el " + fmt(100 * Math.min(...pub.cierre.map(c => c.parte)), 0) + "% y el " + fmt(100 * Math.max(...pub.cierre.map(c => c.parte)), 0) + "% de la brecha: sería petróleo que llega tarde. No está probado que vuelva todo.",
+      frase: "Del mes 2 al 6 se cierra entre el " + fmt(100 * Math.min(...pub.cierre.map(c => c.parte)), 0) + "% y el " + fmt(100 * Math.max(...pub.cierre.map(c => c.parte)), 0) + "% de la brecha del índice: no está probado que el petróleo que falta llegue después.",
       marca: "medido", nota: "Diferido medio por padre en los meses 0 a 6: " + fmt(pub.dif_bbl, 0) + " bbl (intervalo de 95%: " + fmt(pub.dif_ic_bajo_bbl, 0) + " a " + fmt(pub.dif_ic_alto_bbl, 0) + "). Que vuelva todo no está probado: lo máximo que podría no volver es " + fmt(pub.cota_bbl, 0) + " bbl por evento.",
       tabla: () => ({ pie: "Brecha en puntos, según qué padres hacen de control", cab: ["Controles a", "mes 1", "mes 6", "se cierra"], filas: pub.cierre.map(c => [c.control, fmt(100 * c.brecha1, 1), fmt(100 * c.brecha6, 1), fmt(100 * c.parte, 0) + "%"]) }),
       entrar() { tramo("foco", est, "foco", 0, 1); const yaEsta = est.morph > .95; tramo("morph", est, "morph", 1, yaEsta ? 0 : 4); rotulosGrafico(); rotulosCierre(); volar(vistaCierre(), 5); animar("cierre", yaEsta ? 2 : 5, () => {}, () => tramo("cierre", est, "cierre", N_CIERRE, 8)); },

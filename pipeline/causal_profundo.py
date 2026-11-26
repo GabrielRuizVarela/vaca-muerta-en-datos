@@ -118,8 +118,49 @@ D7. Colorado (segunda cuenca independiente).
     "sostiene" y D3 de Colorado da el mismo veredicto que D3 de Vaca Muerta; "no se repite" si D2 de Colorado es "no firme"
     o cualquier otro que no sea "sostiene"; "sin muestra" si D2 de Colorado lo es; "se repite en parte" en otro caso.
 
+D13. Donde se sostiene la suba de Colorado. Fijada antes de calcular ninguna cifra de D13.
+  * Que se sabia al fijarla: de Colorado esta publicado el dW de D7 (9,0 puntos, con 1.247 tratados) y sus resultados de
+    petroleo; no hay publicada ninguna cifra de agua de Colorado por operador (se busco en wiki/hallazgos). En Vaca Muerta la
+    suba depende de YPF (D6); la pregunta de un revisor externo es si Colorado, con 1.247 tratados, se repite entre operadores.
+  * Cortes: los mismos de D6 sobre las celdas de D7 (cel_pri) y los mismos sorteos W que arma _d7, con la maquinaria de _d6
+    (celdas_por_mascara para "solo el operador", causal._celdas_sin_operador para "sin el operador"): cada operador con
+    MIN_TRATADOS_OPERADOR o mas tratados en las celdas de D7, ambos cortes, todos publicados. No hay cortes de edad, periodo
+    ni area: la pregunta de D13 es el operador.
+  * Veredicto (`veredicto_general`) sobre dW: "general" si sin cada operador con el minimo el IC bajo sigue sobre cero;
+    "depende de un operador", con sus nombres, en otro caso. Valor del veredicto: el "sin el operador" de IC bajo mas chico,
+    con su IC, como en D6.
+  * "sin muestra" si la compuerta de cobertura de agua de D7 no pasa, si ningun operador llega al minimo o si llega uno solo
+    (D6 con un solo operador daria "general" o "depende" sobre un unico corte; con uno solo, "sin el operador" deja a los
+    demas sin mas contraste y no alcanza para decir "general", asi que D13 pide al menos dos).
+  * Se corre solo si D7 (cuenca Colorado) paso la compuerta, despues de las filas de D7. Mart: mart_causal_profundo_d13,
+    con las columnas de COLS_D6 y la fila de veredicto de D6, y una columna `diseno` para la familia de Holm.
+  * Holm: D13 entra en FAMILIA_CONFIRMATORIA de pipeline.inferencia con la fila de su veredicto, como D6; la familia pasa de
+    16 a 17 disenos. Esto se fija antes de calcular y puede cambiar el p ajustado por Holm de los otros disenos.
+  * Se publica cualquiera sea el veredicto: una seccion de D13 en la pagina de causal_profundo con la tabla de cortes, el
+    veredicto y el commit de esta regla, y un renglon en el resumen de causal.md: "general": "En Colorado la suba se sostiene
+    sin cada uno de sus operadores grandes (D13)"; "depende de un operador": "En Colorado tambien depende de un operador:
+    <nombre>"; "sin muestra": "D13 no tiene muestra".
+
 D8. Lectura operativa: solo si D3 da "entra agua" (o en los dias producidos) y D4 da "gradiente" de distancia. Un parrafo, sin
 dinero (eso es otra unidad), sin veredicto.
+
+
+D9. Wyoming (tercera cuenca). Fijada antes de calcular ningun numero de agua de Wyoming: la replicacion del petroleo de
+Wyoming ya corrio (regla d4a7355, no se replico) y el corte de agua de Wyoming no se calculo nunca.
+  * El mismo diseno de D7, sin cambiar ninguna constante ni ningun umbral: D2 y D3 con sus placebos, la compuerta de
+    cobertura de agua (COBERTURA_MIN sobre los meses base de los tratados), la semilla SEMILLA_CAUSAL, las mismas REPS, y
+    `veredicto_colorado` como regla de veredicto ("se repite", "se repite en parte", "no se repite", "sin dato de agua",
+    "sin muestra"), comparando con el D3 de Vaca Muerta.
+  * Dato: el warehouse opcional de Wyoming (data/wyoming/warehouse.duckdb) con las tablas que arma pipeline/wyoming y que
+    lee pipeline.replicacion.preparar, las mismas de la replicacion del petroleo de Wyoming.
+  * Mes 0 del hijo: el mes de FIRSTCOMP (primera terminacion), como en la replicacion del petroleo de Wyoming. Es la
+    diferencia con Colorado y va escrita como limite: un mes 0 corrido hacia adelante mete meses posteriores a la fractura
+    en la base y achica D2; "no se repite" no separa "no hay suba" de "el mes 0 esta corrido".
+  * Mart: mart_causal_profundo_d9, con las columnas de mart_causal_profundo_d7.
+  * Se publica cualquiera sea el veredicto: la seccion de D9 en la pagina de causal_profundo y, en el README, el renglon que
+    hoy dice "Se repite en Colorado" suma Wyoming con su veredicto y su cifra. "se repite": la suba del agua aparece en dos
+    cuencas fuera de Vaca Muerta. "se repite en parte" o "no se repite": se dice asi, con la reserva del mes 0. "sin dato
+    de agua" o "sin muestra": se dice que Wyoming no permite probarla.
 
 Lo que no dice: causa bajo los supuestos de pipeline.causal (tendencias paralelas condicionales, sin anticipacion mas alla de
 3 meses, sin derrame sobre controles limpios a 2 km), no un hecho fisico medido. Sin presion de boca ni produccion diaria no
@@ -746,6 +787,11 @@ def _d5(con, D: dict, coh: dict, bases: dict, W: np.ndarray, wells: np.ndarray) 
     return fila
 
 
+# ---- D13: donde se sostiene la suba de Colorado (regla en el docstring del archivo; todavia sin calculo)
+
+MART_D13 = "mart_causal_profundo_d13"
+MIN_OPERADORES_D13 = 2    # con menos de dos operadores con el minimo, D13 da "sin muestra"
+
 # ---- D6: donde se sostiene
 
 COLS_D6 = [("corte", "varchar"), ("grupo", "varchar"), ("n_tratados", "integer"), ("n_controles", "integer"),
@@ -769,14 +815,33 @@ def _fila_d6(corte: str, grupo: str, rr: dict | None) -> tuple:
             float(rr["ic_alto"]))
 
 
-def _d6(con, D: dict, W: np.ndarray, cel_pri: list[dict]) -> tuple:
-    """D6: donde se sostiene dW de D2. Devuelve las filas del mart y la fila de veredicto."""
+def _estimador_agua(D: dict, W: np.ndarray):
+    """dW de D2 (k = 0) sobre unas celdas con los sorteos W; None si no hay celdas."""
     def est(cel):
         if not cel:
             return None
         vt, vc = _valores_agua(D, cel, 0)
         return estimar_valores(D, cel, W, vt, vc)
+    return est
 
+
+def _cortes_operador(D: dict, cel_pri: list[dict], agregar) -> dict:
+    """Los cortes "operador" (solo) y "sin_operador" de cada operador con MIN_TRATADOS_OPERADOR o mas tratados en las
+    celdas; `agregar(corte, grupo, celdas)` los calcula y los publica. Lo usan D6 y D13. Devuelve {operador: resultado de sin_operador}."""
+    trat = _tratados(cel_pri)
+    ops, cuentas = np.unique(D["operador"][trat].astype(str), return_counts=True) if len(trat) else ([], [])
+    sin_op = {}
+    for op, c in zip(ops, cuentas):
+        if c < MIN_TRATADOS_OPERADOR:
+            continue
+        agregar("operador", str(op), celdas_por_mascara(cel_pri, lambda ce, op=op: D["operador"][ce["tratados"]] == op))
+        sin_op[str(op)] = agregar("sin_operador", str(op), _celdas_sin_operador(D, cel_pri, op))
+    return sin_op
+
+
+def _d6(con, D: dict, W: np.ndarray, cel_pri: list[dict]) -> tuple:
+    """D6: donde se sostiene dW de D2. Devuelve las filas del mart y la fila de veredicto."""
+    est = _estimador_agua(D, W)
     filas = []
 
     def agregar(corte, grupo, cel):
@@ -789,13 +854,7 @@ def _d6(con, D: dict, W: np.ndarray, cel_pri: list[dict]) -> tuple:
 
     todos = agregar("todos", "todos", cel_pri)
     trat = _tratados(cel_pri)
-    ops, cuentas = np.unique(D["operador"][trat].astype(str), return_counts=True) if len(trat) else ([], [])
-    sin_op = {}
-    for op, c in zip(ops, cuentas):
-        if c < MIN_TRATADOS_OPERADOR:
-            continue
-        agregar("operador", str(op), celdas_por_mascara(cel_pri, lambda ce, op=op: D["operador"][ce["tratados"]] == op))
-        sin_op[str(op)] = agregar("sin_operador", str(op), _celdas_sin_operador(D, cel_pri, op))
+    sin_op = _cortes_operador(D, cel_pri, agregar)
     for k, nombre in enumerate(ETIQUETAS_EDAD):
         agregar("edad", nombre, [ce for ce in cel_pri if ce["grupo"] == k])
     for (a, b), nombre in zip(PERIODOS, ("hasta 2018", "2019-2021", "2022 en adelante")):
@@ -817,6 +876,57 @@ def _d6(con, D: dict, W: np.ndarray, cel_pri: list[dict]) -> tuple:
             None if peor is None else float(peor["ic_alto"]), int(todos["n_tratados"]) if todos else 0,
             _n_bloques(D, trat), None, motivo)
     _escribir(con, "mart_causal_profundo_d6", COLS_D6, filas)
+    return fila
+
+
+def veredicto_d13(bajos_sin_operador: dict[str, float]) -> tuple[str, list[str]]:
+    """Veredicto de D13: "sin muestra" con menos de MIN_OPERADORES_D13 operadores con el minimo; si no, veredicto_general."""
+    if len(bajos_sin_operador) < MIN_OPERADORES_D13:
+        return V_SIN_MUESTRA, []
+    return veredicto_general(bajos_sin_operador)
+
+
+COLS_D13 = COLS_D6 + [("diseno", "varchar"), ("veredicto", "varchar")]
+
+
+def _d13_sin_muestra(con, motivo: str) -> tuple:
+    """D13 sin muestra: el mart lleva solo la fila de veredicto."""
+    filas = [("veredicto", "", 0, 0, None, None, None, "D13", V_SIN_MUESTRA)]
+    print(f"D13: veredicto {V_SIN_MUESTRA}; {motivo}")
+    _escribir(con, "mart_causal_profundo_d13", COLS_D13, filas)
+    return filas[0]
+
+
+def _d13(con, D: dict, W: np.ndarray, cel_pri: list[dict]) -> tuple:
+    """D13: donde se sostiene dW de Colorado (D7), por operador. Mismos cortes y sorteos que D6, sin edad, periodo ni area.
+    Escribe mart_causal_profundo_d13 en el warehouse `con` (el de Vaca Muerta) y devuelve su fila de veredicto."""
+    est = _estimador_agua(D, W)
+    filas = []
+
+    def agregar(corte, grupo, cel):
+        rr = est(cel)
+        filas.append(_fila_d6(corte, grupo, rr) + (None, None))
+        txt = "sin tratados" if rr is None else (f"dW = {rr['est']:+.2f} (IC {rr['ic_bajo']:+.2f} a {rr['ic_alto']:+.2f}), "
+                                                f"tratados {rr['n_tratados']}")
+        print(f"D13 {corte} {grupo}: {txt}")
+        return rr
+
+    todos = agregar("todos", "todos", cel_pri)
+    sin_op = _cortes_operador(D, cel_pri, agregar)
+    bajos = {op: (float(r["ic_bajo"]) if r is not None else float("nan")) for op, r in sin_op.items()}
+    v, malos = veredicto_d13(bajos)
+    peor = min((r for r in sin_op.values() if r is not None), key=lambda r: r["ic_bajo"], default=None)
+    lista = "; ".join(f"sin {op} {r['est']:+.2f} (IC {r['ic_bajo']:+.2f} a {r['ic_alto']:+.2f})"
+                      for op, r in sin_op.items() if r is not None)
+    print(f"D13: veredicto {v}; dW {lista}" + (f"; depende de: {', '.join(malos)}" if malos else ""))
+    if v == V_SIN_MUESTRA:
+        return _d13_sin_muestra(con, f"{len(sin_op)} operador(es) con {MIN_TRATADOS_OPERADOR} tratados o mas; hacen falta "
+                                     f"{MIN_OPERADORES_D13}")
+    fila = ("veredicto", ", ".join(malos), int(todos["n_tratados"]) if todos else 0, int(todos["n_controles"]) if todos else 0,
+            None if peor is None else float(peor["est"]), None if peor is None else float(peor["ic_bajo"]),
+            None if peor is None else float(peor["ic_alto"]), "D13", v)
+    filas.append(fila)
+    _escribir(con, "mart_causal_profundo_d13", COLS_D13, filas)
     return fila
 
 
@@ -906,10 +1016,13 @@ def _fila_d7(resultado: str, rr: dict, roto: bool, veredicto: str = "") -> tuple
             veredicto)
 
 
-def _d7(con_vm, con_co) -> None:
+def _d7(con_vm, con_co, cuenca: str = "colorado") -> None:
     """D7: el mismo diseno de D2 y D3 sobre Colorado, con la compuerta de cobertura de agua.
 
-    El warehouse de Colorado se abre solo lectura (las entradas que arma pipeline.replicacion son tablas
+    D9 (cuenca="wyoming") es el mismo codigo sobre el warehouse de Wyoming, con otro mart y otra etiqueta; el mes 0 del hijo
+    lo fija pipeline.replicacion.preparar (en Wyoming es FIRSTCOMP).
+
+    El warehouse de la cuenca se abre solo lectura (las entradas que arma pipeline.replicacion son tablas
     temporales); las tablas se escriben en el warehouse de Vaca Muerta."""
     from pipeline import replicacion
     from pipeline.causal import _num
@@ -949,6 +1062,9 @@ def _d7(con_vm, con_co) -> None:
         raise RuntimeError("D7 compara con el D3 de Vaca Muerta: correr antes `python -m pipeline.causal_profundo`")
     v_d3_vm = str(fila_vm[0])
 
+    wy = cuenca == "wyoming"
+    pasa_compuerta = not (np.isnan(cobertura) or cobertura < COBERTURA_MIN)
+    etq, nombre_cuenca = ("D9", "Wyoming") if wy else ("D7", "Colorado")
     nan = float("nan")
     filas = [("cobertura_agua", n_trat, cobertura, nan, nan, False, "")]
     if np.isnan(cobertura) or cobertura < COBERTURA_MIN:
@@ -956,10 +1072,10 @@ def _d7(con_vm, con_co) -> None:
         # (ningun tratado de D2 en el panel) no hay muestra
         v_d7 = V_SIN_MUESTRA if np.isnan(cobertura) else veredicto_colorado(cobertura, V_SIN_MUESTRA, V_SIN_MUESTRA,
                                                                              v_d3_vm)
-        filas.append(("D7", 0, nan, nan, nan, False, v_d7))
-        print(f"D7: cobertura de agua de los meses base: {cobertura:.4f} ({_num(100 * cobertura)}%); "
+        filas.append((etq, 0, nan, nan, nan, False, v_d7))
+        print(f"{etq}: cobertura de agua de los meses base: {cobertura:.4f} ({_num(100 * cobertura)}%); "
               f"la compuerta pide {COBERTURA_MIN:.0%}: no se calculan D2 ni D3")
-        print(f"D7: veredicto {v_d7}")
+        print(f"{etq}: veredicto {v_d7}")
     else:
         d2 = diseno_d2(D, W, cel_pri, cel_ff, cel_fd)
         cierre = placebo_cierre(D, W)
@@ -990,19 +1106,27 @@ def _d7(con_vm, con_co) -> None:
             filas.append(_fila_d7(f"placebo_{nombre}_dA", d3[clave], nombre in d3["rotos"]))
         for nombre, clave in (("previo", "res_prev_pd"), ("nunca_tratados", "res_nt_pd")):
             filas.append(_fila_d7(f"placebo_{nombre}_dA_pd", d3[clave], nombre in d3["rotos_pd"]))
-        filas.append(("D7", int(d3["n_tratados"]), nan, nan, nan, False, v_d7))
+        filas.append((etq, int(d3["n_tratados"]), nan, nan, nan, False, v_d7))
 
-        print(f"D7: cobertura de agua de los meses base: {cobertura:.4f} ({_num(100 * cobertura)}%); "
+        print(f"{etq}: cobertura de agua de los meses base: {cobertura:.4f} ({_num(100 * cobertura)}%); "
               f"la compuerta pide {COBERTURA_MIN:.0%}")
-        print(f"D7: D2 en Colorado: dW = {d2['r']['est']:+.2f} puntos porcentuales (IC 95%: {d2['r']['ic_bajo']:+.2f} a "
+        print(f"{etq}: D2 en {nombre_cuenca}: dW = {d2['r']['est']:+.2f} puntos porcentuales (IC 95%: {d2['r']['ic_bajo']:+.2f} a "
               f"{d2['r']['ic_alto']:+.2f}), {int(d2['r']['n_tratados'])} tratados; veredicto {v_d2}")
-        print(f"D7: D3 en Colorado: dA = {d3['res_a']['est']:+.2f} puntos del liquido base (IC 95%: "
+        print(f"{etq}: D3 en {nombre_cuenca}: dA = {d3['res_a']['est']:+.2f} puntos del liquido base (IC 95%: "
               f"{d3['res_a']['ic_bajo']:+.2f} a {d3['res_a']['ic_alto']:+.2f}), {d3['n_tratados']} tratados; "
               f"veredicto {v_d3}; en Vaca Muerta {v_d3_vm}")
-        print(f"D7: veredicto {v_d7}")
+        print(f"{etq}: veredicto {v_d7}")
 
     con = con_vm    # el linaje busca la llamada _escribir(con, "mart_...")
-    _escribir(con, "mart_causal_profundo_d7", COLS_D7, filas)
+    if wy:
+        _escribir(con, "mart_causal_profundo_d9", COLS_D7, filas)
+    else:
+        _escribir(con, "mart_causal_profundo_d7", COLS_D7, filas)
+        # D13 (regla en el docstring): solo Colorado, despues de las filas de D7; sin la compuerta, "sin muestra"
+        if pasa_compuerta:
+            _d13(con, D, W, cel_pri)
+        else:
+            _d13_sin_muestra(con, "la compuerta de cobertura de agua de D7 no pasa")
 
 
 def main(path=DATA / "warehouse.duckdb") -> None:
@@ -1161,7 +1285,7 @@ def frase_d2(con) -> str | None:
         return None
     ver, val, bajo, alto = v
     a_pd, o_pd, nt = _fila_d3(con, "dA_pd"), _fila_d3(con, "dO_pd"), _fila_d3(con, "placebo_nunca_tratados_dW")
-    base = f"- {MARCA[ver]} **Debajo del corte de agua (D3, [causal_profundo.md](causal_profundo.md), regla fijada después): {ver}.** "
+    base = f"- {MARCA[ver]} **Debajo del corte de agua (D3, [causal_profundo.md](causal_profundo.md), regla fijada tras ver D2, antes de su cifra): {ver}.** "
     if ver == V_D3_ENTRA_PD:
         pet = ("no se separa de cero" if o_pd[3] <= 0 <= o_pd[4] else ("sube" if o_pd[3] > 0 else "baja"))
         txt = (f"En los días que el padre produce, su agua por día sube {_num(a_pd[2])} puntos del líquido de la base "
@@ -1195,7 +1319,7 @@ def frase_d4(con) -> str | None:
         return None
     marcas = {MARCA[vd[0]], MARCA[vt[0]]}
     marca = marcas.pop() if len(marcas) == 1 else "◐"   # mixtos: lleno solo si los dos, vacio solo si los dos
-    base = f"- {marca} **Dosis (D4, [causal_profundo.md](causal_profundo.md), regla fijada después): "
+    base = f"- {marca} **Dosis (D4, [causal_profundo.md](causal_profundo.md), regla fijada tras ver D2, antes de su cifra): "
     if vd[0] == V_SIN_GRADIENTE and vt[0] == V_SIN_GRADIENTE:
         return (base + "sin gradiente.** El corte de agua no sube más cuando el primer golpe está más cerca (la cercana "
                 f"menos la lejana da {_num(vd[1])} puntos porcentuales, IC 95%: {_ic_txt(vd[2], vd[3])}) ni cuando el hijo "
@@ -1332,7 +1456,7 @@ def frase_d56(con) -> list[str]:
     if datos is None:
         return []
     v5, d5, v6, d6 = datos
-    enl = "[causal_profundo.md](causal_profundo.md), regla fijada después"
+    enl = "[causal_profundo.md](causal_profundo.md), regla fijada tras ver D2, antes de su cifra"
     return [f"- {MARCA[v5[0]]} **Forma en el tiempo (D5, {enl}): {v5[0]}.** {_texto_d5(v5, d5)}",
             f"- {MARCA[v6[0]]} **Dónde se sostiene (D6, {enl}): {_ver_d6(v6, d6)}.** {_texto_d6(v6, d6)}"]
 
@@ -1344,7 +1468,7 @@ def frase_d7(con) -> str | None:
     if d7 is None:
         return None
     ver = d7["D7"][5]
-    enl = "[causal_profundo.md](causal_profundo.md), regla fijada después"
+    enl = "[causal_profundo.md](causal_profundo.md), regla fijada tras ver D2, antes de calcular el agua de la cuenca"
     L = f"- {MARCA[ver]} **Otra cuenca (D7, Colorado, {enl}): {ver}.** {TEXTO_D7.get(ver, '')}"
     dw = d7.get("dW")
     if dw is not None:
@@ -1375,7 +1499,7 @@ def frase_lectura_d56(con) -> str | None:
         partes.append("se sostiene sin cada operador (D6)")
     if not partes:
         return None
-    return "Esa suba, con reglas fijadas después en `causal_profundo.md`, " + " y ".join(partes) + "."
+    return "Esa suba, con reglas fijadas tras ver D2 y antes de sus cifras en `causal_profundo.md`, " + " y ".join(partes) + "."
 
 
 def _seccion_d5(v5, d5: dict) -> list[str]:
@@ -1430,7 +1554,9 @@ def _seccion_d6(v6, d6: list[tuple]) -> list[str]:
              "edad del padre, por año de la cohorte y por área (con el mismo mínimo). Se publican todos los cortes, sin ajuste "
              "por comparaciones múltiples, y ningún subgrupo tiene veredicto. Decide solo el \"sin el operador\": "
              "\"general\" si sin cada operador el IC sigue sobre cero, \"depende de un operador\" si no. Sacar un "
-             "operador saca sus tratados y sus controles; un subgrupo deja los controles de su celda.")
+             "operador saca sus tratados y sus controles, y con ellos los tratados de las celdas que se quedan con menos de "
+             f"{MIN_CONTROLES_CELDA} controles: por eso los tratados sin un operador pueden ser menos que el total menos los "
+             "suyos. Un subgrupo deja los controles de su celda.")
     L += ["", "| Corte | Grupo | Tratados | Controles | Corte de agua (pp) | IC 95% |",
           "| --- | --- | ---: | ---: | ---: | --- |"]
     for c, g, nt, nc, val, lo, hi in d6:
@@ -1457,6 +1583,23 @@ TEXTO_D7 = {
                      "calculan D2 ni D3.",
 }
 
+MES0_D9 = ("En Wyoming el mes 0 del hijo es el de la primera terminación (FIRSTCOMP), no el de la fractura: un mes 0 "
+           "corrido hacia adelante mete meses posteriores a la fractura en la base y achica D2, así que este resultado "
+           "no separa «no hay suba» de «el mes 0 está corrido».")
+
+TEXTO_D9 = {
+    V_REPITE: "El corte de agua de D2 sostiene también en Wyoming, y D3 da allí el mismo veredicto que en Vaca Muerta: "
+              "la suba del agua aparece en dos cuencas fuera de Vaca Muerta.",
+    V_NO_REPITE: "En Wyoming el corte de agua de D2 no sostiene, así que D3 no se compara: la suba del agua no se repite "
+                 "en Wyoming. " + MES0_D9,
+    V_REPITE_PARTE: "En Wyoming el corte de agua de D2 sostiene, pero D3 da un veredicto distinto al de Vaca Muerta: la "
+                    "suba del agua se repite en parte. " + MES0_D9,
+    V_SIN_MUESTRA: "La muestra de Wyoming no llega al mínimo de la regla: las cifras se publican pero no deciden, y "
+                   "Wyoming no permite probarla.",
+    V_SIN_DATO_AGUA: "El dato de agua de los meses base no llega a la cobertura que pide la regla: en Wyoming no se "
+                     "calculan D2 ni D3, y Wyoming no permite probarla.",
+}
+
 NOMBRE_PLACEBO_D7 = {"previo": "previo", "fecha_falsa": "fecha falsa", "distancia_falsa": "distancia falsa",
                      "nunca_tratados": "nunca tratados", "cierre": "cierre"}
 
@@ -1466,6 +1609,16 @@ def _filas_d7(con) -> dict | None:
     try:
         filas = con.execute("select resultado, n_tratados, valor, ic_bajo, ic_alto, roto, veredicto "
                             "from mart_causal_profundo_d7").fetchall()
+    except duckdb.Error:
+        return None
+    return {f[0]: f[1:] for f in filas}
+
+
+def _filas_d9(con) -> dict | None:
+    """{resultado: (n_tratados, valor, ic_bajo, ic_alto, roto, veredicto)}; None si D9 no se corrio."""
+    try:
+        filas = con.execute("select resultado, n_tratados, valor, ic_bajo, ic_alto, roto, veredicto "
+                            "from mart_causal_profundo_d9").fetchall()
     except duckdb.Error:
         return None
     return {f[0]: f[1:] for f in filas}
@@ -1483,6 +1636,79 @@ def _txt_rotos(n: int, rotos: list[str]) -> str:
     if not rotos:
         return "no rompe" if n == 1 else f"ninguno de los {_ent(n)} rompe"
     return f"rompe{'n' if len(rotos) > 1 else ''} {', '.join(rotos)}"
+
+
+COMMIT_REGLA_D13 = "a1f1fee"
+NOMBRE_CORTE_D13 = {"todos": "Todos (D7)", "operador": "Solo el operador", "sin_operador": "Sin el operador"}
+
+
+def _filas_d13(con):
+    """(veredicto, nombres, filas de cortes) de D13; None si el mart no esta. Cortes: (corte, grupo, n_t, n_c, valor, lo, hi)."""
+    try:
+        filas = con.execute("select corte, grupo, n_tratados, n_controles, valor, ic_bajo, ic_alto, diseno, veredicto "
+                            "from mart_causal_profundo_d13").fetchall()
+    except duckdb.Error:
+        return None
+    ver = next((f for f in filas if f[7] == "D13"), None)
+    if ver is None:
+        return None
+    cortes = [f[:7] for f in filas if f[7] is None]
+    nombres = [n for n in ver[1].split(", ") if n] if ver[8] == V_DEPENDE else []
+    return ver[8], nombres, cortes, ver
+
+
+def texto_d13(v: str, nombres: list[str]) -> str:
+    """El renglon del resumen de causal.md para D13."""
+    if v == V_GENERAL:
+        return "En Colorado la suba se sostiene sin cada uno de sus operadores grandes (D13)."
+    if v == V_DEPENDE:
+        return "En Colorado también depende de un operador: " + ", ".join(nombres) + "."
+    return "D13 no tiene muestra."
+
+
+def frase_d13(con) -> str | None:
+    """Renglon de D13 para el resumen de causal.md; None sin el mart."""
+    datos = _filas_d13(con)
+    if datos is None:
+        return None
+    v, nombres, _, _ = datos
+    enl = "[causal_profundo.md](causal_profundo.md), regla fijada antes de calcular D13"
+    return f"- {MARCA[v]} **Colorado por operador (D13, {enl}): {v}{': ' + ', '.join(nombres) if nombres else ''}.** {texto_d13(v, nombres)}"
+
+
+def _seccion_d13(datos) -> list[str]:
+    from pipeline.causal import _ic_txt, _num
+    L = ["", "## D13: dónde se sostiene la suba de Colorado", ""]
+    if datos is None:
+        L.append("D13 no se corrió: depende del warehouse opcional de Colorado y de D7. No hay cifras.")
+        return L
+    v, nombres, cortes, ver = datos
+    L.append(f"El corte de agua de D7 (Colorado) partido por operador, solo y sin él, con {MIN_TRATADOS_OPERADOR} tratados o "
+             "más: las mismas celdas y los mismos sorteos de D7 y los mismos cortes de D6, sin cortes de edad, período ni "
+             "área porque la pregunta es el operador. Se publican todos los cortes, sin ajuste por comparaciones múltiples, "
+             "y ningún subgrupo tiene veredicto. Decide solo el \"sin el operador\": \"general\" si sin cada operador el IC "
+             f"sigue sobre cero, \"depende de un operador\" si no, \"sin muestra\" si hay menos de {MIN_OPERADORES_D13} "
+             "operadores con el mínimo o D7 no pasa su compuerta de agua. Sacar un operador saca sus tratados y sus "
+             "controles, y con ellos los tratados de las celdas que se quedan con menos de "
+             f"{MIN_CONTROLES_CELDA} controles: por eso los tratados sin un operador pueden ser menos que el total menos los "
+             "suyos. Un subgrupo deja los controles de su celda.")
+    if cortes:
+        L += ["", "| Corte | Grupo | Tratados | Controles | Corte de agua (pp) | IC 95% |",
+              "| --- | --- | ---: | ---: | ---: | --- |"]
+        for c, g, nt, nc, val, lo, hi in cortes:
+            if val is None:
+                L.append(f"| {NOMBRE_CORTE_D13.get(c, c)} | {g} | 0 | 0 | | |")
+            else:
+                L.append(f"| {NOMBRE_CORTE_D13.get(c, c)} | {g} | {_ent(nt)} | {_ent(nc)} | {_num(val)} | {_ic_txt(lo, hi)} |")
+    L.append("")
+    L.append(f"Veredicto: {v}{': ' + ', '.join(nombres) if nombres else ''}. {texto_d13(v, nombres)}")
+    if ver[4] is not None:
+        L.append(f"El valor del veredicto es el \"sin el operador\" de IC bajo más chico: {_num(ver[4])} puntos porcentuales "
+                 f"(IC 95%: {_ic_txt(ver[5], ver[6])}), {_ent(ver[2])} tratados en D7.")
+    L.append("")
+    L.append(f"La regla se fijó en el commit {COMMIT_REGLA_D13}, antes de calcular ninguna cifra de D13. Entra en la familia de "
+             "Holm de `inferencia.md`, con la fila de su veredicto.")
+    return L
 
 
 def _seccion_d7(con, d7: dict | None) -> list[str]:
@@ -1505,8 +1731,9 @@ def _seccion_d7(con, d7: dict | None) -> list[str]:
         L.append("- Cobertura del dato de agua: no hay meses base de tratados de D2 dentro del panel.")
     else:
         L.append(f"- Cobertura del dato de agua: {_ent(round(100 * cob[1]))}% de los meses base (meses -6 a -4) de los "
-                 f"{_ent(cob[0])} tratados de las celdas de D2 tienen agua y días efectivos; la regla pide "
-                 f"{_ent(round(100 * COBERTURA_MIN))}%.")
+                 f"{_ent(cob[0])} tratados de las celdas del diseño tienen agua y días efectivos; la regla pide "
+                 f"{_ent(round(100 * COBERTURA_MIN))}%. D2 cuenta después solo a los tratados con el corte de agua "
+                 f"medido, por eso da menos tratados.")
     dw = d7.get("dW")
     if dw is None:
         L.append("- D2 y D3 no se calcularon en Colorado: no se pasó la compuerta de dato de la regla.")
@@ -1537,6 +1764,64 @@ def _seccion_d7(con, d7: dict | None) -> list[str]:
                  f"{_txt_rotos(n3p, r3p)}.")
         L.append(f"- D3 en Colorado: {da[5]}. En Vaca Muerta: {vm3[0] if vm3 else 'sin fila'}.")
     L.append(f"- {MARCA[ver]} **D7, Colorado: {ver}.** {TEXTO_D7.get(ver, '')}")
+    return L
+
+
+def _seccion_d9(con, d9: dict | None) -> list[str]:
+    """La seccion de D9 (Wyoming): cobertura, D2 y D3 de la segunda cuenca y el veredicto."""
+    from pipeline.causal import _ic_txt, _num
+    L = ["", "## D9: Wyoming", ""]
+    if d9 is None:
+        L.append("D9 no se corrió: Wyoming es opcional y su warehouse puede no estar. No hay cifras de Wyoming en "
+                 "esta página.")
+        return L
+    cob = d9["cobertura_agua"]
+    ver = d9["D9"][5]
+    L.append("El mismo diseño de D7 (D2 y D3 con las mismas constantes, los mismos sorteos y la regla de veredicto de "
+             "Colorado), con una regla fijada antes de calcular ninguna cifra de agua de Wyoming, sobre el warehouse "
+             "opcional de Wyoming: los pozos horizontales con coordenadas y la producción mensual. El mes 0 del hijo es "
+             "el de la primera terminación (FIRSTCOMP), como en la replicación del petróleo de Wyoming, no el de la "
+             "fractura: es la diferencia con Colorado y un límite de esta prueba. El warehouse de Wyoming se abre solo "
+             "para leer; la tabla `mart_causal_profundo_d9` se escribe en el de Vaca Muerta. La regla pide primero que "
+             "el dato de agua alcance, y después compara.")
+    L.append("")
+    if np.isnan(cob[1]):
+        L.append("- Cobertura del dato de agua: no hay meses base de tratados de D2 dentro del panel.")
+    else:
+        L.append(f"- Cobertura del dato de agua: {_ent(round(100 * cob[1]))}% de los meses base (meses -6 a -4) de los "
+                 f"{_ent(cob[0])} tratados de las celdas del diseño tienen agua y días efectivos; la regla pide "
+                 f"{_ent(round(100 * COBERTURA_MIN))}%. D2 cuenta después solo a los tratados con el corte de agua "
+                 f"medido, por eso da menos tratados.")
+    dw = d9.get("dW")
+    if dw is None:
+        L.append("- D2 y D3 no se calcularon en Wyoming: no se pasó la compuerta de dato de la regla.")
+    else:
+        da, do, da_pd = d9["dA"], d9["dO"], d9["dA_pd"]
+        vm2 = con.execute("select veredicto, valor, ic_bajo, ic_alto from mart_causal_veredicto "
+                          "where diseno = 'D2'").fetchone()
+        vm3 = con.execute("select veredicto from mart_causal_profundo_veredicto where diseno = 'D3'").fetchone()
+        txt_vm2 = (f"; en Vaca Muerta, {_num(vm2[1])} (IC 95%: {_ic_txt(vm2[2], vm2[3])})" if vm2 else "")
+        L.append(f"- D2, corte de agua: {_num(dw[1])} puntos porcentuales (IC 95%: {_ic_txt(dw[2], dw[3])}), con "
+                 f"{_ent(dw[0])} tratados{txt_vm2}. Veredicto en Wyoming: {dw[5]}.")
+        n2, r2 = _placebos_d7(d9, "_dW")
+        c = d9["placebo_cierre"]
+        L.append(f"- Placebos de D2: de los de cohorte, {_txt_rotos(n2, r2)}. El placebo de cierre da "
+                 f"{_num(c[1])} (IC 95%: {_ic_txt(c[2], c[3])}): "
+                 + ("rompe con la regla de D2." if c[4] else
+                    "el intervalo toca cero, no rompe." if not (c[2] > 0 or c[3] < 0) else
+                    f"el intervalo no toca cero, pero queda debajo de {_ent(round(100 * FRACCION_CIERRE))}% del corte "
+                    "de D2, así que con la regla de D2 no rompe." if c[1] < FRACCION_CIERRE * dw[1] else
+                    "el intervalo no toca cero, pero con la regla de D2 no rompe porque el corte de D2 no es positivo."))
+        L.append(f"- D3, en puntos del líquido base: agua por día calendario {_num(da[1])} (IC 95%: "
+                 f"{_ic_txt(da[2], da[3])}), agua por día producido {_num(da_pd[1])} (IC 95%: "
+                 f"{_ic_txt(da_pd[2], da_pd[3])}), petróleo por día calendario {_num(do[1])} (IC 95%: "
+                 f"{_ic_txt(do[2], do[3])}), con {_ent(da[0])} tratados.")
+        n3, r3 = _placebos_d7(d9, "_dA")
+        n3p, r3p = _placebos_d7(d9, "_dA_pd")
+        L.append(f"- Placebos de D3: del agua por día calendario, {_txt_rotos(n3, r3)}; del agua por día producido, "
+                 f"{_txt_rotos(n3p, r3p)}.")
+        L.append(f"- D3 en Wyoming: {da[5]}. En Vaca Muerta: {vm3[0] if vm3 else 'sin fila'}.")
+    L.append(f"- {MARCA[ver]} **D9, Wyoming: {ver}.** {TEXTO_D9.get(ver, '')}")
     return L
 
 
@@ -1572,8 +1857,8 @@ def pagina_causal_profundo(con) -> str:
                  + (" con la salvedad de que el agua entra en los días producidos y el volumen del mes no alcanza a separarse de cero."
                     if ver == V_D3_ENTRA_PD else "."))
     else:
-        L.append("- Qué le pasa a D2: su veredicto impreso no cambia (lo fija la regla de `causal.md`), pero D3, fijado "
-                 "después, no le da el nombre \"comunicación física\": la suba del corte se sostiene, el canal no.")
+        L.append("- Qué le pasa a D2: su veredicto impreso no cambia (lo fija la regla de `causal.md`), pero D3, con su regla fijada "
+                 "tras ver D2, no le da el nombre \"comunicación física\": la suba del corte se sostiene, el canal no.")
     nt_rompe = bool(nt_w[5])
     L.append(f"- El placebo de nunca tratados, que la regla de D2 no tenía, sobre el corte de agua de D2: "
              f"{_num(nt_w[2])} puntos porcentuales (IC 95%: {_ic_txt(nt_w[3], nt_w[4])}), {nt_w[0]} pseudo tratados; "
@@ -1605,6 +1890,17 @@ def pagina_causal_profundo(con) -> str:
         L.append(f"- {MARCA[v_d7]} **D7, Colorado: {v_d7}.** {TEXTO_D7.get(v_d7, '')}")
     else:
         L.append("- D7, Colorado: no se corrió (Colorado es opcional).")
+
+    d13 = frase_d13(con)
+    if d13:
+        L.append(d13)
+
+    d9 = _filas_d9(con)
+    if d9 is not None:
+        v_d9 = d9["D9"][5]
+        L.append(f"- {MARCA[v_d9]} **D9, Wyoming: {v_d9}.** {TEXTO_D9.get(v_d9, '')}")
+    else:
+        L.append("- D9, Wyoming: no se corrió (Wyoming es opcional).")
 
     L += ["", "## Regla fijada antes de calcular", ""]
     L.append(f"La regla se fijó en el commit {COMMIT_REGLA} de la rama `t3/causal-profundo`: la cabecera de "
@@ -1696,6 +1992,8 @@ def pagina_causal_profundo(con) -> str:
         L += _seccion_d5(v5, d5) + _seccion_d6(v6, d6)
 
     L += _seccion_d7(con, _filas_d7(con))
+    L += _seccion_d13(_filas_d13(con))
+    L += _seccion_d9(con, _filas_d9(con))
 
     L += ["", "## Límites", ""]
     L.append("- Causa bajo los supuestos de `causal.md` (tendencias paralelas condicionales a cohorte y edad, sin "
@@ -1723,7 +2021,8 @@ def pagina_causal_profundo(con) -> str:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(prog="pipeline.causal_profundo")
-    ap.add_argument("--cuenca", choices=["colorado"], help="D7 sobre Colorado (la regla fija esa cuenca); sin argumento, Vaca Muerta")
+    ap.add_argument("--cuenca", choices=["colorado", "wyoming"],
+                    help="D7 sobre Colorado o D9 sobre Wyoming (la regla fija esas cuencas); sin argumento, Vaca Muerta")
     a = ap.parse_args()
     if a.cuenca:
         from pipeline.cuencas import cuenca
@@ -1731,7 +2030,7 @@ if __name__ == "__main__":
         con_vm = duckdb.connect(str(DATA / "warehouse.duckdb"))
         con_co = duckdb.connect(str(c.db), read_only=True)
         try:
-            _d7(con_vm, con_co)
+            _d7(con_vm, con_co, a.cuenca)
         finally:
             con_co.close()
             con_vm.close()
