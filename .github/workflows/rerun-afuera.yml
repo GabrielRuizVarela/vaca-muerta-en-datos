@@ -1,0 +1,84 @@
+name: rerun desde afuera
+
+# The outsider's path, on a GitHub-hosted runner outside Argentina, where datos.energia.gob.ar does not answer:
+# the three raw files from the release (scripts/bajar_datos_crudos.py), the chain without --with-ingest and
+# pipeline.claims. With `cuencas`, it also builds Wyoming and Colorado from their public sources. It runs only
+# by hand and only in the public copy; the job summary records where the runner was, whether the portal answered,
+# the step table, the claims totals and what the rerun changed in the committed files.
+on:
+  workflow_dispatch:
+    inputs:
+      cuencas:
+        description: "Tambien Wyoming y Colorado (run_all --with-colorado)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  rerun:
+    if: github.repository == 'GabrielRuizVarela/vaca-muerta-en-datos'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    defaults:
+      run:
+        shell: bash   # bash -eo pipefail: a failing step is not hidden by tee
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+
+      - name: Donde corre y si contesta el portal
+        run: |
+          loc=$(curl -sS -m 20 https://www.cloudflare.com/cdn-cgi/trace | sed -n 's/^loc=//p' || true)
+          portal=$(curl -sS -m 30 -o /dev/null -w '%{http_code}' https://datos.energia.gob.ar/ 2>/dev/null) || portal="sin respuesta"
+          {
+            echo "## Rerun desde afuera"
+            echo "- Pais del runner (Cloudflare trace): ${loc:-desconocido}"
+            echo "- datos.energia.gob.ar desde este runner: ${portal}"
+            echo "- Commit: ${GITHUB_SHA::7}; cuencas: ${{ inputs.cuencas }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Archivos crudos desde la release
+        run: uv run python scripts/bajar_datos_crudos.py 2>&1 | tee bajar.log
+
+      - name: Wyoming
+        if: inputs.cuencas
+        run: |
+          uv run python -m pipeline.wyoming.ingest 2>&1 | tee wyoming.log
+          uv run python -m pipeline.wyoming.build 2>&1 | tee -a wyoming.log
+
+      - name: Cadena sin --with-ingest
+        run: |
+          if [ "${{ inputs.cuencas }}" = "true" ]; then extra=--with-colorado; else extra=; fi
+          uv run python -m pipeline.run_all $extra 2>&1 | tee run_all.log
+
+      - name: Claims
+        run: |
+          uv run python -m pipeline.claims 2>&1 | tee claims.log
+
+      - name: Resumen
+        if: always()
+        run: |
+          hoy=$(date -u +%F)
+          {
+            echo "### Pasos"
+            echo '```'
+            awk '/^paso /,/^total/' run_all.log 2>/dev/null || echo "run_all no llego a la tabla"
+            echo '```'
+            echo "### Claims"
+            echo '```'
+            grep -E 'PASS, [0-9]+ FAIL' claims.log 2>/dev/null || echo "claims no corrio"
+            grep -E '  FAIL( |$)' claims.log 2>/dev/null | head -20 || true
+            echo '```'
+            echo "### Que cambio en los archivos versionados"
+            echo "- Archivos cambiados: $(git diff --name-only | wc -l)"
+            echo "- Archivos nuevos sin versionar: $(git status --short | grep '^??' | grep -vcE '\.log$' || true)"
+            echo "- Lineas cambiadas que no son la fecha de hoy (${hoy}), primeras 40:"
+            echo '```'
+            git diff -U0 | grep -E '^[-+]' | grep -vE '^(\+\+\+|---) ' | grep -v "${hoy}" | cut -c1-200 | head -40 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

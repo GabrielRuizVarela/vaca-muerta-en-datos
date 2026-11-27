@@ -1172,9 +1172,10 @@ def pagina_causal(con) -> str:
           "- Qué es nuevo: que el padre responda a la fractura de un hijo cercano ya lo trata como señal de interferencia la "
           "literatura de golpes de fractura (frac hits) de Vaca Muerta y de cuencas de Estados Unidos (referencias en "
           "[literatura.md](literatura.md)). Min y coautores, \"Data-driven Analysis for Causality of Parent-child "
-          "Interactions in the Bakken\" (URTeC), tienen causalidad en el título; de ese trabajo leímos el resumen y una nota "
-          "de JPT, que no describen el diseño ([literatura.md](literatura.md)). Lo que agrega este trabajo, hasta donde "
-          "leímos, es el diseño sobre dato mensual público de toda la cuenca, no el hecho físico.",
+          "Interactions in the Bakken\" (URTeC), tienen causalidad en el título; leímos el trabajo: en el Bakken el WOR "
+          "del padre sube después de completar el hijo, medido antes contra después y sin "
+          "grupo de control ([literatura.md](literatura.md)). Lo que agrega este trabajo, hasta donde leímos, es el diseño "
+          "con controles sobre dato mensual público de toda la cuenca, no el hecho físico.",
           f"- Placebo de cierre: meses de padres sin hijo a menos de 2 km desde 12 meses antes hasta el mes siguiente, con menos "
           f"de medio mes producido y base de 0,8 o más, contra meses sin cierre del mismo mes calendario y grupo de edad: "
           f"{_num(cierre[2])} puntos porcentuales (IC 95%: {_ic_txt(cierre[3], cierre[4])}), {_g(cierre[5])} meses cerrados. El cierre "

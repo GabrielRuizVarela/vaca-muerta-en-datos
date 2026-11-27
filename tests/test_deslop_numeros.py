@@ -60,6 +60,9 @@ El contrato:
    de la leyenda vieja y entran los de la nueva, solo en el guion; el texto visible conserva sus cifras. En `site/espera.html` la etiqueta
    del gráfico "pozos vecinos" va en dos renglones (el margen derecho del gráfico no alcanza para uno): entran las posiciones del segundo
    renglón, solo en el guion. La clave de cada página se rehízo solo por eso.
+   Otra excepción declarada (docs/articulos-leidos): `wiki/hallazgos/literatura.md` cita ahora con página las cifras de tres
+   trabajos leídos completos (Crespo 2020, Min 2023 y el URTeC 2690466 de 2017): muestras, espaciamientos, años de depleción y
+   porcentajes de esos trabajos, ninguna cifra medida por este proyecto. La clave de esa página se rehízo solo por eso.
 
 Para rehacer la foto (solo si cambia la base): `python tests/test_deslop_numeros.py --congelar <ref-git>`.
 Para rehacer solo las páginas cuyas cifras cambian a propósito: `python tests/test_deslop_numeros.py --refotear <ruta> [<ruta> ...]`.

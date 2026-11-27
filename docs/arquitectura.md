@@ -51,6 +51,7 @@ Todo corre con un comando, `uv run python -m pipeline.run_all`, que ejecuta los 
 
 - **En cualquier máquina:** `uv sync`, los tests, el lint y `make demo` (el warehouse y el tablero sobre la muestra de `data/muestra/`, sin descargar datos; sus cifras no son las de la cuenca).
 - **Con el dato completo:** `--with-ingest` necesita una red argentina, porque el servidor de la Secretaría no responde desde otros países. Ahí corren también `./refresh.sh` y `pipeline.claims` contra el warehouse completo.
+- **Desde fuera de la Argentina:** `scripts/bajar_datos_crudos.py` baja de la release los tres archivos crudos del manifest y `pipeline.run_all` sin `--with-ingest` arma todo desde ellos. El workflow `rerun-afuera.yml`, que se lanza a mano en la copia pública, hace eso en un runner de GitHub y corre también `pipeline.claims`; con `cuencas`, suma Wyoming y Colorado desde sus fuentes públicas.
 - **En integración continua:** lint y tests. Las verificaciones que necesitan el warehouse se saltean ahí y se dicen como salteadas, no como aprobadas.
 
 ## Otras entradas
