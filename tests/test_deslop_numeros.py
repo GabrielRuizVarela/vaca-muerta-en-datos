@@ -41,6 +41,8 @@ El contrato:
    Página nueva (cota-rr-condicional): `wiki/hallazgos/cota_rr_condicional.md` entró a la foto con sus cifras (la cota de Rambachan y Roth con la prueba condicional, pipeline/cota_rr_condicional.py).
    Página nueva (replicacion-operadores): `wiki/hallazgos/replicacion_operadores.md` entró a la foto con sus cifras (la brecha del mes 1 operador por operador, pipeline/replicacion_operadores.py).
    `wiki/hallazgos/linaje.md` se rehízo en la foto solo porque suma las dos tablas de replicacion_operadores y la de cota_rr_condicional (de 187 a 190 tablas, de 1052 a 1063 relaciones).
+   Página nueva (replicacion-operadores-agua): `wiki/hallazgos/replicacion_operadores_agua.md` entró a la foto con sus cifras (el corte de agua de D2 operador por operador, pipeline/replicacion_operadores_agua.py).
+   `wiki/hallazgos/linaje.md` se rehízo en la foto solo porque suma las cuatro tablas de replicacion_operadores_agua (de 190 a 194 tablas, de 1063 a 1079 relaciones).
    Página nueva (espera): `site/espera.html` entró a la foto con sus cifras; las nuevas son los supuestos de la regla de plata (pipeline/espera.py).
    Otra excepción declarada (espera-claims): el control de `site/espera.html` se describe por la distancia ("a 2 a 5 km de
    un pozo nuevo") y no por la edad (revisión independiente, F1); entran el 2 y el 5 de esa distancia, que ya están en el

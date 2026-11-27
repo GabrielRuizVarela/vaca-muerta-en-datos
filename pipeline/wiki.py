@@ -50,6 +50,7 @@ Salidas dentro de ``out_dir``:
     hallazgos/replicacion.md   el estudio de eventos sobre Colorado (lo escribe pipeline.replicacion, solo con --with-colorado)
     hallazgos/replicacion_cuencas.md   la lectura de la familia de cuencas (la escribe pipeline.familia)
     hallazgos/replicacion_operadores.md   la brecha del mes 1 operador por operador dentro de Vaca Muerta (la escribe pipeline.replicacion_operadores; el indice la enlaza si existe)
+    hallazgos/replicacion_operadores_agua.md   el corte de agua de D2 operador por operador, con sus propios controles (la escribe pipeline.replicacion_operadores_agua; el indice la enlaza si existe)
     hallazgos/placebo.md       pretendencia, fechas falsas y permutacion del estudio de eventos (si corrio pipeline.placebo)
     hallazgos/mapa_base.md     fuentes y licencias del mapa base de la pagina 3D (la escribe pipeline.base_mapa; el indice la enlaza si existe)
     hallazgos/cota_rr_condicional.md   la cota de Rambachan y Roth con la prueba condicional e hibrida (la escribe pipeline.cota_rr_condicional; el indice la enlaza si existe)
@@ -823,6 +824,8 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Replicación por cuenca (la lectura de la familia: en cuántas cuencas se replica la huella, sin estimación conjunta): [replicacion_cuencas.md](hallazgos/replicacion_cuencas.md).")
     if (out_dir / "hallazgos" / "replicacion_operadores.md").exists():
         L.append("- Replicación por operador (la brecha del mes 1 operador por operador dentro de Vaca Muerta, con la regla fijada antes de calcular): [replicacion_operadores.md](hallazgos/replicacion_operadores.md).")
+    if (out_dir / "hallazgos" / "replicacion_operadores_agua.md").exists():
+        L.append("- Replicación del corte de agua por operador (D2 operador por operador con sus propios controles y placebos de dos colas, con la regla fijada antes de calcular): [replicacion_operadores_agua.md](hallazgos/replicacion_operadores_agua.md).")
     if hay_eje.get("eje_parada.md"):
         L.append("- Regla de parada del eje de merma (potencia, ventana previa, bloques y exposición): [eje_parada.md](hallazgos/eje_parada.md), con [potencia.md](hallazgos/potencia.md), [eje_controles.md](hallazgos/eje_controles.md) y [eje_exposicion.md](hallazgos/eje_exposicion.md).")
     if (out_dir / "hallazgos" / "cota_rr_condicional.md").exists():

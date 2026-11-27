@@ -6,7 +6,7 @@ Capas: crudo (CSV inmutable en `data/raw`), staging (`stg_`), intermedia (`int_`
 
 Queda fuera la réplica en el warehouse de Colorado (`pipeline.replicacion`), que escribe con nombres tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*`, `mart_golpes_mismo_padre_colorado*`, `mart_dia_inicio_colorado*`, `mart_causal_profundo_d7` y `mart_causal_profundo_d9` (Wyoming) sí están: se guardan en este warehouse, pero se calculan desde el de Colorado, que tiene tablas con los mismos nombres.
 
-Hay 190 tablas con 1063 relaciones de origen.
+Hay 194 tablas con 1079 relaciones de origen.
 
 ## Árbol
 
@@ -446,6 +446,10 @@ raw:fractura_adjunto_iv
           mart_mecanismo_shmax
           mart_mecanismo_veredicto
             mart_eje_parada (ver arriba)
+          mart_replicacion_operadores_agua
+          mart_replicacion_operadores_agua_familia
+          mart_replicacion_operadores_dos_colas
+          mart_replicacion_operadores_dos_colas_familia
           mart_riesgo_anio (ver arriba)
           mart_riesgo_calibracion (ver arriba)
           mart_riesgo_coef (ver arriba)
@@ -638,6 +642,10 @@ raw:fractura_adjunto_iv
       mart_potencia_dosis_sim (ver arriba)
       mart_potencia_dosis_veredicto (ver arriba)
       mart_replicacion_operadores
+      mart_replicacion_operadores_agua (ver arriba)
+      mart_replicacion_operadores_agua_familia (ver arriba)
+      mart_replicacion_operadores_dos_colas (ver arriba)
+      mart_replicacion_operadores_dos_colas_familia (ver arriba)
       mart_replicacion_operadores_familia
       mart_robustez_operador
       mart_robustez_operador_veredicto
@@ -848,6 +856,10 @@ raw:produccion_no_convencional
               mart_potencia_eje (ver arriba)
               mart_potencia_resumen (ver arriba)
               mart_replicacion_operadores (ver arriba)
+              mart_replicacion_operadores_agua (ver arriba)
+              mart_replicacion_operadores_agua_familia (ver arriba)
+              mart_replicacion_operadores_dos_colas (ver arriba)
+              mart_replicacion_operadores_dos_colas_familia (ver arriba)
               mart_replicacion_operadores_familia (ver arriba)
               mart_riesgo_anio (ver arriba)
               mart_riesgo_calibracion (ver arriba)
@@ -1059,6 +1071,10 @@ raw:produccion_no_convencional
       mart_potencia_dosis_sim (ver arriba)
       mart_potencia_dosis_veredicto (ver arriba)
       mart_replicacion_operadores (ver arriba)
+      mart_replicacion_operadores_agua (ver arriba)
+      mart_replicacion_operadores_agua_familia (ver arriba)
+      mart_replicacion_operadores_dos_colas (ver arriba)
+      mart_replicacion_operadores_dos_colas_familia (ver arriba)
       mart_replicacion_operadores_familia (ver arriba)
       mart_riesgo_anio (ver arriba)
       mart_riesgo_calibracion (ver arriba)
@@ -2013,6 +2029,22 @@ seed:operadores
 | mart_replicacion_operadores | mart | fct_produccion | pipeline.replicacion_operadores |
 | mart_replicacion_operadores | mart | int_frac_hijo | pipeline.replicacion_operadores |
 | mart_replicacion_operadores | mart | int_pozo_ubicacion | pipeline.replicacion_operadores |
+| mart_replicacion_operadores_agua | mart | fct_produccion | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_agua | mart | int_frac_hijo | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_agua | mart | int_pozo_ubicacion | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_agua | mart | mart_par_rama | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_agua_familia | mart | fct_produccion | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_agua_familia | mart | int_frac_hijo | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_agua_familia | mart | int_pozo_ubicacion | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_agua_familia | mart | mart_par_rama | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_dos_colas | mart | fct_produccion | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_dos_colas | mart | int_frac_hijo | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_dos_colas | mart | int_pozo_ubicacion | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_dos_colas | mart | mart_par_rama | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_dos_colas_familia | mart | fct_produccion | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_dos_colas_familia | mart | int_frac_hijo | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_dos_colas_familia | mart | int_pozo_ubicacion | pipeline.replicacion_operadores_agua |
+| mart_replicacion_operadores_dos_colas_familia | mart | mart_par_rama | pipeline.replicacion_operadores_agua |
 | mart_replicacion_operadores_familia | mart | fct_produccion | pipeline.replicacion_operadores |
 | mart_replicacion_operadores_familia | mart | int_frac_hijo | pipeline.replicacion_operadores |
 | mart_replicacion_operadores_familia | mart | int_pozo_ubicacion | pipeline.replicacion_operadores |

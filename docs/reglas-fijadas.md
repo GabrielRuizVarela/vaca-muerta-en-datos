@@ -2,7 +2,7 @@
 
 Este repositorio es una copia de un solo commit: el historial de trabajo no se publica. Las cifras y los textos citan, sin embargo, el commit en que se fijó cada regla. Este archivo conserva, para cada commit citado, su fecha en UTC, su asunto, los archivos que tocó y el texto que agregó, de modo que se pueda leer la regla tal como se escribió y comprobar el orden de las fechas sin el historial. El historial completo se comparte a pedido.
 
-Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (42 commits; 32 se citan en esta copia fuera de este archivo y 10 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF) ni el plan de trabajo, que no se publica; el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea.
+Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (43 commits; 33 se citan en esta copia fuera de este archivo y 10 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF) ni el plan de trabajo, que no se publica; el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. La regla de `b1479a8` se copia completa, sin el tope de 60 líneas. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea.
 
 ## `94580fd` · 2026-11-15 07:30 UTC
 
@@ -2722,4 +2722,148 @@ def test_diagnostico_del_ancho():
     # los poliedros que contienen a la delta verdadera no rechazan theta verdadero mas que el 5 % nominal, con margen de simulacion
     assert all(f["rechazo"] <= 0.05 + 3 * (0.05 * 0.95 / cc.N_MC) ** 0.5 for f in si), si
     assert d["union_cobertura"] >= 0.95 and d["union_ancho_max"] >= max(f["ancho_max"] for f in d["poliedros"]) - 1e-9, d
+~~~
+
+## `b1479a8` · 2026-11-27 09:00 UTC
+
+**Asunto:** Ronda 4, S5: regla fijada antes de calcular para la replicacion por operador del corte de agua (D2) con sus propios controles y placebos de dos colas, y la lectura de dos colas del placebo del petroleo, post hoc
+
+**Archivos:** `pipeline/replicacion_operadores_agua.py`
+
+**Primer commit posterior que toca los mismos archivos:** `ac79956` · 2026-11-27 09:31 UTC · Ronda 4, S5: replicación del corte de agua por operador, módulo, marts, página, tests sintéticos y paso en run_all, con la regla de b1479a8 sin cambios; lectura de dos colas del placebo del petróleo, post hoc
+
+Texto agregado en `pipeline/replicacion_operadores_agua.py`:
+
+~~~
+"""Replicacion por operador del corte de agua (D2) contra sus propios controles, con placebos de dos colas (ronda 4, S5).
+
+Las reglas de este modulo se citan tal como se escribieron: "este commit" es el commit en que se fijo la regla, y el plan que
+nombra (docs/plan-siguiente-nivel.md) no se publica. El SHA, la fecha y el texto de la regla estan en docs/reglas-fijadas.md.
+
+REGLA FIJADA ANTES DE CALCULAR (2026-11-27, ronda 4 de docs/plan-siguiente-nivel.md). Este commit trae la regla, las constantes y
+las firmas. Antes de fijarla no se calculo el ATT_W de ningun operador con solo sus propios controles, ni ningun placebo de D2
+por operador, ni el extremo bajo del IC del placebo de fechas de ningun operador del petroleo. Si algo resulta ambiguo al
+calcular, se corrige en un commit nuevo que lo diga, nunca despues de ver una cifra.
+Regla informada en esto: se conocen D2 (ATT_W de la muestra completa, sus placebos y su veredicto) y los cortes de D6
+(pipeline.causal_profundo): con todos los controles, los tratados de YPF solos dan 17,5 puntos porcentuales (IC 11,6 a 24,5,
+255 tratados) y sin YPF la suba da 7,1 (IC -0,6 a 18,1, 129 tratados); los otros operadores con el minimo son Pluspetrol,
+Tecpetrol y Vista, y sacar cualquiera de ellos deja la suba sobre cero. Tambien se conocen las siete lecturas del petroleo de
+pipeline.replicacion_operadores (regla de19052): 5 de 7, con la brecha puntual y el extremo alto del IC de cada placebo de fechas.
+
+Por que. Fable, en la pasada sobre la copia publica 2c2ae47 (S5 7,5), noto que la replicacion por operador mide solo el
+petroleo, que el agua, el unico resultado con lectura causal, depende de YPF (D6) y que el placebo de la replicacion del
+petroleo es de una cola: los placebos de Vista (+7,5) y Pluspetrol (+12,4) no se leen.
+
+A. Agua: D2 operador por operador, con sus propios controles.
+Datos y marco: los de pipeline.causal.main, sin cambios. D = causal.cargar(con); coh = causal.cohortes(D); las celdas cel_pri,
+cel_ff y cel_fd y los sorteos W se arman en el mismo orden y con la misma semilla que en causal.main (el mismo camino que
+cota_rr_condicional._entradas_reales), asi que W es el mismo de D2.
+  * Operadores medidos: los de D6, es decir los que tienen MIN_TRATADOS_OPERADOR o mas tratados en cel_pri, con o sin dW
+    (la cuenta de causal_profundo._cortes_operador, con el operador de cada pozo en D["operador"]). Es un conjunto fijo,
+    elegido por conteo y no por resultado.
+  * Celdas propias de X: cada celda de cel_pri con solo los tratados de X y solo los controles de X (celdas_propias). Se
+    descarta la celda que se queda sin tratados o con menos de causal.MIN_CONTROLES_CELDA controles, como en
+    causal._celdas_sin_operador. Lo mismo con cel_ff y cel_fd para los placebos de X.
+  * ATT_W de X y su IC 95%: como causal.diseno_d2, con causal._valores_agua(D, celdas, 0), causal._preparar y
+    causal._bootstrap_prep(D, prep, W) sobre las celdas propias de X.
+  * Placebos de X, los tres de la regla de D2, sobre las celdas propias: previo (_valores_agua con k = -2 sobre las celdas
+    propias de cel_pri), fecha falsa (k = 0 sobre las de cel_ff) y distancia falsa (k = 0 sobre las de cel_fd). Un placebo
+    rompe con causal.rompe(est, ic_bajo, ic_alto, causal.UMBRAL_ROTURA_AGUA): su IC excluye el cero, de cualquier lado, y su
+    valor absoluto llega al umbral. Es de dos colas. El placebo de cierre no se corre por operador: usa otros eventos (meses
+    cerrados) y la regla de D2 lo lee contra el ATT_W de la muestra completa.
+  * Lectura de X (lectura_operador_agua):
+      - "no se pudo medir: ..." si el ATT_W de X tiene menos de MIN_TRATADOS_MEDIR tratados con dW, o si el ATT_W, su IC o
+        alguno de los tres placebos no tiene valor; cuenta en n con su motivo;
+      - "no se replica: rompe el placebo <nombre>" si rompe alguno de los tres (se nombran todos los que rompen);
+      - "se replica" si no rompe ninguno y el IC 95% del ATT_W de X queda entero sobre cero (ic_bajo > 0);
+      - "no se replica: el IC 95% no queda entero sobre cero" en otro caso.
+    Que el ic_bajo pase tambien UMBRAL_AGUA_PP (el umbral del veredicto de D2) se publica como dato, sin lectura.
+  * Familia: "Se replica en k de n operadores: <operador> (<lectura>); ...", con n todos los operadores medidos (los que no se
+    pudieron medir incluidos) y k los que se replican, en orden de mas a menos tratados en cel_pri (empate: por nombre). No hay
+    promedio, peso ni estimacion conjunta. Se publica cualquiera sea k, tambien k = 0.
+
+B. Petroleo: lectura de dos colas del placebo de fechas, despues de ver las cifras.
+Las siete lecturas de pipeline.replicacion_operadores se fijaron en de19052 con un placebo de una cola, y sus cifras se
+conocen. Esta lectura se fija despues de verlas, asi que es post hoc: no cambia el 5 de 7 de la regla de de19052, que sigue
+siendo la cifra que se cita, y se publica al lado con esa etiqueta.
+  * Por operador del petroleo, el mismo placebo de fechas de replicacion_operadores (mismos eventos, misma semilla
+    SEMILLA_FECHAS, mismo placebo.brecha_ic), leyendo tambien su ic_bajo.
+  * Dos colas: el placebo rompe si su IC 95% excluye el cero de cualquier lado. Un operador "se replica con dos colas" si se
+    replica por la regla de de19052 y su placebo de fechas no rompe con dos colas.
+  * Familia post hoc: "Con el placebo de dos colas, se replica en k2 de n operadores: ...", con la misma n.
+
+Que se publica:
+  * mart_replicacion_operadores_agua: una fila por operador del agua (COLS_REP_AGUA) y una fila de familia (COLS_FAM_AGUA);
+  * mart_replicacion_operadores_dos_colas: una fila por operador del petroleo (COLS_DOS_COLAS) y una fila de familia;
+  * la pagina wiki/hallazgos/replicacion_operadores_agua.md, con la tabla del agua, la frase, la seccion post hoc del
+    petroleo con su etiqueta y lo que no prueba;
+  * en un PR de texto aparte, la frase del agua por operador en la pregunta de validez externa del README y del paper, con sus
+    claims. La portada la agrega solo si k es 0 o k es n.
+
+Validacion fijada antes de leer cifras reales (tests/test_replicacion_operadores_agua.py, sin warehouse):
+  * celdas_propias, sobre celdas sinteticas con dos operadores, deja solo los tratados y los controles de X y descarta la
+    celda con menos de causal.MIN_CONTROLES_CELDA controles;
+  * lectura_operador_agua: un ATT_W con IC sobre cero y placebos limpios da "se replica"; un placebo previo de +3 con IC
+    entero sobre cero (rompe por arriba) da "no se replica" aunque el ATT_W pase, y uno de -3 con IC entero bajo cero tambien;
+    menos de MIN_TRATADOS_MEDIR tratados da "no se pudo medir";
+  * la familia cuenta a los que no se pudieron medir en n, como pipeline.familia;
+  * la lectura de dos colas del petroleo: un placebo con IC 2 a 9 rompe con dos colas y no con una.
+
+Que no prueba: dentro de un operador cambian el area y el ano, asi que el ATT_W por operador no separa al operador de su area.
+k de n es un recuento, no una prueba conjunta: cada operador se lee a 95% por separado, sin ajuste por comparaciones multiples.
+Con solo sus propios controles, un operador chico pierde celdas, y su IC es mas ancho que el del corte de D6.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+from pipeline import causal
+
+# ---- regla fijada (no cambiar despues de ver cifras) ----
+MIN_TRATADOS_OPERADOR = causal.MIN_TRATADOS_OPERADOR   # 50: los operadores de D6
+MIN_TRATADOS_MEDIR = 50        # tratados con dW en las celdas propias de X para leerlo
+UMBRAL_ROTURA_AGUA = causal.UMBRAL_ROTURA_AGUA         # 2 puntos porcentuales, de dos colas (causal.rompe)
+UMBRAL_AGUA_PP = causal.UMBRAL_AGUA_PP                 # el umbral del veredicto de D2; aca es dato
+PLACEBOS_AGUA = ("previo", "fecha_falsa", "distancia_falsa")
+K_PREVIO = -2
+LECTURAS_AGUA = ("se replica", "no se replica", "no se pudo medir")
+
+COLS_REP_AGUA = [("operador", "varchar"), ("n_tratados_d2", "integer"), ("n_tratados", "integer"),
+                 ("n_controles", "integer"), ("att_w", "double"), ("ic_bajo", "double"), ("ic_alto", "double"),
+                 ("pasa_umbral_d2", "boolean"),
+                 ("previo", "double"), ("previo_ic_bajo", "double"), ("previo_ic_alto", "double"),
+                 ("fecha_falsa", "double"), ("fecha_falsa_ic_bajo", "double"), ("fecha_falsa_ic_alto", "double"),
+                 ("distancia_falsa", "double"), ("distancia_falsa_ic_bajo", "double"),
+                 ("distancia_falsa_ic_alto", "double"), ("rotos", "varchar"), ("se_replica", "boolean"),
+                 ("lectura", "varchar")]
+COLS_FAM_AGUA = [("k", "integer"), ("n", "integer"), ("frase", "varchar")]
+COLS_DOS_COLAS = [("operador", "varchar"), ("placebo_brecha", "double"), ("placebo_ic_bajo", "double"),
+                  ("placebo_ic_alto", "double"), ("rompe_dos_colas", "boolean"), ("se_replica_de19052", "boolean"),
+                  ("se_replica_dos_colas", "boolean"), ("lectura", "varchar")]
+PAGINA = Path("wiki/hallazgos/replicacion_operadores_agua.md")
+
+
+def celdas_propias(D: dict, celdas_: list[dict], op: str) -> list[dict]:
+    """Celdas con solo los tratados y solo los controles del operador `op`."""
+    raise NotImplementedError
+
+
+def lectura_operador_agua(n_tratados: int, att: float, ic_bajo: float, ic_alto: float,
+                          placebos: dict[str, tuple[float, float, float]]) -> tuple[bool | None, str, list[str]]:
+    """(se_replica o None si no se pudo medir, lectura, placebos que rompen) segun la regla A."""
+    raise NotImplementedError
+
+
+def lectura_familia_agua(resultados: list[tuple[str, bool | None, str]]) -> dict:
+    """k, n y la frase de la familia del agua."""
+    raise NotImplementedError
+
+
+def rompe_dos_colas(ic_bajo: float, ic_alto: float) -> bool:
+    """El placebo del petroleo rompe con dos colas si su IC 95% excluye el cero."""
+    raise NotImplementedError
+
+
+def main(path=None) -> None:
+    raise NotImplementedError
 ~~~

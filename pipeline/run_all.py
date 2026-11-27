@@ -81,6 +81,8 @@ PASOS: list[Paso] = [
     # The causal pages: wiki.py deletes causal.md / causal_profundo.md when their marts are absent, so they must run before "wiki".
     Paso("causal", "pipeline.causal"),
     Paso("causal_profundo", "pipeline.causal_profundo"),
+    # Water by operator: reads causal's design and replicacion_operadores' rows (it recomputes them; it does not read their marts)
+    Paso("replicacion_operadores_agua", "pipeline.replicacion_operadores_agua"),
     # D10 to D12 read causal_profundo's D4 to D6 and the trajectory pairs; the Rambachan-Roth bound reads mart_causal_veredicto
     Paso("causal_exposicion", "pipeline.causal_exposicion"),
     Paso("apilado", "pipeline.stacked"),
