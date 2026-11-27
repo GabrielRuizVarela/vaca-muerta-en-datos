@@ -2524,6 +2524,12 @@ def _claims_siguiente_nivel() -> list[Claim]:
             "topec": (0, tope_cond, TCC)}
 
     TCX, TRA, TRAF = "mart_cota_rr_contraste", "mart_replicacion_operadores_agua", "mart_replicacion_operadores_agua_familia"
+    TDC, TDCF = "mart_replicacion_operadores_dos_colas", "mart_replicacion_operadores_dos_colas_familia"
+
+    def dos_colas(con):   # S5-R4, post hoc: k con dos colas; el texto nombra a Vista y Pluspetrol, con el placebo entero sobre cero
+        k = con.execute(f"select k from {TDCF}").fetchone()[0]
+        caen = con.execute(f"select operador, placebo_ic_bajo from {TDC} where se_replica_de19052 and not se_replica_dos_colas").fetchall()
+        return k if {op for op, _ in caen} == {"Vista", "Pluspetrol"} and all(lo > 0 for _, lo in caen) else nan
 
     def contraste(est: str, lectura: str, veredicto: str) -> Callable:   # S1-R4: el quiebre de una lectura, con el veredicto del texto
         def f(con):
@@ -2569,7 +2575,8 @@ def _claims_siguiente_nivel() -> list[Claim]:
     REP = {"rk": (0, lambda con: con.execute(f"select k from {TROF}").fetchone()[0], TROF),
            "rn": (0, lambda con: con.execute(f"select n from {TROF}").fetchone()[0], TROF),
            "chb": (1, lambda con: 100 * operador("Chevron", "brecha")(con), TRO), "chn": (0, operador("Chevron", "n_cercanos"), TRO),
-           "chc": (0, operador("Chevron", "n_control"), TRO)}
+           "chc": (0, operador("Chevron", "n_control"), TRO),
+           "rdk": (0, dos_colas, TDC), "rdn": (0, lambda con: con.execute(f"select n from {TDCF}").fetchone()[0], TDCF)}
     D10 = {"d": (1, d10("valor"), TX), "lo": (1, d10("ic_bajo"), TX), "hi": (1, d10("ic_alto"), TX), "nd": (0, d10("n_tratados"), TX)}
     CENS = {"c1": (0, serie("1km", "censurados_12", "n_tratados"), TD), "c2": (0, serie("2km", "censurados_12", "n_tratados"), TD),
             "t": (0, censurados_total, TD), "p": (0, lambda con: 100 * serie("2km", "censurados_12", "est")(con), TD)}
@@ -2780,7 +2787,14 @@ def _claims_siguiente_nivel() -> list[Claim]:
         ("readme_fila_cota_c", R, "| el petróleo al mes 1 del diseño causal no se distingue de cero ni con Mbar = <q1c:i> (con la unión de percentiles, <q1:n>); "
                                   "la media de los meses 0 y 1 del corte de agua deja de distinguirse de cero con Mbar = <qc:n> (con la unión, <q:n>), y el mes 1 "
                                   "sigue distinto de cero hasta Mbar = <topec:i> |"),
-        ("readme_fila_rep", R, "propios controles, se replica en <rk:w> de <rn:w> operadores: YPF, Vista, Pluspetrol, Shell y Chevron |"),
+        ("readme_fila_rep", R, "propios controles, se replica en <rk:w> de <rn:w> operadores: YPF, Vista, Pluspetrol, Shell y Chevron; leído con dos "
+                             "colas, después de ver las cifras, el placebo de fechas de Vista y de Pluspetrol da una brecha entera "
+                             "sobre cero y quedan <rdk:w> de <rdn:w> (post hoc, "),
+        ("readme_rep_dos", R, "Leído con dos colas, una lectura fijada después de ver las cifras, el placebo de fechas de Vista y "
+                              "de Pluspetrol da una brecha entera sobre cero, y quedan <rdk:w> de <rdn:w> ("),
+        ("readme_contraste_igual", R, "llega al mismo conjunto con la misma prueba, la misma matriz de restricciones y el mismo valor crítico, con una "
+                                      "diferencia de <dmx:n> desvíos del "
+                                      "estimando como máximo en un extremo (regla del contraste fijada antes de calcular en "),
         ("readme_fila_rep_chevron", R, "en Chevron la brecha (<chb:n> puntos, con <chn:i> cercanos y <chc:i> controles) queda muy lejos de las demás"),
         ("readme_agua_serie", R, "(D10), la suba es de +<w1:n> puntos en el mes 1 y de +<w10:n> a +<w12:n> en los meses 10 a 12: sigue ahí"),
         ("paper_agua_serie", P, "(D10), la suba es de +<w1:n> pp en el mes 1 y de +<w10:n> a +<w12:n> pp en los meses 10 a 12: un año después"),
@@ -2832,6 +2846,8 @@ def _claims_siguiente_nivel() -> list[Claim]:
         ("site_petroleo", S, "de un mes al siguiente (Mbar = <q1c:i>, con la prueba condicional e híbrida de la cota de Rambachan y Roth; con la "
                              "unión de percentiles que se publicaba antes, hacía falta un salto de <q1:n> veces el mayor salto previo). El paquete de R de los autores de la cota llega al mismo resultado"),
         ("site_rep", S, "la brecha del mes 1 se replica en <rk:w> de <rn:w> operadores. En Tecpetrol y en Pan American Energy no,"),
+        ("site_rep_dos", S, "Leído después con dos colas, el placebo de fechas de Vista y de Pluspetrol da una brecha entera sobre "
+                            "cero, y quedan <rdk:w> de <rdn:w>."),
         ("resumen_agua_cota", W_RESUMEN, "resiste la cota de Rambachan y Roth con Mbar = <m:i> (con la prueba condicional, la media de los meses 0 y 1 se "
                                      "rompe en <qc:n>) y la serie"),
         ("resumen_petroleo", W_RESUMEN, "es una huella; no resiste la cota de Rambachan y Roth ni con Mbar = <q1c:i>."),
@@ -2846,6 +2862,8 @@ def _claims_siguiente_nivel() -> list[Claim]:
         ("paper_cota_c", P, "del bootstrap, la media deja de distinguirse de cero con Mbar = <qc:n>, y el petróleo al mes 1 de D1 no se distingue de cero ni con "
                             "Mbar = <q1c:i>: su quiebre queda por debajo del de la unión."),
         ("paper_rep", P, "**se replica en <rk:w> de <rn:w> operadores**: YPF, Vista, Pluspetrol, Shell y Chevron."),
+        ("paper_rep_dos", P, "Leído después de ver las cifras, con dos colas, el placebo de fechas de Vista y de Pluspetrol da una "
+                             "brecha entera sobre cero, y la cuenta baja a <rdk:w> de <rdn:w>; esa lectura post hoc está en "),
         ("paper_rep_chevron", P, "Chevron da la brecha más grande con la muestra más chica (<chb:n> puntos, con <chn:i> cercanos y <chc:i> controles)"),
         ("paper_tabla_d2", P, "| D2 | Corte de agua, el mayor de los meses 0 y 1 | <h2:n> pp | <h2lo:n> a <h2hi:n> | <h2n:i> | regla fijada antes |"),
         ("paper_tabla_d3", P, "| D3 | Agua por día calendario | <h3:n> puntos del líquido base | <h3lo:n> a <h3hi:n> | <h3n:i> | tras D2, antes de su cifra |"),

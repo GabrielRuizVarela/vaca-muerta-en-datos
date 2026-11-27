@@ -10,7 +10,7 @@ La regla se fijó en el commit `b1479a8` (2026-11-27), antes de calcular ninguna
 
 Donde no se pudo medir, la tabla no muestra el ATT_W, su IC ni los placebos: salen de muy pocos pozos. Quedan en `mart_replicacion_operadores_agua`.
 
-| Operador | Tratados en D2 | Tratados / controles propios | ATT_W (puntos) | IC 95% | Pasa el umbral de D2 | Placebo previo (IC) | Placebo fecha falsa (IC) | Placebo distancia falsa (IC) | Lectura |
+| Operador | Tratados en D2, con o sin dW | Tratados / controles propios | ATT_W (puntos) | IC 95% | Pasa el umbral de D2 | Placebo previo (IC) | Placebo fecha falsa (IC) | Placebo distancia falsa (IC) | Lectura |
 | --- | ---: | --- | ---: | --- | --- | --- | --- | --- | --- |
 | YPF | 389 | 206 / 572 | 14,7 | 7,1 a 20,7 | sí | 2,4 (-1,6 a 6,2) | -0,1 (-2,2 a 1,5) | 2,5 (-4,2 a 8,9) | se replica |
 | Pluspetrol | 61 | 12 / 23 | n/d | n/d | n/d | n/d | n/d | n/d | no se pudo medir: 12 tratados con dW en las celdas propias, menos de 50 |

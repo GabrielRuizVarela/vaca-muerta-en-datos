@@ -533,7 +533,7 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
       </figure>
     </div>
     <div class="campo-estepa"><div class="col">
-      <p class="primera entra">Corrimos los mismos estimadores en otras dos cuencas, con una regla escrita antes de correr el cálculo. Dentro de Vaca Muerta, con los padres cercanos de cada operador contra sus propios controles y otra regla escrita antes de medir ninguno por separado, la brecha del mes 1 se replica en cinco de siete operadores. En Tecpetrol y en Pan American Energy no, porque el placebo de fechas también da brecha, y en Chevron, la muestra más chica, la brecha queda muy lejos de las demás.</p>
+      <p class="primera entra">Corrimos los mismos estimadores en otras dos cuencas, con una regla escrita antes de correr el cálculo. Dentro de Vaca Muerta, con los padres cercanos de cada operador contra sus propios controles y otra regla escrita antes de medir ninguno por separado, la brecha del mes 1 se replica en cinco de siete operadores. En Tecpetrol y en Pan American Energy no, porque el placebo de fechas también da brecha, y en Chevron, la muestra más chica, la brecha queda muy lejos de las demás. Leído después con dos colas, el placebo de fechas de Vista y de Pluspetrol da una brecha entera sobre cero, y quedan tres de siete.</p>
       <details class="numeros"><summary>Ver los números</summary>
       <p>En la cuenca DJ de Colorado se replica: -19,9 puntos al mes 1 (IC 95% por bloques de 5 km: -27,5 a -14,8), con una brecha previa de -6,9 en el mes -1. Ahí, al mes 6, la brecha no se cierra del todo (-5,9). En Wyoming no: -2,5 puntos (IC -5,5 a 2,2), y su brecha previa, de -11,9, es mayor que la del mes 1. Se publican las dos. En Wyoming la regla se escribió antes de bajar sus datos. Con dos cuencas no podemos decir si la diferencia es propia de cada cuenca o si es ruido del dato: no hay estimación conjunta.</p>
       <p class="prueba"><a href="../wiki/hallazgos/replicacion_cuencas.md">La prueba completa: la replicación por cuenca</a></p>
@@ -664,7 +664,7 @@ footer { color: var(--jarilla); font-size: 14px; margin-top: 0; max-width: 34em;
   <p class="sub">Todo se reconstruye desde el dato público y cada paso se puede repetir. La ingeniería y la matemática, de punta a punta: <a href="../README.md#ingeniería-y-matemática">Ingeniería y matemática</a> en el README.</p>
 <section id="reproducir">
   <h3>Código y reglas fijadas</h3>
-  <p class="sub">El código es público en <a href="https://github.com/GabrielRuizVarela/vaca-muerta-en-datos">github.com/GabrielRuizVarela/vaca-muerta-en-datos</a>, una copia de un solo commit; el historial de trabajo, con el commit de cada regla fijada, se comparte a pedido. Con el código, desde su raíz y con <a href="https://docs.astral.sh/uv/">uv</a> instalado, cada paso es idempotente: una corrida sin cambios en el origen no modifica nada.</p>
+  <p class="sub">El código es público en <a href="https://github.com/GabrielRuizVarela/vaca-muerta-en-datos">github.com/GabrielRuizVarela/vaca-muerta-en-datos</a>, una copia con una historia propia y resumida; el historial de trabajo, con el commit de cada regla fijada, se comparte a pedido. Con el código, desde su raíz y con <a href="https://docs.astral.sh/uv/">uv</a> instalado, cada paso es idempotente: una corrida sin cambios en el origen no modifica nada.</p>
 <pre class="cmd"><span class="c"># dependencias</span>
 uv sync
 <span class="c"># toda la cadena, con tiempos</span>

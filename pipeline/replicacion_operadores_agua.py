@@ -286,7 +286,7 @@ def pagina_replicacion_operadores_agua(filas: list[tuple], fam: tuple, filas2: l
          f"{MIN_TRATADOS_MEDIR} tratados con dW o con algún valor faltante. Si el extremo bajo del IC pasa además "
          f"{_g(UMBRAL_AGUA_PP)} puntos (el umbral del veredicto de D2) se publica como dato, sin lectura.", "",
          f"**{fam[2]}**", "",
-         "| Operador | Tratados en D2 | Tratados / controles propios | ATT_W (puntos) | IC 95% | Pasa el umbral de D2 "
+         "| Operador | Tratados en D2, con o sin dW | Tratados / controles propios | ATT_W (puntos) | IC 95% | Pasa el umbral de D2 "
          "| Placebo previo (IC) | Placebo fecha falsa (IC) | Placebo distancia falsa (IC) | Lectura |",
          "| --- | ---: | --- | ---: | --- | --- | --- | --- | --- | --- |"]
     if any(r[18] is None for r in filas):

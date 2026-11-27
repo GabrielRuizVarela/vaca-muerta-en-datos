@@ -28,3 +28,4 @@ Fijada en el commit `de19052` (2026-11-27), antes de calcular ninguna brecha de 
 - Dentro de un operador cambian el área y el año, así que la brecha por operador no separa al operador de su área.
 - k de n es un recuento, no una prueba conjunta: cada operador se lee a 95% por separado.
 - Un mismo padre puede estar en varios eventos; la clave de pad hijo no separa esa dependencia.
+- El placebo de fechas se lee de una cola, como dice la regla: una brecha del placebo entera sobre cero no anula la réplica. La lectura con dos colas, fijada después de ver estas cifras, está en [replicacion_operadores_agua.md](replicacion_operadores_agua.md), con su etiqueta post hoc.
