@@ -2730,13 +2730,15 @@ def _claims_siguiente_nivel() -> list[Claim]:
                                "antes del mes 12 <c1:i> de <t:i> tratados a 1 km y <c2:i> a 2 km | IC 95% por bloques de 5 km: <lo:n> a <hi:n> "
                                "(a 2 km: <lo2:n> a <hi2:n>) | persiste,"),
         ("readme_fila_e", R, "petróleo al mes 1: <e:n> puntos (<en:i> eventos, <enc:i> controles) | IC 95% por bloques de 5 km: <elo:n> a <ehi:n>; "
-                             "ningún placebo rompe; deja de distinguirse de cero con Mbar = <eq:n> | sin muestra,"),
+                             "ningún placebo rompe; con la unión de percentiles deja de distinguirse de cero con Mbar = <eq:n> (la prueba "
+                             "condicional no se corrió sobre E) | sin muestra,"),
         # aparte: la frase de la regla viene despues del commit entre comillas invertidas, que numeros_sin_fijar borra
         ("readme_fila_e_regla", R, "la regla pide <mn:i> eventos y <mb:i> bloques, y hay <en2:i> y <eb2:i> |"),
         ("readme_e2", R, "Con donantes a 2 a 10 km (E2) entran <e2n:i> eventos y da <e2:n> (IC <e2lo:n> a <e2hi:n>), pero también queda "
                          "sin muestra."),
         ("readme_fila_e2", R, "petróleo al mes 1 de E2: <e2:n> puntos (<e2n:i> eventos, <e2nc:i> controles) | IC 95% por bloques de 5 km: <e2lo:n> a "
-                              "<e2hi:n>; ningún placebo rompe; deja de distinguirse de cero con Mbar = <e2q:n> | sin muestra,"),
+                              "<e2hi:n>; ningún placebo rompe; con la unión de percentiles deja de distinguirse de cero con Mbar = <e2q:n> (la "
+                              "prueba condicional no se corrió sobre E2) | sin muestra,"),
         ("readme_fila_e2_regla", R, "la regla pide <mn:i> eventos y <mb:i> bloques, y E2 tiene <e2n2:i> y <e2b:i> |"),
         ("readme_fila_d14", R, "D2 con el golpe por distancia entre ramas (una rama a menos de <r14:i> m), de <a0:i> a <a1:i> (D14,"),
         ("readme_fila_d14_cifras", R, "corte de agua: +<d14:n> puntos porcentuales (<d14n:i> tratados); D2 en esos años, con el golpe por boca de "
@@ -2745,7 +2747,8 @@ def _claims_siguiente_nivel() -> list[Claim]:
         ("readme_fila_d14_regla", R, "la regla pide <m2:i> tratados y D14 tiene <d14n2:i> |"),
         ("paper_e2", P, "Con donantes a 2 a 10 km (E2, regla fijada antes de calcularla) entran <e2n:i> eventos en <e2b:i> bloques, con mejor "
                         "balance después del emparejamiento que E, y da <e2:n> puntos (IC <e2lo:n> a <e2hi:n>); también queda sin muestra, "
-                        "porque la regla pide <mn:i> eventos, y deja de distinguirse de cero con Mbar = <e2q:n>."),
+                        "porque la regla pide <mn:i> eventos, y con la unión de percentiles deja de distinguirse de cero con Mbar = <e2q:n> "
+                        "(la prueba condicional no se corrió sobre E2)."),
         ("paper_i5", P, "Repartida por pad padre (I5), con los pozos de un mismo pad juntos, el p sigue en el mínimo (<i5p:n>), pero la nula ya "
                         "no está centrada en cero: entre los percentiles 2,5 y 97,5 va de <i5lo:n> a <i5hi:n> pp, con media <i5m:n>, porque "
                         "solo se mezcla el <i5x:n>% de las observaciones; <i5v:n> queda por encima de toda esa franja."),
@@ -2764,8 +2767,9 @@ def _claims_siguiente_nivel() -> list[Claim]:
                          "6 a 12 siguen <d:n> puntos arriba (IC <lo:n> a <hi:n>)."),
         ("site_petroleo", S, "de un mes al siguiente (Mbar = <q1c:i>, con la prueba condicional e híbrida de la cota de Rambachan y Roth; con la "
                              "unión de percentiles que se publicaba antes, hacía falta un salto de <q1:n> veces el mayor salto previo). Tampoco"),
-        ("site_rep", S, "la brecha del mes 1 se replica en <rk:w> de <rn:w> operadores.</p>"),
-        ("resumen_agua_cota", W_RESUMEN, "resiste la cota de Rambachan y Roth con Mbar = <m:i> (se rompe en <qc:n>) y la serie"),
+        ("site_rep", S, "la brecha del mes 1 se replica en <rk:w> de <rn:w> operadores. En Tecpetrol y en Pan American Energy no,"),
+        ("resumen_agua_cota", W_RESUMEN, "resiste la cota de Rambachan y Roth con Mbar = <m:i> (con la prueba condicional, la media de los meses 0 y 1 se "
+                                     "rompe en <qc:n>) y la serie"),
         ("resumen_petroleo", W_RESUMEN, "es una huella; no resiste la cota de Rambachan y Roth ni con Mbar = <q1c:i>."),
         ("paper_tabla_d10", P, "| D10 | Corte de agua, media de los meses 6 a 12, con la serie cortada en la segunda fractura a menos de 1 km | "
                                "<d:n> pp | <lo:n> a <hi:n> | <nd:i> | tras D5, antes de su cifra |"),
@@ -5026,6 +5030,7 @@ README_DEFINICIONALES: tuple[str, ...] = (
     r"[Aa] los 6 meses",
     r"donantes a 2 a 10 km \(E2",  # el anillo de donantes de E2 es la definicion del diseno; sus cifras son claims
     r"al mes 1 de E2", r"y E2 tiene",
+    r"no se corrió sobre E2",  # la inferencia del quiebre de E2: la prueba condicional no se corrió
     r"D2 con el golpe por distancia entre ramas", r"\(D14,", r"D2 en esos años", r"D14 tiene",
     r"By month 6",
     r"meses 0 a 6",
@@ -5091,6 +5096,7 @@ LIMITES_DEFINICIONALES: tuple[str, ...] = (
 RESUMEN_DEFINICIONALES: tuple[str, ...] = (
     r"En los meses 10 a 12",
     r"en el mayor de los meses 0 y 1",
+    r"la media de los meses 0 y 1",
     r"regla fijada después de ver D2",
     r"padre en el mes 1",
     r"a menos de 1 km",
@@ -5229,6 +5235,13 @@ PAPER_DEF_C: tuple[str, ...] = (
 )
 
 PAPER_DEF_D: tuple[str, ...] = (
+    # 8. Referencias de método: año, volumen, número, páginas, DOI y versión de cada fuente
+    r"\(2023\)\. A More Credible Approach to Parallel Trends\. \*Review of Economic Studies\*, 90\(5\), 2555-2591\. "
+    r"doi:10\.1093/restud/rdad018",
+    r"\(2023\)\. Inference for Linear Conditional Moment Inequalities\. \*Review of Economic Studies\*, 90\(6\), "
+    r"2763-2791\. doi:10\.1093/restud/rdad004",
+    r"HonestDiD, paquete de R, versión 0\.2\.8",
+    r"Qué se leyó de cada una: \s*, sección 14",
     r"IC 95% por bloques de 5 km",   # el IC 95% y el bloque de 5 km del bootstrap: la definicion del intervalo
     r"fechas falsas, la brecha del mes 1 va de",   # el mes 1 del resultado principal
     r"un inicio el día 3 del mes debería pesar más en el mes 0 que uno el día 27",   # el ejemplo de la pregunta, no un resultado

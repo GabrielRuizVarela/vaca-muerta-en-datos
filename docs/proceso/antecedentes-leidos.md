@@ -2,7 +2,7 @@
 
 Esta página acompaña a [`literatura.md`](../../wiki/hallazgos/literatura.md). Para cada trabajo publicado sobre interferencia entre pozos padre e hijo ("frac hits") dice qué parte pudimos leer, qué dice esa parte que importa para este estudio y cómo se relaciona con nuestro resultado. No es una revisión de la literatura, y donde solo se leyó un resumen o una nota de prensa se dice así.
 
-Fecha de la lectura: 2026-11-26.
+Fecha de la lectura: 2026-11-26 (la entrada 14, 2026-11-27).
 
 ## Cómo leer los rótulos
 
@@ -10,8 +10,9 @@ Fecha de la lectura: 2026-11-26.
 - **Resumen**: se leyó el resumen publicado, no el trabajo.
 - **Nota**: se leyó una nota de prensa técnica que cita el trabajo.
 - **Solo metadatos**: no se leyó ni el resumen; solo título, autores y DOI.
+- **Secciones leídas**: se leyeron las secciones que se nombran, no el trabajo entero (solo en la entrada 14).
 
-Nada se infiere del título. Cada cita entre comillas está copiada de la página o del PDF que se abrió. Solo se usaron accesos libres y gratuitos: el repositorio de la Universidad de Dakota del Norte (EERC), la presentación pública de SPE-GCS, la página de OGJ y la API pública de Crossref (metadatos y, cuando el editor lo depositó, el resumen). No se leyó nada de pago ni detrás de un login, salvo tres trabajos (Crespo 2020, Min 2023 y el URTeC 2690466 de 2017) cuyo PDF aportó el dueño del proyecto el 2026-11-26; esas copias no se guardan en el repositorio, y cada cita lleva la página. Los metadatos de los 13 trabajos vienen de Crossref.
+Nada se infiere del título. Cada cita entre comillas está copiada de la página o del PDF que se abrió. Solo se usaron accesos libres y gratuitos: el repositorio de la Universidad de Dakota del Norte (EERC), la presentación pública de SPE-GCS, la página de OGJ, la API pública de Crossref (metadatos y, cuando el editor lo depositó, el resumen) y, para las fuentes de método de la entrada 14, el sitio de los autores, arXiv y GitHub. No se leyó nada de pago ni detrás de un login, salvo tres trabajos (Crespo 2020, Min 2023 y el URTeC 2690466 de 2017) cuyo PDF aportó el dueño del proyecto el 2026-11-26; esas copias no se guardan en el repositorio, y cada cita lleva la página. Los metadatos de los 13 trabajos vienen de Crossref.
 
 ---
 
@@ -171,6 +172,15 @@ Nada se infiere del título. Cada cita entre comillas está copiada de la págin
 - **Fuente:** Ignacio Ortiz, "YPF usó por primera vez fibra óptica descartable para el monitoreo de fracturas en Vaca Muerta", EconoJournal, 23 de junio de 2025, <https://econojournal.com.ar/oilgas/ypf-uso-por-primera-vez-fibra-optica-descartable-para-el-monitoreo-de-fracturas-en-vaca-muerta/>.
 - **Frase de origen:** la nota cita a Horacio Marín, presidente de YPF: "esta tecnología ya se implementó en 27 etapas sin incidentes y permitió identificar 40 eventos de frac-hits sin registrarse horas perdidas". El servicio es de Halliburton.
 - **Qué falta:** son palabras de la empresa en redes sociales, citadas por la nota; no hay un trabajo técnico detrás que hayamos leído, ni pérdidas de producción.
+
+## 14. Fuentes de método de la cota condicional (ronda 4, 2026-11-27)
+
+No son trabajos sobre frac hits: son las fuentes de la cota de Rambachan y Roth con la prueba condicional e híbrida (`pipeline/cota_rr_condicional.py`, [`cota_rr_condicional.md`](../../wiki/hallazgos/cota_rr_condicional.md)). Se leyeron para comparar la regla de `de19052` con lo que dicen. Rótulo: **Secciones leídas**.
+
+- **Rambachan y Roth (2023)**, "A More Credible Approach to Parallel Trends", *Review of Economic Studies*, 90(5), 2555-2591, doi:10.1093/restud/rdad018 (metadatos de Crossref). Se leyó la versión de trabajo que los autores publican en su sitio, el PDF del 1 de abril de 2022; su paginación no es la de la revista, cuyo PDF respondió HTTP 403. Secciones: 2.4.1 (magnitudes relativas), 2.4.5 (restricciones poliédricas), 2.5, 3.1, 3.2 (conjuntos de confianza condicionales e híbridos) y 6.1.
+- **Andrews, Roth y Pakes (2023)**, "Inference for Linear Conditional Moment Inequalities", *Review of Economic Studies*, 90(6), 2763-2791, doi:10.1093/restud/rdad004 (Crossref). Se leyó la versión de arXiv (1909.10062, v5, 16 de diciembre de 2022): secciones 3.1 a 3.4 (el estadístico, la prueba menos favorable, la condicional y la híbrida) y las notas sobre kappa.
+- **HonestDiD 0.2.8**, el paquete de R de Rambachan y Roth (<https://github.com/asheshrambachan/HonestDiD>): `DESCRIPTION`, `README.md` y partes de `R/deltarm.R`, `R/sensitivityresults.R`, `R/arp-nuisance.R`, `R/utilities.R` y `R/deltasdrm.R`.
+- **Qué importa para este estudio:** kappa vale alfa/10 en los dos trabajos y en el paquete, como en nuestra regla, y la unión de seis poliedros es la de `computeConditionalCS_DeltaRM`. Hay tres diferencias con nuestra regla: el paquete y los dos trabajos censuran en cero el valor crítico condicional y nuestra regla no; por defecto el paquete usa solo las filas de la restricción que tocan meses posteriores (`postPeriodMomentsOnly = TRUE`) y nuestra regla usa todas; y el paquete saca el valor crítico de la primera etapa de 1000 sorteos y nosotros de 10000. Ninguna se midió todavía en cifras.
 
 ---
 

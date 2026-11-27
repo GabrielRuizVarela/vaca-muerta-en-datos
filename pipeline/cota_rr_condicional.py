@@ -574,6 +574,29 @@ def _texto_enmienda(val: dict) -> list[str]:
     return L
 
 
+def _texto_clausula() -> list[str]:
+    """La clausula de la regla de de19052 ("dicen que el de la union es mas conservador") que el texto no siguio, y por que."""
+    return [
+            '## Una cláusula de la regla que no se siguió',
+            '',
+            'La regla de de19052 pedía que, en un PR de texto aparte, el README y la portada citaran el quiebre condicional de D1 ATT(1) como la cota de Rambachan y Roth y dijeran que el de la unión es más conservador, aunque el quiebre condicional saliera menor. La primera parte se siguió; la segunda no. Nadie midió el nivel de la unión de percentiles, y en el petróleo al mes 1 de D1 su quiebre quedó por encima del condicional (las dos cifras están en su tabla, arriba): decir que la unión es más conservadora habría sido falso ahí. El README y el paper ponen los dos quiebres lado a lado para el petróleo al mes 1 de D1 y para la media de los meses 0 y 1 del agua, y la portada, para el petróleo; en el mes 1 del agua ninguno de los dos cae dentro de la grilla de Mbar. La regla queda como se escribió en el código; esta sección registra el desvío.',
+            '',
+    ]
+
+
+def _texto_referencias() -> list[str]:
+    return [
+            '## Referencias',
+            '',
+            '- Rambachan, A. y Roth, J. (2023). A More Credible Approach to Parallel Trends. *Review of Economic Studies*, 90(5), 2555-2591. doi:10.1093/restud/rdad018.',
+            '- Andrews, I., Roth, J. y Pakes, A. (2023). Inference for Linear Conditional Moment Inequalities. *Review of Economic Studies*, 90(6), 2763-2791. doi:10.1093/restud/rdad004.',
+            '- Rambachan, A. y Roth, J. HonestDiD, paquete de R, versión 0.2.8. https://github.com/asheshrambachan/HonestDiD.',
+            '',
+            'Qué se leyó de cada una está en `docs/proceso/antecedentes-leidos.md`, sección 14.',
+            '',
+    ]
+
+
 def _texto_no_dice() -> list[str]:
     return ["## Lo que no dice", "",
             "Supone, como la cota de la unión, que los meses previos no tienen efecto (sin anticipación). La matriz de "
@@ -657,7 +680,7 @@ def pagina_cota_rr_condicional(filas: list[tuple], extras: dict, val: dict) -> s
         L += ["", f"Mbar de quiebre condicional: {_qtxt(q['mbar_quiebre'])}. Veredicto: **{q['veredicto']}**.",
               f"Mbar de quiebre de la unión: {_qtxt(ex['union_quiebre'])}. Veredicto: **{ex['union_veredicto']}**."]
         L += _comparacion(g[0], q["mbar_quiebre"], ex["union_quiebre"]) + [""]
-    L += _texto_no_dice()
+    L += _texto_clausula() + _texto_no_dice() + _texto_referencias()
     return "\n".join(L)
 
 

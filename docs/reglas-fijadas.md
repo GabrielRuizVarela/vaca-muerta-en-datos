@@ -2,7 +2,7 @@
 
 Este repositorio es una copia de un solo commit: el historial de trabajo no se publica. Las cifras y los textos citan, sin embargo, el commit en que se fijó cada regla. Este archivo conserva, para cada commit citado, su fecha en UTC, su asunto, los archivos que tocó y el texto que agregó, de modo que se pueda leer la regla tal como se escribió y comprobar el orden de las fechas sin el historial. El historial completo se comparte a pedido.
 
-Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (43 commits; 33 se citan en esta copia fuera de este archivo y 10 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF) ni el plan de trabajo, que no se publica; el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. La regla de `b1479a8` se copia completa, sin el tope de 60 líneas. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea.
+Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (44 commits; 34 se citan en esta copia fuera de este archivo y 10 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF) ni el plan de trabajo, que no se publica; las dos reglas de la cota condicional (`de19052` y su enmienda `55a709a`) se copian enteras, porque sus primeras 60 líneas dejaban afuera las puertas de la validación y una frase que el texto no siguió; el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. La regla de `b1479a8` se copia completa, sin el tope de 60 líneas. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea. Dos notas agregadas a mano, marcadas así, registran esa frase y por qué está `2ffa2ef`, que no fija una regla.
 
 ## `94580fd` · 2026-11-15 07:30 UTC
 
@@ -2502,7 +2502,7 @@ V_D14_SOSTIENE = "la suba se ve también con el golpe por rama"
 
 **Primer commit posterior que toca los mismos archivos:** `4fed1c5` · 2026-11-27 03:56 UTC · Replicación por operador (S5): módulo, mart, página, tests sintéticos y paso en run_all, con la regla de de19052 sin cambios
 
-Texto agregado en `pipeline/cota_rr_condicional.py` (primeras 60 de 143 líneas):
+Texto agregado en `pipeline/cota_rr_condicional.py`:
 
 ~~~
 """Cota de Rambachan y Roth (2023) con la prueba condicional e hibrida de Andrews, Roth y Pakes (ronda 3, S1).
@@ -2565,9 +2565,92 @@ pipeline.cota_rr.veredicto_rr con ese quiebre, mismas palabras y mismo M_MIN.
 
 Que se publica:
   * mart_cota_rr_condicional: por estimando, la grilla GRILLA_MBAR con el conjunto de confianza condicional, y la fila del quiebre
+    con su veredicto; al lado, el intervalo de union de pipeline.cota_rr del mismo Mbar, como registro;
+  * la pagina wiki/hallazgos/cota_rr_condicional.md, y una linea en wiki/hallazgos/cota_rr.md que remite a ella;
+  * en un PR de texto aparte, el README y la portada pasan a citar el quiebre condicional de D1 ATT(1) como la cota de Rambachan y
+    Roth, cualquiera sea, y dicen que el de la union es mas conservador. Si el quiebre condicional es menor que el de la union, se
+    dice igual.
+
+Validacion fijada antes de leer cifras reales (tests/test_cota_rr_condicional.py, sin warehouse):
+  * dualidad: para Y, X y sigma al azar (semilla fija, 200 casos), eta por vertices coincide hasta 1e-9 con el minimo sobre gamma
+    de max_i (Y_i - X_i gamma) / sigma_i, calculado aparte en los quiebres de esa funcion lineal por tramos;
+  * cobertura: con Sigma sintetica (desvio 1 y correlacion 0,5 entre coeficientes vecinos, 5 x 5), delta previa (0,5; 1,0; 0,8)
+    (m = 0,5), saltos posteriores iguales a +Mbar m (en el borde de la restriccion) y tau(0) = tau(1) = theta = -3, cada
+    simulacion sortea beta ~ N(delta + (0, 0, 0, tau(0), tau(1)), Sigma) con la semilla SEMILLA_MC y la prueba usa esa Sigma; en
+    N_MC simulaciones por Mbar con Mbar en {0,5; 1}, el conjunto contiene a theta (probado en theta0 = theta) en al menos
+    COBERTURA_MIN de las simulaciones, para ATT(1) y para la media;
+  * potencia plantada: igual con tau(0) = tau(1) = -10 y Mbar = 0 (saltos posteriores cero): el conjunto excluye el cero (todos
+    los poliedros rechazan theta0 = 0) en al menos POTENCIA_MIN de las N_MC simulaciones;
+  * en las primeras 20 simulaciones con theta = -3 y Mbar = 0, el conjunto de ATT(1) en la grilla contiene el punto b(1) - b(-1)
+    y no es mas ancho que el doble del intervalo normal al 95% de b(1) - b(-1).
+Si alguna falla, no se publica ninguna cifra real con esta prueba y la pagina dice que fallo.
+
+Lo que no dice: supone, como pipeline.cota_rr, que los meses previos no tienen efecto (sin anticipacion). Sigma sale del bootstrap
+por bloques, no de una formula; con N_LF sorteos fijos el quiebre tiene error de simulacion del orden de TOL_BISECCION o mayor.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+# ---- regla fijada (no cambiar despues de ver cifras) ----
+ALFA = 0.05
+KAPPA = ALFA / 10           # nivel de la primera etapa LF (el valor por defecto de HonestDiD)
+N_LF = 10_000               # sorteos para el valor critico LF
+SEMILLA_LF = 20261127
+TOL_VERTICE = 1e-12
+N_THETA = 1001
+THETA_SE = 6.0
+MAX_AMPLIAR = 3
+GRILLA_MBAR = (0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)   # la de pipeline.cota_rr
+MBAR_MAX = 2.0
+TOL_BISECCION = 1e-3
+N_MC = 1000
+COBERTURA_MIN = 0.93
+POTENCIA_MIN = 0.90
+SEMILLA_MC = 20261128
+
+COLS_COTA_RR_COND = [("diseno", "varchar"), ("estimando", "varchar"), ("fila", "varchar"), ("mbar", "double"),
+                     ("cc_bajo", "double"), ("cc_alto", "double"), ("cc_abierto", "varchar"), ("cc_con_huecos", "boolean"),
+                     ("union_bajo", "double"), ("union_alto", "double"), ("mbar_quiebre", "double"), ("veredicto", "varchar"),
+                     ("n_tratados", "integer"), ("sorteos", "integer"), ("motivo", "varchar")]
+PAGINA = Path("wiki/hallazgos/cota_rr_condicional.md")
+
+
+def matriz_rm(j: int, sg: int, mbar: float):
+    """A (8 x 5) del poliedro (j, sg) de Delta^RM(Mbar), en el orden de filas de la regla."""
+    raise NotImplementedError
+
+
+def vertices(X, sigma):
+    """Vertices de {nu >= 0, nu'X = 0, nu'sigma = 1}, en un arreglo (n_vertices, n_momentos)."""
+    raise NotImplementedError
+
+
+def rechaza(beta, Sigma, a, b, j: int, sg: int, mbar: float, theta0: float, c_lf: float | None = None) -> bool:
+    """La prueba condicional e hibrida de la regla para un poliedro y un theta0."""
+    raise NotImplementedError
+
+
+def conjunto_confianza(beta, Sigma, a, b, mbar: float, centro_id: tuple[float, float], desvio: float) -> dict:
+    """Union sobre los seis poliedros: bajo, alto, abierto y con_huecos."""
+    raise NotImplementedError
+
+
+def quiebre_condicional(beta, Sigma, a, b) -> float:
+    """Menor Mbar en [0, MBAR_MAX] cuyo conjunto contiene cero; inf si no lo contiene en MBAR_MAX."""
+    raise NotImplementedError
+
+
+def main(path=None) -> None:
+    """Escribe mart_cota_rr_condicional y la pagina."""
+    raise NotImplementedError
+
+
+if __name__ == "__main__":
+    main()
 ~~~
 
-Texto agregado en `pipeline/replicacion_operadores.py` (primeras 60 de 105 líneas):
+Texto agregado en `pipeline/replicacion_operadores.py`:
 
 ~~~
 """Replicacion por operador dentro de Vaca Muerta: la brecha del mes 1 medida operador por operador (ronda 3, S5).
@@ -2630,7 +2713,78 @@ Validacion fijada antes de leer cifras reales (tests/test_replicacion_operadores
   * k y n cuentan a los que no se pudieron medir como en pipeline.familia.
 
 Que no prueba: dentro de un operador cambian el area y el ano, asi que la brecha por operador no separa al operador de su area.
+k de n es un recuento, no una prueba conjunta: cada operador se lee a 95% por separado. Un mismo padre puede estar en varios
+eventos; la clave de pad hijo no separa esa dependencia.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+# ---- regla fijada (no cambiar despues de ver cifras) ----
+MIN_CERCANOS = 50             # el piso de pipeline.robustez_operador; los grupos salen de robustez_operador.grupos_a_sacar
+MIN_CONTROLES = 50            # eventos de control con indice del mes 1 observado para que un operador se pueda medir
+DESPLAZAMIENTO_PLACEBO = -12  # meses que se corre la fecha del hijo en el placebo de fechas
+BRECHA_PLANTADA = -0.20       # brecha plantada en la validacion sintetica (fraccion del indice, -20 puntos)
+LECTURAS_OP = ("se replica", "no se replica", "no se pudo medir")
+
+COLS_REP_OP = [("operador", "varchar"), ("n_cercanos", "integer"), ("n_control", "integer"), ("brecha", "double"),
+               ("ic_bajo", "double"), ("ic_alto", "double"), ("brecha_previa", "double"), ("placebo_brecha", "double"),
+               ("placebo_ic_alto", "double"), ("placebo_limpio", "boolean"), ("valor", "double"),
+               ("se_replica", "boolean"), ("lectura", "varchar")]
+COLS_FAM_OP = [("k", "integer"), ("n", "integer"), ("frase", "varchar")]
+PAGINA = Path("wiki/hallazgos/replicacion_operadores.md")
+
+
+def lectura_operador(brecha: float, ic_alto: float, brecha_previa: float, placebo_ic_alto: float,
+                     n_control: int) -> tuple[bool | None, float, str]:
+    """(se_replica o None si no se pudo medir, valor, lectura) segun la regla de arriba."""
+    raise NotImplementedError
+
+
+def lectura_familia_op(resultados: list[tuple[str, bool | None, str]]) -> dict:
+    """`resultados`: (operador, se_replica o None, lectura) en el orden de grupos_a_sacar. Devuelve k, n y la frase."""
+    raise NotImplementedError
+
+
+def calcular(con) -> tuple[list[tuple], tuple]:
+    """Filas de COLS_REP_OP y la fila de COLS_FAM_OP, con los datos y el marco de arriba."""
+    raise NotImplementedError
+
+
+def main(path=None) -> None:
+    """Escribe mart_replicacion_operadores y la pagina."""
+    raise NotImplementedError
+
+
+if __name__ == "__main__":
+    main()
 ~~~
+
+**Nota agregada a mano el 2026-11-27, fuera de la lectura mecánica:** la regla de arriba dice, en `pipeline/cota_rr_condicional.py`, que en el PR de texto el README y la portada «dicen que el de la union es mas conservador». Esa parte no se siguió. Nadie midió el nivel de la unión de percentiles, y en el petróleo al mes 1 de D1 su quiebre quedó por encima del condicional: decir que la unión es más conservadora habría sido falso ahí. El README, la portada y el paper citan el quiebre condicional, como pide la misma frase. El README y el paper lo ponen al lado del de la unión para el petróleo al mes 1 de D1 y para la media de los meses 0 y 1 del agua, y la portada, para el petróleo; en el mes 1 del agua ninguno de los dos cae dentro de la grilla de Mbar. Lo registra también la sección «Una cláusula de la regla que no se siguió» de `wiki/hallazgos/cota_rr_condicional.md`.
+
+## `2ffa2ef` · 2026-11-27 03:57 UTC
+
+**Asunto:** S1: cota de Rambachan y Roth condicional implementada; la validacion de ancho falla y no se publican cifras reales
+
+**Archivos:** `pipeline/cota_rr.py`, `pipeline/cota_rr_condicional.py`, `pipeline/run_all.py`, `pipeline/wiki.py`, `tests/fixtures/deslop_numeros_antes.json`, `tests/test_cota_rr_condicional.py`, `tests/test_deslop_numeros.py`, `wiki/hallazgos/cota_rr.md`, `wiki/hallazgos/cota_rr_condicional.md`, `wiki/hallazgos/linaje.md`, `wiki/index.md`
+
+**Primer commit posterior que toca los mismos archivos:** `55a709a` · 2026-11-27 04:16 UTC · S1: enmienda de la regla antes de calcular ninguna cifra real: el ancho pasa a ser dato y no puerta
+
+**Nota agregada a mano el 2026-11-27, fuera de la lectura mecánica:** este commit no fija una regla, así que la lectura mecánica no copia su texto. Está porque lo cita `pipeline/cota_rr_condicional.py` y porque en él descansa que la enmienda `55a709a` vino antes de ninguna cifra real: su `main` corre la validación sintética antes de abrir el warehouse y, si falla, escribe la página de la falla y vuelve sin leer datos reales. Las líneas de `main` en este commit:
+
+~~~
+    val = validar()
+    print(f"validacion: dualidad {val['dualidad']}\n  cobertura {val['cobertura']}\n  potencia {val['potencia']}\n  "
+          f"ancho {val['ancho']}\n  fallas: {val['fallas'] or 'ninguna'}  ({time.time() - t0:.1f} s)")
+    PAGINA.parent.mkdir(parents=True, exist_ok=True)
+    if not val["ok"]:
+        PAGINA.write_text(pagina_falla(val), encoding="utf-8")
+        print(f"la validacion fallo ({', '.join(val['fallas'])}): no se publica ninguna cifra real; escrita {PAGINA}")
+        return
+    con = duckdb.connect(str(path), read_only=True)
+~~~
+
+Las horas de los commits no descartan una corrida local que no se haya commiteado.
 
 ## `55a709a` · 2026-11-27 04:16 UTC
 
@@ -2640,7 +2794,7 @@ Que no prueba: dentro de un operador cambian el area y el ano, asi que la brecha
 
 **Primer commit posterior que toca los mismos archivos:** `2ee52dd` · 2026-11-27 04:20 UTC · S1: corrida con datos reales después de la enmienda 55a709a
 
-Texto agregado en `pipeline/cota_rr_condicional.py` (primeras 60 de 98 líneas):
+Texto agregado en `pipeline/cota_rr_condicional.py`:
 
 ~~~
 Enmienda del 2026-11-27, antes de calcular ninguna cifra real. Va despues de 2ffa2ef, que implemento la regla sin cambios y solo
@@ -2703,6 +2857,44 @@ def diagnostico_ancho() -> dict:
     """Las cuatro validaciones de la regla; main publica cifras reales solo si pasan todas (la del ancho, desde la enmienda,
     solo por contener el punto). Trae ademas diagnostico_ancho(), que no es puerta."""
          "ancho": validar_ancho(), "diagnostico": diagnostico_ancho()}
+          f"{w['de']}. {'Pasa' if w['ok'] else 'FALLA'}. El más ancho mide {_fmt(w['razon_max'], 2)} veces el intervalo "
+          f"normal al 95 % y el promedio {_fmt(w['razon_media'], 2)} veces. La regla de {COMMIT_REGLA} ponía un tope de "
+          f"{_fmt(w.get('tope', TOPE_ANCHO), 0)}, que "
+          + ("se cumple" if w.get("cumple_tope", w["razon_max"] <= TOPE_ANCHO) else "no se cumple")
+          + ": desde la enmienda de abajo, el ancho es un dato y no una puerta.", ""]
+    return L + _texto_enmienda(val)
+
+
+def _texto_enmienda(val: dict) -> list[str]:
+    w, dg = val["ancho"], val.get("diagnostico")
+    sha = f" ({COMMIT_ENMIENDA})" if COMMIT_ENMIENDA else ""
+    L = [f"## Enmienda antes de calcular{sha}", "",
+         f"La regla de {COMMIT_REGLA} hacía del ancho una puerta: con Mbar = 0, el conjunto no podía medir más del doble del "
+         f"intervalo normal. La primera corrida de la validación, todavía sin datos reales, no la pasó: el más ancho midió "
+         f"{_fmt(w['razon_max'], 2)} veces. Ese tope no salía de la literatura ni de una cuenta. Se puso como guarda contra "
+         "una implementación rota, y el ancho mide eficiencia, no corrección. La enmienda, hecha antes de calcular ninguna "
+         "cifra real, deja el ancho como dato. Que el conjunto contenga el punto sigue siendo puerta, y no cambia ningún otro "
+         "número: el tope no se reemplazó por otro, y la dualidad, la cobertura y la potencia quedan iguales.", ""]
+    if dg:
+        L += ["De dónde sale el ancho, con los mismos datos sintéticos (ATT(1), Mbar = 0, theta = -3): cada poliedro por "
+              f"separado, con su rechazo de theta verdadero en {dg['n']} simulaciones y su ancho en los {w['de']} casos del ancho.", "",
+              "| Poliedro (mes del mayor salto previo, signo) | Contiene la delta verdadera | Rechazo de theta verdadero | "
+              "Ancho medio | Ancho máximo |", "|---|---|---|---|---|"]
+        for f in dg["poliedros"]:
+            L.append(f"| {f['j']}, {'+' if f['sg'] > 0 else '-'} | {'sí' if f['contiene_delta'] else 'no'} | {_pct(f['rechazo'])} | "
+                     f"{_fmt(f['ancho_medio'], 2)} | {_fmt(f['ancho_max'], 2)} |")
+        si = [f for f in dg["poliedros"] if f["contiene_delta"]]
+        tope = w.get("tope", TOPE_ANCHO)
+        L += ["", "Los anchos son en veces el intervalo normal al 95 %. "
+              + (f"Los {len(si)} poliedros que contienen a la delta verdadera rechazan theta verdadero en "
+                 + " y ".join(_pct(f["rechazo"]) for f in si) + ", y su conjunto mide como máximo "
+                 + " y ".join(_fmt(f["ancho_max"], 2) for f in si) + " veces. " if si else "")
+              + f"La unión de los seis contiene a theta en {_pct(dg['union_cobertura'])} de las {dg['n']} simulaciones; "
+              f"su ancho medio es {_fmt(dg['union_ancho_medio'], 2)} veces y el máximo {_fmt(dg['union_ancho_max'], 2)}."
+              + (" El exceso sobre el tope viene de poliedros que no contienen a la delta verdadera: la unión tiene que "
+                 "incluirlos porque con datos reales no se sabe cuál vale."
+                 if si and max(f["ancho_max"] for f in si) <= tope < dg["union_ancho_max"] else "")
+              + " Un conjunto más ancho incluye antes el cero, así que solo puede bajar el Mbar de quiebre, nunca subirlo.", ""]
 ~~~
 
 Texto agregado en `tests/test_cota_rr_condicional.py`:
