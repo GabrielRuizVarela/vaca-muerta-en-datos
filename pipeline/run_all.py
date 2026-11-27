@@ -88,6 +88,7 @@ PASOS: list[Paso] = [
     Paso("apilado", "pipeline.stacked"),
     Paso("cota_rr", "pipeline.cota_rr"),   # its page reads E's bound from mart_apilado
     Paso("cota_rr_condicional", "pipeline.cota_rr_condicional"),   # reads mart_cota_rr for the union side
+    Paso("cota_rr_contraste", "pipeline.cota_rr_contraste"),   # reads data/cota_rr_contraste_honestdid.json (R, run apart) and adds two sections to the condicional page
     # Colorado warehouse first: every step below that reads it comes after colorado_build.
     Paso("colorado_ingest", "pipeline.colorado.ingest", solo_con_colorado=True),
     Paso("colorado_build", "pipeline.colorado.build", solo_con_colorado=True),

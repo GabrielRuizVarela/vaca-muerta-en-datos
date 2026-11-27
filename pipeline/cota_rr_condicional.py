@@ -307,11 +307,11 @@ def conjunto_confianza(beta, Sigma, a, b, mbar: float, centro_id: tuple[float, f
             break
     idx = np.nonzero(acepta)[0]
     if not idx.size:
-        return {"bajo": None, "alto": None, "abierto": None, "con_huecos": False}
+        return {"bajo": None, "alto": None, "abierto": None, "con_huecos": False, "paso": float(grilla[1] - grilla[0])}
     ab_lo, ab_hi = bool(acepta[0]), bool(acepta[-1])
     return {"bajo": float(grilla[idx[0]]), "alto": float(grilla[idx[-1]]),
             "abierto": "ambos" if ab_lo and ab_hi else "bajo" if ab_lo else "alto" if ab_hi else None,
-            "con_huecos": bool(idx[-1] - idx[0] + 1 != idx.size)}
+            "con_huecos": bool(idx[-1] - idx[0] + 1 != idx.size), "paso": float(grilla[1] - grilla[0])}
 
 
 def quiebre_condicional(beta, Sigma, a, b) -> float:

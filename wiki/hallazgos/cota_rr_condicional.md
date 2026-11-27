@@ -101,6 +101,111 @@ El quiebre condicional es mayor que el de la unión: con esta prueba el efecto r
 
 La regla de de19052 pedía que, en un PR de texto aparte, el README y la portada citaran el quiebre condicional de D1 ATT(1) como la cota de Rambachan y Roth y dijeran que el de la unión es más conservador, aunque el quiebre condicional saliera menor. La primera parte se siguió; la segunda no. Nadie midió el nivel de la unión de percentiles, y en el petróleo al mes 1 de D1 su quiebre quedó por encima del condicional (las dos cifras están en su tabla, arriba): decir que la unión es más conservadora habría sido falso ahí. El README y el paper ponen los dos quiebres lado a lado para el petróleo al mes 1 de D1 y para la media de los meses 0 y 1 del agua, y la portada, para el petróleo; en el mes 1 del agua ninguno de los dos cae dentro de la grilla de Mbar. La regla queda como se escribió en el código; esta sección registra el desvío.
 
+## Contraste con HonestDiD
+
+Regla fijada en el commit 06f7720 antes de calcular, con sus aclaraciones en el commit 21e1a91 (fijadas antes de correr R sobre entradas reales). Generada por `pipeline/cota_rr_contraste.py`. La prueba condicional e híbrida de esta página se corre otra vez con el paquete HonestDiD 0.2.8 de CRAN, en R dentro de un contenedor con límites (`scripts/contraste_honestdid.sh`). Las entradas son `data/cota_rr_contraste_entradas.json` (beta, Sigma y las matrices A por poliedro; sin datos de pozos) y la salida de R es `data/cota_rr_contraste_honestdid.json`.
+
+R 4.4.2 (2024-10-31), HonestDiD 0.2.8, semilla 0. **Lectura L1 (misma A y mismo valor crítico que el módulo): coincide** con la regla de coincidencia en los 5 estimandos. La mayor diferencia de un extremo entre L1 y el módulo es 0,023 sd (extremo bajo) y 0,031 sd (extremo alto), en desvíos del estimando.
+
+Las cuatro lecturas: L1 (misma A y mismo valor crítico), L1p (misma A y valor crítico del paquete, 1000 sorteos), L2 (HonestDiD completo, `postPeriodMomentsOnly = FALSE`) y L3 (HonestDiD por defecto: usa solo las filas de A que tocan meses posteriores). L1p, L2 y L3 se publican como dato: no cambian ningún veredicto. Las diferencias son en sd contra el módulo, extremo bajo y extremo alto, sobre los Mbar de la grilla con ese extremo cerrado en los dos conjuntos.
+
+### D1 ATT(1)
+
+| Lectura | Mbar de quiebre | Veredicto | Mayor diferencia con el módulo (sd) | Fallos del programa lineal | Errores del paquete | Conjuntos que contienen al anterior |
+|---|---|---|---|---|---|---|
+| módulo | 0,00 | no resiste ni con Mbar = 0 | - | - | - | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1 | no se biseca: pasa la prueba del cero alrededor del quiebre del módulo | - | 0,023 y 0,031 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1p | 0,00 | no resiste ni con Mbar = 0 | 0,043 y 0,072 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L2 | 0,00 | no resiste ni con Mbar = 0 | 0,023 y 0,031 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L3 | 0,35 | resiste solo con Mbar menor que 1 | 2,116 y 2,812 | 0 | 0 | 8 de 8 |
+
+### D2 tau_W(1)
+
+| Lectura | Mbar de quiebre | Veredicto | Mayor diferencia con el módulo (sd) | Fallos del programa lineal | Errores del paquete | Conjuntos que contienen al anterior |
+|---|---|---|---|---|---|---|
+| módulo | mayor que 2,00 | resiste Mbar = 1 | - | - | - | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1 | no se biseca: pasa la prueba del cero alrededor del quiebre del módulo | - | 0,009 y 0,016 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1p | mayor que 2,00 | resiste Mbar = 1 | 0,009 y 0,012 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L2 | mayor que 2,00 | resiste Mbar = 1 | 0,009 y 0,108 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L3 | mayor que 2,00 | resiste Mbar = 1 | 0,604 y 0,652 | 0 | 0 | 8 de 8 |
+
+### D2 media tau_W(0,1)
+
+| Lectura | Mbar de quiebre | Veredicto | Mayor diferencia con el módulo (sd) | Fallos del programa lineal | Errores del paquete | Conjuntos que contienen al anterior |
+|---|---|---|---|---|---|---|
+| módulo | 1,83 | resiste Mbar = 1 | - | - | - | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1 | no se biseca: pasa la prueba del cero alrededor del quiebre del módulo | - | 0,012 y 0,012 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1p | 1,83 | resiste Mbar = 1 | 0,008 y 0,012 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L2 | 1,83 | resiste Mbar = 1 | 0,012 y 0,076 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L3 | 1,85 | resiste Mbar = 1 | 0,544 y 0,844 | 0 | 0 | 8 de 8 |
+
+### E ATT(1)
+
+| Lectura | Mbar de quiebre | Veredicto | Mayor diferencia con el módulo (sd) | Fallos del programa lineal | Errores del paquete | Conjuntos que contienen al anterior |
+|---|---|---|---|---|---|---|
+| módulo | 0,00 | no resiste ni con Mbar = 0 | - | - | - | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1 | no se biseca: pasa la prueba del cero alrededor del quiebre del módulo | - | 0,011 y 0,014 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1p | 0,00 | no resiste ni con Mbar = 0 | 0,042 y 0,040 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L2 | 0,00 | no resiste ni con Mbar = 0 | 0,031 y 0,020 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L3 | 0,38 | resiste solo con Mbar menor que 1 | 2,236 y 1,828 | 0 | 0 | 8 de 8 |
+
+### E2 ATT(1)
+
+| Lectura | Mbar de quiebre | Veredicto | Mayor diferencia con el módulo (sd) | Fallos del programa lineal | Errores del paquete | Conjuntos que contienen al anterior |
+|---|---|---|---|---|---|---|
+| módulo | 0,48 | resiste solo con Mbar menor que 1 | - | - | - | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1 | no se biseca: pasa la prueba del cero alrededor del quiebre del módulo | - | 0,013 y 0,010 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L1p | 0,48 | resiste solo con Mbar menor que 1 | 0,013 y 0,012 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L2 | 0,48 | resiste solo con Mbar menor que 1 | 0,013 y 0,016 | 0 | 0 | 7 de 8 (no contiene al anterior en Mbar = 0,25) |
+| L3 | 0,59 | resiste solo con Mbar menor que 1 | 0,532 y 1,672 | 0 | 0 | 8 de 8 |
+
+El veredicto de L3 es distinto del del módulo en D1 ATT(1), E ATT(1). Es un dato de esta lectura: ningún veredicto publicado cambia por él.
+
+El anidamiento es un dato, sin veredicto: para cada lectura se cuenta en cuántos Mbar de la grilla (desde el segundo) el conjunto contiene al del Mbar anterior, con tolerancia de 0,05 sd más el paso de la grilla. Cuando el paquete falla con un error en un theta, o su programa lineal no converge, esa prueba no rechaza; se cuenta y se publica. L3 usa solo las filas de A que tocan meses posteriores.
+
+### Lo que no dice el contraste
+
+Prueba que la misma prueba da lo mismo con otro código. No prueba que Delta^RM sea la restricción correcta ni que la base de los coeficientes sea la que usaría HonestDiD con los datos crudos: usa la de este proyecto, que es la de `pipeline.cota_rr`.
+
+## E y E2
+
+La misma cota condicional del módulo (regla 06f7720, aclaraciones 21e1a91) sobre las series principales de los diseños apilados E (controles a 2 a 5 km) y E2 (a 2 a 10 km), con los mismos sorteos que sus páginas: beta es el punto de la muestra completa y Sigma la covarianza de los sorteos completos de e = -3, -2, -1, 0 y 1. Es cifra nueva. El quiebre condicional va al lado del de la unión, que sale de las marts de cada diseño. Unidades: puntos de índice, los del estimando de cada diseño.
+
+| Diseño | Tratados | Sorteos completos | Mbar de quiebre condicional | Veredicto condicional | Mbar de quiebre de la unión | Veredicto de la unión |
+|---|---|---|---|---|---|---|
+| E ATT(1) | 81 | 400 | 0,00 | no resiste ni con Mbar = 0 | 0,32 | resiste solo con Mbar menor que 1 |
+| E2 ATT(1) | 210 | 400 | 0,48 | resiste solo con Mbar menor que 1 | 0,51 | resiste solo con Mbar menor que 1 |
+
+### E ATT(1): conjunto de confianza condicional
+
+| Mbar | Conjunto condicional |
+|---|---|
+| 0,00 | -55,9 a 7,9 |
+| 0,25 | -56,4 a 5,4 |
+| 0,50 | -57,8 a 5,6 |
+| 0,75 | -60,0 a 11,3 |
+| 1,00 | -66,5 a 18,6 |
+| 1,25 | -75,0 a 26,1 |
+| 1,50 | -83,5 a 33,6 |
+| 1,75 | -92,2 a 41,1 |
+| 2,00 | -100,8 a 48,7 |
+
+### E2 ATT(1): conjunto de confianza condicional
+
+| Mbar | Conjunto condicional |
+|---|---|
+| 0,00 | -32,4 a -0,7 |
+| 0,25 | -32,4 a -2,9 |
+| 0,50 | -33,0 a 0,2 |
+| 0,75 | -34,9 a 3,8 |
+| 1,00 | -38,2 a 8,9 |
+| 1,25 | -43,0 a 14,1 |
+| 1,50 | -48,0 a 19,3 |
+| 1,75 | -53,2 a 24,6 |
+| 2,00 | -58,3 a 29,9 |
+
+Los veredictos de E y de E2 no cambian: `pipeline.stacked.veredicto_apilado` sigue recibiendo el veredicto de la unión y da E: **sin muestra** y E2: **sin muestra** por el número de eventos, no por la cota.
+
 ## Lo que no dice
 
 Supone, como la cota de la unión, que los meses previos no tienen efecto (sin anticipación). La matriz de covarianza sale del bootstrap por bloques, no de una fórmula; con un número fijo de sorteos para el valor crítico el Mbar de quiebre tiene un error de simulación del orden de la tolerancia de la bisección o mayor. El conjunto se busca en una grilla de valores del parámetro: si llega al borde de la grilla se publica como abierto de ese lado.

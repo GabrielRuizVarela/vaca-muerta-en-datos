@@ -48,6 +48,7 @@ El contrato:
    siguió; entran solo las cifras de esas referencias (año, volumen, número, páginas, DOI y versión) y los identificadores
    de esa sección (D1, ATT(1), el commit de19052, los meses 0 y 1). Las cifras del análisis no cambian; la clave de esa
    página se rehízo solo por eso.
+   Ronda 4, S1 (contraste con HonestDiD): `wiki/hallazgos/cota_rr_condicional.md` suma las secciones "Contraste con HonestDiD" y "E y E2" (pipeline/cota_rr_contraste.py): cifras nuevas medidas por esa regla (quiebres y diferencias de las lecturas L1, L1p, L2 y L3, y la cota condicional de E y E2), con la regla fijada en 06f7720 y sus aclaraciones en 21e1a91; el resto de la página no cambia. `wiki/hallazgos/linaje.md` se rehízo en la foto solo porque suma la tabla mart_cota_rr_contraste (de 194 a 195 tablas, de 1079 a 1086 relaciones).
    Página nueva (espera): `site/espera.html` entró a la foto con sus cifras; las nuevas son los supuestos de la regla de plata (pipeline/espera.py).
    Otra excepción declarada (espera-claims): el control de `site/espera.html` se describe por la distancia ("a 2 a 5 km de
    un pozo nuevo") y no por la edad (revisión independiente, F1); entran el 2 y el 5 de esa distancia, que ya están en el
