@@ -2522,6 +2522,49 @@ def _claims_siguiente_nivel() -> list[Claim]:
 
     COND = {"q1c": (0, cond("D1", "ATT(1)", "no resiste ni con Mbar = 0"), TCC), "qc": (2, cond("D2", "media tau_W(0,1)", AGUA), TCC),
             "topec": (0, tope_cond, TCC)}
+
+    TCX, TRA, TRAF = "mart_cota_rr_contraste", "mart_replicacion_operadores_agua", "mart_replicacion_operadores_agua_familia"
+
+    def contraste(est: str, lectura: str, veredicto: str) -> Callable:   # S1-R4: el quiebre de una lectura, con el veredicto del texto
+        def f(con):
+            v, x = con.execute(f"select veredicto_rr, mbar_quiebre from {TCX} where estimando = ? and lectura = ? and fila = 'quiebre'",
+                               [est, lectura]).fetchone()
+            return x if v == veredicto else nan
+        return f
+
+    def coinciden(con):   # los estimandos en que L1 coincide con el modulo; el texto dice que son todos
+        n, k = con.execute(f"select count(*), count(*) filter (where coincide) from {TCX} where lectura = 'L1' and fila = 'veredicto'").fetchone()
+        return k if k == n else nan
+
+    def no_anidan(con):   # estimandos cuyo conjunto en el segundo Mbar no contiene al del primero en el modulo y en L2, y si en L3
+        filas = con.execute(f"select estimando, lectura, contiene_al_anterior from {TCX} where fila = 'grilla' and mbar = "
+                            f"(select min(mbar) from {TCX} where fila = 'grilla' and mbar > 0)").fetchall()
+        d = {(e, lec): c for e, lec, c in filas}
+        ests = {e for e, _, _ in filas}
+        ok = [e for e in ests if d.get((e, "modulo")) is False and d.get((e, "L2")) is False and d.get((e, "L3")) is True]
+        return len(ok) if len(ok) == len(ests) else nan
+
+    def agua_no_medido(nombre: str) -> Callable:   # S5-R4: tratados con dW de un operador que no se pudo medir
+        def f(con):
+            n, lec = con.execute(f"select n_tratados, lectura from {TRA} where operador = ?", [nombre]).fetchone()
+            return n if lec.startswith("no se pudo medir") else nan
+        return f
+
+    CONTRASTE = {"lc": (0, coinciden, TCX),
+                 "dmx": (2, lambda con: con.execute(f"select max(greatest(dif_max_bajo_sd, dif_max_alto_sd)) from {TCX} "
+                                                    "where lectura = 'L1' and fila = 'quiebre'").fetchone()[0], TCX),
+                 "l2d1": (0, contraste("D1 ATT(1)", "L2", "no resiste ni con Mbar = 0"), TCX),
+                 "l3d1": (2, contraste("D1 ATT(1)", "L3", "resiste solo con Mbar menor que 1"), TCX),
+                 "qe": (0, contraste("E ATT(1)", "modulo", "no resiste ni con Mbar = 0"), TCX),
+                 "qe2": (2, contraste("E2 ATT(1)", "modulo", "resiste solo con Mbar menor que 1"), TCX),
+                 "nn": (0, no_anidan, TCX),
+                 "paso": (2, lambda con: con.execute(f"select min(mbar) from {TCX} where fila = 'grilla' and mbar > 0").fetchone()[0], TCX),
+                 "cero": (0, lambda con: con.execute(f"select min(mbar) from {TCX} where fila = 'grilla'").fetchone()[0], TCX),
+                 "rak": (0, lambda con: con.execute(f"select k from {TRAF}").fetchone()[0], TRAF),
+                 "ran": (0, lambda con: con.execute(f"select n from {TRAF}").fetchone()[0], TRAF),
+                 "apl": (0, agua_no_medido("Pluspetrol"), TRA), "atp": (0, agua_no_medido("Tecpetrol"), TRA),
+                 "avi": (0, agua_no_medido("Vista"), TRA),
+                 "amin": (0, lambda con: __import__("pipeline.replicacion_operadores_agua", fromlist=["x"]).MIN_TRATADOS_MEDIR, "")}
     # chb: el mart guarda la brecha como fraccion y el texto la imprime en puntos
     REP = {"rk": (0, lambda con: con.execute(f"select k from {TROF}").fetchone()[0], TROF),
            "rn": (0, lambda con: con.execute(f"select n from {TROF}").fetchone()[0], TROF),
@@ -2700,12 +2743,13 @@ def _claims_siguiente_nivel() -> list[Claim]:
            "a0": (0, exposicion("ANIOS_RAMA", 0), ""), "a1": (0, exposicion("ANIOS_RAMA", 1), "")}
     D14["d14n2"] = D14["d14n"]
     slots = {"q1": D1, "m": UNO, **MEDIA, **MES1, **D10, **CENS, **D10_2, **E, **AGUA_MES, **TABLA, **PRUEBAS, **HOLM, **D13,
-             **PERM, **E2, **D14, **COND, **REP}
+             **PERM, **E2, **D14, **COND, **REP, **CONTRASTE}
     FMT = {0: ("{:.0f}", 0.5), 1: ("{:.1f}", 0.05), 2: ("{:.2f}", 0.005), 4: ("{:.4f}", 0.00005)}
 
     frases = [
         ("readme_q2c", R, "el sesgo no salta nada de un mes al siguiente (Mbar = <q1c:i>; regla fijada antes de calcular en "),
-        ("readme_q2", R, "si el sesgo saltaba apenas <q1:n> veces el mayor salto previo: con la prueba condicional, el quiebre queda más abajo. Un estimador apilado con controles limpios da "
+        ("readme_q2", R, "si el sesgo saltaba apenas <q1:n> veces el mayor salto previo: con la prueba condicional, el quiebre queda más abajo."),
+        ("readme_q2e", R, "Un estimador apilado con controles limpios da "
                          "<e:n> puntos al mes 1 (IC <elo:n> a <ehi:n>; en los meses -3, -2 y -1 da +<ep3:n>, +<ep2:n> y +<ep1:n>, con IC que incluyen cero) pero queda sin muestra: <en:i> eventos en <eb:i> bloques, contra un mínimo "
                          "de <mn:i> y <mb:i>."),
         ("readme_q3", R, "Aguanta la cota de Rambachan y Roth con Mbar = <m:i>, que deja que después de la fractura el sesgo salte de un mes al "
@@ -2715,6 +2759,23 @@ def _claims_siguiente_nivel() -> list[Claim]:
                          "fractura a menos de 1 km (D10, regla fijada antes de calcularla), los meses 6 a 12 siguen <d:n> puntos arriba "
                          "(IC <lo:n> a <hi:n>): persiste. El corte saca de la serie antes del mes 12 a <c1:i> de los <t:i> padres de la serie; a menos de 2 km reciben "
                          "otra fractura <c2:i> (<p:i>%), y esa serie queda con <n2:i> tratados como mínimo, menos que los <m5:i> que pide la regla, así que se publica sin veredicto."),
+        # empieza despues del commit entre comillas invertidas, que numeros_sin_fijar borra
+        ("readme_contraste", R, "con sus opciones por defecto, que usan solo las restricciones que tocan meses posteriores a la fractura, el "
+                                "petróleo deja de distinguirse de cero con Mbar = <l3d1:n>."),
+        ("readme_agua_operador", R, "se replica en <rak:w> de <ran:w> operadores, YPF; Pluspetrol, Tecpetrol y Vista no se pudieron medir, con "
+                                    "<apl:i>, <atp:i> y <avi:i> tratados en sus celdas, menos que los <amin:i> que pide la regla."),
+        ("readme_fila_cota_c_contraste", R, "coincide en los <lc:w> estimandos (los de esta fila, E y E2), con una diferencia de <dmx:n> desvíos del estimando como máximo en "
+                                            "un extremo |"),
+        ("paper_contraste", P, "llega al mismo conjunto en los <lc:w> estimandos del contraste, con una diferencia de <dmx:n> desvíos del "
+                               "estimando como máximo en un extremo.\nCon todas sus restricciones da también Mbar = <l2d1:i> para el petróleo "
+                               "de D1; con sus opciones por defecto, que usan solo las restricciones que tocan meses posteriores, ese petróleo "
+                               "deja de distinguirse de cero con Mbar = <l3d1:n>.\nEn los <nn:w> estimandos, el conjunto con Mbar = <paso:n> no "
+                               "contiene al de Mbar = <cero:i>, en esta implementación y en el paquete completo"),
+        ("paper_agua_operador", P, "el corte de agua se replica en <rak:w> de <ran:w> operadores, YPF.\nPluspetrol, Tecpetrol y Vista tienen "
+                                   "<apl:i>, <atp:i> y <avi:i> tratados en sus celdas, menos que los <amin:i> que pide la regla, y no se pudieron medir."),
+        ("paper_e_cond", P, "esa caída no se distingue de cero ni con Mbar = <qe:i> (con la unión de percentiles, <eq:n>)."),
+        ("site_contraste", S, "con todas sus restricciones; con sus opciones por defecto, que usan solo las de los meses posteriores a la "
+                              "fractura, haría falta un salto de <l3d1:n> veces el mayor salto previo. Tampoco"),
         ("readme_rep", R, "la brecha del mes 1 se replica en <rk:w> de <rn:w> operadores (regla fijada antes de medir ninguno por separado"),
         ("readme_fila_cota_c", R, "| el petróleo al mes 1 del diseño causal no se distingue de cero ni con Mbar = <q1c:i> (con la unión de percentiles, <q1:n>); "
                                   "la media de los meses 0 y 1 del corte de agua deja de distinguirse de cero con Mbar = <qc:n> (con la unión, <q:n>), y el mes 1 "
@@ -2730,15 +2791,18 @@ def _claims_siguiente_nivel() -> list[Claim]:
                                "antes del mes 12 <c1:i> de <t:i> tratados a 1 km y <c2:i> a 2 km | IC 95% por bloques de 5 km: <lo:n> a <hi:n> "
                                "(a 2 km: <lo2:n> a <hi2:n>) | persiste,"),
         ("readme_fila_e", R, "petróleo al mes 1: <e:n> puntos (<en:i> eventos, <enc:i> controles) | IC 95% por bloques de 5 km: <elo:n> a <ehi:n>; "
-                             "ningún placebo rompe; con la unión de percentiles deja de distinguirse de cero con Mbar = <eq:n> (la prueba "
-                             "condicional no se corrió sobre E) | sin muestra,"),
+                             "ningún placebo rompe; con la unión de percentiles deja de distinguirse de cero con Mbar = <eq:n>, y con la prueba "
+                             "condicional e híbrida (regla "),
+        # partida en el commit entre comillas invertidas, que numeros_sin_fijar borra
+        ("readme_fila_e_cond", R, ") no se distingue ni con Mbar = <qe:i> | sin muestra,"),
         # aparte: la frase de la regla viene despues del commit entre comillas invertidas, que numeros_sin_fijar borra
         ("readme_fila_e_regla", R, "la regla pide <mn:i> eventos y <mb:i> bloques, y hay <en2:i> y <eb2:i> |"),
         ("readme_e2", R, "Con donantes a 2 a 10 km (E2) entran <e2n:i> eventos y da <e2:n> (IC <e2lo:n> a <e2hi:n>), pero también queda "
                          "sin muestra."),
         ("readme_fila_e2", R, "petróleo al mes 1 de E2: <e2:n> puntos (<e2n:i> eventos, <e2nc:i> controles) | IC 95% por bloques de 5 km: <e2lo:n> a "
-                              "<e2hi:n>; ningún placebo rompe; con la unión de percentiles deja de distinguirse de cero con Mbar = <e2q:n> (la "
-                              "prueba condicional no se corrió sobre E2) | sin muestra,"),
+                              "<e2hi:n>; ningún placebo rompe; con la unión de percentiles deja de distinguirse de cero con Mbar = <e2q:n>, y con la "
+                              "prueba condicional e híbrida (regla "),
+        ("readme_fila_e2_cond", R, "), con Mbar = <qe2:n> | sin muestra,"),
         ("readme_fila_e2_regla", R, "la regla pide <mn:i> eventos y <mb:i> bloques, y E2 tiene <e2n2:i> y <e2b:i> |"),
         ("readme_fila_d14", R, "D2 con el golpe por distancia entre ramas (una rama a menos de <r14:i> m), de <a0:i> a <a1:i> (D14,"),
         ("readme_fila_d14_cifras", R, "corte de agua: +<d14:n> puntos porcentuales (<d14n:i> tratados); D2 en esos años, con el golpe por boca de "
@@ -2748,7 +2812,7 @@ def _claims_siguiente_nivel() -> list[Claim]:
         ("paper_e2", P, "Con donantes a 2 a 10 km (E2, regla fijada antes de calcularla) entran <e2n:i> eventos en <e2b:i> bloques, con mejor "
                         "balance después del emparejamiento que E, y da <e2:n> puntos (IC <e2lo:n> a <e2hi:n>); también queda sin muestra, "
                         "porque la regla pide <mn:i> eventos, y con la unión de percentiles deja de distinguirse de cero con Mbar = <e2q:n> "
-                        "(la prueba condicional no se corrió sobre E2)."),
+                        "y con la prueba condicional e híbrida, con Mbar = <qe2:n>."),
         ("paper_i5", P, "Repartida por pad padre (I5), con los pozos de un mismo pad juntos, el p sigue en el mínimo (<i5p:n>), pero la nula ya "
                         "no está centrada en cero: entre los percentiles 2,5 y 97,5 va de <i5lo:n> a <i5hi:n> pp, con media <i5m:n>, porque "
                         "solo se mezcla el <i5x:n>% de las observaciones; <i5v:n> queda por encima de toda esa franja."),
@@ -2766,7 +2830,7 @@ def _claims_siguiente_nivel() -> list[Claim]:
                          "siguiente tanto como el mayor salto previo), y con la serie cortada en la segunda fractura a menos de 1 km los meses "
                          "6 a 12 siguen <d:n> puntos arriba (IC <lo:n> a <hi:n>)."),
         ("site_petroleo", S, "de un mes al siguiente (Mbar = <q1c:i>, con la prueba condicional e híbrida de la cota de Rambachan y Roth; con la "
-                             "unión de percentiles que se publicaba antes, hacía falta un salto de <q1:n> veces el mayor salto previo). Tampoco"),
+                             "unión de percentiles que se publicaba antes, hacía falta un salto de <q1:n> veces el mayor salto previo). El paquete de R de los autores de la cota llega al mismo resultado"),
         ("site_rep", S, "la brecha del mes 1 se replica en <rk:w> de <rn:w> operadores. En Tecpetrol y en Pan American Energy no,"),
         ("resumen_agua_cota", W_RESUMEN, "resiste la cota de Rambachan y Roth con Mbar = <m:i> (con la prueba condicional, la media de los meses 0 y 1 se "
                                      "rompe en <qc:n>) y la serie"),
@@ -4968,6 +5032,8 @@ CLAIMS: list[Claim] = [
 # Numeros de README.md que son parte de una definicion y no un resultado: cada uno es una frase, no un numero suelto.
 README_DEFINICIONALES: tuple[str, ...] = (
     r"datos-crudos-2026-11-23",  # el nombre de la release con los archivos crudos, no una cifra
+    r"paquete HonestDiD 0\.2\.8 de R",  # la version del paquete del contraste, no una cifra
+    r"los de esta fila, E y E2",  # los disenos del contraste: el nombre de E2, no una cifra
     r"en los meses -3, -2 y -1",  # los meses de la serie previa de E; sus cifras son claims
     r"en los meses 10 a 12",  # la ventana de la serie de D10; sus cifras son claims
     r"the larger of months 0 and 1",  # D2 es el mayor de los meses 0 y 1, no una media
@@ -5030,7 +5096,6 @@ README_DEFINICIONALES: tuple[str, ...] = (
     r"[Aa] los 6 meses",
     r"donantes a 2 a 10 km \(E2",  # el anillo de donantes de E2 es la definicion del diseno; sus cifras son claims
     r"al mes 1 de E2", r"y E2 tiene",
-    r"no se corrió sobre E2",  # la inferencia del quiebre de E2: la prueba condicional no se corrió
     r"D2 con el golpe por distancia entre ramas", r"\(D14,", r"D2 en esos años", r"D14 tiene",
     r"By month 6",
     r"meses 0 a 6",
@@ -5218,6 +5283,7 @@ PAPER_DEF_B: tuple[str, ...] = (
 PAPER_DEF_C: tuple[str, ...] = (
     r"a menos de 1 km",  # el golpe que define al padre y la serie cortada de D10 (KM_TRATADO): una distancia de diseno
     r"IC 95%",  # el nivel de los intervalos, en el encabezado de la tabla
+    r"paquete HonestDiD 0\.2\.8 de R",  # la version del paquete del contraste, no una cifra
     r"(?:mayor|media) de los meses 0 y 1",  # D2 es el mayor de los meses 0 y 1; la cota de Rambachan y Roth usa su media
     r"meses 6 a 12",  # la ventana tardia de D5 y D10 (H_D5 = 12)
     r"no se cura en 12 meses",  # el horizonte de D5

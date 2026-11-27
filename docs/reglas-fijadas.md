@@ -2,7 +2,7 @@
 
 Este repositorio es una copia de un solo commit: el historial de trabajo no se publica. Las cifras y los textos citan, sin embargo, el commit en que se fijó cada regla. Este archivo conserva, para cada commit citado, su fecha en UTC, su asunto, los archivos que tocó y el texto que agregó, de modo que se pueda leer la regla tal como se escribió y comprobar el orden de las fechas sin el historial. El historial completo se comparte a pedido.
 
-Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (44 commits; 34 se citan en esta copia fuera de este archivo y 10 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF) ni el plan de trabajo, que no se publica; las dos reglas de la cota condicional (`de19052` y su enmienda `55a709a`) se copian enteras, porque sus primeras 60 líneas dejaban afuera las puertas de la validación y una frase que el texto no siguió; el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. La regla de `b1479a8` se copia completa, sin el tope de 60 líneas. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea. Dos notas agregadas a mano, marcadas así, registran esa frase y por qué está `2ffa2ef`, que no fija una regla.
+Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (46 commits; 36 se citan en esta copia fuera de este archivo y 10 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF) ni el plan de trabajo, que no se publica; las dos reglas de la cota condicional (`de19052` y su enmienda `55a709a`) se copian enteras, porque sus primeras 60 líneas dejaban afuera las puertas de la validación y una frase que el texto no siguió; el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. Las reglas de `06f7720` y `b1479a8` se copian completas, sin el tope de 60 líneas. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea. Dos notas agregadas a mano, marcadas así, registran esa frase y por qué está `2ffa2ef`, que no fija una regla.
 
 ## `94580fd` · 2026-11-15 07:30 UTC
 
@@ -2916,6 +2916,183 @@ def test_diagnostico_del_ancho():
     assert d["union_cobertura"] >= 0.95 and d["union_ancho_max"] >= max(f["ancho_max"] for f in d["poliedros"]) - 1e-9, d
 ~~~
 
+## `06f7720` · 2026-11-27 08:55 UTC
+
+**Asunto:** Ronda 4, S1: regla fijada antes de calcular para el contraste con HonestDiD 0.2.8 (misma A y mismo valor critico, el paquete completo y por defecto) y la cota condicional de E y E2
+
+**Archivos:** `pipeline/cota_rr_contraste.py`
+
+**Primer commit posterior que toca los mismos archivos:** `a4e2399` · 2026-11-27 09:57 UTC · Ronda 4, S1, parte A: el contraste con HonestDiD 0.2.8 sobre entradas sinteticas (R en contenedor, L1 coincide, mayor diferencia 0,019 sd); sin datos reales
+
+Texto agregado en `pipeline/cota_rr_contraste.py`:
+
+~~~
+"""Contraste de la cota condicional de Rambachan y Roth con el paquete HonestDiD, y la misma cota sobre E y E2 (ronda 4, S1).
+
+Las reglas de este modulo se citan tal como se escribieron: "este commit" es el commit en que se fijo la regla, y el plan que
+nombra (docs/plan-siguiente-nivel.md) no se publica. El SHA, la fecha y el texto de la regla estan en docs/reglas-fijadas.md.
+
+REGLA FIJADA ANTES DE CALCULAR (2026-11-27, ronda 4 de docs/plan-siguiente-nivel.md). Este commit trae la regla, las constantes y
+las firmas. Antes de fijarla no se corrio HonestDiD sobre ninguna entrada real ni se calculo la cota condicional de E o de E2. Si
+algo resulta ambiguo al calcular, se corrige en un commit nuevo que lo diga, nunca despues de ver una cifra.
+Regla informada en esto: se conocen las cifras de pipeline.cota_rr_condicional (regla de19052, enmienda 55a709a). El quiebre de
+D1 ATT(1) es 0; su conjunto con Mbar = 0 va de -35,0 a 6,8 y con Mbar = 0,25 de -34,5 a 3,6, asi que no estan anidados. El de la
+media de D2 es 1,83 y el de D2 tau_W(1) es mayor que 2. Tambien se conocen los quiebres de la union de E y E2 (0,32 y 0,51). Se
+leyo el codigo de HonestDiD 0.2.8 (computeConditionalCS_DeltaRM, .computeConditionalCS_DeltaRM_fixedS, .create_A_RM,
+.ARP_computeCI, .compute_least_favorable_cv y .lp_conditional_test_fn); solo se corrio sobre datos inventados, para medir el
+tiempo. El paquete simula el valor critico de la primera etapa con 1000 sorteos y el modulo con 10000. Por defecto
+(postPeriodMomentsOnly = TRUE) la prueba del paquete usa solo las filas de A que tocan meses posteriores. Ademas, sus poliedros
+traen una fila de signo para el salto mayor, que la de este proyecto no tiene: dentro del conjunto identificado es redundante,
+pero en la prueba cuenta.
+
+Por que. Fable, en la pasada sobre la copia publica 2c2ae47, pidio dos cosas: comparar la implementacion propia con HonestDiD y
+correr la prueba condicional sobre E y E2. Tambien noto que los conjuntos de D1 no estan anidados en Mbar, y no pudo decir si eso
+viene del metodo o de un error.
+
+Entradas. Por estimando, beta = (b(-3), b(-2), b(-1), b(0), b(1)) y Sigma, armados exactamente como los arma
+pipeline.cota_rr_condicional.calcular_estimando: beta es el punto de la muestra completa y Sigma = np.cov de los sorteos completos
+(un sorteo con algun valor faltante se descarta).
+  * D1 ATT(1), D2 tau_W(1) y D2 media tau_W(0,1) salen de cota_rr_condicional._entradas_reales.
+  * E ATT(1) y E2 ATT(1) salen de la serie principal de pipeline.stacked.calcular, con los mismos sorteos (r["est"] y
+    r["sorteos"] en e = -3, -2, -1, 0, 1). E usa km_max = KM_CONTROL_MAX y E2 usa KM_CONTROL_MAX_E2. En los dos, a = (0, 1),
+    b = (1, 0) y meses = (1,).
+Se escriben en ENTRADAS, por estimando: beta, Sigma, n_tratados, el numero de sorteos completos, l_vec, el quiebre del modulo
+y su valor critico LF por poliedro para cada Mbar que R necesita en L1. No lleva datos de pozos. La salida de R guarda el SHA-256
+de ese archivo. Si el archivo cambia, el contraste queda "desactualizado" y no se lee hasta volver a correr R.
+
+Cambio de base. HonestDiD pone el periodo de referencia justo antes del primer mes posterior; este proyecto lo pone antes de
+b(-3). beta_H = M beta y Sigma_H = M Sigma M'. M tiene las filas (0,0,-1,0,0), (1,0,-1,0,0), (0,1,-1,0,0), (0,0,-1,1,0) y
+(0,0,-1,0,1): los tres previos de HonestDiD son la base, -3 y -2, medidos contra b(-1); la referencia es -1; los posteriores son
+b(0) - b(-1) y b(1) - b(-1). numPrePeriods = 3 y numPostPeriods = 2. Con eso, los saltos previos de HonestDiD son s(-3), s(-2)
+y s(-1), los posteriores son los mismos dos, y Delta^RM es el mismo conjunto. l_vec = (0, 1) para ATT(1) y (0,5; 0,5) para la
+media.
+
+Cuatro lecturas con HonestDiD 0.2.8 de CRAN, todas con alfa = ALFA, hybrid_flag = "LF", hybrid_kappa = alfa / 10 y
+seed = 0. R corre en un contenedor con limites (scripts/contraste_honestdid.sh). Para cada theta de la grilla, el paquete
+decide con .test_delta_lp_fn_wrapper, la prueba que llama .ARP_computeCI; las filas que usa la prueba (rowsForARP) se pasan
+siempre explicitas.
+  * L1, misma A y mismo valor critico. Para cada uno de los seis poliedros (j, sg), la matriz A de
+    cota_rr_condicional.matriz_rm(j, sg, Mbar) se pasa a la base de HonestDiD (A_H = A M^-1, mismas filas y mismo orden) y
+    entra con d = 0 y todas las filas. El valor critico de la primera etapa es el del modulo para ese poliedro y ese Mbar
+    (hybrid_list$lf_cv): es el cuerpo de .ARP_computeCI sin la linea que lo vuelve a calcular. El conjunto es la union de los
+    seis. Este es el contraste de la implementacion: las mismas filas, el mismo metodo y el mismo valor critico, con otro
+    codigo para el estadistico, los vertices, el truncamiento y el valor p.
+  * L1p, misma A y valor critico del paquete: lo mismo, por .ARP_computeCI tal cual. El paquete simula el valor critico con
+    1000 sorteos y semilla 0 (.compute_least_favorable_cv); el modulo, con N_LF = 10000 y su semilla. La diferencia con L1
+    mide cuanto mueve el conjunto la simulacion del valor critico.
+  * L2, HonestDiD completo: computeConditionalCS_DeltaRM con postPeriodMomentsOnly = FALSE, con los poliedros del paquete (que
+    traen la fila de signo).
+  * L3, HonestDiD por defecto: computeConditionalCS_DeltaRM con sus valores por defecto (postPeriodMomentsOnly = TRUE). Es lo
+    que obtiene quien corre el paquete sin cambiar nada, salvo la grilla.
+  Grilla de theta en las cuatro: GRID_PUNTOS puntos, de l'beta_H - GRID_SD sd a l'beta_H + GRID_SD sd, con
+  sd = raiz de l' Sigma_H,post l, que es el `desvio` de calcular_estimando. No es la grilla por defecto del paquete (de -20 a
+  20 sd alrededor de cero), que puede quedar corta lejos del cero. Si un extremo de la grilla queda aceptado, el conjunto se
+  publica abierto de ese lado, sin ampliar la grilla. Si el programa lineal no converge, el paquete no rechaza ese theta; se
+  cuenta y se publica. Mbar recorre la GRILLA_MBAR de cota_rr_condicional.
+  Quiebre: el menor Mbar en [0, MBAR_MAX] cuyo conjunto contiene el cero. El cero esta en el conjunto si el punto del medio
+  de la grilla CERO_GRILLA (-1e-9, 0, 1e-9) se acepta. En L1p, L2 y L3, por biseccion con TOL_BISECCION, como en
+  cota_rr_condicional, con el valor critico que el paquete calcula para cada Mbar. En L1 no hay biseccion, porque el valor
+  critico del modulo solo se lleva a R para algunos Mbar: con q el quiebre del modulo, L1 pasa si acepta el cero con
+  Mbar = min(q + TOL_QUIEBRE, MBAR_MAX) y lo rechaza con Mbar = max(q - TOL_QUIEBRE, 0); si q = 0, si lo acepta con
+  Mbar = 0; si q es mayor que MBAR_MAX, si lo rechaza con MBAR_MAX.
+
+Validacion antes de las entradas reales. R corre primero sobre entradas sinteticas: Sigma = SIGMA_SINT y un solo beta, el valor
+esperado de la simulacion de cobertura de cota_rr_condicional con Mbar = 0,5 y theta = -3 (DELTA_PREVIA y saltos posteriores en
+el borde), para ATT(1) y para la media. L1 tiene que dar "coincide" con la regla de abajo. Si no da, R no se corre sobre las
+entradas reales hasta entender por que, y la pagina lo dice.
+
+Regla de coincidencia (L1 contra el modulo, por estimando):
+  * para cada Mbar de la grilla, cada extremo del conjunto de L1 queda a no mas de TOL_SD sd mas el paso de las dos grillas
+    (la del modulo y la de R) del extremo del modulo, y los dos son abiertos o cerrados del mismo lado;
+  * L1 pasa la prueba del quiebre de arriba.
+"Coincide" si se cumple para los cinco estimandos; si no, "no coincide", con la lista de lo que no se cumple.
+
+Que pasa con cada resultado (fijado ahora, antes de verlo):
+  * Si coincide, las cifras del modulo siguen siendo las que se citan. La pagina dice que coinciden con la prueba de HonestDiD
+    0.2.8 con las mismas filas y el mismo valor critico, y publica la mayor diferencia, en sd.
+  * Si no coincide, un PR de texto aparte hace que el README, la portada y el paper citen las cifras de L1p (el codigo del
+    paquete de punta a punta, con las filas de este proyecto) en lugar de las del modulo. La pagina publica las dos y la lista
+    de diferencias. El modulo se corrige solo en un commit nuevo que diga por que.
+  * L1p, L2 y L3 se publican como dato en la pagina, con su quiebre y su veredicto (pipeline.cota_rr.veredicto_rr), y no
+    cambian ningun veredicto. De L1p se publica tambien la mayor diferencia con el modulo, en sd.
+  * La frase del README que cita la cota condicional de D1 ATT(1) agrega, sea cual sea, el quiebre que da HonestDiD por
+    defecto (L3), y dice que esa lectura usa solo las filas que tocan meses posteriores. La portada lo agrega solo si el
+    veredicto de L3 es distinto del del modulo.
+  * E y E2: la cota condicional del modulo (cota_rr_condicional.calcular_estimando con sus entradas) es cifra nueva. Su
+    quiebre y su veredicto_rr se publican al lado de los de la union, en la pagina, en las filas de E y E2 del README y en el
+    paper. Los veredictos de E y de E2 no cambian: pipeline.stacked.veredicto_apilado sigue recibiendo el veredicto de la
+    union, y da "sin muestra" por el numero de eventos.
+  * Anidamiento: para cada lectura y estimando, la pagina dice si cada conjunto de la grilla contiene al del Mbar anterior,
+    con tolerancia de TOL_SD sd mas el paso de la grilla. Es un dato, sin veredicto.
+
+Que se publica:
+  * ENTRADAS y SALIDA_R (data/), el script de R (scripts/contraste_honestdid.R) y el que lo corre en el contenedor;
+  * mart_cota_rr_contraste: una fila por estimando, lectura (modulo, L1, L1p, L2, L3) y Mbar de la grilla, mas una fila de
+    quiebre por estimando y lectura y una fila de veredicto del contraste;
+  * una seccion "Contraste con HonestDiD" y una seccion "E y E2" en wiki/hallazgos/cota_rr_condicional.md.
+
+Validacion fijada antes de leer cifras reales (tests/test_cota_rr_contraste.py, sin warehouse y sin R):
+  * cambio de base: para beta al azar, los cinco saltos de beta_H en la base de HonestDiD son los de beta en la del proyecto, y
+    A_H beta_H = A beta para los seis poliedros y la grilla de Mbar;
+  * la regla de coincidencia, sobre la salida sintetica de R que se guarda en el repositorio (SALIDA_SINT), da "coincide" en L1;
+  * una salida de R con el SHA-256 de otras entradas queda "desactualizado".
+
+Lo que no dice: el contraste prueba que la misma prueba da lo mismo con otro codigo. No prueba que Delta^RM sea la restriccion
+correcta ni que la base de los coeficientes sea la que usaria HonestDiD con los datos crudos: usa la de este proyecto, que es la
+de pipeline.cota_rr.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+from pipeline import cota_rr_condicional as crc
+
+# ---- regla fijada (no cambiar despues de ver cifras) ----
+ALFA = crc.ALFA                 # 0,05
+GRID_PUNTOS = 3001
+GRID_SD = 30.0
+TOL_SD = 0.05
+TOL_QUIEBRE = 0.02
+CERO_GRILLA = (-1e-9, 0.0, 1e-9)
+SEMILLA_R = 0
+TOL_BISECCION = crc.TOL_BISECCION
+MBAR_MAX = crc.MBAR_MAX
+GRILLA_MBAR = crc.GRILLA_MBAR
+HONESTDID_VERSION = "0.2.8"
+LECTURAS = ("modulo", "L1", "L1p", "L2", "L3")
+M_BASE = ((0, 0, -1, 0, 0), (1, 0, -1, 0, 0), (0, 1, -1, 0, 0), (0, 0, -1, 1, 0), (0, 0, -1, 0, 1))
+ENTRADAS = Path("data/cota_rr_contraste_entradas.json")
+SALIDA_R = Path("data/cota_rr_contraste_honestdid.json")
+ENTRADAS_SINT = Path("tests/fixtures/cota_rr_contraste_entradas_sint.json")
+SALIDA_SINT = Path("tests/fixtures/cota_rr_contraste_honestdid_sint.json")
+COMMIT_REGLA = None             # lo fija el commit que corre el contraste con datos reales
+PAGINA = crc.PAGINA
+
+
+def base_honestdid(beta, Sigma):
+    """(beta_H, Sigma_H) en la base de HonestDiD."""
+    raise NotImplementedError
+
+
+def a_honestdid(A):
+    """A_H = A M^-1."""
+    raise NotImplementedError
+
+
+def entradas(con) -> list[dict]:
+    """Los cinco estimandos con beta, Sigma, n_tratados y sorteos."""
+    raise NotImplementedError
+
+
+def coincide(modulo: dict, l1: dict) -> tuple[bool, list[str]]:
+    """Regla de coincidencia de L1 contra el modulo para un estimando."""
+    raise NotImplementedError
+
+
+def main(path=None) -> None:
+    raise NotImplementedError
+~~~
+
 ## `b1479a8` · 2026-11-27 09:00 UTC
 
 **Asunto:** Ronda 4, S5: regla fijada antes de calcular para la replicacion por operador del corte de agua (D2) con sus propios controles y placebos de dos colas, y la lectura de dos colas del placebo del petroleo, post hoc
@@ -3058,4 +3235,30 @@ def rompe_dos_colas(ic_bajo: float, ic_alto: float) -> bool:
 
 def main(path=None) -> None:
     raise NotImplementedError
+~~~
+
+## `21e1a91` · 2026-11-27 10:00 UTC
+
+**Asunto:** Ronda 4, S1: aclaraciones de la regla del contraste, fijadas antes de correr R sobre entradas reales (error del paquete en un theta = no rechaza, lados abiertos, A_H lineal en Mbar, conjuntos del modulo recalculados y comparados con el mart)
+
+**Archivos:** `pipeline/cota_rr_contraste.py`
+
+**Primer commit posterior que toca los mismos archivos:** `5735b46` · 2026-11-27 10:12 UTC · Ronda 4, S1, parte B: contraste con HonestDiD 0.2.8 sobre las entradas reales y cota condicional de E y E2 (L1 coincide en los cinco estimandos, mayor diferencia 0,031 sd)
+
+Texto agregado en `pipeline/cota_rr_contraste.py`:
+
+~~~
+# ---- aclaraciones de la regla (2026-11-27), fijadas antes de correr R sobre entradas reales; solo se vio la salida sintetica ----
+# 1. Si el paquete falla con un error en un theta, esa prueba no rechaza, como cuando el programa lineal no converge. En la
+#    salida sintetica pasa con solve() de una matriz singular en theta = -2, que cae justo en la grilla, en dos poliedros de
+#    ATT(1) con Mbar = 0, y no mueve ningun extremo. El envoltorio esta en scripts/contraste_honestdid.R; se cuenta por
+#    lectura (errores_paquete) y se publica al lado de los fallos del programa lineal.
+# 2. Si un lado queda abierto en el modulo y en L1, de ese lado solo se compara que los dos esten abiertos: los dos extremos son
+#    el borde de su grilla.
+# 3. En la biseccion de L1p, L2 y L3, un Mbar que no esta en la grilla usa A_H(Mbar) = A_H(0) + Mbar (A_H(1) - A_H(0)): A es
+#    lineal en Mbar, y tests/test_cota_rr_contraste.py lo prueba.
+# 4. Los conjuntos y el quiebre del modulo que van en ENTRADAS se recalculan con cota_rr_condicional.conjunto_confianza y
+#    quiebre_condicional sobre el beta y la Sigma de la entrada. Para D1 y D2 tienen que dar los de mart_cota_rr_condicional,
+#    hasta el paso de su grilla; si no dan, no se corre R.
+
 ~~~
