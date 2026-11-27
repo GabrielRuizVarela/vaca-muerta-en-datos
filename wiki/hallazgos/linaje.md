@@ -6,7 +6,7 @@ Capas: crudo (CSV inmutable en `data/raw`), staging (`stg_`), intermedia (`int_`
 
 Queda fuera la réplica en el warehouse de Colorado (`pipeline.replicacion`), que escribe con nombres tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*`, `mart_golpes_mismo_padre_colorado*`, `mart_dia_inicio_colorado*`, `mart_causal_profundo_d7` y `mart_causal_profundo_d9` (Wyoming) sí están: se guardan en este warehouse, pero se calculan desde el de Colorado, que tiene tablas con los mismos nombres.
 
-Hay 187 tablas con 1052 relaciones de origen.
+Hay 190 tablas con 1063 relaciones de origen.
 
 ## Árbol
 
@@ -81,6 +81,7 @@ manifiesto:fecha_extraccion
             mart_causal_serie (ver arriba)
             mart_causal_veredicto (ver arriba)
           mart_cota_rr
+            mart_cota_rr_condicional
       mart_causal_profundo_d3 (ver arriba)
       mart_causal_profundo_d4 (ver arriba)
       mart_causal_profundo_d5 (ver arriba)
@@ -435,6 +436,7 @@ raw:fractura_adjunto_iv
           mart_causal_serie (ver arriba)
           mart_causal_veredicto (ver arriba)
           mart_cota_rr (ver arriba)
+          mart_cota_rr_condicional (ver arriba)
           mart_inferencia_escala
           mart_inferencia_holm
           mart_inferencia_permutacion
@@ -552,6 +554,7 @@ raw:fractura_adjunto_iv
       mart_causal_serie (ver arriba)
       mart_causal_veredicto (ver arriba)
       mart_cota_rr (ver arriba)
+      mart_cota_rr_condicional (ver arriba)
       mart_descomposicion_aditiva
       mart_descomposicion_cierres
       mart_descomposicion_distancia
@@ -634,6 +637,8 @@ raw:fractura_adjunto_iv
       mart_potencia_dosis (ver arriba)
       mart_potencia_dosis_sim (ver arriba)
       mart_potencia_dosis_veredicto (ver arriba)
+      mart_replicacion_operadores
+      mart_replicacion_operadores_familia
       mart_robustez_operador
       mart_robustez_operador_veredicto
       mart_sincronia
@@ -745,6 +750,7 @@ raw:produccion_no_convencional
               mart_costo_cv (ver arriba)
               mart_costo_residuales (ver arriba)
               mart_cota_rr (ver arriba)
+              mart_cota_rr_condicional (ver arriba)
               mart_decision_cierre (ver arriba)
               mart_decision_distancia (ver arriba)
               mart_decision_edad (ver arriba)
@@ -841,6 +847,8 @@ raw:produccion_no_convencional
               mart_potencia_dosis_veredicto (ver arriba)
               mart_potencia_eje (ver arriba)
               mart_potencia_resumen (ver arriba)
+              mart_replicacion_operadores (ver arriba)
+              mart_replicacion_operadores_familia (ver arriba)
               mart_riesgo_anio (ver arriba)
               mart_riesgo_calibracion (ver arriba)
               mart_riesgo_coef (ver arriba)
@@ -975,6 +983,7 @@ raw:produccion_no_convencional
       mart_costo_cv (ver arriba)
       mart_costo_residuales (ver arriba)
       mart_cota_rr (ver arriba)
+      mart_cota_rr_condicional (ver arriba)
       mart_descomposicion_aditiva (ver arriba)
       mart_descomposicion_cierres (ver arriba)
       mart_descomposicion_distancia (ver arriba)
@@ -1049,6 +1058,8 @@ raw:produccion_no_convencional
       mart_potencia_dosis (ver arriba)
       mart_potencia_dosis_sim (ver arriba)
       mart_potencia_dosis_veredicto (ver arriba)
+      mart_replicacion_operadores (ver arriba)
+      mart_replicacion_operadores_familia (ver arriba)
       mart_riesgo_anio (ver arriba)
       mart_riesgo_calibracion (ver arriba)
       mart_riesgo_coef (ver arriba)
@@ -1396,6 +1407,11 @@ seed:operadores
 | mart_cota_rr | mart | mart_apilado | pipeline.cota_rr |
 | mart_cota_rr | mart | mart_causal_veredicto | pipeline.cota_rr |
 | mart_cota_rr | mart | mart_par_rama | pipeline.cota_rr |
+| mart_cota_rr_condicional | mart | fct_produccion | pipeline.cota_rr_condicional |
+| mart_cota_rr_condicional | mart | int_frac_hijo | pipeline.cota_rr_condicional |
+| mart_cota_rr_condicional | mart | int_pozo_ubicacion | pipeline.cota_rr_condicional |
+| mart_cota_rr_condicional | mart | mart_cota_rr | pipeline.cota_rr_condicional |
+| mart_cota_rr_condicional | mart | mart_par_rama | pipeline.cota_rr_condicional |
 | mart_curva_tipo | mart | int_pozo_mop | pipeline/sql/03_marts.sql |
 | mart_decision_cierre | mart | int_pozo_ubicacion | pipeline.decision |
 | mart_decision_cierre | mart | mart_anillo | pipeline.decision |
@@ -1994,6 +2010,12 @@ seed:operadores
 | mart_pozo_12m | mart | dim_pozo | pipeline/sql/03_marts.sql |
 | mart_pozo_12m | mart | int_pozo_mop | pipeline/sql/03_marts.sql |
 | mart_pozo_12m | mart | ultimo_mes | pipeline/sql/03_marts.sql |
+| mart_replicacion_operadores | mart | fct_produccion | pipeline.replicacion_operadores |
+| mart_replicacion_operadores | mart | int_frac_hijo | pipeline.replicacion_operadores |
+| mart_replicacion_operadores | mart | int_pozo_ubicacion | pipeline.replicacion_operadores |
+| mart_replicacion_operadores_familia | mart | fct_produccion | pipeline.replicacion_operadores |
+| mart_replicacion_operadores_familia | mart | int_frac_hijo | pipeline.replicacion_operadores |
+| mart_replicacion_operadores_familia | mart | int_pozo_ubicacion | pipeline.replicacion_operadores |
 | mart_riesgo_anio | mart | dim_fractura_pozo | pipeline.riesgo |
 | mart_riesgo_anio | mart | fct_produccion | pipeline.riesgo |
 | mart_riesgo_anio | mart | int_interferencia_evento | pipeline.riesgo |

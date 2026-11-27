@@ -61,6 +61,7 @@ PASOS: list[Paso] = [
     Paso("dosis_pad", "pipeline.dosis_pad"),
     Paso("potencia_dosis", "pipeline.potencia_dosis"),
     Paso("robustez_operador", "pipeline.robustez_operador"),
+    Paso("replicacion_operadores", "pipeline.replicacion_operadores"),
     Paso("dias_perdidos", "pipeline.dias_perdidos"),
     Paso("golpes_mismo_mes", "pipeline.golpes_mismo_mes"),
     Paso("golpes_mismo_padre", "pipeline.golpes_mismo_padre"),
@@ -84,6 +85,7 @@ PASOS: list[Paso] = [
     Paso("causal_exposicion", "pipeline.causal_exposicion"),
     Paso("apilado", "pipeline.stacked"),
     Paso("cota_rr", "pipeline.cota_rr"),   # its page reads E's bound from mart_apilado
+    Paso("cota_rr_condicional", "pipeline.cota_rr_condicional"),   # reads mart_cota_rr for the union side
     # Colorado warehouse first: every step below that reads it comes after colorado_build.
     Paso("colorado_ingest", "pipeline.colorado.ingest", solo_con_colorado=True),
     Paso("colorado_build", "pipeline.colorado.build", solo_con_colorado=True),

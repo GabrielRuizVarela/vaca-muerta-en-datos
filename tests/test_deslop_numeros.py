@@ -38,6 +38,9 @@ El contrato:
    datos no cambian, y la huella del archivo de esa página se rehízo solo por eso.
    Página nueva (estudio-dia-inicio): `wiki/hallazgos/dia_inicio.md` entró a la foto con sus cifras (el día de inicio como dosis, pipeline/dia_inicio.py).
    `wiki/hallazgos/linaje.md` se rehízo en la foto solo porque suma las seis tablas de ese módulo (de 168 a 174 tablas, de 929 a 959 relaciones).
+   Página nueva (cota-rr-condicional): `wiki/hallazgos/cota_rr_condicional.md` entró a la foto con sus cifras (la cota de Rambachan y Roth con la prueba condicional, pipeline/cota_rr_condicional.py).
+   Página nueva (replicacion-operadores): `wiki/hallazgos/replicacion_operadores.md` entró a la foto con sus cifras (la brecha del mes 1 operador por operador, pipeline/replicacion_operadores.py).
+   `wiki/hallazgos/linaje.md` se rehízo en la foto solo porque suma las dos tablas de replicacion_operadores y la de cota_rr_condicional (de 187 a 190 tablas, de 1052 a 1063 relaciones).
    Página nueva (espera): `site/espera.html` entró a la foto con sus cifras; las nuevas son los supuestos de la regla de plata (pipeline/espera.py).
    Otra excepción declarada (espera-claims): el control de `site/espera.html` se describe por la distancia ("a 2 a 5 km de
    un pozo nuevo") y no por la edad (revisión independiente, F1); entran el 2 y el 5 de esa distancia, que ya están en el
@@ -63,6 +66,9 @@ El contrato:
    Otra excepción declarada (docs/articulos-leidos): `wiki/hallazgos/literatura.md` cita ahora con página las cifras de tres
    trabajos leídos completos (Crespo 2020, Min 2023 y el URTeC 2690466 de 2017): muestras, espaciamientos, años de depleción y
    porcentajes de esos trabajos, ninguna cifra medida por este proyecto. La clave de esa página se rehízo solo por eso.
+   Otra excepción declarada (docs/fable-cierre-2): en esa misma página, la cita de las cifras de la simulación del
+   URTeC 2690466 pasa de "p. 14-15" a "p. 14", la página donde están en el original; sale un "15", que era un
+   número de página. La clave de esa página se rehízo solo por eso.
 
 Para rehacer la foto (solo si cambia la base): `python tests/test_deslop_numeros.py --congelar <ref-git>`.
 Para rehacer solo las páginas cuyas cifras cambian a propósito: `python tests/test_deslop_numeros.py --refotear <ruta> [<ruta> ...]`.

@@ -48,7 +48,9 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Wyoming, datos y conteos de la replicación en otra cuenca: [wyoming_datos.md](hallazgos/wyoming_datos.md).
 - Replicación en Wyoming (el mismo estudio de eventos con la misma regla, fijada antes de bajar la producción): [replicacion_wyoming.md](hallazgos/replicacion_wyoming.md).
 - Replicación por cuenca (la lectura de la familia: en cuántas cuencas se replica la huella, sin estimación conjunta): [replicacion_cuencas.md](hallazgos/replicacion_cuencas.md).
+- Replicación por operador (la brecha del mes 1 operador por operador dentro de Vaca Muerta, con la regla fijada antes de calcular): [replicacion_operadores.md](hallazgos/replicacion_operadores.md).
 - Regla de parada del eje de merma (potencia, ventana previa, bloques y exposición): [eje_parada.md](hallazgos/eje_parada.md), con [potencia.md](hallazgos/potencia.md), [eje_controles.md](hallazgos/eje_controles.md) y [eje_exposicion.md](hallazgos/eje_exposicion.md).
+- Cota de Rambachan y Roth con la prueba condicional e híbrida de Andrews, Roth y Pakes (la regla fijada antes de calcular y, si pasó la validación, el Mbar de quiebre): [cota_rr_condicional.md](hallazgos/cota_rr_condicional.md).
 - Mapa base de Vaca Muerta en 3D (fuente, licencia y huella del relieve, el agua, los límites, las localidades y las concesiones): [mapa_base.md](hallazgos/mapa_base.md).
 - Grafo: [grafo.json](grafo.json) con 2024 nodos y 4096 aristas vigentes.
 

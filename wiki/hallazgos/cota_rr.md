@@ -4,6 +4,8 @@ Página generada por `pipeline/cota_rr.py`, regla fijada en el commit 857d434 an
 
 La cota pregunta qué tan grande tendría que ser la violación de tendencias paralelas después del tratamiento, medida contra el mayor salto entre meses que ya se ve antes del tratamiento, para que el efecto deje de distinguirse de cero. Mbar es esa razón: con Mbar = 1 el sesgo puede saltar de un mes al siguiente tanto como el mayor salto previo; con Mbar = 0 no puede saltar. El conjunto identificado es el rango del efecto compatible con esa violación; el intervalo agrega la incertidumbre del bootstrap por bloques de 5 km (unión de los percentiles 2,5 y 97,5 de los extremos, conservador). El Mbar de quiebre es el menor Mbar con intervalo que contiene cero. Unidades: puntos de producción en D1 y puntos porcentuales de corte de agua en D2.
 
+La misma pregunta con la prueba condicional e híbrida de Andrews, Roth y Pakes en lugar de la unión de bootstrap está en [cota_rr_condicional.md](cota_rr_condicional.md).
+
 ## D1, ATT(1)
 
 Efecto estimado -25,8; previos b(-3) = -6,1, b(-2) = -3,6, b(-1) = -10,0; mayor salto previo m = 6,4; 468 tratados, 400 sorteos completos.

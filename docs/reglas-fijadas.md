@@ -2,7 +2,7 @@
 
 Este repositorio es una copia de un solo commit: el historial de trabajo no se publica. Las cifras y los textos citan, sin embargo, el commit en que se fijó cada regla. Este archivo conserva, para cada commit citado, su fecha en UTC, su asunto, los archivos que tocó y el texto que agregó, de modo que se pueda leer la regla tal como se escribió y comprobar el orden de las fechas sin el historial. El historial completo se comparte a pedido.
 
-Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (40 commits; 31 se citan en esta copia y 9 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF); el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea.
+Cómo se armó: `git log` y `git show` de cada commit citado en el README, los docs, la wiki y el código del repositorio de trabajo (42 commits; 32 se citan en esta copia fuera de este archivo y 10 solo en documentos de trabajo que no se publican), ordenados por fecha. Es una lectura mecánica: para los commits que fijan una regla (asunto con «regla», «fijada», «antes de calcular» o «aclaración») se copia el texto que agregaron, hasta 60 líneas por archivo y 3 archivos, sin los archivos generados (datos, wiki, sitio, PDF) ni el plan de trabajo, que no se publica; el commit de las reglas de D a J muestra completos sus cinco archivos de `pipeline/`, uno por regla, y no sus tests. Los demás commits citados solo listan fecha, asunto y archivos. La línea «primer commit posterior que toca los mismos archivos» da el primer commit, sin contar merges, que desciende del citado y cambia alguno de sus archivos (`git log --ancestry-path --no-merges`): dice cuánto tiempo pasó entre la regla y el código que vino después, a veces minutos, y no prueba cuándo se calculó cada cifra. Los merges sin cambios propios no tienen esa línea.
 
 ## `94580fd` · 2026-11-15 07:30 UTC
 
@@ -2494,3 +2494,232 @@ V_D14_SOSTIENE = "la suba se ve también con el golpe por rama"
 
 (Commit citado que no fija una regla: se listan solo su fecha, asunto y archivos.)
 
+## `de19052` · 2026-11-27 03:37 UTC
+
+**Asunto:** Ronda 3: reglas fijadas antes de calcular para la replicacion por operador (S5) y la cota de Rambachan y Roth condicional (S1)
+
+**Archivos:** `docs/plan-siguiente-nivel.md`, `pipeline/cota_rr_condicional.py`, `pipeline/replicacion_operadores.py`
+
+**Primer commit posterior que toca los mismos archivos:** `4fed1c5` · 2026-11-27 03:56 UTC · Replicación por operador (S5): módulo, mart, página, tests sintéticos y paso en run_all, con la regla de de19052 sin cambios
+
+Texto agregado en `pipeline/cota_rr_condicional.py` (primeras 60 de 143 líneas):
+
+~~~
+"""Cota de Rambachan y Roth (2023) con la prueba condicional e hibrida de Andrews, Roth y Pakes (ronda 3, S1).
+
+Las reglas de este modulo se citan tal como se escribieron: "este commit" es el commit en que se fijo la regla, y el plan que
+nombra (docs/plan-siguiente-nivel.md) no se publica. El SHA, la fecha y el texto de la regla estan en docs/reglas-fijadas.md.
+
+REGLA FIJADA ANTES DE CALCULAR (2026-11-27, ronda 3 de docs/plan-siguiente-nivel.md). Este commit trae la regla, las constantes y
+las firmas; no se calculo ninguna cifra con esta prueba antes de fijarla. Si algo resulta ambiguo al calcular, se corrige en un
+commit nuevo que lo diga, nunca despues de ver una cifra.
+Regla informada en esto: se conocen las cifras publicadas de pipeline.cota_rr (regla 857d434), que usa el mismo marco con un
+intervalo de union por bootstrap: Mbar de quiebre 0,20 en D1 ATT(1), mayor que 2 en D2 tau_W(1) y 1,62 en la media de tau_W(0) y
+tau_W(1); en D1, b(-3) = -6,1, b(-2) = -3,6, b(-1) = -10,0.
+
+Que cambia respecto de pipeline.cota_rr. El marco, la restriccion y los estimandos son los mismos: magnitudes relativas,
+Delta^RM(Mbar), con los saltos previos s(-3) = delta(-3) (contra la base), s(-2) = delta(-2) - delta(-3), s(-1) = delta(-1) -
+delta(-2), y cada salto posterior delta(0) - delta(-1), delta(1) - delta(0) a lo sumo Mbar max|s| en valor absoluto. Cambia la
+inferencia: en lugar de la union de percentiles del bootstrap, el conjunto de confianza de Rambachan y Roth (2023, seccion 4), que
+invierte la prueba condicional e hibrida de Andrews, Roth y Pakes (2023) para cada valor del parametro. El max de |s| deja de ser
+un limite: Delta^RM se escribe como la union de seis poliedros, uno por salto previo que es el mayor y por su signo, y el conjunto
+de confianza es la union de los de cada poliedro (como computeConditionalCS_DeltaRM del paquete HonestDiD). No se agrega ninguna
+dependencia nueva: numpy y statistics.NormalDist de la biblioteca estandar.
+
+Entradas, por estimando: beta = (b(-3), b(-2), b(-1), b(0), b(1)) con el punto de la muestra completa y Sigma = la covarianza
+muestral de los sorteos completos del bootstrap por bloques del diseno (los mismos sorteos para los cinco coeficientes; un sorteo
+con algun valor faltante se descarta). Estimandos: D1 ATT(1) (theta = tau(1)); D2 tau_W(1); D2 media de tau_W(0) y tau_W(1)
+(theta = (tau(0) + tau(1)) / 2), armados como en pipeline.cota_rr._estimandos_d1 y _estimandos_d2 pero guardando tambien b(0).
+E ATT(1) no entra: su veredicto es "sin muestra".
+
+Prueba para un poliedro (j, sg), j en {-3, -2, -1} el salto previo mayor y sg en {+1, -1} su signo, y un valor theta0:
+  * A (8 x 5) sobre delta = (delta(-3), delta(-2), delta(-1), delta(0), delta(1)): para cada salto previo i distinto de j,
+    s(i) - sg s(j) <= 0 y -s(i) - sg s(j) <= 0 (4 filas); para cada salto posterior p, p - Mbar sg s(j) <= 0 y
+    -p - Mbar sg s(j) <= 0 (4 filas). Con d = 0.
+  * delta = beta - (0, 0, 0, tau(0), tau(1)) y tau_post = theta0 a + gamma b, con a = (0, 1), b = (1, 0) para ATT(1) y
+    a = (1, 1), b = (1, -1) para la media. Momentos: Y = A beta - theta0 A_post a, X = A_post b (A_post son las columnas de
+    delta(0) y delta(1)); bajo la nula hay un gamma con E[Y - X gamma] <= 0. Sigma_Y = A Sigma A', sigma = raiz de su diagonal.
+  * Estadistico: eta = max sobre los vertices v de {nu >= 0, nu'X = 0, nu'sigma = 1} de v'Y (el dual del programa lineal
+    min eta sujeto a Y - X gamma <= eta sigma). Con un solo parametro de estorbo, cada vertice tiene a lo sumo dos componentes
+    distintas de cero: las filas i con X_i = 0 (nu = e_i / sigma_i) y los pares (i, k) con X_i X_k < 0 que resuelven
+    nu_i X_i + nu_k X_k = 0, nu_i sigma_i + nu_k sigma_k = 1. Se enumeran todos; nu* es el que da el maximo (empate: el primero
+    en el orden de las filas).
+  * Primera etapa, menos favorable (LF): c_LF = cuantil 1 - KAPPA de max_v v'xi, con xi ~ N(0, Sigma_Y) en N_LF sorteos con la
+    semilla SEMILLA_LF (raiz de Sigma_Y por autovalores, los negativos llevados a cero). Si eta > c_LF, se rechaza.
+  * Segunda etapa, condicional: s2 = nu*'Sigma_Y nu*, c = Sigma_Y nu* / s2, z = Y - c eta. Para cada vertice v, con
+    a_v = v'c y b_v = v'z: si a_v < 1, b_v / (1 - a_v) es una cota inferior; si a_v > 1, es una cota superior (tolerancia
+    TOL_VERTICE). V_lo es la mayor de las inferiores y V_up la menor de las superiores, tope c_LF. Con la media en cero (el caso
+    menos favorable de la nula), p = (F(V_up) - F(eta)) / (F(V_up) - F(V_lo)), F la normal con desvio raiz de s2. Se rechaza si
+    p < (ALFA - KAPPA) / (1 - KAPPA). Si el denominador no es positivo, no se rechaza.
+
+Conjunto de confianza para un Mbar: los theta0 de una grilla de N_THETA puntos que alguno de los seis poliedros no rechaza. La
+grilla va del extremo bajo del conjunto identificado de pipeline.cota_rr.conjunto (con el punto) menos THETA_SE desvios al extremo
+alto mas THETA_SE desvios, con el desvio de l(beta) - b(-1) en los sorteos. Si un extremo de la grilla queda aceptado, se duplica
+la cantidad de desvios que se agrega a cada lado (THETA_SE, 2 THETA_SE, 4 THETA_SE...), con N_THETA puntos cada vez, hasta
+MAX_AMPLIAR veces; si sigue aceptado, el extremo se publica como abierto. Se publica [min, max] de los aceptados y
+si el conjunto tiene huecos.
+
+Mbar de quiebre: el menor Mbar en [0, MBAR_MAX] cuyo conjunto contiene cero, probando theta0 = 0 directamente (no en la grilla),
+por biseccion con TOL_BISECCION; 0 si ya lo contiene con Mbar = 0; "mayor que MBAR_MAX" si no lo contiene en MBAR_MAX. Veredicto:
+pipeline.cota_rr.veredicto_rr con ese quiebre, mismas palabras y mismo M_MIN.
+
+Que se publica:
+  * mart_cota_rr_condicional: por estimando, la grilla GRILLA_MBAR con el conjunto de confianza condicional, y la fila del quiebre
+~~~
+
+Texto agregado en `pipeline/replicacion_operadores.py` (primeras 60 de 105 líneas):
+
+~~~
+"""Replicacion por operador dentro de Vaca Muerta: la brecha del mes 1 medida operador por operador (ronda 3, S5).
+
+Las reglas de este modulo se citan tal como se escribieron: "este commit" es el commit en que se fijo la regla, y el plan que
+nombra (docs/plan-siguiente-nivel.md) no se publica. El SHA, la fecha y el texto de la regla estan en docs/reglas-fijadas.md.
+
+REGLA FIJADA ANTES DE CALCULAR (2026-11-27, ronda 3 de docs/plan-siguiente-nivel.md). Este commit trae la regla, las constantes y
+las firmas; no se calculo ninguna brecha de un operador medida solo con sus eventos antes de fijarla. Si algo resulta ambiguo al
+calcular, se corrige en un commit nuevo que lo diga, nunca despues de ver una cifra.
+Regla informada en esto: se conocen la brecha del mes 1 de la muestra completa (unos 23 puntos menos), las 7 salidas de
+pipeline.robustez_operador (sacando de a un operador, la brecha puntual queda entre -24,1 y -22,2 puntos) y que esos 7 operadores
+tienen al menos 50 eventos cercanos. Tambien se conoce el veredicto de la familia de cuencas (se replica en 1 de 2).
+
+Pregunta. pipeline.robustez_operador prueba que ningun operador produce la brecha por si solo (sacar de a uno). Esta prueba es la
+otra mitad: si la brecha aparece dentro de cada operador, con sus padres cercanos contra sus padres de control. Es la lectura de
+pipeline.familia (cuenca por cuenca, sin efecto comun) aplicada a los operadores de una misma cuenca.
+
+Datos y marco (los de pipeline.robustez_operador, sin cambios):
+  * d = placebo.cargar(con); m = placebo.marco(d, d["hijo_mes"], ks=(1,), base=placebo.BASE_ORIGINAL). El operador de cada
+    evento es el de su PADRE, como en robustez_operador.cargar_eventos (operador de int_pozo_ubicacion ordenada por pozo_id,
+    indexado por m["padre"]).
+  * Brecha previa limpia: mp = placebo.marco(d, d["hijo_mes"], ks=(-1,), base=placebo.BASE_LIMPIA), con el operador del padre
+    por el mismo camino.
+  * Placebo de fechas: mf = placebo.marco(d, d["hijo_mes"] + DESPLAZAMIENTO_PLACEBO, solo_reales=True), como lo arma
+    placebo.tabla_fechas para ese desplazamiento, con el operador del padre por el mismo camino.
+  * Operadores medidos: robustez_operador.grupos_a_sacar(m, operador), es decir los que tienen al menos MIN_CERCANOS = 50 eventos
+    cercanos con indice del mes 1 observado. Es el mismo conjunto fijo de la prueba de sacar de a uno, elegido por conteo y no
+    por resultado. Los operadores mas chicos no se leen solos.
+
+Por operador X, con los eventos cuyo padre es de X en las dos bandas (cercanos a menos de 1 km, control a 2 a 5 km):
+  * brecha del mes 1 y su IC 95%: placebo.brecha_ic(m["idx"][1][mk], m["banda"][mk], m["clave"][mk], placebo.REPS_BOOT,
+    placebo.SEMILLA_PLACEBO), con mk = (operador == X);
+  * brecha previa: placebo.brecha_ic(mp["idx"][-1][mkp], mp["banda"][mkp], mp["clave"][mkp], placebo.REPS_BOOT,
+    placebo.SEMILLA_PLACEBO)["brecha"];
+  * placebo: placebo.brecha_ic(mf["idx"][1][mkf], mf["banda"][mkf], mf["clave"][mkf], placebo.REPS_BOOT, SEMILLA_FECHAS), con
+    SEMILLA_FECHAS la que usa placebo.tabla_fechas para el desplazamiento -12 (placebo.SEMILLA_PLACEBO + 201);
+  * lectura: (se_replica, valor) = replicacion.lectura(brecha, ic_alto, brecha_previa), es decir que se replica si el IC 95%
+    queda entero bajo cero y la brecha previa es menor, en valor absoluto, que la del mes 1. Ademas el placebo tiene que estar
+    limpio: su ic_alto es mayor o igual que cero. Un placebo que tambien da una brecha entera bajo cero anula la replicacion de X
+    ("no se replica: el placebo de fechas tambien da brecha").
+  * No se pudo medir: menos de MIN_CONTROLES = 50 eventos de control con indice del mes 1 observado, o la brecha, su IC, la
+    brecha previa o el ic_alto del placebo sin valor (placebo.brecha_ic no da IC con menos de 5 eventos en una banda). Cuenta en
+    n con su motivo escrito, como una cuenca que no se pudo medir en pipeline.familia.
+
+Lectura de la familia: "Se replica en k de n operadores: <operador> (<lectura>); ...", con n todos los operadores medidos (los que
+no se pudieron medir incluidos) y k los que se replican, en el orden de grupos_a_sacar. No hay promedio, peso ni estimacion
+conjunta. Se publica cualquiera sea k, tambien k = 0.
+
+Que se publica:
+  * mart_replicacion_operadores: una fila por operador (COLS_REP_OP) y una fila de familia (COLS_FAM_OP: k, n, frase);
+  * la pagina wiki/hallazgos/replicacion_operadores.md, con la tabla, la frase y lo que no prueba;
+  * en un PR de texto aparte, una frase en la pregunta de validez externa del README y de la portada ("Dentro de Vaca Muerta,
+    con la misma regla, ..."), con sus claims.
+
+Validacion fijada antes de leer cifras reales (tests/test_replicacion_operadores.py, con eventos sinteticos):
+  * una brecha plantada de BRECHA_PLANTADA puntos en los cercanos de un operador sintetico, con la de los otros en cero, da "se
+    replica" en ese y "no se replica" en los otros;
+  * un operador cuyo placebo de fechas tambien da brecha queda en "no se replica" aunque su brecha del mes 1 pase;
+  * k y n cuentan a los que no se pudieron medir como en pipeline.familia.
+
+Que no prueba: dentro de un operador cambian el area y el ano, asi que la brecha por operador no separa al operador de su area.
+~~~
+
+## `55a709a` · 2026-11-27 04:16 UTC
+
+**Asunto:** S1: enmienda de la regla antes de calcular ninguna cifra real: el ancho pasa a ser dato y no puerta
+
+**Archivos:** `docs/plan-siguiente-nivel.md`, `pipeline/cota_rr_condicional.py`, `tests/test_cota_rr_condicional.py`
+
+**Primer commit posterior que toca los mismos archivos:** `2ee52dd` · 2026-11-27 04:20 UTC · S1: corrida con datos reales después de la enmienda 55a709a
+
+Texto agregado en `pipeline/cota_rr_condicional.py` (primeras 60 de 98 líneas):
+
+~~~
+Enmienda del 2026-11-27, antes de calcular ninguna cifra real. Va despues de 2ffa2ef, que implemento la regla sin cambios y solo
+corrio la validacion sintetica. La cuarta validacion fallo tal como estaba escrita: en las primeras 20 simulaciones el conjunto
+de ATT(1) contiene el punto en 20 de 20, pero el mas ancho mide 2,14 veces el intervalo normal al 95% (el promedio, 1,79) y el
+tope era 2. Ese tope no salia de la literatura ni de una cuenta: se puso como guarda contra una implementacion rota, y el ancho
+mide eficiencia, no correccion. Las tres validaciones de correccion pasan. diagnostico_ancho() (sin warehouse, los mismos datos
+sinteticos) muestra de donde sale el ancho. Los dos poliedros que contienen a la delta verdadera rechazan theta verdadero en
+4,3% y 2,8% de 1000 simulaciones y miden como maximo 1,70 y 1,97 veces. El 2,14 viene de un poliedro que no la contiene, y la
+union tiene que incluirlo porque con datos reales no se sabe cual vale. Con Mbar = 0 la union contiene a theta en las 1000
+simulaciones. Un conjunto mas ancho incluye antes el cero: solo puede bajar el Mbar de quiebre, nunca subirlo. Lo que cambia:
+  * el ancho deja de ser puerta. Se sigue calculando con los mismos 20 casos, y la pagina publica el mas ancho, el promedio, el
+    tope de 2 que no se cumplio, esta enmienda y el diagnostico;
+  * que el conjunto contenga el punto en las 20 sigue siendo puerta;
+  * no cambia ningun otro numero. El tope no se reemplaza por otro, y las constantes, la dualidad, la cobertura y la potencia
+    quedan iguales.
+
+COMMIT_ENMIENDA = ""        # el commit de la enmienda del ancho; lo fija el commit que corre la prueba con datos reales
+TOPE_ANCHO = 2.0            # el tope de la regla original; desde la enmienda es dato, no puerta
+def conjunto_confianza(beta, Sigma, a, b, mbar: float, centro_id: tuple[float, float], desvio: float,
+                       pruebas: list[_Prueba] | None = None) -> dict:
+    """Union sobre los seis poliedros (o sobre `pruebas`, si se pasan): bajo, alto, abierto y con_huecos."""
+    pruebas = _pruebas(Sigma, a, b, mbar) if pruebas is None else pruebas
+    # enmienda del ancho: la puerta es solo que el conjunto contenga el punto; el ancho contra TOPE_ANCHO queda como dato
+    return {"ok": contiene == N_ANCHO, "contiene": contiene, "de": N_ANCHO, "razon_max": razon,
+            "razon_media": float(np.mean(anchos) / ancho_normal), "tope": TOPE_ANCHO, "cumple_tope": razon <= TOPE_ANCHO}
+
+
+def diagnostico_ancho() -> dict:
+    """Dato de la enmienda, no puerta. Con los datos sinteticos del ancho (ATT(1), Mbar = 0, theta = -3): para cada poliedro,
+    si contiene a la delta verdadera (eta por vertices <= 0 sin ruido), su rechazo de theta verdadero en las N_MC simulaciones
+    y su ancho en los N_ANCHO casos del ancho, contra el intervalo normal; y la cobertura y el ancho de la union."""
+    a, b, _m = _NOMBRE_SINT["ATT(1)"]
+    theta = -3.0
+    betas = _betas_sinteticos(0.0, theta)
+    d = np.array(DELTA_PREVIA)
+    media = np.concatenate([d, [d[-1], d[-1]]]) + np.array([0, 0, 0, theta, theta])
+    desvio = float(np.sqrt(SIGMA_SINT[4, 4] + SIGMA_SINT[2, 2] - 2 * SIGMA_SINT[2, 4]))
+    ancho_normal = 2 * NormalDist().inv_cdf(0.975) * desvio
+    pruebas = _pruebas(SIGMA_SINT, a, b, 0.0)
+
+    def _anchos(ps):
+        out = []
+        for beta in betas[:N_ANCHO]:
+            punto = float(beta[4] - beta[2])
+            cc = conjunto_confianza(beta, SIGMA_SINT, a, b, 0.0, (punto, punto), desvio, pruebas=ps)
+            out.append(0.0 if cc["bajo"] is None else (cc["alto"] - cc["bajo"]) / ancho_normal)
+        return out
+
+    filas = []
+    for (j, sg), P in zip(POLIEDROS, pruebas):
+        w = _anchos([P])
+        filas.append({"j": j, "sg": sg,
+                      "contiene_delta": bool(eta_vertices(P.momentos(media, theta)[0], P.X, P.sigma) <= 1e-9),
+                      "rechazo": float(P.rechaza_Y(P.momentos(betas, theta)).mean()),
+                      "ancho_medio": float(np.mean(w)), "ancho_max": float(max(w))})
+    u = _anchos(pruebas)
+    return {"poliedros": filas, "union_cobertura": float(_aceptado(pruebas, betas, theta).mean()), "n": len(betas),
+            "union_ancho_medio": float(np.mean(u)), "union_ancho_max": float(max(u))}
+    """Las cuatro validaciones de la regla; main publica cifras reales solo si pasan todas (la del ancho, desde la enmienda,
+    solo por contener el punto). Trae ademas diagnostico_ancho(), que no es puerta."""
+         "ancho": validar_ancho(), "diagnostico": diagnostico_ancho()}
+~~~
+
+Texto agregado en `tests/test_cota_rr_condicional.py`:
+
+~~~
+def test_conjunto_con_mbar_cero_contiene_el_punto():
+    # enmienda del ancho: la puerta es contener el punto; el ancho contra el tope de 2 es un dato que la pagina publica
+    assert r["contiene"] == r["de"] and r["ok"], r
+    assert r["tope"] == 2.0 and r["cumple_tope"] == (r["razon_max"] <= 2.0), r
+
+
+def test_diagnostico_del_ancho():
+    d = cc.diagnostico_ancho()
+    assert len(d["poliedros"]) == 6 and d["n"] == cc.N_MC
+    si = [f for f in d["poliedros"] if f["contiene_delta"]]
+    assert si, d
+    # los poliedros que contienen a la delta verdadera no rechazan theta verdadero mas que el 5 % nominal, con margen de simulacion
+    assert all(f["rechazo"] <= 0.05 + 3 * (0.05 * 0.95 / cc.N_MC) ** 0.5 for f in si), si
+    assert d["union_cobertura"] >= 0.95 and d["union_ancho_max"] >= max(f["ancho_max"] for f in d["poliedros"]) - 1e-9, d
+~~~

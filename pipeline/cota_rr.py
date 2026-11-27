@@ -234,7 +234,8 @@ def pagina_cota_rr(filas: list[tuple], e_apilado: tuple | None = None) -> str:
          "el mayor salto previo; con Mbar = 0 no puede saltar. El conjunto identificado es el rango del efecto "
          "compatible con esa violación; el intervalo agrega la incertidumbre del bootstrap por bloques de 5 km "
          "(unión de los percentiles 2,5 y 97,5 de los extremos, conservador). El Mbar de quiebre es el menor Mbar "
-         "con intervalo que contiene cero. Unidades: puntos de producción en D1 y puntos porcentuales de corte de agua en D2.", ""]
+         "con intervalo que contiene cero. Unidades: puntos de producción en D1 y puntos porcentuales de corte de agua en D2.", "",
+         "La misma pregunta con la prueba condicional e híbrida de Andrews, Roth y Pakes en lugar de la unión de bootstrap está en [cota_rr_condicional.md](cota_rr_condicional.md).", ""]
     for d, nom in orden:
         g = [x for x in reg if x["diseno"] == d and x["estimando"] == nom and x["fila"] == "grilla"]
         q = next(x for x in reg if x["diseno"] == d and x["estimando"] == nom and x["fila"] == "quiebre")

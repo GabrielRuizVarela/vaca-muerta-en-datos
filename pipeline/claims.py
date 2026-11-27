@@ -2502,6 +2502,31 @@ def _claims_siguiente_nivel() -> list[Claim]:
              "q": (2, cota("D2", "media tau_W(0,1)", "quiebre", AGUA), TC)}
     MES1 = {"v1": (1, cota("D2", "tau_W(1)", "l_beta", AGUA), TC), "n1": (0, cota("D2", "tau_W(1)", "n_tratados", AGUA), TC),
             "tope": (0, tope, TC)}
+    TCC, TRO, TROF = "mart_cota_rr_condicional", "mart_replicacion_operadores", "mart_replicacion_operadores_familia"
+
+    def cond(dis: str, est: str, veredicto: str) -> Callable:   # S1: el quiebre condicional, con el veredicto que imprime el texto
+        def f(con):
+            v, x = con.execute(f"select veredicto, mbar_quiebre from {TCC} where diseno = ? and estimando = ? and fila = 'quiebre'",
+                               [dis, est]).fetchone()
+            return x if v == veredicto else nan
+        return f
+
+    def tope_cond(con):   # tau_W(1) condicional no cruza cero en la grilla: el texto dice "hasta Mbar = MBAR_MAX"
+        from pipeline.cota_rr_condicional import MBAR_MAX
+        q, v = con.execute(f"select mbar_quiebre, veredicto from {TCC} where diseno = 'D2' and estimando = 'tau_W(1)' "
+                           "and fila = 'quiebre'").fetchone()
+        return MBAR_MAX if q is None and v == AGUA else nan
+
+    def operador(nombre: str, col: str) -> Callable:   # S5: una fila de mart_replicacion_operadores
+        return lambda con: con.execute(f"select {col} from {TRO} where operador = ?", [nombre]).fetchone()[0]
+
+    COND = {"q1c": (0, cond("D1", "ATT(1)", "no resiste ni con Mbar = 0"), TCC), "qc": (2, cond("D2", "media tau_W(0,1)", AGUA), TCC),
+            "topec": (0, tope_cond, TCC)}
+    # chb: el mart guarda la brecha como fraccion y el texto la imprime en puntos
+    REP = {"rk": (0, lambda con: con.execute(f"select k from {TROF}").fetchone()[0], TROF),
+           "rn": (0, lambda con: con.execute(f"select n from {TROF}").fetchone()[0], TROF),
+           "chb": (1, lambda con: 100 * operador("Chevron", "brecha")(con), TRO), "chn": (0, operador("Chevron", "n_cercanos"), TRO),
+           "chc": (0, operador("Chevron", "n_control"), TRO)}
     D10 = {"d": (1, d10("valor"), TX), "lo": (1, d10("ic_bajo"), TX), "hi": (1, d10("ic_alto"), TX), "nd": (0, d10("n_tratados"), TX)}
     CENS = {"c1": (0, serie("1km", "censurados_12", "n_tratados"), TD), "c2": (0, serie("2km", "censurados_12", "n_tratados"), TD),
             "t": (0, censurados_total, TD), "p": (0, lambda con: 100 * serie("2km", "censurados_12", "est")(con), TD)}
@@ -2675,19 +2700,27 @@ def _claims_siguiente_nivel() -> list[Claim]:
            "a0": (0, exposicion("ANIOS_RAMA", 0), ""), "a1": (0, exposicion("ANIOS_RAMA", 1), "")}
     D14["d14n2"] = D14["d14n"]
     slots = {"q1": D1, "m": UNO, **MEDIA, **MES1, **D10, **CENS, **D10_2, **E, **AGUA_MES, **TABLA, **PRUEBAS, **HOLM, **D13,
-             **PERM, **E2, **D14}
+             **PERM, **E2, **D14, **COND, **REP}
     FMT = {0: ("{:.0f}", 0.5), 1: ("{:.1f}", 0.05), 2: ("{:.2f}", 0.005), 4: ("{:.4f}", 0.00005)}
 
     frases = [
-        ("readme_q2", R, "apenas <q1:n> veces el mayor salto previo (cota de Rambachan y Roth), y un estimador apilado con controles limpios da "
+        ("readme_q2c", R, "el sesgo no salta nada de un mes al siguiente (Mbar = <q1c:i>; regla fijada antes de calcular en "),
+        ("readme_q2", R, "si el sesgo saltaba apenas <q1:n> veces el mayor salto previo: con la prueba condicional, el quiebre queda más abajo. Un estimador apilado con controles limpios da "
                          "<e:n> puntos al mes 1 (IC <elo:n> a <ehi:n>; en los meses -3, -2 y -1 da +<ep3:n>, +<ep2:n> y +<ep1:n>, con IC que incluyen cero) pero queda sin muestra: <en:i> eventos en <eb:i> bloques, contra un mínimo "
                          "de <mn:i> y <mb:i>."),
         ("readme_q3", R, "Aguanta la cota de Rambachan y Roth con Mbar = <m:i>, que deja que después de la fractura el sesgo salte de un mes al "
                          "siguiente tanto como el mayor salto previo: la cota va sobre la media de los meses 0 y 1 (<v:n> puntos, <n:i> padres), "
-                         "porque el mayor de dos meses no es lineal en el efecto, y deja de distinguirse de cero recién con Mbar = <q:n>. Cortando la serie en la segunda "
+                         "porque el mayor de dos meses no es lineal en el efecto, y deja de distinguirse de cero recién con Mbar = <qc:n> con la prueba condicional e híbrida "
+                         "(<q:n> con la unión de percentiles). Cortando la serie en la segunda "
                          "fractura a menos de 1 km (D10, regla fijada antes de calcularla), los meses 6 a 12 siguen <d:n> puntos arriba "
                          "(IC <lo:n> a <hi:n>): persiste. El corte saca de la serie antes del mes 12 a <c1:i> de los <t:i> padres de la serie; a menos de 2 km reciben "
                          "otra fractura <c2:i> (<p:i>%), y esa serie queda con <n2:i> tratados como mínimo, menos que los <m5:i> que pide la regla, así que se publica sin veredicto."),
+        ("readme_rep", R, "la brecha del mes 1 se replica en <rk:w> de <rn:w> operadores (regla fijada antes de medir ninguno por separado"),
+        ("readme_fila_cota_c", R, "| el petróleo al mes 1 del diseño causal no se distingue de cero ni con Mbar = <q1c:i> (con la unión de percentiles, <q1:n>); "
+                                  "la media de los meses 0 y 1 del corte de agua deja de distinguirse de cero con Mbar = <qc:n> (con la unión, <q:n>), y el mes 1 "
+                                  "sigue distinto de cero hasta Mbar = <topec:i> |"),
+        ("readme_fila_rep", R, "propios controles, se replica en <rk:w> de <rn:w> operadores: YPF, Vista, Pluspetrol, Shell y Chevron |"),
+        ("readme_fila_rep_chevron", R, "en Chevron la brecha (<chb:n> puntos, con <chn:i> cercanos y <chc:i> controles) queda muy lejos de las demás"),
         ("readme_agua_serie", R, "(D10), la suba es de +<w1:n> puntos en el mes 1 y de +<w10:n> a +<w12:n> en los meses 10 a 12: sigue ahí"),
         ("paper_agua_serie", P, "(D10), la suba es de +<w1:n> pp en el mes 1 y de +<w10:n> a +<w12:n> pp en los meses 10 a 12: un año después"),
         ("readme_fila_cota", R, "el corte de agua del mes 1 (<v1:n> puntos, <n1:i> tratados) sigue distinto de cero en toda la grilla, hasta "
@@ -2729,9 +2762,11 @@ def _claims_siguiente_nivel() -> list[Claim]:
         ("site_agua", S, "aguanta la cota de Rambachan y Roth con Mbar = <m:i> (después de la fractura el sesgo puede saltar de un mes al "
                          "siguiente tanto como el mayor salto previo), y con la serie cortada en la segunda fractura a menos de 1 km los meses "
                          "6 a 12 siguen <d:n> puntos arriba (IC <lo:n> a <hi:n>)."),
-        ("site_petroleo", S, "de cero si el sesgo salta de un mes al siguiente apenas <q1:n> veces el mayor salto previo. Tampoco"),
-        ("resumen_agua_cota", W_RESUMEN, "resiste la cota de Rambachan y Roth con Mbar = <m:i> (se rompe en <q:n>) y la serie"),
-        ("resumen_petroleo", W_RESUMEN, "un sesgo que salte <q1:n> veces el mayor salto previo ya la borra."),
+        ("site_petroleo", S, "de un mes al siguiente (Mbar = <q1c:i>, con la prueba condicional e híbrida de la cota de Rambachan y Roth; con la "
+                             "unión de percentiles que se publicaba antes, hacía falta un salto de <q1:n> veces el mayor salto previo). Tampoco"),
+        ("site_rep", S, "la brecha del mes 1 se replica en <rk:w> de <rn:w> operadores.</p>"),
+        ("resumen_agua_cota", W_RESUMEN, "resiste la cota de Rambachan y Roth con Mbar = <m:i> (se rompe en <qc:n>) y la serie"),
+        ("resumen_petroleo", W_RESUMEN, "es una huella; no resiste la cota de Rambachan y Roth ni con Mbar = <q1c:i>."),
         ("paper_tabla_d10", P, "| D10 | Corte de agua, media de los meses 6 a 12, con la serie cortada en la segunda fractura a menos de 1 km | "
                                "<d:n> pp | <lo:n> a <hi:n> | <nd:i> | tras D5, antes de su cifra |"),
         ("paper_d10", P, "la media de los meses 6 a 12 sigue en <d:n> pp: el veredicto es persiste.\nSalen de la serie antes del mes 12 <c1:i> "
@@ -2740,6 +2775,10 @@ def _claims_siguiente_nivel() -> list[Claim]:
                               "y se publica sin veredicto."),
         ("paper_cota", P, "El mes 1 solo (<v1:n> pp, <n1:i> tratados) sigue distinto de cero en toda la grilla, hasta Mbar = <tope:i>.\n"
                           "La media de los meses 0 y 1 (<v:n> pp, <n:i> tratados) deja de distinguirse de cero recién con Mbar = <q:n>."),
+        ("paper_cota_c", P, "del bootstrap, la media deja de distinguirse de cero con Mbar = <qc:n>, y el petróleo al mes 1 de D1 no se distingue de cero ni con "
+                            "Mbar = <q1c:i>: su quiebre queda por debajo del de la unión."),
+        ("paper_rep", P, "**se replica en <rk:w> de <rn:w> operadores**: YPF, Vista, Pluspetrol, Shell y Chevron."),
+        ("paper_rep_chevron", P, "Chevron da la brecha más grande con la muestra más chica (<chb:n> puntos, con <chn:i> cercanos y <chc:i> controles)"),
         ("paper_tabla_d2", P, "| D2 | Corte de agua, el mayor de los meses 0 y 1 | <h2:n> pp | <h2lo:n> a <h2hi:n> | <h2n:i> | regla fijada antes |"),
         ("paper_tabla_d3", P, "| D3 | Agua por día calendario | <h3:n> puntos del líquido base | <h3lo:n> a <h3hi:n> | <h3n:i> | tras D2, antes de su cifra |"),
         ("paper_tabla_d3pd", P, "| D3 | Agua por día producido | <p3:n> puntos del líquido base | <p3lo:n> a <p3hi:n> | <p3n:i> | tras D2, antes de su cifra |"),
@@ -2771,7 +2810,8 @@ def _claims_siguiente_nivel() -> list[Claim]:
                          "<d13hi:n>, <d13n:i> tratados).\nCon los pozos de un solo operador, el IC incluye cero en <s13:i>: PDC y Prairie.\n"
                          "PDC es el operador con más tratados (<p13n:i>) y solo da <p13:n> pp (IC <p13lo:n> a <p13hi:n>): la suba de "
                          "Colorado no es pareja entre operadores."),
-        ("paper_petroleo", P, "si el sesgo salta <q1:n> veces el mayor salto previo (cota de Rambachan y Roth). Un estimador apilado con "
+        ("paper_petroleo", P, "ni con Mbar = <q1c:i> con la cota de Rambachan y Roth y la prueba condicional e híbrida de Andrews, Roth y Pakes; con la "
+                              "unión de percentiles del bootstrap dejaba de distinguirse si el sesgo saltaba <q1:n> veces el mayor salto previo. Un estimador apilado con "
                               "controles limpios da <e:n> puntos al mes 1 (IC <elo:n> a <ehi:n>; en los meses -3, -2 y -1 da +<ep3:n>, +<ep2:n> y +<ep1:n>, con IC que incluyen cero), pero queda sin muestra: <en:i> eventos en "
                               "<eb:i> bloques, contra un mínimo de <mn:i> y <mb:i>."),
     ]
@@ -4026,7 +4066,7 @@ B_FACTOR = {B_HEAD: 100, B_DESC: 100, B_LIMP: 100, B_PEND: 10, B_DIAS: 100, B_TA
 B_FILAS = ([(B_HEAD, 1, "mediana"), (B_DESC, 1, "mediana")] + [(B_LIMP, k, "mediana") for k in range(-3, 4)]
            + [(B_PEND, 0, "pendiente"), (B_PEND, -1, "pendiente")]
            + [(m, 1, v) for m in (B_DIAS, B_TASA) for v in ("con_cerrados", "sin_cerrados")])
-_TIPO = {"n": r"-?\d+,\d+", "i": r"[\d.]+"}
+_TIPO = {"n": r"-?\d+,\d+", "i": r"[\d.]+", "w": "(?:" + "|".join(sorted(_PALABRAS, key=len, reverse=True)) + ")"}
 
 
 def _blq(metrica: str, k: int, col: str, factor: float = 1.0, est: str | None = None) -> Callable:
@@ -5023,6 +5063,7 @@ README_DEFINICIONALES: tuple[str, ...] = (
     r"\ba [12] km\b",
     r"resiste Mbar = 1",
     r"con Mbar menor que 1",
+    r"no resiste ni con Mbar = 0",  # el veredicto de la cota condicional de D1 (mart_cota_rr_condicional)
     r"a menos de 2 km antes del mes 12",
     r"a menos de 2 km reciben otra fractura",
     r"de D2 no es lineal",
@@ -5182,6 +5223,7 @@ PAPER_DEF_C: tuple[str, ...] = (
     r"(?<=y \d{3}) a 2 km",  # la misma censura a 2 km (tras el conteo de 1 km)
     r"Cortada a 2 km",  # la serie de D10 cortada a 2 km
     r"El mes 1 solo",  # la cota de Rambachan y Roth sobre el mes 1
+    r"el petróleo al mes 1 de D1",  # la cota condicional sobre el mes 1 de D1
     r"controles a 2 km",  # el derrame sobre los controles: su distancia
     r"anticipación más allá de 3 meses",  # el supuesto de no anticipacion, en meses
 )
@@ -5196,7 +5238,7 @@ PAPER_DEF_D: tuple[str, ...] = (
     r"Brecha del mes 1 \(puntos\)",   # encabezado de la tabla de replicacion
     r"Brecha previa, mes -1",   # encabezado de la tabla de replicacion
     r"mayor que la del mes 1\. Las cuencas",   # el mes 1 del resultado principal
-    r"la caída del mes 1 deja de distinguirse",   # el mes 1 del resultado principal
+    r"la caída del mes 1 (?:deja de distinguirse|no se distingue)",   # el mes 1 del resultado principal
     r"puntos al mes 1 \(IC",   # el mes 1 del estimador apilado
     r"en los meses -3, -2 y -1 da",   # los meses del estimador apilado, que definen que se mira
     r"donantes a 2 a 10 km",   # distancia de los donantes del diseno E2
