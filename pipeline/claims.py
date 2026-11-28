@@ -5401,15 +5401,17 @@ def _lee_cierres() -> bool:
 
 _VERDAD_LOCAL = {"agua": _lee_agua, "diario": _lee_diario, "cierres": _lee_cierres}
 
-# (fichero, clave del id, {capacidad: patron}): una Capacidad por frase y por cosa que nombra. Estas frases dicen que NO lo lee.
+# (fichero, clave del id, {capacidad: patron}): una Capacidad por frase y por cosa que nombra. Estas frases dicen que SI lo lee.
+# Desde L1c (--daily y --shutins, pipeline.local_diario y pipeline.local_cierres) el modo local lee el diario y los cierres:
+# las frases que decian que no lo hacia se reescribieron y ahora afirman que lo lee y lo agrega (no parte dias y caudal).
 _FRASES_LOCAL = (
-    ("README.md", "readme_en", {"diario": r"does not yet read[^.]*daily data", "cierres": r"does not yet read[^.]*shut-in logs"}),
-    ("README.md", "readme_es", {"diario": r"todavía no lee[^.]*el diario", "cierres": r"todavía no lee[^.]*los cierres"}),
-    ("docs/resumen-operador.md", "resumen", {"diario": r"no lee diario"}),
-    ("docs/operador-datos-propios.md", "operador", {"diario": r"no lee datos diarios ni registros de cierres",
-                                                    "cierres": r"no lee datos diarios ni registros de cierres"}),
-    ("docs/paper/paper.md", "paper", {"diario": r"todavía no lee[^.]*el diario", "cierres": r"todavía no lee[^.]*los cierres"}),
-    ("site/index.html", "sitio", {"diario": r"todavía no lee[^.]*el diario", "cierres": r"todavía no lee[^.]*los cierres"}),
+    ("README.md", "readme_en", {"diario": r"also reads the daily production file", "cierres": r"also reads[^.]*the shut-in log"}),
+    ("README.md", "readme_es", {"diario": r"también lee el diario de producción", "cierres": r"también lee[^.]*el registro de cierres"}),
+    ("docs/resumen-operador.md", "resumen", {"diario": r"lee el agua mensual opcional, el diario y los cierres"}),
+    ("docs/operador-datos-propios.md", "operador", {"diario": r"lee además el diario de producción",
+                                                    "cierres": r"lee además el diario de producción y el registro de cierres"}),
+    ("docs/paper/paper.md", "paper", {"diario": r"también lee el diario de producción", "cierres": r"también lee[^.]*el registro de cierres"}),
+    ("site/index.html", "sitio", {"diario": r"también lee el diario de producción", "cierres": r"también lee[^.]*el registro de cierres"}),
 )
 
 # Estas dicen que SI lo lee (desde la porcion D: agua_m3 opcional en el mensual y el diseno del corte de agua con ella).
@@ -5424,7 +5426,7 @@ _FRASES_LOCAL_LEE = (
 
 CAPACIDADES: list[Capacidad] = [
     Capacidad(f"cap_local_{que}_{clave}", fichero, patron, dice, _VERDAD_LOCAL[que])
-    for frases_, dice in ((_FRASES_LOCAL, False), (_FRASES_LOCAL_LEE, True))
+    for frases_, dice in ((_FRASES_LOCAL, True), (_FRASES_LOCAL_LEE, True))
     for fichero, clave, frases in frases_ for que, patron in frases.items()
 ]
 

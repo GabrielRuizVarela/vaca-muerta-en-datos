@@ -77,6 +77,8 @@ El contrato:
    Otra excepción declarada (docs/fable-cierre-2): en esa misma página, la cita de las cifras de la simulación del
    URTeC 2690466 pasa de "p. 14-15" a "p. 14", la página donde están en el original; sale un "15", que era un
    número de página. La clave de esa página se rehízo solo por eso.
+   Carril LR, R1-build (lane/r1-estimador): `wiki/hallazgos/linaje.md` se rehízo en la foto solo porque suma las dos tablas de
+   golpes_repetidos, mart_golpes_repetidos y mart_golpes_repetidos_veredicto (de 195 a 197 tablas, de 1086 a 1096 relaciones).
 
 Para rehacer la foto (solo si cambia la base): `python tests/test_deslop_numeros.py --congelar <ref-git>`.
 Para rehacer solo las páginas cuyas cifras cambian a propósito: `python tests/test_deslop_numeros.py --refotear <ruta> [<ruta> ...]`.

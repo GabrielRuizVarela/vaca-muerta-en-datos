@@ -19,6 +19,6 @@ Cada número se recalcula con `uv run python -m pipeline.claims`.
 
 ## Qué hacer con esto
 
-Corré parte del estudio con el dato mensual de tus pozos: `uv run python -m pipeline.local` (`docs/operador-datos-propios.md`). Da la brecha, el modelo de dosis y el corte de agua: lee el agua mensual opcional; no lee diario. Para valorar el diferido: `wiki/hallazgos/decision_operador.md`.
+Corré parte del estudio con tus datos: `uv run python -m pipeline.local` (`docs/operador-datos-propios.md`). Da la brecha, el modelo de dosis y el corte de agua: lee el agua mensual opcional, el diario y los cierres. Para valorar el diferido: `wiki/hallazgos/decision_operador.md`.
 
 No es una recomendación de operación: describe asociaciones en pozos de varios operadores.

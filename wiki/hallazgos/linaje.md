@@ -6,7 +6,7 @@ Capas: crudo (CSV inmutable en `data/raw`), staging (`stg_`), intermedia (`int_`
 
 Queda fuera la réplica en el warehouse de Colorado (`pipeline.replicacion`), que escribe con nombres tomados de un diccionario y no con una llamada por mart. Los marts `mart_dias_perdidos_colorado*`, `mart_golpes_mismo_mes_colorado*`, `mart_golpes_mismo_padre_colorado*`, `mart_dia_inicio_colorado*`, `mart_causal_profundo_d7` y `mart_causal_profundo_d9` (Wyoming) sí están: se guardan en este warehouse, pero se calculan desde el de Colorado, que tiene tablas con los mismos nombres.
 
-Hay 195 tablas con 1086 relaciones de origen.
+Hay 197 tablas con 1096 relaciones de origen.
 
 ## Árbol
 
@@ -83,6 +83,8 @@ manifiesto:fecha_extraccion
           mart_cota_rr
             mart_cota_rr_condicional
               mart_cota_rr_contraste
+          mart_golpes_repetidos
+          mart_golpes_repetidos_veredicto
       mart_causal_profundo_d3 (ver arriba)
       mart_causal_profundo_d4 (ver arriba)
       mart_causal_profundo_d5 (ver arriba)
@@ -441,6 +443,8 @@ raw:fractura_adjunto_iv
           mart_cota_rr (ver arriba)
           mart_cota_rr_condicional (ver arriba)
           mart_cota_rr_contraste (ver arriba)
+          mart_golpes_repetidos (ver arriba)
+          mart_golpes_repetidos_veredicto (ver arriba)
           mart_inferencia_escala
           mart_inferencia_holm
           mart_inferencia_permutacion
@@ -625,6 +629,8 @@ raw:fractura_adjunto_iv
       mart_golpes_mismo_padre_colorado
       mart_golpes_mismo_padre_colorado_prueba
       mart_golpes_mismo_padre_prueba
+      mart_golpes_repetidos (ver arriba)
+      mart_golpes_repetidos_veredicto (ver arriba)
       mart_inferencia_escala (ver arriba)
       mart_inferencia_holm (ver arriba)
       mart_inferencia_permutacion (ver arriba)
@@ -827,6 +833,8 @@ raw:produccion_no_convencional
               mart_golpes_mismo_padre_colorado (ver arriba)
               mart_golpes_mismo_padre_colorado_prueba (ver arriba)
               mart_golpes_mismo_padre_prueba (ver arriba)
+              mart_golpes_repetidos (ver arriba)
+              mart_golpes_repetidos_veredicto (ver arriba)
               mart_hijo_celdas_coef (ver arriba)
               mart_hijo_celdas_equilibrio (ver arriba)
               mart_hijo_celdas_resumen (ver arriba)
@@ -1058,6 +1066,8 @@ raw:produccion_no_convencional
       mart_golpes_mismo_padre_colorado (ver arriba)
       mart_golpes_mismo_padre_colorado_prueba (ver arriba)
       mart_golpes_mismo_padre_prueba (ver arriba)
+      mart_golpes_repetidos (ver arriba)
+      mart_golpes_repetidos_veredicto (ver arriba)
       mart_inferencia_escala (ver arriba)
       mart_inferencia_holm (ver arriba)
       mart_inferencia_permutacion (ver arriba)
@@ -1847,6 +1857,16 @@ seed:operadores
 | mart_golpes_mismo_padre_prueba | mart | fct_produccion | pipeline.golpes_mismo_padre |
 | mart_golpes_mismo_padre_prueba | mart | int_frac_hijo | pipeline.golpes_mismo_padre |
 | mart_golpes_mismo_padre_prueba | mart | int_pozo_ubicacion | pipeline.golpes_mismo_padre |
+| mart_golpes_repetidos | mart | fct_produccion | pipeline.golpes_repetidos |
+| mart_golpes_repetidos | mart | int_frac_hijo | pipeline.golpes_repetidos |
+| mart_golpes_repetidos | mart | int_pozo_ubicacion | pipeline.golpes_repetidos |
+| mart_golpes_repetidos | mart | mart_causal_veredicto | pipeline.golpes_repetidos |
+| mart_golpes_repetidos | mart | mart_par_rama | pipeline.golpes_repetidos |
+| mart_golpes_repetidos_veredicto | mart | fct_produccion | pipeline.golpes_repetidos |
+| mart_golpes_repetidos_veredicto | mart | int_frac_hijo | pipeline.golpes_repetidos |
+| mart_golpes_repetidos_veredicto | mart | int_pozo_ubicacion | pipeline.golpes_repetidos |
+| mart_golpes_repetidos_veredicto | mart | mart_causal_veredicto | pipeline.golpes_repetidos |
+| mart_golpes_repetidos_veredicto | mart | mart_par_rama | pipeline.golpes_repetidos |
 | mart_hijo_celdas_coef | mart | dim_fractura_pozo | pipeline.hijo_celdas |
 | mart_hijo_celdas_coef | mart | int_pozo_mop | pipeline.hijo_celdas |
 | mart_hijo_celdas_coef | mart | int_pozo_ubicacion | pipeline.hijo_celdas |

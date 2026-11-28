@@ -13,7 +13,7 @@ A los 6 meses la brecha baja a menos de 5 puntos, pero con medias de logaritmos 
 El agua sigue arriba, a cerca de la mitad del pico: el corte de agua del padre sube 13,8 puntos porcentuales en el mayor de los meses 0 y 1 (447 padres) y sigue arriba en los meses 6 a 12.
 La caída del petróleo es una huella medida, no una causa demostrada.
 La suba del agua es causal con supuestos nombrados; medida mes a mes (no como el mayor de dos meses), aguanta una cota de Rambachan y Roth del tamaño del mayor salto previo, sigue cuando la serie se corta en la segunda fractura a menos de 1 km, se repite en Colorado, donde no depende de un solo operador pero no es pareja entre ellos (con los pozos de PDC, el de más tratados, no se distingue de cero; Wyoming no permite probarla), y en Vaca Muerta depende de los pozos de YPF.
-El dato mensual no separa un cierre preventivo de un daño; los datos diarios y los registros de cierres de un operador sí. Una parte del estudio corre en su máquina sobre su dato mensual: la brecha del estudio de eventos, el modelo de dosis y, como lee el agua mensual opcional, el diseño del corte de agua. No parte la caída en días y caudal, y todavía no lee el diario ni los cierres.
+El dato mensual no separa un cierre preventivo de un daño; los datos diarios y los registros de cierres de un operador sí. Una parte del estudio corre en su máquina sobre su dato mensual: la brecha del estudio de eventos, el modelo de dosis y, como lee el agua mensual opcional, el diseño del corte de agua. No parte la caída en días y caudal. Si el operador los trae, también lee el diario de producción y el registro de cierres y los agrega (días con producción y horas cerradas por mes); no estima ningún efecto con ellos.
 
 ## 1. Pregunta
 

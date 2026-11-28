@@ -28,11 +28,9 @@ El texto de cada punto queda como se escribió, porque los módulos lo citan com
 ## Brechas abiertas, por prioridad
 
 <!-- brechas:inicio -->
-1. **B02** (código): El modo local no lee datos diarios de producción. (`README.md:5`)
-2. **B03** (código): El modo local no lee registros de cierres de pozos. (`README.md:3`)
-3. **B06** (datos del operador): El dato mensual no separa un cierre preventivo de un daño: hacen falta los registros de cierres con fecha y hora y la presión de cabeza o de fondo del padre. (`docs/proceso/siguientes-investigaciones.md:24`)
-4. **B07** (datos del operador): La geometría de las ramas necesita el azimut y las coordenadas de fondo, que no están en la base pública. (`docs/proceso/siguientes-investigaciones.md:23`)
-5. **B09** (código): Tratado y control se definen por la distancia entre bocas de pozo, no entre ramas; parte de los pares queda mal clasificada. (`wiki/hallazgos/causal.md:104`)
-6. **B04** (leer la fuente): Las fuentes de producción por pozo de Montana, Nuevo México, Pennsylvania y Utah no se pudieron verificar (fuentes_mundo.md líneas 39, 40, 42 y 43). (`wiki/hallazgos/fuentes_mundo.md:39`)
-7. **B05** (leer la fuente): Magneres 2020, Romero 2020, Fasola 2023 y Mamani 2024 y los demás estudios de Vaca Muerta se leyeron solo como metadatos (título, autores y DOI); no se comparó su muestra ni su método. Crespo 2020 se leyó completo el 2026-11-26. (`wiki/hallazgos/literatura.md:44`)
+1. **B06** (datos del operador): El dato mensual no separa un cierre preventivo de un daño: hacen falta los registros de cierres con fecha y hora y la presión de cabeza o de fondo del padre. (`docs/proceso/siguientes-investigaciones.md:24`)
+2. **B07** (datos del operador): La geometría de las ramas necesita el azimut y las coordenadas de fondo, que no están en la base pública. (`docs/proceso/siguientes-investigaciones.md:23`)
+3. **B09** (código): Tratado y control se definen por la distancia entre bocas de pozo, no entre ramas; parte de los pares queda mal clasificada. (`wiki/hallazgos/causal.md:104`)
+4. **B04** (leer la fuente): Las fuentes de producción por pozo de Montana, Nuevo México, Pennsylvania y Utah no se pudieron verificar (fuentes_mundo.md líneas 39, 40, 42 y 43). (`wiki/hallazgos/fuentes_mundo.md:39`)
+5. **B05** (leer la fuente): Magneres 2020, Romero 2020, Fasola 2023 y Mamani 2024 y los demás estudios de Vaca Muerta se leyeron solo como metadatos (título, autores y DOI); no se comparó su muestra ni su método. Crespo 2020 se leyó completo el 2026-11-26. (`wiki/hallazgos/literatura.md:44`)
 <!-- brechas:fin -->

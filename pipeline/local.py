@@ -1,6 +1,7 @@
 """Modo con datos propios: el mismo estudio de eventos y el mismo modelo de dosis sobre los CSV de un operador.
 
-Uso:  uv run python -m pipeline.local --wells POZOS.csv --monthly MENSUAL.csv --out CARPETA [--reps N]
+Uso:  uv run python -m pipeline.local --wells POZOS.csv --monthly MENSUAL.csv --out CARPETA [--reps N] [--daily DIARIO.csv]
+      [--shutins CIERRES.csv]
 Esquema de los CSV y garantia de privacidad: docs/operador-datos-propios.md.
 
 REGLA FIJADA ANTES DE CORRER (2026-11-17, antes de correr este modulo sobre ningun dato; no se cambia despues de ver resultados).
@@ -49,12 +50,21 @@ Condicion de muestra: el modelo no se corre si tiene menos de MIN_EVENTOS_DOSIS 
 Aviso de muestra chica de la brecha: menos de MIN_CERCANOS = 30 eventos cercanos o menos de MIN_PADS = 10 pads hijo de los cercanos.
 
 Salidas (SOLO en la carpeta --out): resumen.json (todas las cifras), resumen.md (el informe en espanol), eventos.csv (un renglon por
-evento cercano con ids, km, mes, indice a k = 1, caida y variables) y la tarjeta (tarjeta.json y tarjeta.md, pipeline.tarjeta). Nada se escribe en el repo, en el warehouse ni en otra carpeta.
+evento cercano con ids, km, mes, indice a k = 1, caida y variables) y la tarjeta (tarjeta.json y tarjeta.md, pipeline.tarjeta). Con --daily
+se escribe ademas diario_mes.csv (y diario_contra_mensual.csv si hay produccion mensual) y con --shutins cierres_mes.csv, las tablas por
+pozo y mes de pipeline.local_diario y pipeline.local_cierres. Nada se escribe en el repo, en el warehouse ni en otra carpeta.
 
 Privacidad por construccion: el modulo REHUSA correr, con un mensaje que dice por que y codigo de salida 2, si cualquier ruta de
 entrada o de salida cae dentro del repositorio y esta versionada (git ls-files) o no esta ignorada por git (git check-ignore); fuera
 del repositorio no hay restriccion. Asi los datos privados no pueden terminar en git por un descuido. Los datos se cargan en una base
 en memoria que no se guarda. No hay llamadas de red.
+
+Ampliacion L1c (2026-11-28, no cambia ninguna regla de arriba ni ningun numero de salida): --daily y --shutins, opcionales, leen
+el diario de produccion (pipeline.local_diario) y el registro de cierres (pipeline.local_cierres) despues de armar la base, con la
+regla de cada modulo fijada en su docstring. Solo LEEN Y AGREGAN: resumen.json trae sus conteos bajo "diario" y "cierres", resumen.md
+una seccion y los avisos con conteos, y las tablas por pozo y mes salen como CSV en --out (diario_mes.csv, diario_contra_mensual.csv,
+cierres_mes.csv; con ids de pozo, igual que eventos.csv); no se calcula ninguna particion en dias y caudal, ni ninguna etiqueta de cierre por evento
+de fractura, ni se cambia la brecha, el modelo de dosis o la tarjeta. Las rutas de --daily y --shutins pasan por comprobar_rutas.
 
 Que NO prueba:
   * Es el mismo estimador del dato publico: no corrige por nada que el operador sepa y no este en las columnas (espaciamiento real,
@@ -92,10 +102,12 @@ POZOS_OBLIGATORIAS = ("pozo_id", "pad_id", "lon", "lat", "fecha_fractura", "aren
                       "presion_max_psi")
 MENSUAL_OBLIGATORIAS = ("pozo_id", "mes", "petroleo_m3")
 # Columnas opcionales del mensual: dias_produccion se valida y, con agua_m3, entra al diseno D2 (placebo de cierre); agua_m3
-# alimenta el diseno de corte de agua. Agregar diario o cierres exige tocar estas constantes (pipeline.claims las lee para
-# comprobar lo que el README, el resumen y el sitio dicen que el código lee).
+# alimenta el diseno de corte de agua. ENTRADAS son los archivos que el modo lee (los dos ultimos, opcionales, desde L1c: son
+# local_diario.ENTRADA y local_cierres.ENTRADA, escritos aca porque esos modulos importan este y un import circular fallaria;
+# tests/test_local_lectores.py los compara). pipeline.claims lee estas constantes para comprobar lo que el README, el resumen
+# y el sitio dicen que el código lee.
 MENSUAL_OPCIONALES = ("dias_produccion", "agua_m3")
-ENTRADAS = ("pozos.csv", "mensual.csv")
+ENTRADAS = ("pozos.csv", "mensual.csv", "diario.csv", "cierres.csv")
 VARS_DOSIS = ("arena_etapa", "arena_rama", "presion", "deplecion")
 
 _E_INT = "try_cast(nullif(trim({c}), '') as integer)"
@@ -433,7 +445,24 @@ def informe(res) -> str:
            f"{_g(ent['pozos_con_fractura'])}.",
            f"- Filas mensuales: {_g(ent['filas_mensual'])}; meses cubiertos: {ent['mes_desde']} a "
            f"{ent['mes_hasta']}.",
-           "", "## Brecha cercano menos control",
+           ]
+    if "diario" in res:
+        from pipeline import local_diario   # import tardio: local_diario importa este modulo
+        dr = res["diario"]
+        lin.append(f"- Diario de producción ({ENTRADAS[2]}): {_g(dr['filas_usadas'])} filas de {_g(dr['pozos'])} pozos, del "
+                   f"{dr['fecha_desde']} al {dr['fecha_hasta']}; {_g(dr['meses'])} pozo-meses agregados.")
+        if dr["meses_comparados"]:
+            lin.append(f"  Contra el mensual: {_g(dr['meses_difieren'])} de {_g(dr['meses_comparados'])} meses comparados difieren "
+                       f"más que la tolerancia ({local_diario.TOLERANCIA_MENSUAL:.0%} del valor mensual).")
+    if "cierres" in res:
+        cr = res["cierres"]
+        lin.append(f"- Registro de cierres ({ENTRADAS[3]}): {_g(cr['filas'])} intervalos de {_g(cr['pozos'])} pozos, del "
+                   f"{cr['desde']} al {cr['hasta']}; {_g(cr['abiertos'])} sin fin y {_g(cr['superpuestos'])} superpuestos.")
+    if res.get("tablas"):
+        lin.append("  Tablas por pozo y mes, en la carpeta de salida: " + ", ".join(res["tablas"]) + ".")
+    if "diario" in res or "cierres" in res:
+        lin.append("  Se leen y se agregan; no se cruzan con las fracturas ni separan cierre preventivo de daño.")
+    lin += ["", "## Brecha cercano menos control",
            "La brecha es la mediana del índice de los padres cercanos (menos de 1 km) menos la de los controles "
            "(2 a 5 km), en puntos (índice por 100), con intervalo de confianza del 95% por pads hijo."]
     for etiqueta, r in (("Mes 1", k1), ("Mes 6", k6)):
@@ -476,7 +505,8 @@ def informe(res) -> str:
             "- Los pozos del archivo se toman todos como padres e hijos posibles; si el archivo es una parte del "
             "campo, la distancia al hijo más cercano ignora los pozos que no están.",
             "", "Los datos no salieron de la carpeta de salida: el módulo solo escribió resumen.json, resumen.md, "
-            "eventos.csv, tarjeta.json y tarjeta.md en ella."]
+            "eventos.csv, tarjeta.json y tarjeta.md"
+            + "".join(f", {t}" for t in res.get("tablas", [])) + " en ella."]
     return "\n".join(lin) + "\n"
 
 def _redondear(x):
@@ -522,19 +552,57 @@ def _escribir_eventos(ruta, d, y) -> None:
             w.writerow(fila)
 
 
+def _escribir_tabla(con, tabla, ruta) -> None:
+    """Vuelca una tabla por pozo y mes de la base en memoria a un CSV en --out (orden por pozo y mes)."""
+    cur = con.execute(f"select * from {tabla} order by pozo_id, mes")
+    with open(ruta, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow([c[0] for c in cur.description])
+        for fila in cur.fetchall():
+            w.writerow(["" if v is None else (repr(v) if isinstance(v, float) else str(v)) for v in fila])
+
+
+def _escribir_tablas(con, extra, out) -> list[str]:
+    """Escribe en --out las tablas por pozo y mes de lo que vino; devuelve los nombres de archivo, en orden."""
+    tablas = []
+    if "diario" in extra:
+        tablas.append("diario_mes")
+        if con.execute("select count(*) from information_schema.tables where table_name = 'diario_contra_mensual'").fetchone()[0]:
+            tablas.append("diario_contra_mensual")
+    if "cierres" in extra:
+        tablas.append("cierres_mes")
+    for t in tablas:
+        _escribir_tabla(con, t, out / f"{t}.csv")
+    return [f"{t}.csv" for t in tablas]
+
+
+def _leer_opcionales(con, args) -> dict:
+    """Lee --daily y --shutins sobre la base ya armada; devuelve {'diario': info, 'cierres': info} solo con los que vinieron."""
+    from pipeline import local_cierres, local_diario
+    infos = {}
+    if args.daily:
+        infos["diario"] = local_diario.leer(con, args.daily)
+    if args.shutins:
+        infos["cierres"] = local_cierres.leer(con, args.shutins)
+    return infos
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Estudio de eventos y modelo de dosis sobre CSV propios.")
     ap.add_argument("--wells", required=True)
     ap.add_argument("--monthly", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--reps", type=int, default=None)
+    ap.add_argument("--daily", default=None, help="diario.csv opcional: produccion por pozo y dia (se lee y se agrega)")
+    ap.add_argument("--shutins", default=None, help="cierres.csv opcional: intervalos de cierre por pozo (se lee y se agrega)")
     args = ap.parse_args(argv)
-    comprobar_rutas([args.wells, args.monthly, args.out])
+    comprobar_rutas([r for r in (args.wells, args.monthly, args.daily, args.shutins, args.out) if r])
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     reps_b = args.reps if args.reps is not None else placebo.REPS_BOOT
     reps_d = args.reps if args.reps is not None else dosis.B_MAIN
     con, info = armar_base(args.wells, args.monthly)
+    extra = _leer_opcionales(con, args)
     br = brecha(con, reps_b)
     dz, d, y = modelo_dosis(con, reps_d)
     d2 = None
@@ -542,9 +610,14 @@ def main(argv=None) -> int:
         d2 = tarjeta.d2_local(con, con_cierre=info["con_dias"], reps=args.reps)
     res = {"entradas": {k: info[k] for k in ("pozos", "pozos_con_fractura", "filas_mensual", "mes_desde",
                                             "mes_hasta")},
-           "avisos": info["avisos"], "brecha": br, "dosis": dz}
+           "avisos": info["avisos"] + [a for i in extra.values() for a in i["avisos"]], "brecha": br, "dosis": dz}
+    for clave, i in extra.items():
+        res[clave] = {k: v for k, v in i.items() if k != "avisos"}
     if d2 is not None:
         res["agua"] = d2
+    tablas = _escribir_tablas(con, extra, out)
+    if tablas:
+        res["tablas"] = tablas
     (out / "resumen.json").write_text(json.dumps(_redondear(res), indent=2, ensure_ascii=False) + "\n")
     (out / "resumen.md").write_text(informe(res))
     _escribir_eventos(out / "eventos.csv", d, y)
@@ -555,6 +628,12 @@ def main(argv=None) -> int:
               f"tratados: {_g(d2['n_tratados'])}, veredicto: {d2['veredicto']}")
     k1, k6 = br["k1"], br["k6"]
     print(f"pozos: {_g(info['pozos'])}, meses: {info['mes_desde']} a {info['mes_hasta']}")
+    if "diario" in extra:
+        print(f"diario: {_g(extra['diario']['filas_usadas'])} filas de {_g(extra['diario']['pozos'])} pozos, "
+              f"{_g(extra['diario']['meses'])} meses agregados")
+    if "cierres" in extra:
+        print(f"cierres: {_g(extra['cierres']['filas'])} intervalos de {_g(extra['cierres']['pozos'])} pozos, "
+              f"{_g(extra['cierres']['abiertos'])} sin fin")
     for etiqueta, r in (("mes 1", k1), ("mes 6", k6)):
         print(f"brecha {etiqueta}: {_g(r['brecha'] * 100, 1)} puntos "
               f"(IC {_g(r['ic_bajo'] * 100, 1)} a {_g(r['ic_alto'] * 100, 1)}), n cercanos: "
