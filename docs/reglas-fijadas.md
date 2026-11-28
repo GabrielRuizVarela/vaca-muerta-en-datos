@@ -3262,3 +3262,7 @@ Texto agregado en `pipeline/cota_rr_contraste.py`:
 #    hasta el paso de su grilla; si no dan, no se corre R.
 
 ~~~
+
+## Cómo agregar una entrada
+
+Cada entrada nueva se arma con `uv run python scripts/reglas_nueva_entrada.py SHA` (imprime la entrada; no escribe nada). Con `--escribir` la inserta en el orden de las fechas y reescribe la cuenta del encabezado; `--recontar` solo recuenta. Para una regla larga que no debe cortarse en 60 líneas va `--completa`, y para un commit con varias reglas en `pipeline/` va `--todos-los-archivos` (hasta cinco archivos). Las notas agregadas a mano no se tocan. El encabezado se recuenta solo con archivos publicados, y las pruebas de `tests/test_reglas_nueva_entrada.py` comparan cinco entradas existentes con lo que el programa genera.
