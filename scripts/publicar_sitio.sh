@@ -49,14 +49,16 @@ cp -a "$ROOT/site/." "$OUT_DIR/"
 mkdir -p "$OUT_DIR/docs" "$OUT_DIR/wiki"
 cp -a "$ROOT/docs/." "$OUT_DIR/docs/"
 cp -a "$ROOT/wiki/." "$OUT_DIR/wiki/"
-# Internal working documents (review notes, plans, the scoring baseline) are not published.
-rm -f "$OUT_DIR/docs/deslop-review.md" "$OUT_DIR/docs/revision-independiente.md" \
-      "$OUT_DIR/docs/plan-nueva-entrada.md" "$OUT_DIR/docs/plan-siguiente-nivel.md" \
-      "$OUT_DIR/docs/proceso/fable-base-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-factual-verificacion-2026-11-26.md" \
-      "$OUT_DIR/docs/proceso/auditoria-P-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-P-2026-11-26.md" \
-      "$OUT_DIR/docs/proceso/ronda1-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-R1-2026-11-26.md" \
-      "$OUT_DIR/docs/proceso/ronda2-2026-11-26.md" "$OUT_DIR/docs/proceso/fable-R2-2026-11-26.md" \
-      "$OUT_DIR/docs/proceso/fable-final-2026-11-26.md"
+# What is never published (internal documents, the agents' working folder) lives in scripts/no_publicar.txt,
+# shared with scripts/publicar_copia.sh. Only the entries under docs/ exist in this tree.
+while IFS= read -r entry || [ -n "$entry" ]; do
+  case "$entry" in
+    ''|'#'*) continue ;;
+    /*|*..*) echo "Bad entry in scripts/no_publicar.txt: $entry" >&2; exit 2 ;;
+    docs/*/) rm -rf "${OUT_DIR:?}/${entry%/}" ;;
+    docs/*) rm -f "${OUT_DIR:?}/$entry" ;;
+  esac
+done < "$ROOT/scripts/no_publicar.txt"
 
 cp -a "$ROOT/README.md" "$ROOT/ATRIBUCION.md" "$ROOT/LICENSE" "$OUT_DIR/"
 

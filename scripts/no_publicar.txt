@@ -1,0 +1,26 @@
+# What is never published: neither on the site nor in the public copy.
+# One path per line, relative to the repo root. A trailing "/" means a folder.
+# Blank lines and lines that start with "#" are ignored.
+# Read by scripts/publicar_sitio.sh and scripts/publicar_copia.sh; edit it here and nowhere else.
+
+# Internal working documents (review notes, plans, the scoring baseline)
+docs/deslop-review.md
+docs/revision-independiente.md
+docs/plan-nueva-entrada.md
+docs/plan-siguiente-nivel.md
+docs/proceso/fable-base-2026-11-26.md
+docs/proceso/fable-factual-verificacion-2026-11-26.md
+docs/proceso/auditoria-P-2026-11-26.md
+docs/proceso/fable-P-2026-11-26.md
+docs/proceso/ronda1-2026-11-26.md
+docs/proceso/fable-R1-2026-11-26.md
+docs/proceso/ronda2-2026-11-26.md
+docs/proceso/fable-R2-2026-11-26.md
+docs/proceso/fable-final-2026-11-26.md
+
+# The agents' working folder (lanes, contracts, briefs, journal)
+docs/orquestacion/
+
+# Agent rules (not under docs/; only the public-copy script removes them)
+REVIEW.md
+AGENTS.md
