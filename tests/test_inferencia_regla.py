@@ -25,7 +25,7 @@ def test_p_normal():
 
 def test_familia_fija():
     ids = [f[0] for f in inf.FAMILIA_CONFIRMATORIA]
-    assert len(ids) == len(set(ids)) == 19   # 15 en la regla, mas D11c (ACLARACION 2), D13 (regla en causal_profundo), E2 (82d58c0) y D14 (5002094)
+    assert len(ids) == len(set(ids)) == 20   # 15 en la regla, mas D11c (ACLARACION 2), D13 (regla en causal_profundo), E2 (82d58c0), D14 (5002094) y R1 (0670d9c)
 
 
 def test_veredicto_escala():

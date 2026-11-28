@@ -20,6 +20,7 @@ Wiki generado desde el warehouse de producción no convencional y fracturas (Sec
 - Mecanismo por la geometría de las ramas (padres al costado de la rama del hijo contra padres en su punta, con placebo previo a la fractura): [mecanismo.md](hallazgos/mecanismo.md).
 - Diseño causal (diferencias en diferencias escalonadas con controles aún no tratados; el corte de agua como canal físico, con placebo de cierre): [causal.md](hallazgos/causal.md).
 - Debajo del corte de agua: si entra agua o sale petróleo, con el mismo diseño y la regla fijada antes: [causal_profundo.md](hallazgos/causal_profundo.md).
+- Golpes repetidos (R1): el efecto de cada golpe posterior de un padre ya golpeado, con la regla fijada antes de calcular: [golpes_repetidos.md](hallazgos/golpes_repetidos.md).
 - El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).
 - Comparación con la literatura (las cifras de este trabajo al lado de las publicadas): [literatura.md](hallazgos/literatura.md).
 - Límites y robustez en detalle (lo que el dato público no deja afirmar, con cada cifra verificada): [limites.md](hallazgos/limites.md).

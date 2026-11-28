@@ -167,6 +167,7 @@ FAMILIA_CONFIRMATORIA = (
     ("D12a", "mart_causal_exposicion_veredicto", "D12a"),        # dentro de operador y area
     ("D12b", "mart_causal_exposicion_veredicto", "D12b"),        # fuera de YPF
     ("D14", "mart_causal_d14", "D14"),                           # D2 con el golpe por distancia entre ramas (regla en causal_exposicion)
+    ("R1", "mart_golpes_repetidos_veredicto", "R1"),             # cada golpe posterior como su propio evento (regla 0670d9c en golpes_repetidos)
     ("D13", "mart_causal_profundo_d13", "D13"),                  # Colorado sin cada operador (regla en causal_profundo, D13)
 )
 

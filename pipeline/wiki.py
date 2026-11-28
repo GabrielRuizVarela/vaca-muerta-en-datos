@@ -754,6 +754,8 @@ def build_wiki(con, manifest, out_dir) -> dict:
         L.append("- Diseño causal (diferencias en diferencias escalonadas con controles aún no tratados; el corte de agua como canal físico, con placebo de cierre): [causal.md](hallazgos/causal.md).")
     if hay_causal_profundo:
         L.append("- Debajo del corte de agua: si entra agua o sale petróleo, con el mismo diseño y la regla fijada antes: [causal_profundo.md](hallazgos/causal_profundo.md).")
+    if con.execute("select count(*) from information_schema.tables where table_name = 'mart_golpes_repetidos_veredicto'").fetchall()[0][0] > 0:
+        L.append("- Golpes repetidos (R1): el efecto de cada golpe posterior de un padre ya golpeado, con la regla fijada antes de calcular: [golpes_repetidos.md](hallazgos/golpes_repetidos.md).")
     if hay_gas:
         L.append("- El padre en la ventana de gas (padres gasíferos, el gas como resultado y el GOR de los padres petrolíferos): [gas.md](hallazgos/gas.md).")
     if (out_dir / "hallazgos" / "literatura.md").exists():

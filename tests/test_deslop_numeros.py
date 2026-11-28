@@ -79,6 +79,9 @@ El contrato:
    número de página. La clave de esa página se rehízo solo por eso.
    Carril LR, R1-build (lane/r1-estimador): `wiki/hallazgos/linaje.md` se rehízo en la foto solo porque suma las dos tablas de
    golpes_repetidos, mart_golpes_repetidos y mart_golpes_repetidos_veredicto (de 195 a 197 tablas, de 1086 a 1096 relaciones).
+   Carril LR, R1-run (lane/r1-corrida): `wiki/hallazgos/golpes_repetidos.md` entra a la foto con sus cifras (la corrida de pipeline.golpes_repetidos,
+   regla fijada en 0670d9c); `wiki/hallazgos/inferencia.md` se rehizo en la foto solo porque R1 entra a la familia confirmatoria (k de 19 a 20,
+   Holm de 7 de 19 a 8 de 20, y la fila de R1 con su p).
 
 Para rehacer la foto (solo si cambia la base): `python tests/test_deslop_numeros.py --congelar <ref-git>`.
 Para rehacer solo las páginas cuyas cifras cambian a propósito: `python tests/test_deslop_numeros.py --refotear <ruta> [<ruta> ...]`.

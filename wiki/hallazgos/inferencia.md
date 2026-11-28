@@ -90,7 +90,7 @@ Qué no prueba: los pads son clusters de bocas de pozo, no de laterales; un pad 
 
 ## I3. Holm sobre la familia confirmatoria
 
-La familia tiene k = 19 diseños. Rechazan a α = 0,05 con Holm: 7 de 19. Un diseño sin muestra, sin fila o sin IC entra con p = 1: la familia no se achica. D7 y D9 se leen de la fila `dW` de su mart, que guarda sus resultados en la columna `resultado`. D11c se sumó después de la primera corrida, con las cifras de D11 ya conocidas: la regla de D11 le da veredicto propio, como a D4 y D12 sus dos filas (segunda aclaración de la regla, en `pipeline/inferencia.py`). E2 y D14 se sumaron después, cada uno con su regla fijada antes de calcular ninguna de sus cifras (`82d58c0` en `pipeline/stacked.py` y `5002094` en `pipeline/causal_exposicion.py`); sumarlos sube k y puede cambiar el p ajustado de los demás.
+La familia tiene k = 20 diseños. Rechazan a α = 0,05 con Holm: 8 de 20. Un diseño sin muestra, sin fila o sin IC entra con p = 1: la familia no se achica. D7 y D9 se leen de la fila `dW` de su mart, que guarda sus resultados en la columna `resultado`. D11c se sumó después de la primera corrida, con las cifras de D11 ya conocidas: la regla de D11 le da veredicto propio, como a D4 y D12 sus dos filas (segunda aclaración de la regla, en `pipeline/inferencia.py`). E2 y D14 se sumaron después, cada uno con su regla fijada antes de calcular ninguna de sus cifras (`82d58c0` en `pipeline/stacked.py` y `5002094` en `pipeline/causal_exposicion.py`); sumarlos sube k y puede cambiar el p ajustado de los demás.
 
 | Diseño | Fuente | Estado | Veredicto del diseño | Valor | IC 95% | p | p de Holm | ¿Rechaza? |
 | --- | --- | --- | --- | ---: | --- | ---: | ---: | --- |
@@ -101,6 +101,7 @@ La familia tiene k = 19 diseños. Rechazan a α = 0,05 con Holm: 7 de 19. Un dis
 | D2 | `mart_causal_veredicto:D2` | leido | sostiene: comunicación física causal bajo tendencias paralelas | 13,76 | 9,51 a 19,89 | < 0,0001 | < 0,0001 | sí |
 | D10 | `mart_causal_exposicion_veredicto:D10` | leido | persiste | 10,49 | 6,81 a 15,41 | < 0,0001 | < 0,0001 | sí |
 | D3 | `mart_causal_profundo_d3:dA_pd` | leido | entra agua en los días producidos | 19,51 | 12,84 a 29,20 | < 0,0001 | < 0,0001 | sí |
+| R1 | `mart_golpes_repetidos_veredicto:R1` | leido | se repite en cada golpe | 9,61 | 3,65 a 15,01 | 0,0009 | 0,0118 | sí |
 | D6 | `mart_causal_profundo_veredicto:D6` | leido | depende de un operador | 7,08 | -0,60 a 18,11 | 0,1383 | 1,0000 | no |
 | D4_tamano | `mart_causal_profundo_veredicto:D4_tamano` | leido | sin gradiente | -8,60 | -18,89 a 9,37 | 0,2327 | 1,0000 | no |
 | D4_distancia | `mart_causal_profundo_veredicto:D4_distancia` | leido | sin gradiente | 3,17 | -3,66 a 10,78 | 0,3892 | 1,0000 | no |

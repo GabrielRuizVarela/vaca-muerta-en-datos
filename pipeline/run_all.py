@@ -85,6 +85,7 @@ PASOS: list[Paso] = [
     Paso("replicacion_operadores_agua", "pipeline.replicacion_operadores_agua"),
     # D10 to D12 read causal_profundo's D4 to D6 and the trajectory pairs; the Rambachan-Roth bound reads mart_causal_veredicto
     Paso("causal_exposicion", "pipeline.causal_exposicion"),
+    Paso("golpes_repetidos", "pipeline.golpes_repetidos"),   # R1: reads mart_causal_veredicto (D2) and the D3 draws; inferencia adds its row to the family
     Paso("apilado", "pipeline.stacked"),
     Paso("cota_rr", "pipeline.cota_rr"),   # its page reads E's bound from mart_apilado
     Paso("cota_rr_condicional", "pipeline.cota_rr_condicional"),   # reads mart_cota_rr for the union side

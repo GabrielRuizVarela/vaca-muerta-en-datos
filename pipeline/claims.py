@@ -2447,6 +2447,90 @@ def _claims_d14() -> list[Claim]:
     return out
 
 
+W_R1 = "wiki/hallazgos/golpes_repetidos.md"
+
+
+def _claims_r1() -> list[Claim]:
+    """Cifras de la pagina de golpes repetidos (R1) contra mart_golpes_repetidos y su veredicto. Cada cifra se lee con el
+    veredicto que la pagina imprime al lado: si el veredicto del mart cambia, la cifra da nan (FAIL) y el texto se rehace."""
+    T, TV = "mart_golpes_repetidos", "mart_golpes_repetidos_veredicto"
+    V = "se repite en cada golpe"
+    PM = r"([+-]\d+,\d+)"
+    nan = float("nan")
+    ok = lambda con: con.execute(f"select veredicto from {TV} where diseno = 'R1'").fetchone()[0] == V   # noqa: E731
+
+    def ver(col: str) -> Callable:
+        return lambda con: con.execute(f"select {col} from {TV} where diseno = 'R1'").fetchone()[0] if ok(con) else nan
+
+    def fila(parte: str, corte: str, col: str, e: int | None = None) -> Callable:
+        def f(con):
+            if not ok(con):
+                return nan
+            q = f"select {col} from {T} where diseno = 'R1' and parte = ? and corte = ? and " + ("e is null" if e is None else "e = ?")
+            return con.execute(q, [parte, corte] + ([] if e is None else [e])).fetchone()[0]
+        return f
+
+    def d2(col: str) -> Callable:   # el ATT_W de D2 sale de mart_causal_veredicto, el mismo que lee la regla
+        return lambda con: con.execute(f"select {col} from mart_causal_veredicto where diseno = 'D2'").fetchone()[0] if ok(con) else nan
+
+    cabeza = r"\*\*Veredicto: " + V + r"\.\*\*\n\n- ATT de R1 \(suba del corte de agua de un golpe posterior, en puntos porcentuales\): "
+    out = [
+        _c("r1_att@golpes_repetidos", W_R1, cabeza + PM, ver("valor"), 0.05, "{:+.1f}", tabla=TV),
+        _c("r1_bajo@golpes_repetidos", W_R1, cabeza + r"[+-]\d+,\d+ \(IC 95 %: " + PM + r" a", ver("ic_bajo"), 0.05, "{:+.1f}", tabla=TV),
+        _c("r1_alto@golpes_repetidos", W_R1, cabeza + r"[+-]\d+,\d+ \(IC 95 %: [+-]\d+,\d+ a " + PM + r"\)", ver("ic_alto"), 0.05, "{:+.1f}",
+           tabla=TV),
+        _c("r1_n@golpes_repetidos", W_R1, cabeza + r"[+-]\d+,\d+ \(IC 95 %: [+-]\d+,\d+ a [+-]\d+,\d+\), " + N + r" golpes", ver("n_tratados"), 0,
+           tabla=TV),
+        _c("r1_veredicto@golpes_repetidos", W_R1, r"\*\*Veredicto: " + V + r"\.\*\*.*?" + N + r" golpes\.", ver("n_tratados"), 0, tabla=TV)]
+    base2 = r"- El ATT de D2 con el que se compara \(primer golpe\): "
+    out += [
+        _c("r1_d2_att@golpes_repetidos", W_R1, base2 + PM, d2("valor"), 0.05, "{:+.1f}"),
+        _c("r1_d2_bajo@golpes_repetidos", W_R1, base2 + r"[+-]\d+,\d+ \(IC 95 %: " + PM + r" a", d2("ic_bajo"), 0.05, "{:+.1f}"),
+        _c("r1_d2_alto@golpes_repetidos", W_R1, base2 + r"[+-]\d+,\d+ \(IC 95 %: [+-]\d+,\d+ a " + PM + r"\)", d2("ic_alto"), 0.05, "{:+.1f}"),
+        _c("r1_d2_n@golpes_repetidos", W_R1, base2 + r"[+-]\d+,\d+ \(IC 95 %: [+-]\d+,\d+ a [+-]\d+,\d+\), " + N + r" tratados", d2("n_tratados"), 0)]
+    pl = r"- Placebo \(meses −3 a −1 antes del golpe\): "
+    out += [
+        _c("r1_placebo_valor@golpes_repetidos", W_R1, pl + PM, fila("placebo", "pretendencia", "est"), 0.05, "{:+.1f}", tabla=T),
+        _c("r1_placebo_bajo@golpes_repetidos", W_R1, pl + r"[+-]\d+,\d+ \(IC 95 %: " + PM + r" a", fila("placebo", "pretendencia", "ic_bajo"), 0.05,
+           "{:+.1f}", tabla=T),
+        _c("r1_placebo_alto@golpes_repetidos", W_R1, pl + r"[+-]\d+,\d+ \(IC 95 %: [+-]\d+,\d+ a " + PM + r"\)",
+           fila("placebo", "pretendencia", "ic_alto"), 0.05, "{:+.1f}", tabla=T)]
+    for e in range(-6, 13):
+        f = r"\| " + str(e) + r" \| "
+        out += [
+            _c(f"r1_serie_{e}@golpes_repetidos", W_R1, f + PM + r" \|", fila("serie", "dW", "est", e), 0.05, "{:+.1f}", tabla=T),
+            _c(f"r1_serie_{e}_bajo@golpes_repetidos", W_R1, f + r"[+-]\d+,\d+ \| " + PM + r" a", fila("serie", "dW", "ic_bajo", e), 0.05, "{:+.1f}",
+               tabla=T),
+            _c(f"r1_serie_{e}_alto@golpes_repetidos", W_R1, f + r"[+-]\d+,\d+ \| [+-]\d+,\d+ a " + PM + r" \|", fila("serie", "dW", "ic_alto", e),
+               0.05, "{:+.1f}", tabla=T),
+            _c(f"r1_serie_{e}_n@golpes_repetidos", W_R1, f + r"[+-]\d+,\d+ \| [+-]\d+,\d+ a [+-]\d+,\d+ \| " + N + r" \|",
+               fila("serie", "dW", "n_tratados", e), 0, tabla=T)]
+    cortes = (("orden", "k=2", r"orden k=2", "orden_2"), ("orden", "k>=3", r"orden k>=3", "orden_3_o_mas"),
+              ("banda", "8-12", r"meses desde el anterior: 8-12", "banda_8_12"), ("banda", "13-24", r"meses desde el anterior: 13-24", "banda_13_24"),
+              ("banda", "25+", r"meses desde el anterior: 25\+", "banda_25_mas"))
+    for parte, corte, etiqueta, id_ in cortes:
+        f = r"\| " + etiqueta + r" \| "
+        out += [
+            _c(f"r1_{id_}@golpes_repetidos", W_R1, f + PM + r" \|", fila(parte, corte, "est"), 0.05, "{:+.1f}", tabla=T),
+            _c(f"r1_{id_}_bajo@golpes_repetidos", W_R1, f + r"[+-]\d+,\d+ \| " + PM + r" a", fila(parte, corte, "ic_bajo"), 0.05, "{:+.1f}", tabla=T),
+            _c(f"r1_{id_}_alto@golpes_repetidos", W_R1, f + r"[+-]\d+,\d+ \| [+-]\d+,\d+ a " + PM + r" \|", fila(parte, corte, "ic_alto"), 0.05,
+               "{:+.1f}", tabla=T),
+            _c(f"r1_{id_}_n@golpes_repetidos", W_R1, f + r"[+-]\d+,\d+ \| [+-]\d+,\d+ a [+-]\d+,\d+ \| " + N + r" \|", fila(parte, corte, "n_tratados"),
+               0, tabla=T)]
+
+    def cuenta(nombre: str) -> Callable:
+        return lambda con: con.execute(f"select n_tratados from {T} where diseno = 'R1' and parte = 'cuenta' and corte = ?",
+                                       [nombre]).fetchone()[0]
+
+    out += [
+        _c("r1_cuenta_eventos@golpes_repetidos", W_R1, r"- Golpes posteriores \(orden 2 o más\): " + N + r"\.", cuenta("eventos_orden_2_o_mas"), 0, tabla=T),
+        _c("r1_cuenta_s_2_a_7@golpes_repetidos", W_R1, r"\(se cuentan, no se estiman\): " + N + r"\.", cuenta("s_2_a_7"), 0, tabla=T),
+        _c("r1_cuenta_elegibles@golpes_repetidos", W_R1, r"- Elegibles: " + N + r"; en celdas", cuenta("elegibles"), 0, tabla=T),
+        _c("r1_cuenta_en_celdas@golpes_repetidos", W_R1, r"en celdas con controles: " + N + r"\.", cuenta("en_celdas_con_controles"), 0, tabla=T),
+        _c("r1_cuenta_sin_bloque@golpes_repetidos", W_R1, r"que salen del bootstrap: " + N + r"\.", cuenta("pozos_sin_bloque"), 0, tabla=T)]
+    return out
+
+
 def _claims_siguiente_nivel() -> list[Claim]:
     """Cifras del texto de la fase siguiente-nivel (README, sitio, resumen del operador y paper) contra los marts de
     pipeline.cota_rr (la cota de Rambachan y Roth), pipeline.causal_exposicion (D10) y pipeline.stacked (E). Cada cifra se lee
@@ -4865,6 +4949,7 @@ CLAIMS: list[Claim] = [
     *_claims_siguiente_nivel(),
     *_claims_apilado_e2(),
     *_claims_d14(),
+    *_claims_r1(),
     *_claims_paper_a(),
     *_claims_paper_b(),
     *_claims_paper_c(),
